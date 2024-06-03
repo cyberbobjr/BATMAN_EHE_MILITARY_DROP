@@ -185,9 +185,8 @@ local function onCommand(_module, _command, _data)
             end
             for i, radio in ipairs(radios) do
                 timer:Create("SomeUniqueTimerNameRadio" .. i, 5, 3, function()
-                    if radio:getIsPortable() then
+                    if radio then
                         radio:AddDeviceText(ackPhrase, 0, 1, 0, nil, nil, 10)
-                    else
                         radio:Say(ackPhrase)
                     end
                 end)
