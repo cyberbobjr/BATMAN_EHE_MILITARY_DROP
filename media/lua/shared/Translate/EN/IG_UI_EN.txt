@@ -1,0 +1,17 @@
+IGUI_EN = {
+    IGUI_HTC_EHE_Drop_tooltip = "I can use the radio to request a drop",
+    IGUI_HTC_EHE_Ask_drop = "Request a drop",
+    IGUI_HTC_EHE_Call_too_short = "I can't contact them now, I already did this week",
+    IGUI_HTC_EHE_Call_drop_1 = "This is the quarantine zone, we need an emergency arms drop. Can you send a package?",
+    IGUI_HTC_EHE_Call_drop_2 = "Alert! We are out of arms. Requesting immediate drop of ammunition and weapons!",
+    IGUI_HTC_EHE_Call_drop_3 = "Military base, this is the Knox survivors. We need an arms drop, the situation is critical.",
+    IGUI_HTC_EHE_Call_drop_4 = "Requesting urgent resupply of arms. Our stocks are depleted and we need support. Can you help us?",
+    IGUI_HTC_EHE_Call_drop_5 = "Hello, this is the disaster area. We need weapons and ammunition urgently. Can you perform an arms drop?",
+    IGUI_HTC_EHE_Turn_on = "The beacon needs to be turned on",
+    IGUI_HTC_EHE_Ack_drop_1 = "Received. Arms drop in progress. Hold on, reinforcements are on the way.",
+    IGUI_HTC_EHE_Ack_drop_2 = "Message received. We are proceeding with the drop of ammunition and weapons. Good luck.",
+    IGUI_HTC_EHE_Ack_drop_3 = "Your request is confirmed. The arms package will be dropped in your area shortly.",
+    IGUI_HTC_EHE_Ack_drop_4 = "Well received. Prepare to receive the arms drop. Stay vigilant.",
+    IGUI_HTC_EHE_Ack_drop_5 = "Affirmative. We are sending an arms drop immediately. Watch the sky.",
+    IGUI_HTC_EHE_dropped = "Drop confirmed at coordinates %d / %d - this message will be repeated 3 times - Over",
+}

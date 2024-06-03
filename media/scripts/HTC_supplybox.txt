@@ -1,0 +1,98 @@
+module HTC
+{
+	fixing Fix EmergencyMilitaryProbe
+	{
+	   Require : WalkieTalkie5,
+	   ConditionModifier : 100,
+
+       Fixer : ElectronicsScrap=3;Electricity=6,
+	}
+
+	item SurvivorAmmoSupplyBox
+	{
+		DisplayCategory = Container,
+		Weight			=	6.3,
+		Icon			=	SupplyBox_blank,
+		DisplayName		=	Supply Box,
+		Tooltip = Tooltip_HTC_SurvivorAmmoSupplyBox,
+		WorldStaticModel = SurvivorSupplyBox,
+	}
+
+	item SurvivorWeaponSupplyBox
+	{
+		DisplayCategory = Container,
+		Weight			=	6.3,
+		Icon			=	SupplyBox_blank,
+		DisplayName		=	Supply Box,
+		Tooltip = Tooltip_HTC_SurvivorWeaponSupplyBox,
+		WorldStaticModel = SurvivorSupplyBox,
+	}
+
+	item SurvivorArmorSupplyBox
+	{
+		DisplayCategory = Container,
+		Weight			=	6.3,
+		Icon			=	SupplyBox_blank,
+		DisplayName		=	Supply Box,
+		Tooltip = Tooltip_HTC_SurvivorArmorSupplyBox,
+		WorldStaticModel = SurvivorSupplyBox,
+	}
+
+	item SurvivorAttachmentSupplyBox
+	{
+		DisplayCategory = Container,
+		Weight			=	6.3,
+		Icon			=	SupplyBox_blank,
+		DisplayName		=	Supply Box,
+		Tooltip = Tooltip_HTC_SurvivorAttachmentSupplyBox,
+		WorldStaticModel = SurvivorSupplyBox,
+	}
+
+	recipe Open Supplies
+    {
+       SurvivorAmmoSupplyBox,
+       Result:Case_Medium1,
+       CanBeDoneFromFloor:true,
+       OnCreate:EHE_Recipe.MILITARYAMMOBOX,
+       Tooltip:Tooltip_open_boxes_barehanded,
+       Time:210.0,
+       RemoveResultItem:true,
+       Sound:crashes_bombs_misc/OpenBox,
+    }
+
+	recipe Open Supplies
+    {
+       SurvivorWeaponSupplyBox,
+       Result:Case_Large3,
+       CanBeDoneFromFloor:true,
+       OnCreate:EHE_Recipe.MILITARYWEAPONBOX,
+       Tooltip:Tooltip_open_boxes_barehanded,
+       Time:210.0,
+       RemoveResultItem:true,
+       Sound:crashes_bombs_misc/OpenBox,
+    }
+
+	recipe Open Supplies
+    {
+       SurvivorArmorSupplyBox,
+       Result:Case_Medium1,
+       CanBeDoneFromFloor:true,
+       OnCreate:EHE_Recipe.MILITARYARMORBOX,
+       Tooltip:Tooltip_open_boxes_barehanded,
+       Time:210.0,
+       RemoveResultItem:true,
+       Sound:crashes_bombs_misc/OpenBox,
+    }
+
+	recipe Open Supplies
+    {
+       SurvivorAttachmentSupplyBox,
+       Result:Case_Medium1,
+       CanBeDoneFromFloor:true,
+       OnCreate:EHE_Recipe.MILITARYATTACHMENTBOX,
+       Tooltip:Tooltip_open_boxes_barehanded,
+       Time:210.0,
+       RemoveResultItem:true,
+       Sound:crashes_bombs_misc/OpenBox,
+    }
+}

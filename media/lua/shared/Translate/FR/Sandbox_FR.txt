@@ -1,0 +1,7 @@
+Sandbox_FR = {
+
+	Sandbox_HTC_EHE_MilitaryDrop = "HTC EHE Military Drop",
+	
+	HTC_EHE_MilitaryDrop_TimeBetweenCall = "Time between calls (in hours)",
+	HTC_EHE_MilitaryDrop_MaxZSpawn = "Max Zombies spawn",
+}

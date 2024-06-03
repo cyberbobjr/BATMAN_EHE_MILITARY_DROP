@@ -1,0 +1,28 @@
+VERSION = 1,
+
+option HTC_EHE_MilitaryDrop.TimeBetweenCall = {
+	type = integer,
+    default = 168,
+    min = 1,
+    max = 8640,
+	page = HTC_EHE_MilitaryDrop,
+	translation = HTC_EHE_MilitaryDrop_TimeBetweenCall,
+}
+
+option HTC_EHE_MilitaryDrop.MaxZSpawn = {
+	type = integer,
+    default = 30,
+    min = 1,
+    max = 1000,
+	page = HTC_EHE_MilitaryDrop,
+	translation = HTC_EHE_MilitaryDrop_MaxZSpawn,
+}
+
+option HTC_EHE_MilitaryDrop.MinZSpawn = {
+	type = integer,
+    default = 30,
+    min = 1,
+    max = 1000,
+	page = HTC_EHE_MilitaryDrop,
+	translation = HTC_EHE_MilitaryDrop_MinZSpawn,
+}

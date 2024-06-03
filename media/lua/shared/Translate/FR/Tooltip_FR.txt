@@ -1,0 +1,6 @@
+Tooltip_FR = {
+    Tooltip_HTC_SurvivorAmmoSupplyBox = "Caisse de munitions",
+    Tooltip_HTC_SurvivorWeaponSupplyBox = "Caisse d'armes",
+    Tooltip_HTC_SurvivorArmorSupplyBox = "Caisse d'armures",
+    Tooltip_HTC_SurvivorAttachmentSupplyBox = "Caisse d'accessoires",
+}

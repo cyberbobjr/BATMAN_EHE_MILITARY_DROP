@@ -1,0 +1,6 @@
+Tooltip_FR = {
+    Tooltip_HTC_SurvivorAmmoSupplyBox = "Ammunition box",
+    Tooltip_HTC_SurvivorWeaponSupplyBox = "Weapon box",
+    Tooltip_HTC_SurvivorArmorSupplyBox = "Armor box",
+    Tooltip_HTC_SurvivorAttachmentSupplyBox = "Attachment box",
+}
