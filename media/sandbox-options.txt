@@ -9,10 +9,19 @@ option HTC_EHE_MilitaryDrop.TimeBetweenCall = {
 	translation = HTC_EHE_MilitaryDrop_TimeBetweenCall,
 }
 
+option HTC_EHE_MilitaryDrop.Frequency = {
+	type = double,
+	default = 151.4,
+	max = 200,
+    min = 1,
+	page = HTC_EHE_MilitaryDrop,
+	translation = HTC_EHE_MilitaryDrop_Frequency,
+}
+
 option HTC_EHE_MilitaryDrop.MaxZSpawn = {
 	type = integer,
     default = 30,
-    min = 1,
+    min = 0,
     max = 1000,
 	page = HTC_EHE_MilitaryDrop,
 	translation = HTC_EHE_MilitaryDrop_MaxZSpawn,
@@ -20,9 +29,24 @@ option HTC_EHE_MilitaryDrop.MaxZSpawn = {
 
 option HTC_EHE_MilitaryDrop.MinZSpawn = {
 	type = integer,
-    default = 30,
-    min = 1,
+    default = 3,
+    min = 0,
     max = 1000,
 	page = HTC_EHE_MilitaryDrop,
 	translation = HTC_EHE_MilitaryDrop_MinZSpawn,
+}
+option HTC_EHE_MilitaryDrop.noteDropRate = {
+	type = enum,
+    numValues = 6,
+    default = 4,
+	page = HTC_EHE_MilitaryDrop,
+	translation = HTC_EHE_MilitaryDrop_noteDropRate,
+	valueTranslation = HTC_EHE_MilitaryDrop_noteDropRateEnum,
+}
+
+option HTC_EHE_MilitaryDrop.onlyArmyAndPoliceCorpse = {
+	type = boolean,
+	default = true,
+	page = HTC_EHE_MilitaryDrop,
+	translation = HTC_EHE_MilitaryDrop_onlyArmyAndPoliceCorpse
 }

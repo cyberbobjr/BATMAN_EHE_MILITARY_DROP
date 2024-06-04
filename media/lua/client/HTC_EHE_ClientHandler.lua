@@ -1,5 +1,8 @@
 require "ISUI/Maps/ISMap"
 
+local TimeBetweenCall = SandboxVars.HTC_EHE_MilitaryDrop.TimeBetweenCall
+local Frequency = SandboxVars.HTC_EHE_MilitaryDrop.Frequency * 1000
+
 HTC_EHE = {}
 
 HTC_EHE.drawSymbol = function(x, y, symbolName, playerNum)
@@ -18,11 +21,12 @@ HTC_EHE.drawSymbol = function(x, y, symbolName, playerNum)
     textureSymbol:setScale(ISMap.SCALE)
 end
 ---@param isoRadio IsoRadio
-HTC_EHE.call_drop = function(isoRadio, player)
+HTC_EHE.call_drop = function(isoRadio, player, force)
     local playerObj = getSpecificPlayer(player)
     local dataPlayer = playerObj:getModData();
     local currentHour = getGameTime():getWorldAgeHours()
-    local hoursSinceLastCall = 168
+    local hoursSinceLastCall = TimeBetweenCall
+    local radioFrequency = isoRadio:getDeviceData():getChannel()
 
     -- Définir la dernière heure d'appel si elle n'existe pas
     if not dataPlayer['HTC_EHE_last_drop_call'] then
@@ -32,13 +36,18 @@ HTC_EHE.call_drop = function(isoRadio, player)
     end
 
     -- Calculer l'intervalle depuis le dernier appel
-    if isDebugEnabled() or isAdmin() then
+    if force then
         print("HTC_EHE - hoursSinceLastCall : " .. hoursSinceLastCall)
-        HTC_EHE.drop(isoRadio, playerObj)
+        hoursSinceLastCall = TimeBetweenCall
+    end
+
+    if Frequency ~= radioFrequency then
+        playerObj:Say(getText("IGUI_HTC_EHE_bad_frequency"));
         return
     end
-    if hoursSinceLastCall >= 168 then
+    if hoursSinceLastCall >= TimeBetweenCall then
         HTC_EHE.drop(isoRadio, playerObj)
+        dataPlayer['HTC_EHE_last_drop_call'] = currentHour
     else
         playerObj:Say(getText("IGUI_HTC_EHE_Call_too_short"));
     end
@@ -64,11 +73,12 @@ HTC_EHE.drop = function(isoRadio, playerObj)
         local selectedAckPhraseKey = "IGUI_HTC_EHE_Ack_drop_" .. ackRandomIndex
         local selectedAckPhrase = getText(selectedAckPhraseKey)
         if isoRadio:getDeviceData():getIsTurnedOn() then
-            isoRadio:AddDeviceText(selectedAckPhrase, 1, 0, 0, nil, nil, 10)
+            --isoRadio:AddDeviceText(selectedAckPhrase, 1, 0, 0, nil, nil, 10)
+            isoRadio:Say(selectedAckPhrase)
         end
     end)
     local frequency = isoRadio:getDeviceData():getChannel()
-    sendClientCommand(getPlayer(), 'HTC_EHE', 'CallMilitaryDrop', { frequency = frequency })
+    sendClientCommand(getPlayer(), 'HTC_EHE', 'CallMilitaryDrop', nil)
 end
 HTC_EHE.getIsoRadiosInPlayerCell = function(isTurningOn, frequency)
     local radios = {}
@@ -106,13 +116,19 @@ local function addRadioOption(context, isoRadio, player)
     local deviceData = isoRadio:getDeviceData()
     local isTurnedOn = deviceData:getIsTurnedOn()
 
+    if isDebugEnabled() or isAdmin() then
+        local option = context:addOption(getText("IGUI_HTC_EHE_Ask_drop_admin"), isoRadio, HTC_EHE.call_drop, player, true)
+        tooltip.description = getText("IGUI_HTC_EHE_Drop_tooltip")
+        option.toolTip = tooltip
+    end
+
     if not isTurnedOn then
         local option = context:addOption(getText("IGUI_HTC_EHE_Ask_drop"))
         tooltip.description = getText("IGUI_HTC_EHE_Turn_on")
         option.notAvailable = true
         option.toolTip = tooltip
     else
-        local option = context:addOption(getText("IGUI_HTC_EHE_Ask_drop"), isoRadio, HTC_EHE.call_drop, player, isoRadio)
+        local option = context:addOption(getText("IGUI_HTC_EHE_Ask_drop"), isoRadio, HTC_EHE.call_drop, player, false)
         tooltip.description = getText("IGUI_HTC_EHE_Drop_tooltip")
         option.toolTip = tooltip
     end
@@ -170,7 +186,7 @@ local function onCommand(_module, _command, _data)
             if getDebug() then
                 print("HTC_EHE - debug Dropped : " .. _data.x .. "/" .. _data.y)
             end
-            local radios = HTC_EHE.getIsoRadiosInPlayerCell(true, _data.frequency)
+            local radios = HTC_EHE.getIsoRadiosInPlayerCell(true, Frequency)
             local ackPhrase = string.format(getText("IGUI_HTC_EHE_dropped"), _data.x, _data.y)
             local playerNum = getPlayer():getPlayerNum()
             local radioInPlayerInventory = getPlayer():getInventory():getItemFromType("Radio.WalkieTalkie5", true, true)
@@ -186,7 +202,7 @@ local function onCommand(_module, _command, _data)
             for i, radio in ipairs(radios) do
                 timer:Create("SomeUniqueTimerNameRadio" .. i, 5, 3, function()
                     if radio then
-                        radio:AddDeviceText(ackPhrase, 0, 1, 0, nil, nil, 10)
+                        --radio:AddDeviceText(ackPhrase, 0, 1, 0, nil, nil, 10)
                         radio:Say(ackPhrase)
                     end
                 end)
@@ -194,6 +210,14 @@ local function onCommand(_module, _command, _data)
         end
     end
 end
+
+local function updateSandboxValues()
+    TimeBetweenCall = SandboxVars.HTC_EHE_MilitaryDrop.TimeBetweenCall
+    Frequency = SandboxVars.HTC_EHE_MilitaryDrop.Frequency * 1000
+end
+
+
 Events.OnFillInventoryObjectContextMenu.Add(checkEmergencyRadio);
 Events.OnFillWorldObjectContextMenu.Add(checkEmergencyRadioWorld)
 Events.OnServerCommand.Add(onCommand)--/server/ to client
+Events.OnGameStart.Add(updateSandboxValues)

@@ -1,0 +1,4 @@
+Another type of drop (medical, tools, seeds, etc.)
+One frequency for each drop
+Random frequency (?)
+Broadcast the frequency on television (?)

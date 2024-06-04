@@ -2,4 +2,4 @@ name=[HERE THEY COME] - Expanded Helicopter Event - Military Drop
 id=batman_HTC_EHE_MilitaryDrop
 description=
 poster=poster.png
-require=ExpandedHelicopterEvents,Brita_2,Brita,Arsenal(26)GunFighter[MAIN MOD 2.0]
+require=ExpandedHelicopterEvents

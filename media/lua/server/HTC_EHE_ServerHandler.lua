@@ -56,14 +56,7 @@ function eHelicopter:dropCarePackage(fuzz)
             local spawnZNumber = ZombRand(MinZSpawn, MaxZSpawn)
             --[[DEBUG]] print("HTC - EHE: spawnHorde :" .. spawnZNumber)
             spawnHorde(heliX - 2, heliY - 2, heliX + 2, heliY + 2, 0, spawnZNumber);
-
-            --- Added event
-            if self.frequency then
-                --[[DEBUG]] print("HTC - EHE: " .. carePackage .. " frequency: " .. self.frequency)
-                sendServerCommand("HTC_EHE", "Dropped", { x = heliX, y = heliY, frequency = self.frequency })
-            else
-                --[[DEBUG]] print("HTC - EHE: NO FREQUENCY")
-            end
+            sendServerCommand("HTC_EHE", "Dropped", { x = heliX, y = heliY })
         end
         --[[DEBUG]] print("HTC - EHE: " .. carePackage .. " dropped: " .. heliX .. ", " .. heliY)
         eventSoundHandler:playEventSound(self, "droppingPackage")
@@ -79,17 +72,13 @@ local function onClientCommand(_module, _command, _player, _data)
         if _command == "CallMilitaryDrop" then
             print("HTC - EHE: Receive command " .. _module .. " " .. _command)
             local heli = getFreeHelicopter("HTC_military_drop")
-            heli.frequency = _data.frequency
             print("HTC - EHE: Launch Military Drop " .. _player:getUsername())
-            print("HTC - EHE: CallMilitaryDrop frequency: " .. _data.frequency)
-            print("HTC - EHE: CallMilitaryDrop frequency: " .. heli.frequency)
             heli:launch(_player)
         end
     end
 end
 
 local function updateSandboxValues()
-    --TimeBetweenCall = SandboxVars.HTC_EHE_MilitaryDrop.TimeBetweenCall
     MaxZSpawn = SandboxVars.HTC_EHE_MilitaryDrop.MaxZSpawn
     MinZSpawn = SandboxVars.HTC_EHE_MilitaryDrop.MinZSpawn
 end

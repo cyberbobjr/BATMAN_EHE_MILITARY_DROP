@@ -1,6 +1,7 @@
 IGUI_FR = {
     IGUI_HTC_EHE_Drop_tooltip = "Je peux utiliser la radio pour demander un largage",
     IGUI_HTC_EHE_Ask_drop = "Demander un largage",
+    IGUI_HTC_EHE_Ask_drop_admin = "Force la demande de largage (ADMIN)",
     IGUI_HTC_EHE_Call_too_short = "Je ne peux pas les contacter maintenant, je l'ai déjà fait cette semaine",
     IGUI_HTC_EHE_Call_drop_1 = "Ici la zone de quarantaine, nous avons besoin d'un largage d'armements d'urgence. Pouvez-vous envoyer un colis ?",
     IGUI_HTC_EHE_Call_drop_2 = "Alerte ! Nous sommes à court d'armements. Demande de largage de munitions et d'armes immédiatement !",
@@ -14,4 +15,15 @@ IGUI_FR = {
     IGUI_HTC_EHE_Ack_drop_4 = "Bien reçu. Préparez-vous à recevoir le largage d'armements. Ne relâchez pas votre vigilance.",
     IGUI_HTC_EHE_Ack_drop_5 = "Affirmatif. Nous envoyons un largage d'armements immédiatement. Surveillez le ciel.",
     IGUI_HTC_EHE_dropped = "Largage confirmé aux coordonnées %d / %d - ce message sera répété 3 fois - Terminé",
+    IGUI_HTC_EHE_bad_frequency = "Je ne suis pas sur la bonne fréquence",
+
+    IGUI_HTC_EHE_note_title = "Note de service à tout le personnel",
+    IGUI_HTC_EHE_note1 = "Fréquence d'urgence : %s MHz. Besoin de renforts et de largage d'armes légères et de munitions. Position : grille 07Z.",
+    IGUI_HTC_EHE_note2 = "Canal sécurisé : %s MHz. Demandons largage immédiat d'armes de poing et de fusils d'assaut. Code d'authentification : Alpha-Tango-Charlie.",
+    IGUI_HTC_EHE_note3 = "Message aux forces armées : la fréquence %s MHz est désormais dédiée aux demandes de largage de grenades, de mines et de pièges.",
+    IGUI_HTC_EHE_note4 = "Attention : la fréquence 105.5 MHz est temporairement indisponible pour les demandes de largage. Utilisez la fréquence de secours %s MHz à la place.",
+    IGUI_HTC_EHE_note5 = "Alerte : des hordes de zombies ont été repérées dans la zone d'exclusion. Utilisez la fréquence %s MHz pour organiser un largage d'armes et de munitions en bande.",
+    IGUI_HTC_EHE_note6 = "Ordre de mission : la fréquence %s MHz est à utiliser pour les demandes de largage d'armes silencieuses et de munitions associées. Objectif : éliminer discrètement les menaces.",
+    IGUI_HTC_EHE_note7 = "Message aux pilotes de largage : la fréquence %s MHz est à utiliser pour les demandes de largage d'armes de tir à longue distance et de lunettes de visée. Priorité aux tireurs d'élite.",
+    IGUI_HTC_EHE_note8 = "Attention : la fréquence 105.5 MHz est temporairement indisponible pour les demandes de largage. Utilisez la fréquence de secours %s MHz à la place.",
 }

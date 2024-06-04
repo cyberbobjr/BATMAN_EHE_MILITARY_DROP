@@ -1,6 +1,10 @@
 module HTC
 {
-	fixing Fix EmergencyMilitaryProbe
+    import {
+        Base
+    }
+
+	fixing Fix WalkieTalkie5
 	{
 	   Require : WalkieTalkie5,
 	   ConditionModifier : 100,
@@ -51,9 +55,9 @@ module HTC
 	recipe Open Supplies
     {
        SurvivorAmmoSupplyBox,
-       Result:Case_Medium1,
+       Result:PistolCase1,
        CanBeDoneFromFloor:true,
-       OnCreate:EHE_Recipe.MILITARYAMMOBOX,
+       OnCreate:HTC_EHE_Recipe.MILITARYAMMOBOX,
        Tooltip:Tooltip_open_boxes_barehanded,
        Time:210.0,
        RemoveResultItem:true,
@@ -63,9 +67,9 @@ module HTC
 	recipe Open Supplies
     {
        SurvivorWeaponSupplyBox,
-       Result:Case_Large3,
+       Result:PistolCase1,
        CanBeDoneFromFloor:true,
-       OnCreate:EHE_Recipe.MILITARYWEAPONBOX,
+       OnCreate:HTC_EHE_Recipe.MILITARYWEAPONBOX,
        Tooltip:Tooltip_open_boxes_barehanded,
        Time:210.0,
        RemoveResultItem:true,
@@ -75,9 +79,9 @@ module HTC
 	recipe Open Supplies
     {
        SurvivorArmorSupplyBox,
-       Result:Case_Medium1,
+       Result:PistolCase1,
        CanBeDoneFromFloor:true,
-       OnCreate:EHE_Recipe.MILITARYARMORBOX,
+       OnCreate:HTC_EHE_Recipe.MILITARYARMORBOX,
        Tooltip:Tooltip_open_boxes_barehanded,
        Time:210.0,
        RemoveResultItem:true,
@@ -87,9 +91,9 @@ module HTC
 	recipe Open Supplies
     {
        SurvivorAttachmentSupplyBox,
-       Result:Case_Medium1,
+       Result:PistolCase1,
        CanBeDoneFromFloor:true,
-       OnCreate:EHE_Recipe.MILITARYATTACHMENTBOX,
+       OnCreate:HTC_EHE_Recipe.MILITARYATTACHMENTBOX,
        Tooltip:Tooltip_open_boxes_barehanded,
        Time:210.0,
        RemoveResultItem:true,

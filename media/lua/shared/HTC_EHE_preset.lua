@@ -27,7 +27,9 @@ eHelicopter_PRESETS["HTC_military_drop"] = {
     dropPackages = { "HTC_MilitarySupplyDrop" }
 }
 
-function EHE_Recipe.getRandomItemFromStore(items)
+HTC_EHE_Recipe = {}
+
+function HTC_EHE_Recipe.getRandomItemFromStore(items)
     local weights = {}
     local totalWeight = 0
 
@@ -59,18 +61,18 @@ function EHE_Recipe.getRandomItemFromStore(items)
     return nil
 end
 
-function EHE_Recipe.MILITARYAMMOBOX(items, result, player)
+function HTC_EHE_Recipe.MILITARYAMMOBOX(items, result, player)
     local itemContainer = player:getInventory()
     if not itemContainer then
         return
     end
     local attempts = 0
     local maxAttempts = 50
-    for i = 1, 10 do
+    for i = 1, 5 do
         local randomItem = nil
         attempts = 0
         while attempts < maxAttempts do
-            randomItem = EHE_Recipe.getRandomItemFromStore(A26ProcDistro.list.SurplusAmmo.items)
+            randomItem = HTC_EHE_Recipe.getRandomItemFromStore(HTC_EHE_Recipe.getAmmoDistributionList())
             if randomItem and not string.find(randomItem, "PolyCan") and not string.find(randomItem, "AmmoCan") then
                 break
             end
@@ -82,18 +84,18 @@ function EHE_Recipe.MILITARYAMMOBOX(items, result, player)
     end
 end
 
-function EHE_Recipe.MILITARYWEAPONBOX(items, result, player)
+function HTC_EHE_Recipe.MILITARYWEAPONBOX(items, result, player)
     local itemContainer = player:getInventory()
     if not itemContainer then
         return
     end
-    local randomItem = EHE_Recipe.getRandomItemFromStore(A26ProcDistro.list.SurplusGuns.items)
+    local randomItem = HTC_EHE_Recipe.getRandomItemFromStore(HTC_EHE_Recipe.getWeaponDistributionList())
     if randomItem then
         itemContainer:AddItem(randomItem)
     end
 end
 
-function EHE_Recipe.MILITARYARMORBOX(items, result, player)
+function HTC_EHE_Recipe.MILITARYARMORBOX(items, result, player)
     local itemContainer = player:getInventory()
     if not itemContainer then
         return
@@ -101,25 +103,79 @@ function EHE_Recipe.MILITARYARMORBOX(items, result, player)
 
     for i = 1, 5 do
         -- Répète 5 fois
-        local randomItem = EHE_Recipe.getRandomItemFromStore(Brita_2_ProcDistro.list.ArmySurplusOutfit.items)
+        local randomItem = HTC_EHE_Recipe.getRandomItemFromStore(HTC_EHE_Recipe.getArmorDistributionList())
         if randomItem then
             itemContainer:AddItem(randomItem)
         end
     end
 end
 
-function EHE_Recipe.MILITARYATTACHMENTBOX(items, result, player)
+function HTC_EHE_Recipe.MILITARYATTACHMENTBOX(items, result, player)
     local itemContainer = player:getInventory()
     if not itemContainer then
         return
     end
     for i = 1, 5 do
         -- Répète 5 fois
-        local randomItem = EHE_Recipe.getRandomItemFromStore(A26ProcDistro.list.SurplusParts.items)
+        local randomItem = HTC_EHE_Recipe.getRandomItemFromStore(HTC_EHE_Recipe.getAttachmentDistributionList())
         if randomItem then
             itemContainer:AddItem(randomItem)
         end
     end
+end
+
+function HTC_EHE_Recipe.getAmmoDistributionList()
+    if getActivatedMods():contains("Arsenal(26)GunFighter[MAIN MOD 2.0]") then
+        return A26ProcDistro.list.SurplusAmmo.items
+    end
+    return ProceduralDistributions.list.ArmyStorageAmmunition.items
+end
+function HTC_EHE_Recipe.getWeaponDistributionList()
+    if getActivatedMods():contains("Arsenal(26)GunFighter[MAIN MOD 2.0]") then
+        return A26ProcDistro.list.SurplusGuns.items
+    end
+    return ProceduralDistributions.list.ArmyStorageGuns.items
+end
+function HTC_EHE_Recipe.getArmorDistributionList()
+    if getActivatedMods():contains("Arsenal(26)GunFighter[MAIN MOD 2.0]") then
+        return Brita_2_ProcDistro.list.ArmySurplusOutfit.items
+    end
+    return ProceduralDistributions.list.ArmyStorageOutfit.items
+end
+function HTC_EHE_Recipe.getAttachmentDistributionList()
+    if getActivatedMods():contains("Arsenal(26)GunFighter[MAIN MOD 2.0]") then
+        return A26ProcDistro.list.SurplusParts.items
+    end
+    local attachmentTable = {
+        "AmmoStraps", 6,
+        --"Bayonnet", 4,
+        "ChokeTubeFull", 6,
+        "ChokeTubeImproved", 6,
+        "FiberglassStock", 6,
+        --"gunlight", 6,
+        "Hat_EarMuff_Protectors", 8,
+        "IronSight", 4,
+        "Laser", 6,
+        "RecoilPad", 6,
+        "RedDot", 6,
+        "Sling", 6,
+        "x2Scope", 8,
+        "x4Scope", 6,
+        "x8Scope", 4,
+    }
+    if getActivatedMods():contains("VFExpansion1") then
+        table.insert(attachmentTable, "Bipod")
+        table.insert(attachmentTable, 4)
+        table.insert(attachmentTable, "CleaningKit")
+        table.insert(attachmentTable, 4)
+        table.insert(attachmentTable, "FireKlean")
+        table.insert(attachmentTable, 4)
+        table.insert(attachmentTable, "ShellStraps")
+        table.insert(attachmentTable, 4)
+        table.insert(attachmentTable, "LightenedStock")
+        table.insert(attachmentTable, 4)
+    end
+    return attachmentTable
 end
 
 Events.OnPostDistributionMerge.Add(HTC_applyLootBoxLoot)

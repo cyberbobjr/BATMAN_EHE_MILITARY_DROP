@@ -1,6 +1,7 @@
 IGUI_EN = {
     IGUI_HTC_EHE_Drop_tooltip = "I can use the radio to request a drop",
     IGUI_HTC_EHE_Ask_drop = "Request a drop",
+    IGUI_HTC_EHE_Ask_drop_admin = "Force drop request (ADMIN)",
     IGUI_HTC_EHE_Call_too_short = "I can't contact them now, I already did this week",
     IGUI_HTC_EHE_Call_drop_1 = "This is the quarantine zone, we need an emergency arms drop. Can you send a package?",
     IGUI_HTC_EHE_Call_drop_2 = "Alert! We are out of arms. Requesting immediate drop of ammunition and weapons!",
@@ -14,4 +15,15 @@ IGUI_EN = {
     IGUI_HTC_EHE_Ack_drop_4 = "Well received. Prepare to receive the arms drop. Stay vigilant.",
     IGUI_HTC_EHE_Ack_drop_5 = "Affirmative. We are sending an arms drop immediately. Watch the sky.",
     IGUI_HTC_EHE_dropped = "Drop confirmed at coordinates %d / %d - this message will be repeated 3 times - Over",
+    IGUI_HTC_EHE_bad_frequency = "The radio frequency is not correct",
+
+    IGUI_HTC_EHE_note_title = "Service Memo to All Personnel",
+    IGUI_HTC_EHE_note1 = "Emergency frequency: %s MHz. Need backup and airdrop of light weapons and ammunition. Position: grid 07Z.",
+    IGUI_HTC_EHE_note2 = "Secure channel: %s MHz. Requesting immediate airdrop of handguns and assault rifles. Authentication code: Alpha-Tango-Charlie.",
+    IGUI_HTC_EHE_note3 = "Message to armed forces: the frequency %s MHz is now dedicated to requests for airdrops of grenades, mines, and traps.",
+    IGUI_HTC_EHE_note4 = "Attention: the frequency 105.5 MHz is temporarily unavailable for airdrop requests. Use the backup frequency %s MHz instead.",
+    IGUI_HTC_EHE_note5 = "Alert: hordes of zombies have been spotted in the exclusion zone. Use the frequency %s MHz to organize an airdrop of weapons and ammunition in bulk.",
+    IGUI_HTC_EHE_note6 = "Mission order: the frequency %s MHz is to be used for requests for airdrops of silenced weapons and associated ammunition. Objective: to discreetly eliminate threats.",
+    IGUI_HTC_EHE_note7 = "Message to airdrop pilots: the frequency %s MHz is to be used for requests for airdrops of long-range weapons and scopes. Priority to snipers.",
+    IGUI_HTC_EHE_note8 = "Attention: the frequency 105.5 MHz is temporarily unavailable for airdrop requests. Use the backup frequency %s MHz instead."
 }
