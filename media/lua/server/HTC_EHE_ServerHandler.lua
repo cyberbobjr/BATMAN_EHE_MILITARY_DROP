@@ -50,14 +50,13 @@ function eHelicopter:dropCarePackage(fuzz)
 
     if returned_sq then
         local extraFunctions = { "applyFlaresToEvent" }
-
-        SpawnerTEMP.spawnVehicle(carePackage, heliX, heliY, 0, extraFunctions, nil, "getOutsideSquareFromAbove_vehicle")
-        if carePackage == "HTC_MilitarySupplyDrop" then
-            local spawnZNumber = ZombRand(MinZSpawn, MaxZSpawn)
-            --[[DEBUG]] print("HTC - EHE: spawnHorde :" .. spawnZNumber)
-            spawnHorde(heliX - 2, heliY - 2, heliX + 2, heliY + 2, 0, spawnZNumber);
-            sendServerCommand("HTC_EHE", "Dropped", { x = heliX, y = heliY })
+        if self.addedFunctionsToEvents then
+            local eventFunction = self.currentPresetID.."OnDrop"--self.addedFunctionsToEvents["OnCrash"]
+            if eventFunction then
+                table.insert(extraFunctions, eventFunction)
+            end
         end
+        SpawnerTEMP.spawnVehicle(carePackage, heliX, heliY, 0, extraFunctions, nil, "getOutsideSquareFromAbove_vehicle")
         --[[DEBUG]] print("HTC - EHE: " .. carePackage .. " dropped: " .. heliX .. ", " .. heliY)
         eventSoundHandler:playEventSound(self, "droppingPackage")
         addSound(nil, heliX, heliY, 0, 200, 150)

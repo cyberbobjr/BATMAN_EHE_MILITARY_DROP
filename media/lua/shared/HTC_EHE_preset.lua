@@ -21,10 +21,28 @@ local function HTC_applyLootBoxLoot()
     distributionTable["HTC_MilitarySupplyDrop"] = { Normal = VehicleDistributions.HTC_MilitarySupplyDrop; }
 end
 
+local function onDrop(vehicle)
+    if not vehicle then
+        return
+    end
+    local MaxZSpawn = SandboxVars.HTC_EHE_MilitaryDrop.MaxZSpawn
+    local MinZSpawn = SandboxVars.HTC_EHE_MilitaryDrop.MinZSpawn
+
+    --if carePackage == "HTC_MilitarySupplyDrop" then
+    local spawnZNumber = ZombRand(MinZSpawn, MaxZSpawn)
+    local heliX, heliY, heliZ = vehicle:getX(), vehicle:getY(), vehicle:getZ()
+
+    --[[DEBUG]] print("HTC - EHE: spawnHorde :" .. spawnZNumber)
+    spawnHorde(heliX - 2, heliY - 2, heliX + 2, heliY + 2, heliZ, spawnZNumber);
+    sendServerCommand("HTC_EHE", "Dropped", { x = heliX, y = heliY })
+    --end
+end
+
 eHelicopter_PRESETS = eHelicopter_PRESETS or {}
 eHelicopter_PRESETS["HTC_military_drop"] = {
     inherit = { "samaritan_drop" },
-    dropPackages = { "HTC_MilitarySupplyDrop" }
+    dropPackages = { "HTC_MilitarySupplyDrop" },
+    addedFunctionsToEvents = { ["OnDrop"] = onDrop },
 }
 
 HTC_EHE_Recipe = {}
