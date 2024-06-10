@@ -41,12 +41,15 @@ end
 
 function HTC_OnZombieDead(zombie)
     local outfitName = zombie:getOutfitName()
-    print("HTC - EHE: HTC_OnZombieDead " .. outfitName)
-    if SandboxVars.HTC_EHE_MilitaryDrop.onlyArmyAndPoliceCorpse then
-        if not containsPoliceOrArmy(outfitName) then
-            return
+    if outfitName then
+        print("HTC - EHE: HTC_OnZombieDead " .. outfitName)
+        if SandboxVars.HTC_EHE_MilitaryDrop.onlyArmyAndPoliceCorpse then
+            if not containsPoliceOrArmy(outfitName) then
+                return
+            end
         end
     end
+
     local noteDropRate = getNoteDropRate()
 
     local myLot = ZombRand(1, noteDropRate + 1)
