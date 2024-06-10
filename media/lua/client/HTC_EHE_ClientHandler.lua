@@ -73,11 +73,14 @@ HTC_EHE.drop = function(isoRadio, playerObj)
         local selectedAckPhraseKey = "IGUI_HTC_EHE_Ack_drop_" .. ackRandomIndex
         local selectedAckPhrase = getText(selectedAckPhraseKey)
         if isoRadio:getDeviceData():getIsTurnedOn() then
-            --isoRadio:AddDeviceText(selectedAckPhrase, 1, 0, 0, nil, nil, 10)
-            isoRadio:Say(selectedAckPhrase)
+            local container = isoRadio:getContainer()
+            if container then
+                isoRadio:AddDeviceText(selectedAckPhrase, 1, 0, 0, nil, nil, 10)
+            else
+                isoRadio:Say(selectedAckPhrase)
+            end
         end
     end)
-    local frequency = isoRadio:getDeviceData():getChannel()
     sendClientCommand(getPlayer(), 'HTC_EHE', 'CallMilitaryDrop', nil)
 end
 HTC_EHE.getIsoRadiosInPlayerCell = function(isTurningOn, frequency)
@@ -215,7 +218,6 @@ local function updateSandboxValues()
     TimeBetweenCall = SandboxVars.HTC_EHE_MilitaryDrop.TimeBetweenCall
     Frequency = SandboxVars.HTC_EHE_MilitaryDrop.Frequency * 1000
 end
-
 
 Events.OnFillInventoryObjectContextMenu.Add(checkEmergencyRadio);
 Events.OnFillWorldObjectContextMenu.Add(checkEmergencyRadioWorld)

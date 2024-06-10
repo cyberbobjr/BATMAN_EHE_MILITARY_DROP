@@ -11,7 +11,7 @@ local function HTC_applyLootBoxLoot()
             "HTC.SurvivorAmmoSupplyBox", 50,
             "HTC.SurvivorAmmoSupplyBox", 50,
             "HTC.SurvivorAmmoSupplyBox", 50,
-            "HTC.SurvivorWeaponSupplyBox", 30,
+            "HTC.SurvivorWeaponSupplyBox", 50,
             "HTC.SurvivorArmorSupplyBox", 20,
             "HTC.SurvivorAttachmentSupplyBox", 20
         }
@@ -41,6 +41,9 @@ end
 eHelicopter_PRESETS = eHelicopter_PRESETS or {}
 eHelicopter_PRESETS["HTC_military_drop"] = {
     inherit = { "samaritan_drop" },
+    forScheduling = false,
+    targetIntensityThreshold = false,
+    randomEdgeStart = false,
     dropPackages = { "HTC_MilitarySupplyDrop" },
     addedFunctionsToEvents = { ["OnDrop"] = onDrop },
 }
