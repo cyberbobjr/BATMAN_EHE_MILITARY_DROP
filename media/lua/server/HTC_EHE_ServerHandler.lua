@@ -73,6 +73,7 @@ local function onClientCommand(_module, _command, _player, _data)
             local heli = getFreeHelicopter("HTC_military_drop")
             print("HTC - EHE: Launch Military Drop " .. _player:getUsername())
             heli:launch(_player)
+            heli.forceUnlaunchTime = false --for preventing the return after 2 hours
         end
     end
 end
