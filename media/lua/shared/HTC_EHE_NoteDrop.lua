@@ -63,7 +63,7 @@ function HTC_OnZombieDead(zombie)
         local selectedNoteRandomKey = "IGUI_HTC_EHE_note" .. noteRandomIndex
         local selectedNoteRandom = getText(selectedNoteRandomKey)
 
-        newJournal:setName(" " .. getText("IGUI_HTC_EHE_note_title"))
+        newJournal:setName(getText("IGUI_HTC_EHE_note_title"))
         newJournal:addPage(pageCount, string.format(selectedNoteRandom, SandboxVars.HTC_EHE_MilitaryDrop.Frequency))
     end
 end
