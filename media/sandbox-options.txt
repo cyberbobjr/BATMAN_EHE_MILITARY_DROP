@@ -50,3 +50,12 @@ option HTC_EHE_MilitaryDrop.onlyArmyAndPoliceCorpse = {
 	page = HTC_EHE_MilitaryDrop,
 	translation = HTC_EHE_MilitaryDrop_onlyArmyAndPoliceCorpse
 }
+
+option HTC_EHE_MilitaryDrop.rollsLootBox = {
+	type = integer,
+	default = 6,
+	min = 0,
+    max = 100,
+	page = HTC_EHE_MilitaryDrop,
+	translation = HTC_EHE_MilitaryDrop_RollsLootBox,
+}

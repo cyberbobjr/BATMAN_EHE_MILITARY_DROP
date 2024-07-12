@@ -26,4 +26,5 @@ IGUI_FR = {
     IGUI_HTC_EHE_note6 = "Ordre de mission : la fréquence %s MHz est à utiliser pour les demandes de largage d'armes silencieuses et de munitions associées. Objectif : éliminer discrètement les menaces.",
     IGUI_HTC_EHE_note7 = "Message aux pilotes de largage : la fréquence %s MHz est à utiliser pour les demandes de largage d'armes de tir à longue distance et de lunettes de visée. Priorité aux tireurs d'élite.",
     IGUI_HTC_EHE_note8 = "Attention : la fréquence 105.5 MHz est temporairement indisponible pour les demandes de largage. Utilisez la fréquence de secours %s MHz à la place.",
+    IGUI_VehicleNameHTC_MilitarySupplyDrop = "Cargaison militaire"
 }

@@ -25,5 +25,6 @@ IGUI_EN = {
     IGUI_HTC_EHE_note5 = "Alert: hordes of zombies have been spotted in the exclusion zone. Use the frequency %s MHz to organize an airdrop of weapons and ammunition in bulk.",
     IGUI_HTC_EHE_note6 = "Mission order: the frequency %s MHz is to be used for requests for airdrops of silenced weapons and associated ammunition. Objective: to discreetly eliminate threats.",
     IGUI_HTC_EHE_note7 = "Message to airdrop pilots: the frequency %s MHz is to be used for requests for airdrops of long-range weapons and scopes. Priority to snipers.",
-    IGUI_HTC_EHE_note8 = "Attention: the frequency 105.5 MHz is temporarily unavailable for airdrop requests. Use the backup frequency %s MHz instead."
+    IGUI_HTC_EHE_note8 = "Attention: the frequency 105.5 MHz is temporarily unavailable for airdrop requests. Use the backup frequency %s MHz instead.",
+    IGUI_VehicleNameHTC_MilitarySupplyDrop = "Military Drop"
 }

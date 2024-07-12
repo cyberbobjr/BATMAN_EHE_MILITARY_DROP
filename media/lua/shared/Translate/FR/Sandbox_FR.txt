@@ -6,6 +6,7 @@ Sandbox_FR = {
 	Sandbox_HTC_EHE_MilitaryDrop_MinZSpawn = "Min Zombies spawn",
 	Sandbox_HTC_EHE_MilitaryDrop_MinZSpawn_tooltip = "Si min et max sont égals à 0 aucun Z ne sera généré",
 	Sandbox_HTC_EHE_MilitaryDrop_Frequency = "Fréquence d'écoute pour les militaires",
+	Sandbox_HTC_EHE_MilitaryDrop_RollsLootBox = "Nombre de fois où le dé est jeté pour la lootbox",
 	Sandbox_HTC_EHE_MilitaryDrop_noteDropRate = "Taux de drop des notes militaires sur la fréquence à appeler",
 	Sandbox_HTC_EHE_MilitaryDrop_noteDropRateEnum_option1 = "extremely rare (1/1000)",
     Sandbox_HTC_EHE_MilitaryDrop_noteDropRateEnum_option2 = "very rare (1/500)",
@@ -13,5 +14,5 @@ Sandbox_FR = {
     Sandbox_HTC_EHE_MilitaryDrop_noteDropRateEnum_option4 = "normal (1/50)",
     Sandbox_HTC_EHE_MilitaryDrop_noteDropRateEnum_option5 = "common (1/25)",
     Sandbox_HTC_EHE_MilitaryDrop_noteDropRateEnum_option6 = "Debug (1/2)",
-    Sandbox_onlyArmyAndPoliceCorpse = "Les notes ne se trouvent que sur les corps de militaires ou de police",
+    Sandbox_HTC_EHE_MilitaryDrop_onlyArmyAndPoliceCorpse = "Les notes ne se trouvent que sur les corps de militaires ou de police",
 }

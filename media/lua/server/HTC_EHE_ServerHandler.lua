@@ -51,7 +51,7 @@ function eHelicopter:dropCarePackage(fuzz)
     if returned_sq then
         local extraFunctions = { "applyFlaresToEvent" }
         if self.addedFunctionsToEvents then
-            local eventFunction = self.currentPresetID.."OnDrop"--self.addedFunctionsToEvents["OnCrash"]
+            local eventFunction = self.currentPresetID .. "OnDrop"--self.addedFunctionsToEvents["OnCrash"]
             if eventFunction then
                 table.insert(extraFunctions, eventFunction)
             end
@@ -73,7 +73,19 @@ local function onClientCommand(_module, _command, _player, _data)
             local heli = getFreeHelicopter("HTC_military_drop")
             print("HTC - EHE: Launch Military Drop " .. _player:getUsername())
             heli:launch(_player)
-            heli.forceUnlaunchTime = false --for preventing the return after 2 hours
+
+            local GT = getGameTime()
+            local DAY = GT:getNightsSurvived()
+            local HOUR = GT:getHour()
+
+            HOUR = HOUR + 8 -- return the helico after 8 hours
+            if HOUR > 24 then
+                HOUR = HOUR - 24
+                DAY = DAY + 1
+            end
+
+            heli.forceUnlaunchTime = { DAY, HOUR }
+            --heli.forceUnlaunchTime = false --for preventing the return after 2 hours
         end
     end
 end

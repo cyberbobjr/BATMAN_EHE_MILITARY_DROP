@@ -39,6 +39,9 @@ HTC_EHE.call_drop = function(isoRadio, player, force)
     if force then
         print("HTC_EHE - hoursSinceLastCall : " .. hoursSinceLastCall)
         hoursSinceLastCall = TimeBetweenCall
+        playerObj:Say("ADMIN LAUNCH");
+        HTC_EHE.drop(isoRadio, playerObj)
+        return
     end
 
     if Frequency ~= radioFrequency then

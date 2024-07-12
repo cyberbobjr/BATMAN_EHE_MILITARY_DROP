@@ -6,7 +6,7 @@ local function HTC_applyLootBoxLoot()
     local distributionTable = VehicleDistributions[1]
 
     VehicleDistributions.HTC_MilitarySupplyDrop = {
-        rolls = 6,
+        rolls = SandboxVars.HTC_EHE_MilitaryDrop.rollsLootBox,
         items = {
             "HTC.SurvivorAmmoSupplyBox", 50,
             "HTC.SurvivorAmmoSupplyBox", 50,
