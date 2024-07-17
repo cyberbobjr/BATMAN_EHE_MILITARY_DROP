@@ -5,6 +5,7 @@ require "ExpandedHelicopter01c_MainCore"
 require "ExpandedHelicopter01a_MainVariables"
 require "ExpandedHelicopter01f_ShadowSystem"
 require "ExpandedHelicopter00c_SpawnerAPI"
+local pseudoSquare = require "ExpandedHelicopter00a_psuedoSquare"
 local eventSoundHandler = require "ExpandedHelicopter01b_Sounds"
 local MaxZSpawn = SandboxVars.HTC_EHE_MilitaryDrop.MaxZSpawn
 local MinZSpawn = SandboxVars.HTC_EHE_MilitaryDrop.MinZSpawn
