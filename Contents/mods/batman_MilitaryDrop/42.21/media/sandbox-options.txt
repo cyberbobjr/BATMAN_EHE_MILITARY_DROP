@@ -1,0 +1,56 @@
+VERSION = 1,
+
+option MilitaryDrop.CooldownHours
+{
+    type = integer, min = 1, max = 8760, default = 168,
+    page = MilitaryDrop, translation = MilitaryDrop_CooldownHours,
+}
+
+option MilitaryDrop.Frequency
+{
+    type = double, min = 0.2, max = 1000.0, default = 151.4,
+    page = MilitaryDrop, translation = MilitaryDrop_Frequency,
+}
+
+option MilitaryDrop.RequireAuthCode
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_RequireAuthCode,
+}
+
+option MilitaryDrop.MinZombies
+{
+    type = integer, min = 0, max = 1000, default = 3,
+    page = MilitaryDrop, translation = MilitaryDrop_MinZombies,
+}
+
+option MilitaryDrop.MaxZombies
+{
+    type = integer, min = 0, max = 1000, default = 30,
+    page = MilitaryDrop, translation = MilitaryDrop_MaxZombies,
+}
+
+option MilitaryDrop.CaseRolls
+{
+    type = integer, min = 1, max = 100, default = 6,
+    page = MilitaryDrop, translation = MilitaryDrop_CaseRolls,
+}
+
+option MilitaryDrop.NoteDropRate
+{
+    type = enum, numValues = 6, default = 4,
+    page = MilitaryDrop, translation = MilitaryDrop_NoteDropRate,
+    valueTranslation = MilitaryDrop_NoteDropRate,
+}
+
+option MilitaryDrop.NotesOnlyArmyPolice
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_NotesOnlyArmyPolice,
+}
+
+option MilitaryDrop.DebugLog
+{
+    type = boolean, default = false,
+    page = MilitaryDrop, translation = MilitaryDrop_DebugLog,
+}

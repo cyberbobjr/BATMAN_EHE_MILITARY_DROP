@@ -1,0 +1,50 @@
+/* Military Drop : caisses de ravitaillement larguées (ouvertes par la recette
+   OpenMilitarySupplyCase, MilitaryDrop_recipes.txt). Icônes et modèles au sol
+   des étuis militaires vanilla. Noms : Translate/<LANG>/ItemName.json. */
+module MilitaryDrop
+{
+    imports
+    {
+        Base
+    }
+
+    item AmmoSupplyCase
+    {
+        DisplayCategory = Container,
+        ItemType = base:normal,
+        Weight = 6.3,
+        Icon = AmmoCase,
+        WorldStaticModel = AmmoBox_Ground,
+        Tooltip = Tooltip_MilitaryDrop_AmmoSupplyCase,
+    }
+
+    item WeaponSupplyCase
+    {
+        DisplayCategory = Container,
+        ItemType = base:normal,
+        Weight = 6.3,
+        Icon = ProtectiveCase_LargeGreen,
+        WorldStaticModel = ProtectiveCaseBulky_Ground,
+        Tooltip = Tooltip_MilitaryDrop_WeaponSupplyCase,
+    }
+
+    item ArmorSupplyCase
+    {
+        DisplayCategory = Container,
+        ItemType = base:normal,
+        Weight = 6.3,
+        Icon = ProtectiveCase_MediumGreen,
+        WorldStaticModel = ProtectiveCase_Ground,
+        Tooltip = Tooltip_MilitaryDrop_ArmorSupplyCase,
+    }
+
+    item AttachmentSupplyCase
+    {
+        DisplayCategory = Container,
+        ItemType = base:normal,
+        Weight = 6.3,
+        Icon = ProtectiveCase_SmallGreen,
+        WorldStaticModel = ProtectiveCaseSmall_Ground,
+        Tooltip = Tooltip_MilitaryDrop_AttachmentSupplyCase,
+    }
+}

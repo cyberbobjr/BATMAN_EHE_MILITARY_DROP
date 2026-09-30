@@ -1,0 +1,15 @@
+/* Réparation du talkie-walkie militaire (aucune réparation vanilla en 42.21),
+   reprise de la version B41 : 3 débris électroniques, Électricité 6. */
+module MilitaryDrop
+{
+    imports
+    {
+        Base
+    }
+
+    fixing Fix Military Walkie Talkie
+    {
+        Require = Base.WalkieTalkie5,
+        Fixer = Base.ElectronicsScrap=3; Electricity=6,
+    }
+}

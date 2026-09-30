@@ -1,0 +1,23 @@
+/* Ouverture des caisses : aucune sortie déclarée, le contenu est tiré par
+   MilitaryDrop.Recipe.openSupplyCase (solo, ou serveur en MP :
+   ISHandcraftAction:performRecipe, 42.21). */
+module MilitaryDrop
+{
+    imports
+    {
+        Base
+    }
+
+    craftRecipe OpenMilitarySupplyCase
+    {
+        timedAction = Making,
+        time = 70,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark;RightClickOnly,
+        OnCreate = MilitaryDrop.Recipe.openSupplyCase,
+        inputs
+        {
+            item 1 [MilitaryDrop.AmmoSupplyCase;MilitaryDrop.WeaponSupplyCase;MilitaryDrop.ArmorSupplyCase;MilitaryDrop.AttachmentSupplyCase],
+        }
+    }
+}

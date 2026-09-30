@@ -20,7 +20,11 @@ Aucune migration de sauvegarde : les parties B41 ne se chargent pas en B42. Les 
 ## Phases
 
 - [x] **0. Cadrage** : projet `Zomboid\Workshop\MilitaryDrop` (branche `b42`), structure `Contents/mods/batman_MilitaryDrop/{common,42.21}`, `workshop.txt` (privé), tests et CI, sources B41 déplacées dans `legacy-b41/` (non publiées, à supprimer avant la sortie).
-- [ ] **1. Socle 42.21 en solo** : traductions JSON UTF-8 (EN, FR), objets et `craftRecipe`, options sandbox, aucune surcharge de fichier vanilla.
+- [ ] **1. Socle 42.21 en solo** : traductions JSON UTF-8 (EN, FR), objets et `craftRecipe`, options sandbox, aucune surcharge de fichier vanilla. *Code écrit et testé hors jeu (2026-09-30) ; test en jeu à faire.*
+  - Quatre caisses `MilitaryDrop.{Ammo,Weapon,Armor,Attachment}SupplyCase` (icônes et modèles des étuis militaires vanilla), recette `OpenMilitarySupplyCase` (menu contextuel), contenu tiré dans `OnCreate` (`MilitaryDrop_Recipe.lua`, solo ou serveur).
+  - Butin : tables `ArmyStorage*` filtrées par `ItemType` (armes seules dans la caisse d'armes, sans sacs vides dans celle de munitions), accessoires 42.21, tirage aux poids décimaux (`MilitaryDrop_Loot.lua`). La compatibilité Arsenal et VFE de la B41 est abandonnée : un mod peut remplacer `MilitaryDrop.Loot.CASES[type].source`.
+  - Options sandbox lues à l'appel (`MilitaryDrop_Core.lua`) ; fréquence ramenée au pas de 0,2 MHz des radios, bornée à 0,2-1 000 MHz, 112,2 MHz (HEF) décalée.
+  - Réparation du talkie-walkie militaire reprise de la B41 (3 débris électroniques, Électricité 6), sans le `ConditionModifier : 100` d'origine.
 - [ ] **2. Autorité serveur** : le client envoie une demande ; le serveur vérifie radio, allumage, fréquence (arrondie au pas de 200 du talkie), code, délai global et droits admin, puis crée la caisse, le butin et la horde. Notes tirées côté serveur (ou solo). Branche solo sans commande réseau.
 - [ ] **3. Hélicoptère** : trajectoire côté serveur, envoi aux clients ; son, ombre et marqueur côté client ; reprise après reconnexion.
 - [ ] **4. Annonces** : chaîne radio dynamique sur la fréquence sandbox (fin du balayage de cellule) ; marqueur de carte pour les joueurs à l'écoute seulement.
