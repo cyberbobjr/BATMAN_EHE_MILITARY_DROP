@@ -12,8 +12,8 @@
 --
 -- Une demande acceptée lance un hélicoptère (MilitaryDrop_Flights.lua) vers
 -- une case extérieure à 15-30 cases de la radio. À son passage, deliver pose
--- le largage (provisoire : caisses au sol, remplacées par une caisse larguée
--- en phase 5) et la horde.
+-- la caisse de largage (MilitaryDrop_Crate.lua ; à défaut, les caisses de
+-- ravitaillement au sol) et la horde.
 -- ============================================================================
 
 if isClient() then
@@ -25,12 +25,12 @@ require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Loot"
 require "MilitaryDrop/MilitaryDrop_Flight"
+require "MilitaryDrop/MilitaryDrop_Crate"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
 local Radio = MilitaryDrop.Radio
 local Codes = MilitaryDrop.Codes
-local Loot = MilitaryDrop.Loot
 
 local Server = {}
 MilitaryDrop.Server = Server
@@ -42,14 +42,6 @@ Server.LANDING_MIN_DISTANCE = 15
 Server.LANDING_MAX_DISTANCE = 30
 Server.LANDING_ATTEMPTS = 40
 Server.HORDE_RADIUS = 4
--- Caisses posées à chaque tirage (livraison provisoire).
-Server.CASE_WEIGHTS = {
-    "MilitaryDrop.AmmoSupplyCase", 45,
-    "MilitaryDrop.WeaponSupplyCase", 25,
-    "MilitaryDrop.ArmorSupplyCase", 15,
-    "MilitaryDrop.AttachmentSupplyCase", 15,
-}
-
 local lastRequestMs = {}
 
 --- État persistant de la partie ; tire le code à la première lecture.
@@ -112,9 +104,11 @@ function Server.evaluate(player, args, now)
     return "accepted", radio
 end
 
---- Case d'atterrissage : extérieure, au sol, libre et hors de l'eau.
+--- Case d'atterrissage : extérieure, au sol, libre, hors de l'eau et sans
+--- véhicule (sinon la caisse, qui est un véhicule, ne peut pas apparaître).
 function Server.isLandingSquare(square)
     return square ~= nil and square:isOutside() and square:isFree(false) and not square:isWaterSquare()
+        and square:getVehicleContainer() == nil
 end
 
 --- Case d'atterrissage tirée au hasard autour d'un point, ou nil.
@@ -167,20 +161,23 @@ function Server.findPlayer(username)
     return nil
 end
 
---- Livraison provisoire : caisses au sol et horde autour. La case doit être
---- chargée ; requester est le nom du joueur qui a appelé. notify : lui
+--- Livraison : caisse de largage et horde autour. La case doit être chargée ;
+--- requester est le nom du joueur qui a appelé. notify : lui
 --- envoyer les coordonnées en privé (largage admin, qui n'exige pas d'être à
 --- l'écoute de la chaîne militaire).
 function Server.deliver(square, requester, requestId, notify)
     local x, y = square:getX(), square:getY()
-    local entries = Loot.toEntries(Server.CASE_WEIGHTS)
-    local rand = function(total) return ZombRandFloat(0, total) end
     local count = 0
-    for _ = 1, math.max(1, math.floor(Config.get("CaseRolls"))) do
-        local entry = Loot.pickWeighted(entries, rand)
-        if entry and square:AddWorldInventoryItem(entry.name, ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0) then
-            count = count + 1
+    if MilitaryDrop.Crate.spawn(square) then
+        count = 1
+    else
+        -- Repli : la caisse n'a pas pu apparaître (véhicule sur la case).
+        for _, fullType in ipairs(MilitaryDrop.Crate.rollCases()) do
+            if square:AddWorldInventoryItem(fullType, ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0) then
+                count = count + 1
+            end
         end
+        MilitaryDrop.log("crate could not spawn: supply cases left on the ground", true)
     end
     local zombies = Server.hordeSize()
     if zombies > 0 then
@@ -189,7 +186,7 @@ function Server.deliver(square, requester, requestId, notify)
     end
     local state = Server.getState()
     state.lastDrop = { x = x, y = y, hours = getGameTime():getWorldAgeHours() }
-    MilitaryDrop.log(string.format("drop at %d,%d: %d cases, %d zombies, for %s",
+    MilitaryDrop.log(string.format("drop at %d,%d: %d crate/cases, %d zombies, for %s",
         x, y, count, zombies, tostring(requester)), true)
     local player = notify and requester and Server.findPlayer(requester)
     if player then

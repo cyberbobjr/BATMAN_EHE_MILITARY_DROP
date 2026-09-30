@@ -8,6 +8,7 @@ local function makeSquare(x, y)
         getX = function() return x end, getY = function() return y end, getZ = function() return 0 end,
         isOutside = function() return true end, isFree = function() return true end,
         isWaterSquare = function() return false end,
+        getVehicleContainer = function() return nil end,
         AddWorldInventoryItem = function(_, name) PLACED[#PLACED + 1] = name return {} end,
     }
 end
@@ -41,6 +42,11 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Codes.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Loot.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Flight.lua")
+    VehicleDistributions = { {} }
+    SPAWNED = {}
+    addVehicleDebug = function(script) SPAWNED[#SPAWNED + 1] = script return VEHICLE end
+    IsoDirections = { getRandom = function() return "N" end }
+    loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")

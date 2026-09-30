@@ -45,6 +45,11 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Codes.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Loot.lua")
+    VehicleDistributions = { {} }
+    SPAWNED = {}
+    addVehicleDebug = function(script) SPAWNED[#SPAWNED + 1] = script return VEHICLE end
+    IsoDirections = { getRandom = function() return "N" end }
+    loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Notes.lua")
 end

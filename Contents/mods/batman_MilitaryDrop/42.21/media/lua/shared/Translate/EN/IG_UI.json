@@ -26,6 +26,7 @@
     "IGUI_MilitaryDrop_BroadcastInbound": "All stations, Logistics. Supply helicopter en route to a requested drop zone, ETA one minute.",
     "IGUI_MilitaryDrop_BroadcastDropped": "Supply crate delivered at grid %1 / %2. I repeat, grid %1 / %2.",
     "IGUI_MilitaryDrop_BroadcastOut": "Logistics out.",
+    "IGUI_VehicleNameMilitaryDrop_SupplyCrate": "Military Supply Crate",
     "IGUI_MilitaryDrop_Note_1": "Emergency frequency: %1 MHz. Need backup and airdrop of light weapons and ammunition. Authentication code: %2. Position: grid 07Z.",
     "IGUI_MilitaryDrop_Note_2": "Secure channel: %1 MHz. Requesting immediate airdrop of handguns and assault rifles. Authentication code: %2.",
     "IGUI_MilitaryDrop_Note_3": "Message to armed forces: the frequency %1 MHz is now dedicated to airdrop requests. Give code %2 to be authenticated.",

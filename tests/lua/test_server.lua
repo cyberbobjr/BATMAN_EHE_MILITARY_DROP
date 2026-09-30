@@ -58,6 +58,7 @@ function T.setup()
         getX = function() return 115 end, getY = function() return 200 end,
         isOutside = function() return true end, isFree = function() return true end,
         isWaterSquare = function() return false end,
+        getVehicleContainer = function() return nil end,
         AddWorldInventoryItem = function(_, name) PLACED[#PLACED + 1] = name return {} end,
     }
     getCell = function() return { getGridSquare = function() return LANDING end } end
@@ -75,6 +76,11 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Codes.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Loot.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Flight.lua")
+    VehicleDistributions = { {} }
+    SPAWNED = {}
+    addVehicleDebug = function(script) SPAWNED[#SPAWNED + 1] = script return VEHICLE end
+    IsoDirections = { getRandom = function() return "N" end }
+    loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")

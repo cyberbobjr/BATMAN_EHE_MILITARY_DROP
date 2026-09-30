@@ -26,6 +26,7 @@
     "IGUI_MilitaryDrop_BroadcastInbound": "À toutes les stations, ici Logistique. Hélicoptère de ravitaillement en route vers une zone de largage demandée, arrivée dans une minute.",
     "IGUI_MilitaryDrop_BroadcastDropped": "Caisse de ravitaillement livrée en grille %1 / %2. Je répète, grille %1 / %2.",
     "IGUI_MilitaryDrop_BroadcastOut": "Ici Logistique, terminé.",
+    "IGUI_VehicleNameMilitaryDrop_SupplyCrate": "Caisse de largage militaire",
     "IGUI_MilitaryDrop_Note_1": "Fréquence d'urgence : %1 MHz. Besoin de renforts et d'un largage d'armes légères et de munitions. Code d'authentification : %2. Position : grille 07Z.",
     "IGUI_MilitaryDrop_Note_2": "Canal sécurisé : %1 MHz. Demandons le largage immédiat d'armes de poing et de fusils d'assaut. Code d'authentification : %2.",
     "IGUI_MilitaryDrop_Note_3": "Message aux forces armées : la fréquence %1 MHz est désormais réservée aux demandes de largage. Donner le code %2 pour être authentifié.",
