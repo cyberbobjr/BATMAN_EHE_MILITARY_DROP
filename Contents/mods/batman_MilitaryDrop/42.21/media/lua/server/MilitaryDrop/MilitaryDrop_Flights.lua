@@ -25,10 +25,12 @@ if isClient() then
 end
 
 require "MilitaryDrop/MilitaryDrop_Server"
+require "MilitaryDrop/MilitaryDrop_Broadcast"
 
 local Flight = MilitaryDrop.Flight
 local Net = MilitaryDrop.Net
 local Server = MilitaryDrop.Server
+local Broadcast = MilitaryDrop.Broadcast
 
 local Flights = {}
 MilitaryDrop.Flights = Flights
@@ -79,7 +81,7 @@ local function onLoadGridsquare(square)
     local entry = pending[key]
     if entry then
         pending[key] = nil
-        Server.deliver(square, entry.requester, entry.requestId)
+        Server.deliver(square, entry.requester, entry.requestId, entry.forced)
     end
     if not hasPending() then
         Events.LoadGridsquare.Remove(onLoadGridsquare)
@@ -95,13 +97,15 @@ local function watchSquares()
 end
 
 --- Livre sur la case (x, y, 0), tout de suite si elle est chargée.
-function Flights.deliverAt(x, y, requester, requestId)
+function Flights.deliverAt(x, y, requester, requestId, forced)
     local square = getCell():getGridSquare(x, y, 0)
     if square then
-        Server.deliver(square, requester, requestId)
+        Server.deliver(square, requester, requestId, forced)
         return
     end
-    state().pending[pendingKey(x, y)] = { x = x, y = y, requester = requester, requestId = requestId }
+    state().pending[pendingKey(x, y)] = {
+        x = x, y = y, requester = requester, requestId = requestId, forced = forced,
+    }
     watchSquares()
     MilitaryDrop.log(string.format("drop at %d,%d waits for its square to load", x, y))
 end
@@ -129,7 +133,8 @@ local function drop(flight)
     flight.dropped = true
     local x, y = math.floor(flight.tx), math.floor(flight.ty)
     addSound(nil, x, y, 0, Flights.DROP_NOISE_RADIUS, Flights.DROP_NOISE_VOLUME)
-    Flights.deliverAt(x, y, flight.requester, flight.requestId)
+    Flights.deliverAt(x, y, flight.requester, flight.requestId, flight.forced)
+    Broadcast.dropped(x, y)
 end
 
 local function removeFlight(index)
@@ -148,6 +153,7 @@ function Flights.advance(flight, dt)
         end
         flight.started = true
         Net.toAll("FlightStart", Flight.toArgs(flight))
+        Broadcast.inbound()
         MilitaryDrop.log(string.format("flight %d started toward %d,%d", flight.id, flight.tx, flight.ty))
     end
     flight.elapsed = flight.elapsed + dt
@@ -192,13 +198,14 @@ local function startTicking()
     end
 end
 
---- Lance un hélicoptère vers une case d'atterrissage.
-function Flights.launch(square, requester, requestId)
+--- Lance un hélicoptère vers une case d'atterrissage (forced : largage admin).
+function Flights.launch(square, requester, requestId, forced)
     local s = state()
     s.nextFlightId = (tonumber(s.nextFlightId) or 0) + 1
     local flight = Flight.new(s.nextFlightId, square:getX() + 0.5, square:getY() + 0.5, ZombRandFloat(0, 2 * math.pi))
     flight.requester = requester
     flight.requestId = requestId
+    flight.forced = forced == true
     flight.dropped = false
     flight.started = false
     table.insert(s.flights, flight)
@@ -221,7 +228,9 @@ function Flights.restore()
     for _, flight in ipairs(s.flights) do
         if not flight.dropped then
             local x, y = math.floor(flight.tx), math.floor(flight.ty)
-            s.pending[pendingKey(x, y)] = { x = x, y = y, requester = flight.requester, requestId = flight.requestId }
+            s.pending[pendingKey(x, y)] = {
+                x = x, y = y, requester = flight.requester, requestId = flight.requestId, forced = flight.forced,
+            }
         end
     end
     s.flights = {}

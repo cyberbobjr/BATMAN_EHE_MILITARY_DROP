@@ -1,7 +1,8 @@
 # Portage B42.21 — plan de travail
 
-Décisions prises le 2026-09-30. L'analyse complète (prérequis EHE, API) est dans
-`.claude/pz-knowledge/helicopter-events.md` du dossier `Zomboid\Workshop`.
+Décisions prises le 2026-09-30. L'analyse complète (prérequis EHE, API, HEF) est dans
+`docs/third-party-helicopter-mods.md` ; l'hélicoptère vanilla dans
+`.claude/pz-knowledge/staging-effects.md` du dossier `Zomboid\Workshop`.
 
 ## Décisions
 
@@ -37,7 +38,10 @@ Aucune migration de sauvegarde : les parties B41 ne se chargent pas en B42. Les 
   - `MilitaryDrop_Flights.lua` (serveur) : avance les vols sur `OnTick` (arrêté pendant une pause solo, pas limité à 0,25 s), prévient les clients (`FlightStart`, `FlightSync` toutes les 5 s, `FlightEnd`) et fait du bruit (rayon 60 toutes les 3 s, 150 au largage). Il retarde le départ tant qu'un événement HEF est actif à moins de son rayon + 300 cases (5 min au plus). Une livraison dont la case n'est pas chargée attend `LoadGridsquare`. Au redémarrage, un vol interrompu devient une livraison en attente, sans hélicoptère.
   - `MilitaryDrop_Heli.lua` (client) : son vanilla `Helicopter` sur un émetteur libre local, 20 niveaux plus haut pour ne pas être étouffé ; ombre `circle_shadow` pulsée ; flèche `dir_arrow_up` pour chaque joueur local entre 25 et 400 cases. Un vol sans `FlightEnd` est retiré 10 s après sa fin prévue. Un client qui (re)vient demande les vols en cours (`Sync`).
   - Les coordonnées sont annoncées 4 s après le largage réel.
-- [ ] **4. Annonces** : chaîne radio dynamique sur la fréquence sandbox (fin du balayage de cellule) ; marqueur de carte pour les joueurs à l'écoute seulement.
+- [ ] **4. Annonces** : chaîne radio dynamique sur la fréquence sandbox (fin du balayage de cellule) ; marqueur de carte pour les joueurs à l'écoute seulement. *Code écrit et testé hors jeu (2026-09-30) ; test en jeu à faire.*
+  - `MilitaryDrop_Broadcast.lua` (serveur) : chaîne `DynamicRadioChannel` « Military Logistics » (catégorie Military) créée à `OnLoadRadioScripts`. Son nom est retiré des noms connus pour que le panneau de la radio ne révèle pas la fréquence ; si la fréquence est déjà prise, un avertissement est journalisé et il n'y a pas d'annonce. Au départ de l'hélicoptère : « en route », sans coordonnées. Au largage : coordonnées répétées 3 fois avec le code `MDRP`, puis fin.
+  - `MilitaryDrop_Announce.lua` (client) : coordonnées reçues de tous (`DropAnnounce`), mais symbole « Target » ajouté à la carte seulement si une radio du joueur reçoit une ligne `MDRP` (`OnDeviceText` : en main, ou posée à 5 cases au plus). Un seul symbole par largage, sans doublon.
+  - Le demandeur n'a plus de message privé de coordonnées (il est sur la chaîne), sauf pour un largage admin.
 - [ ] **5. Caisse 3D** : modèle Blender, script de véhicule 42.21 (`frontEndDurability`…), coffre rempli par le serveur.
 - [ ] **6. Qualité** : espace de noms `MilitaryDrop`, aucune globale, traces de debug sous option, luacheck, tests `lupa` (tirage pondéré, délai, fréquence, code).
 - [ ] **7. Tests** : solo, hébergé, serveur dédié (`C:\pzserver`) avec 2 clients, reconnexion, commande forgée, partie avec HEF.

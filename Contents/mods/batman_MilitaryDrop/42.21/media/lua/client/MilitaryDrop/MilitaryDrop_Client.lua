@@ -14,6 +14,7 @@ require "ISUI/ISTextBox"
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Heli"
+require "MilitaryDrop/MilitaryDrop_Announce"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
@@ -191,6 +192,10 @@ function Client.onServerCommand(module, command, args)
     end
     if FLIGHT_COMMANDS[command] then
         MilitaryDrop.Heli[FLIGHT_COMMANDS[command]](args)
+        return
+    end
+    if command == "DropAnnounce" then
+        MilitaryDrop.Announce.onDropAnnounce(args)
         return
     end
     local request = pending[args.requestId]

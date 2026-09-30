@@ -67,6 +67,7 @@ function T.setup()
     PLAYER = makePlayer(makeRadio(true, CHANNEL))
     getNumActivePlayers = function() return 1 end
     getSpecificPlayer = function() return PLAYER end
+    getText = function(key, a, b) return key .. "|" .. tostring(a) .. "|" .. tostring(b) end
     SENT = {}
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
@@ -75,6 +76,7 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Loot.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Flight.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")
     MilitaryDrop.Client = { onServerCommand = function(_, command, args)
         SENT[#SENT + 1] = { command = command, args = args }
@@ -159,7 +161,8 @@ function T.accepted_request_launches_a_flight_then_drops()
     assertEq(#PLACED, 2, "CaseRolls caisses posées au largage")
     local sequence = commands()
     assertTrue(sequence:find("^Result,FlightStart,FlightSync") ~= nil, "réponse, départ, synchronisation : " .. sequence)
-    assertTrue(sequence:find(",Dropped$") ~= nil, "confirmation en dernier : " .. sequence)
+    assertTrue(sequence:find(",DropAnnounce$") ~= nil, "annonce des coordonnées en dernier : " .. sequence)
+    assertTrue(sequence:find("Dropped") == nil, "pas de message privé : la chaîne suffit")
     assertEq(SENT[#SENT].args.x, 115, "coordonnées")
 end
 
@@ -169,6 +172,8 @@ function T.forced_drop_does_not_touch_cooldown()
     MilitaryDrop.Server.handleRequest(PLAYER, args)
     assertEq(MilitaryDrop.Server.getState().lastDropHours, nil, "délai inchangé")
     assertEq(#MilitaryDrop.Server.getState().flights, 1, "vol lancé quand même")
+    fly(MilitaryDrop.Flight.dropTime(MilitaryDrop.Server.getState().flights[1]) + 0.5)
+    assertTrue(commands():find("Dropped") ~= nil, "admin : coordonnées en privé")
 end
 
 function T.request_burst_is_ignored()

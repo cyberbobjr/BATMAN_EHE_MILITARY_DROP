@@ -33,6 +33,7 @@ function T.setup()
     getCell = function()
         return { getGridSquare = function(_, x, y) return LOADED and makeSquare(x, y) or nil end }
     end
+    getText = function(key) return key end
     SENT = {}
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
@@ -41,6 +42,7 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Loot.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Flight.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")
     MilitaryDrop.Client = { onServerCommand = function(_, command, args)
         SENT[#SENT + 1] = { command = command, args = args }
