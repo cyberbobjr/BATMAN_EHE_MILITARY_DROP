@@ -5,7 +5,7 @@ Chaque étape donne l'action, puis le résultat attendu. Noter tout écart et ga
 ## Préparation (solo)
 
 1. Lancer le jeu en mode debug (`-debug` dans les options de lancement Steam).
-2. Mods : activer **batman_Military Drop** seul (HEF désactivé pour ce premier passage).
+2. Mods : activer **Military Drop** (id `batman_MilitaryDrop`) seul (HEF désactivé pour ce premier passage).
 3. Nouvelle partie « bac à sable ». Page **Military Drop** des options :
    - vérifier les 11 options et leurs libellés en français ;
    - **Heures entre deux largages** : 1 ; **Fréquence des notes militaires** : Débogage (1/2) ; **Journal de débogage** : activé ; le reste par défaut (151,4 MHz, code exigé).
