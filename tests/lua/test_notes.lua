@@ -30,7 +30,22 @@ function T.setup()
     SandboxVars = { MilitaryDrop = { NoteDropRate = 6, NotesOnlyArmyPolice = true } }
     isClient = function() return false end
     isServer = function() return false end
-    ModData = { getOrCreate = function() return { code = "BRAVO-KILO-07" } end }
+    ModData = { getOrCreate = function() return {} end }
+    FILES = {}
+    getWorld = function()
+        return { getGameMode = function() return "Sandbox" end, getWorld = function() return "Test Save" end }
+    end
+    getFileReader = function(name)
+        local value = FILES[name]
+        if not value then
+            return nil
+        end
+        return { readLine = function() return value end, close = function() end }
+    end
+    getFileWriter = function(name)
+        return { write = function(_, text) FILES[name] = text end, close = function() end }
+    end
+    FILES["MilitaryDrop/Sandbox_Test_Save_code.txt"] = "BRAVO-KILO-07"
     ROLL = 0
     ZombRand = function() return ROLL end
     getText = function(key, a, b) return key .. "|" .. tostring(a) .. "|" .. tostring(b) end

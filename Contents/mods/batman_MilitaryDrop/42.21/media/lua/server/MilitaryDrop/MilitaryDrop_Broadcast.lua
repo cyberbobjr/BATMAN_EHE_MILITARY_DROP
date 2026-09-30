@@ -54,18 +54,25 @@ function Broadcast.onLoadRadioScripts(scriptManager)
     end
 end
 
---- Diffuse des lignes { texte, codes } sur la chaîne militaire.
+--- Diffuse des lignes { texte, codes } sur la chaîne militaire, à la suite
+--- d'une diffusion en cours (deux largages proches : aucune ligne perdue).
 function Broadcast.air(lines)
     if not Broadcast.channel then
         return false
     end
-    serial = serial + 1
-    local bc = RadioBroadCast.new("MDRP-" .. serial, -1, -1)
+    local bc = Broadcast.channel:getAiringBroadcast()
+    local airing = bc ~= nil
+    if not airing then
+        serial = serial + 1
+        bc = RadioBroadCast.new("MDRP-" .. serial, -1, -1)
+    end
     local c = Broadcast.COLOR
     for _, line in ipairs(lines) do
         bc:AddRadioLine(RadioLine.new(line[1], c.r, c.g, c.b, line[2]))
     end
-    Broadcast.channel:setAiringBroadcast(bc)
+    if not airing then
+        Broadcast.channel:setAiringBroadcast(bc)
+    end
     return true
 end
 

@@ -16,8 +16,10 @@
 --
 -- Persistance (ModData « MilitaryDrop ») : les vols en cours. Au chargement de
 -- la partie, un vol interrompu devient une livraison en attente, sans
--- hélicoptère. Une livraison dont la case n'est pas chargée attend son
--- chargement (LoadGridsquare).
+-- hélicoptère. Une livraison dont la case n'est pas chargée attend la fin du
+-- chargement de son chunk (LoadChunk : après les histoires de bâtiment et le
+-- butin, une fois par chunk de 8 × 8 cases), puis Server.deliver revérifie la
+-- case et annonce les coordonnées.
 -- ============================================================================
 
 if isClient() then
@@ -25,12 +27,10 @@ if isClient() then
 end
 
 require "MilitaryDrop/MilitaryDrop_Server"
-require "MilitaryDrop/MilitaryDrop_Broadcast"
 
 local Flight = MilitaryDrop.Flight
 local Net = MilitaryDrop.Net
 local Server = MilitaryDrop.Server
-local Broadcast = MilitaryDrop.Broadcast
 
 local Flights = {}
 MilitaryDrop.Flights = Flights
@@ -44,6 +44,7 @@ Flights.DROP_NOISE_RADIUS = 150
 Flights.DROP_NOISE_VOLUME = 100
 Flights.MAX_HOLD_SECONDS = 300
 Flights.AIRSPACE_MARGIN = 300
+Flights.CHUNK_SIZE = 8
 
 local ticking = false
 local watchingSquares = false
@@ -69,22 +70,46 @@ local function hasPending()
 end
 
 -- ----------------------------------------------------------------------------
--- Livraisons en attente de chargement de leur case
+-- Livraisons en attente du chargement de leur chunk
 -- ----------------------------------------------------------------------------
 
-local function onLoadGridsquare(square)
-    if square:getZ() ~= 0 then
+--- Coin nord-ouest (x, y) d'un chunk, déduit d'une de ses cases au sol :
+--- IsoChunk n'expose pas ses coordonnées à Lua.
+local function chunkOrigin(chunk)
+    for lx = 0, Flights.CHUNK_SIZE - 1 do
+        for ly = 0, Flights.CHUNK_SIZE - 1 do
+            local square = chunk:getGridSquare(lx, ly, 0)
+            if square then
+                return square:getX() - lx, square:getY() - ly
+            end
+        end
+    end
+    return nil
+end
+
+local function onLoadChunk(chunk)
+    local x0, y0 = chunkOrigin(chunk)
+    if not x0 then
         return
     end
     local pending = state().pending
-    local key = pendingKey(square:getX(), square:getY())
-    local entry = pending[key]
-    if entry then
-        pending[key] = nil
-        Server.deliver(square, entry.requester, entry.requestId, entry.forced)
+    -- Kahlua : relever les entrées, puis les retirer après le pairs.
+    local ready = {}
+    for key, entry in pairs(pending) do
+        if entry.x >= x0 and entry.x < x0 + Flights.CHUNK_SIZE and entry.y >= y0 and entry.y < y0 + Flights.CHUNK_SIZE then
+            ready[#ready + 1] = key
+        end
+    end
+    for _, key in ipairs(ready) do
+        local entry = pending[key]
+        local square = getCell():getGridSquare(entry.x, entry.y, 0)
+        if square then
+            pending[key] = nil
+            Server.deliver(square, entry.requester, entry.requestId, entry.forced)
+        end
     end
     if not hasPending() then
-        Events.LoadGridsquare.Remove(onLoadGridsquare)
+        Events.LoadChunk.Remove(onLoadChunk)
         watchingSquares = false
     end
 end
@@ -92,7 +117,7 @@ end
 local function watchSquares()
     if not watchingSquares then
         watchingSquares = true
-        Events.LoadGridsquare.Add(onLoadGridsquare)
+        Events.LoadChunk.Add(onLoadChunk)
     end
 end
 
@@ -134,7 +159,6 @@ local function drop(flight)
     local x, y = math.floor(flight.tx), math.floor(flight.ty)
     addSound(nil, x, y, 0, Flights.DROP_NOISE_RADIUS, Flights.DROP_NOISE_VOLUME)
     Flights.deliverAt(x, y, flight.requester, flight.requestId, flight.forced)
-    Broadcast.dropped(x, y)
 end
 
 local function removeFlight(index)
@@ -153,7 +177,7 @@ function Flights.advance(flight, dt)
         end
         flight.started = true
         Net.toAll("FlightStart", Flight.toArgs(flight))
-        Broadcast.inbound()
+        MilitaryDrop.Broadcast.inbound()
         MilitaryDrop.log(string.format("flight %d started toward %d,%d", flight.id, flight.tx, flight.ty))
     end
     flight.elapsed = flight.elapsed + dt

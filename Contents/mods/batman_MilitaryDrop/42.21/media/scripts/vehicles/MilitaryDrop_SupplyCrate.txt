@@ -52,9 +52,11 @@ module Base
         mass = 200,
         frontEndDurability = 150,
         rearEndDurability = 150,
+        /* Zone d'accès au coffre : le centre du personnage doit y entrer
+           (BaseVehicle.isInArea) ; marge d'environ 0,7 m autour de la caisse. */
         area TruckBed
         {
-            xywh = 0.0 0.0 1.7 1.7,
+            xywh = 0.0 0.0 2.5 2.5,
         }
         template = Trunk/part/TrailerTrunk,
         part TrailerTrunk

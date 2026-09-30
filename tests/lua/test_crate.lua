@@ -14,7 +14,8 @@ function T.setup()
     ZombRandFloat = function(low) return low end
     VehicleDistributions = { {} }
     SPAWNED = {}
-    VEHICLE = { kind = "BaseVehicle" }
+    SQL_ID = 12
+    VEHICLE = { kind = "BaseVehicle", getSqlId = function() return SQL_ID end }
     addVehicleDebug = function(script, dir, skin, square)
         SPAWNED[#SPAWNED + 1] = { script = script, skin = skin, square = square }
         return VEHICLE
@@ -50,6 +51,12 @@ function T.spawn_uses_vehicle_script()
     local square = { getVehicleContainer = function() return nil end }
     assertEq(MilitaryDrop.Crate.spawn(square), VEHICLE, "véhicule renvoyé")
     assertEq(SPAWNED[1].script, "Base.MilitaryDrop_SupplyCrate", "script complet")
+end
+
+function T.refused_position_is_not_a_crate()
+    SQL_ID = -1
+    local square = { getVehicleContainer = function() return nil end }
+    assertEq(MilitaryDrop.Crate.spawn(square), nil, "véhicule non ajouté au monde")
 end
 
 function T.occupied_square_does_not_spawn()

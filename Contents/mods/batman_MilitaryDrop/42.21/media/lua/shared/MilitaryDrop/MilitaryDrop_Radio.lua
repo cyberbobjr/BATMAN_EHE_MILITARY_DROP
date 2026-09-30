@@ -3,10 +3,12 @@
 --
 -- Radio militaire = appareil « haut de gamme » vanilla (DeviceData:getIsHighTier :
 -- WalkieTalkie5, ManPackRadio, HamRadio2). Deux formes :
---   * objet d'inventaire (Radio) : porté en main ou dans l'inventaire principal.
---     En MP, le client n'envoie l'état d'un appareil d'inventaire (allumage,
---     canal) au serveur que dans ces deux cas (DeviceData.sendDeviceDataStatePacket,
---     42.21) : le serveur ne peut pas juger une radio rangée dans un sac ;
+--   * objet d'inventaire (Radio) : en main ou porté sur le dos. En solo, seule
+--     cette radio « équipée » reçoit les chaînes (ZomboidRadio.DistributeToPlayer
+--     → getEquipedRadio, 42.21) : dans l'inventaire, le joueur n'entendrait pas
+--     l'annonce des coordonnées. En MP, l'état d'un appareil d'inventaire
+--     (allumage, canal) n'est envoyé au serveur que s'il est équipé ou dans
+--     l'inventaire principal (DeviceData.sendDeviceDataStatePacket) ;
 --   * appareil posé (IsoWaveSignal), à MAX_WORLD_DISTANCE cases au plus.
 --
 -- Le client désigne l'appareil par une référence ; le serveur la résout
@@ -28,10 +30,21 @@ function Radio.isWorldRadio(object)
     return object ~= nil and instanceof(object, "IsoWaveSignal")
 end
 
---- L'objet d'inventaire est en main ou dans l'inventaire principal du joueur.
+--- Radios d'inventaire équipées : les deux mains et le dos (nil possibles).
+local function equippedItems(player)
+    return { player:getPrimaryHandItem(), player:getSecondaryHandItem(), player:getClothingItem_Back() }
+end
+
+--- L'objet d'inventaire est en main ou porté sur le dos.
 function Radio.isCarried(player, item)
-    return item == player:getPrimaryHandItem() or item == player:getSecondaryHandItem()
-        or item:getContainer() == player:getInventory()
+    local items = equippedItems(player)
+    -- Pas d'ipairs : il s'arrête au premier emplacement vide (nil).
+    for i = 1, 3 do
+        if items[i] == item then
+            return true
+        end
+    end
+    return false
 end
 
 --- L'appareil posé est assez proche du joueur, au même étage.
@@ -97,17 +110,12 @@ function Radio.resolve(player, ref)
         return nil
     end
     if ref.kind == "item" and isInteger(ref.id) then
-        -- Pas d'ipairs sur les deux mains : il s'arrête à une main vide (nil).
-        local hands = { player:getPrimaryHandItem(), player:getSecondaryHandItem() }
-        for i = 1, 2 do
-            local item = hands[i]
+        local items = equippedItems(player)
+        for i = 1, 3 do
+            local item = items[i]
             if item and item:getID() == ref.id and Radio.isInventoryRadio(item) then
                 return item
             end
-        end
-        local item = player:getInventory():getItemWithID(ref.id)
-        if Radio.isInventoryRadio(item) then
-            return item
         end
         return nil
     end

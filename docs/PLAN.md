@@ -28,8 +28,8 @@ Aucune migration de sauvegarde : les parties B41 ne se chargent pas en B42. Les 
   - Réparation du talkie-walkie militaire reprise de la B41 (3 débris électroniques, Électricité 6), sans le `ConditionModifier : 100` d'origine.
 - [ ] **2. Autorité serveur** : le client envoie une demande ; le serveur vérifie radio, allumage, fréquence (arrondie au pas de 200 du talkie), code, délai global et droits admin, puis crée la caisse, le butin et la horde. Notes tirées côté serveur (ou solo). Branche solo sans commande réseau. *Code écrit et testé hors jeu (2026-09-30) ; test en jeu à faire.*
   - `MilitaryDrop_Net.lua` : `toServer`/`toPlayer`, appel direct en solo (où `sendServerCommand` ne fait rien).
-  - `MilitaryDrop_Radio.lua` : radio militaire = `getIsHighTier` (talkie et poste nomade portés en main ou dans l'inventaire principal, radio posée à 2 cases au plus). Le serveur résout lui-même la référence envoyée par le client.
-  - `MilitaryDrop_Server.lua` : ordre des contrôles admin (`Capability.MakeEventsAlarmGunshot`, comme `/chopper`), radio, allumage, canal, code, délai global (ModData « MilitaryDrop », jamais transmise). Le délai n'est révélé qu'après un code juste. Une demande toutes les 3 s par joueur au plus. Largage admin sans délai ni contrôle de radio.
+  - `MilitaryDrop_Radio.lua` : radio militaire = `getIsHighTier` (talkie et poste nomade en main ou sur le dos, radio posée à 2 cases au plus). Le serveur résout lui-même la référence envoyée par le client.
+  - `MilitaryDrop_Server.lua` : ordre des contrôles admin (`Capability.MakeEventsAlarmGunshot`, comme `/chopper`), radio, allumage, canal et code (même réponse en cas d'erreur), délai global (ModData « MilitaryDrop »). Code dans un fichier du serveur (voir phase 6). Le délai n'est révélé qu'après un canal et un code justes. Une demande toutes les 3 s par joueur au plus. Largage admin sans délai ni contrôle de radio.
   - **Livraison provisoire** : caisses posées au sol sur une case extérieure libre à 15-30 cases de la radio, et horde dans un rayon de 4 cases. Elle sera remplacée aux phases 3 et 5.
   - `MilitaryDrop_Notes.lua` : note `MilitaryDrop.MilitaryMemo` (une page verrouillée, donc « Lire » seulement) ; tenues `army`, `police`, `sheriff` ; tirage mémorisé et note remise après un second `OnZombieDead`. Le texte est dans la langue du serveur.
   - `MilitaryDrop_Client.lua` : menus contextuels (inventaire et monde), saisie du code (`ISTextBox`), réponses de la base par la radio après 5 s, coordonnées après 12 s. La fréquence n'est jamais vérifiée côté client, pour qu'on ne puisse pas la trouver en balayant les canaux.
@@ -48,7 +48,17 @@ Aucune migration de sauvegarde : les parties B41 ne se chargent pas en B42. Les 
   - `scripts/vehicles/MilitaryDrop_SupplyCrate.txt` : véhicule `Base.MilitaryDrop_SupplyCrate` sans roues, sur le modèle de la remorque vanilla, coffre `TrailerTrunk` (sans clé, capacité 150), textures de salissure et de dégâts vanilla.
   - `MilitaryDrop_Crate.lua` (serveur) : distribution vide pour le coffre, remplie par `OnFillContainer` avec `CaseRolls` caisses de ravitaillement tirées au moment du largage. Caisse créée par `addVehicleDebug` sur la case d'atterrissage, qui doit être sans véhicule. En repli, les caisses de ravitaillement sont posées au sol.
   - À vérifier en jeu : taille et orientation du modèle, caisse posée au sol (ni enfoncée ni flottante), ouverture du coffre, contenu, nom affiché « Caisse de largage militaire ».
-- [ ] **6. Qualité** : espace de noms `MilitaryDrop`, aucune globale, traces de debug sous option, luacheck, tests `lupa` (tirage pondéré, délai, fréquence, code).
+- [x] **6. Qualité** : espace de noms `MilitaryDrop`, aucune globale, traces de debug sous option, luacheck, tests `lupa` (tirage pondéré, délai, fréquence, code). *Fait le 2026-09-30 : 67 tests, règle luacheck « aucune globale hors `MilitaryDrop` », relecture indépendante du code.*
+  - Corrections issues de la relecture :
+    - le code d'authentification n'est plus dans la ModData globale, que tout client peut demander (`ModData.request`). Il est dans un fichier du serveur, `Zomboid/Lua/MilitaryDrop/<mode>_<partie>_code.txt`, avec reprise d'un ancien code ;
+    - mauvais canal et mauvais code donnent la même réponse (grésillements), pour qu'on ne trouve pas la fréquence en appelant chaque canal ;
+    - la radio doit être en main ou sur le dos : en solo, une radio rangée dans l'inventaire n'entend pas la chaîne ;
+    - la caisse est vérifiée comme réellement ajoutée au monde (`getSqlId() ~= -1`). Elle occupe les quatre cases autour du coin nord-ouest de la case visée, qui doivent être libres ; au largage, la case est revérifiée et déplacée au besoin, avec repli au sol ;
+    - les livraisons différées (redémarrage, zone non chargée) attendent `LoadChunk` au lieu de `LoadGridsquare`, puis sont revérifiées et annoncées ;
+    - sans chaîne militaire (fréquence prise), le demandeur reçoit les coordonnées en privé ;
+    - deux annonces proches s'enchaînent sur la même diffusion au lieu de s'écraser ;
+    - zone d'accès au coffre portée à 2,5 × 2,5 m ; requêtes terminées retirées côté client.
+  - **Compromis accepté** : les coordonnées d'un largage (`DropAnnounce`) partent vers tous les clients, qui ne marquent leur carte que s'ils entendent l'annonce. Un client modifié peut donc les connaître sans écouter la radio. Les réserver aux auditeurs demanderait au serveur de connaître l'état de toutes les radios de chaque joueur.
 - [ ] **7. Tests** : solo, hébergé, serveur dédié (`C:\pzserver`) avec 2 clients, reconnexion, commande forgée, partie avec HEF.
 - [ ] **8. Publication** : art (skill `pz-workshop-art`), suppression de `legacy-b41/`, nouvel élément Workshop, lien depuis la page B41.
 

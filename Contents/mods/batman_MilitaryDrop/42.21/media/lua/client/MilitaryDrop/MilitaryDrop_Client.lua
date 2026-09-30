@@ -2,7 +2,7 @@
 -- Military Drop — interface client : appel radio et réponses de la base
 --
 -- Menu contextuel « Demander un largage » sur une radio militaire (objet
--- d'inventaire porté, ou appareil posé à portée). Le client ne décide rien :
+-- d'inventaire en main ou sur le dos, ou appareil posé à portée). Le client ne décide rien :
 -- il demande le code si l'option l'exige, fait parler le personnage, envoie
 -- la demande au serveur, puis affiche la réponse par la radio.
 --
@@ -110,7 +110,7 @@ end
 function Client.sendRequest(player, device, code, force)
     local requestId = nextRequestId
     nextRequestId = nextRequestId + 1
-    local request = { playerNum = player:getPlayerNum(), device = device }
+    local request = { playerNum = player:getPlayerNum(), device = device, force = force == true }
     pending[requestId] = request
 
     player:Say(randomText("IGUI_MilitaryDrop_Call_", Client.CALL_COUNT))
@@ -149,9 +149,9 @@ end
 -- Réponses du serveur
 -- ----------------------------------------------------------------------------
 
+-- Mauvais canal ou mauvais code : même réponse du serveur (« noAnswer »).
 local RADIO_REPLIES = {
-    wrongFrequency = "IGUI_MilitaryDrop_NoAnswer",
-    badCode = "IGUI_MilitaryDrop_BadCode",
+    noAnswer = "IGUI_MilitaryDrop_NoAnswer",
     noSite = "IGUI_MilitaryDrop_NoSite",
 }
 
@@ -204,7 +204,9 @@ function Client.onServerCommand(module, command, args)
     end
     if command == "Result" then
         onResult(request, args)
-        if args.status ~= "accepted" then
+        -- Seul un largage admin attend encore un message (coordonnées privées) ;
+        -- les autres les entendent sur la chaîne militaire.
+        if args.status ~= "accepted" or not request.force then
             pending[args.requestId] = nil
         end
     elseif command == "Dropped" then

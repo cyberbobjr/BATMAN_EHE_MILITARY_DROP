@@ -35,6 +35,39 @@ function T.setup()
         return { getGridSquare = function(_, x, y) return LOADED and makeSquare(x, y) or nil end }
     end
     getText = function(key) return key end
+    FILES = {}
+    getWorld = function()
+        return { getGameMode = function() return "Sandbox" end, getWorld = function() return "Test Save" end }
+    end
+    getFileReader = function(name)
+        local value = FILES[name]
+        if not value then
+            return nil
+        end
+        return { readLine = function() return value end, close = function() end }
+    end
+    getFileWriter = function(name)
+        return { write = function(_, text) FILES[name] = text end, close = function() end }
+    end
+    ChannelCategory = { Military = "Military" }
+    AIRING = nil
+    DynamicRadioChannel = { new = function(name, freq)
+        return {
+            freq = freq,
+            getAiringBroadcast = function() return AIRING end,
+            setAiringBroadcast = function(_, bc) AIRING = bc end,
+        }
+    end }
+    RadioBroadCast = { new = function()
+        return { lines = {}, AddRadioLine = function(self, line) self.lines[#self.lines + 1] = line end }
+    end }
+    RadioLine = { new = function(text, r, g, b, codes) return { text = text, codes = codes } end }
+    getZomboidRadio = function() return { removeChannelName = function() end } end
+    CHANNELS = {}
+    SCRIPT_MANAGER = {
+        AddChannel = function(_, channel) CHANNELS[#CHANNELS + 1] = channel end,
+        getRadioChannel = function() return CHANNELS[1] end,
+    }
     SENT = {}
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
@@ -86,16 +119,23 @@ function T.hold_is_limited()
     assertEq(flight.started, true, "départ forcé après l'attente maximale")
 end
 
-function T.unloaded_square_waits_for_load()
+--- Chunk de 8 × 8 cases dont le coin nord-ouest est (x0, y0).
+local function makeChunk(x0, y0)
+    return { getGridSquare = function(_, lx, ly) return makeSquare(x0 + lx, y0 + ly) end }
+end
+
+function T.unloaded_square_waits_for_its_chunk()
     LOADED = false
     MilitaryDrop.Flights.deliverAt(500, 600, "tester", 1)
     assertEq(#PLACED, 0, "case non chargée")
-    assertEq(listenerCount("LoadGridsquare"), 1, "surveillance du chargement")
-    triggerEvent("LoadGridsquare", makeSquare(10, 10))
-    assertEq(#PLACED, 0, "autre case ignorée")
-    triggerEvent("LoadGridsquare", makeSquare(500, 600))
-    assertEq(#PLACED, 1, "livré au chargement")
-    assertEq(listenerCount("LoadGridsquare"), 0, "surveillance arrêtée")
+    assertEq(listenerCount("LoadChunk"), 1, "surveillance du chargement")
+    LOADED = true
+    triggerEvent("LoadChunk", makeChunk(504, 600))
+    assertEq(#PLACED, 0, "autre chunk ignoré")
+    triggerEvent("LoadChunk", makeChunk(496, 600))
+    assertEq(#PLACED, 1, "livré à la fin du chargement de son chunk")
+    assertEq(SENT[#SENT].command, "DropAnnounce", "coordonnées annoncées")
+    assertEq(listenerCount("LoadChunk"), 0, "surveillance arrêtée")
 end
 
 function T.restart_turns_flights_into_pending_drops()
@@ -107,7 +147,7 @@ function T.restart_turns_flights_into_pending_drops()
     local state = MilitaryDrop.Server.getState()
     assertEq(#state.flights, 0, "plus de vol en cours")
     assertTrue(state.pending["700,800"] ~= nil, "livraison en attente")
-    assertEq(listenerCount("LoadGridsquare"), 1, "surveillance du chargement")
+    assertEq(listenerCount("LoadChunk"), 1, "surveillance du chargement")
 end
 
 return T

@@ -13,6 +13,7 @@ function T.setup()
         AIRED = nil
         return {
             name = name, freq = freq, category = category, uuid = uuid,
+            getAiringBroadcast = function() return AIRED end,
             setAiringBroadcast = function(_, bc) AIRED = bc end,
         }
     end }
@@ -65,6 +66,15 @@ function T.inbound_has_no_coordinates_or_code()
     MilitaryDrop.Broadcast.inbound()
     assertEq(#AIRED.lines, 1, "une ligne")
     assertEq(AIRED.lines[1].codes, nil, "pas de repère")
+end
+
+function T.second_drop_is_appended_to_the_airing_broadcast()
+    triggerEvent("OnLoadRadioScripts", SCRIPT_MANAGER, false)
+    MilitaryDrop.Broadcast.dropped(1, 2)
+    local first = AIRED
+    MilitaryDrop.Broadcast.inbound()
+    assertEq(AIRED, first, "même diffusion")
+    assertEq(#AIRED.lines, MilitaryDrop.Broadcast.REPEATS + 2, "annonce ajoutée à la suite")
 end
 
 function T.taken_frequency_disables_broadcast_quietly()

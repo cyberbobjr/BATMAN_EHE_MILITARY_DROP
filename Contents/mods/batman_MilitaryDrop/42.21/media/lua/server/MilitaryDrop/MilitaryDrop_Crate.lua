@@ -67,11 +67,18 @@ function Crate.onFillContainer(roomType, _, container)
 end
 
 --- Fait apparaître la caisse sur la case (chargée) ; renvoie le véhicule ou nil.
+--- addVehicleDebug renvoie le véhicule même quand sa position est refusée
+--- (collision avec un autre véhicule), sans l'ajouter au monde : seul un
+--- véhicule ajouté reçoit un identifiant de base (VehiclesDB2.addVehicle).
 function Crate.spawn(square)
     if square:getVehicleContainer() then
         return nil
     end
-    return addVehicleDebug(Crate.FULL_SCRIPT, IsoDirections.getRandom(), 0, square)
+    local vehicle = addVehicleDebug(Crate.FULL_SCRIPT, IsoDirections.getRandom(), 0, square)
+    if vehicle and vehicle:getSqlId() ~= -1 then
+        return vehicle
+    end
+    return nil
 end
 
 Events.OnPostDistributionMerge.Add(Crate.registerDistribution)

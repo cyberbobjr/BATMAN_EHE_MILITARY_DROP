@@ -3,12 +3,16 @@
 --
 -- Le client envoie seulement une demande (commande « Request » : référence de
 -- la radio, code saisi, demande admin). Le serveur revérifie tout, dans cet
--- ordre : droits admin, radio à portée, radio militaire allumée sur le bon
--- canal, code, délai global. Le délai n'est révélé qu'après un code juste.
+-- ordre : droits admin, radio à portée, radio militaire allumée, puis canal et
+-- code ensemble, puis délai global. Mauvais canal et mauvais code donnent la
+-- même réponse (« noAnswer ») : on ne peut trouver la fréquence en appelant
+-- chaque canal. Le délai n'est révélé qu'après un canal et un code justes.
 --
--- État persistant : ModData globale « MilitaryDrop » du serveur (code de la
--- partie, heure du dernier largage). Elle n'est jamais transmise aux clients :
--- le code ne doit se lire que sur les notes.
+-- État persistant : ModData globale « MilitaryDrop » (heure du dernier
+-- largage, vols, livraisons en attente). Tout client connecté peut lire une
+-- ModData globale (ModData.request, GlobalModData.receiveRequest, 42.21) : le
+-- code de la partie n'y est donc pas. Il est gardé dans un fichier du serveur
+-- (Zomboid/Lua/MilitaryDrop/<mode>_<partie>_code.txt).
 --
 -- Une demande acceptée lance un hélicoptère (MilitaryDrop_Flights.lua) vers
 -- une case extérieure à 15-30 cases de la radio. À son passage, deliver pose
@@ -26,6 +30,7 @@ require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Loot"
 require "MilitaryDrop/MilitaryDrop_Flight"
 require "MilitaryDrop/MilitaryDrop_Crate"
+require "MilitaryDrop/MilitaryDrop_Broadcast"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
@@ -42,16 +47,62 @@ Server.LANDING_MIN_DISTANCE = 15
 Server.LANDING_MAX_DISTANCE = 30
 Server.LANDING_ATTEMPTS = 40
 Server.HORDE_RADIUS = 4
+-- Rayon de recherche d'une autre case si la case prévue n'est plus libre.
+Server.RELOCATE_RADIUS = 6
 local lastRequestMs = {}
+local secretCode = nil
 
---- État persistant de la partie ; tire le code à la première lecture.
+--- État persistant de la partie (lisible par les clients : rien de secret).
 function Server.getState()
-    local state = ModData.getOrCreate(Server.MODDATA_TAG)
-    if type(state.code) ~= "string" or state.code == "" then
-        state.code = Codes.generate()
-        MilitaryDrop.log("authentication code generated")
+    return ModData.getOrCreate(Server.MODDATA_TAG)
+end
+
+--- Fichier du code, propre à la partie (dossier Lua du serveur ou du joueur).
+function Server.codeFile()
+    local world = getWorld()
+    local key = tostring(world:getGameMode()) .. "_" .. tostring(world:getWorld())
+    return "MilitaryDrop/" .. key:gsub("[^%w_%-]", "_") .. "_code.txt"
+end
+
+local function readCode(file)
+    local reader = getFileReader(file, false)
+    if not reader then
+        return nil
     end
-    return state
+    local line = reader:readLine()
+    reader:close()
+    if type(line) == "string" and line ~= "" then
+        return line
+    end
+    return nil
+end
+
+local function writeCode(file, code)
+    local writer = getFileWriter(file, true, false)
+    if writer then
+        writer:write(code)
+        writer:close()
+    else
+        MilitaryDrop.log("cannot write " .. file .. ": the code will change at the next restart", true)
+    end
+end
+
+--- Code d'authentification de la partie, tiré à la première lecture.
+function Server.getCode()
+    if secretCode then
+        return secretCode
+    end
+    local file = Server.codeFile()
+    local state = Server.getState()
+    secretCode = readCode(file)
+    if not secretCode then
+        -- Reprise d'une version de développement qui le gardait en ModData.
+        secretCode = type(state.code) == "string" and state.code ~= "" and state.code or Codes.generate()
+        writeCode(file, secretCode)
+        MilitaryDrop.log("authentication code stored in " .. file)
+    end
+    state.code = nil
+    return secretCode
 end
 
 --- Heures de jeu avant le prochain largage permis (0 si permis).
@@ -90,38 +141,70 @@ function Server.evaluate(player, args, now)
         return "accepted", radio
     end
     local status = Radio.status(radio, Config.getChannel())
+    if status == "wrongFrequency" then
+        return "noAnswer"
+    end
     if status then
         return status
     end
-    local state = Server.getState()
-    if Config.get("RequireAuthCode") and not Codes.matches(args.code, state.code) then
-        return "badCode"
+    if Config.get("RequireAuthCode") and not Codes.matches(args.code, Server.getCode()) then
+        return "noAnswer"
     end
-    local wait = Server.hoursUntilNextDrop(state, now)
+    local wait = Server.hoursUntilNextDrop(Server.getState(), now)
     if wait > 0 then
         return "cooldown", math.ceil(wait)
     end
     return "accepted", radio
 end
 
---- Case d'atterrissage : extérieure, au sol, libre, hors de l'eau et sans
---- véhicule (sinon la caisse, qui est un véhicule, ne peut pas apparaître).
-function Server.isLandingSquare(square)
+--- Case libre pour la caisse : extérieure, au sol, sans obstacle, hors de
+--- l'eau et sans véhicule.
+function Server.isFreeSquare(square)
     return square ~= nil and square:isOutside() and square:isFree(false) and not square:isWaterSquare()
         and square:getVehicleContainer() == nil
 end
 
+--- Point d'atterrissage (x, y) : addVehicleDebug centre la caisse sur le coin
+--- nord-ouest de la case (setX(sq.x)), elle couvre donc les quatre cases
+--- x-1..x, y-1..y, qui doivent toutes être libres. Renvoie la case (x, y).
+function Server.landingSquareAt(x, y)
+    local cell = getCell()
+    for dx = -1, 0 do
+        for dy = -1, 0 do
+            if not Server.isFreeSquare(cell:getGridSquare(x + dx, y + dy, 0)) then
+                return nil
+            end
+        end
+    end
+    return cell:getGridSquare(x, y, 0)
+end
+
 --- Case d'atterrissage tirée au hasard autour d'un point, ou nil.
 function Server.findLandingSquare(centerX, centerY)
-    local cell = getCell()
     for _ = 1, Server.LANDING_ATTEMPTS do
         local angle = ZombRandFloat(0, 2 * math.pi)
         local distance = ZombRandFloat(Server.LANDING_MIN_DISTANCE, Server.LANDING_MAX_DISTANCE)
-        local x = math.floor(centerX + math.cos(angle) * distance)
-        local y = math.floor(centerY + math.sin(angle) * distance)
-        local square = cell:getGridSquare(x, y, 0)
-        if Server.isLandingSquare(square) then
+        local square = Server.landingSquareAt(math.floor(centerX + math.cos(angle) * distance),
+            math.floor(centerY + math.sin(angle) * distance))
+        if square then
             return square
+        end
+    end
+    return nil
+end
+
+--- Case d'atterrissage la plus proche de (x, y), dans RELOCATE_RADIUS, ou nil.
+function Server.findLandingNear(x, y)
+    for radius = 0, Server.RELOCATE_RADIUS do
+        for dx = -radius, radius do
+            for dy = -radius, radius do
+                if math.max(math.abs(dx), math.abs(dy)) == radius then
+                    local square = Server.landingSquareAt(x + dx, y + dy)
+                    if square then
+                        return square
+                    end
+                end
+            end
         end
     end
     return nil
@@ -161,17 +244,20 @@ function Server.findPlayer(username)
     return nil
 end
 
---- Livraison : caisse de largage et horde autour. La case doit être chargée ;
---- requester est le nom du joueur qui a appelé. notify : lui
+--- Livraison : caisse de largage, horde autour et annonce sur la chaîne
+--- militaire. La case doit être chargée ; elle est revérifiée (un véhicule a pu
+--- s'y garer pendant le vol ou avant un redémarrage) et remplacée au besoin
+--- par la plus proche. requester : nom du joueur qui a appelé. notify : lui
 --- envoyer les coordonnées en privé (largage admin, qui n'exige pas d'être à
---- l'écoute de la chaîne militaire).
+--- l'écoute ; ou chaîne militaire absente).
 function Server.deliver(square, requester, requestId, notify)
+    square = Server.findLandingNear(square:getX(), square:getY()) or square
     local x, y = square:getX(), square:getY()
     local count = 0
     if MilitaryDrop.Crate.spawn(square) then
         count = 1
     else
-        -- Repli : la caisse n'a pas pu apparaître (véhicule sur la case).
+        -- Repli : la caisse n'a pas pu apparaître (aucune place libre).
         for _, fullType in ipairs(MilitaryDrop.Crate.rollCases()) do
             if square:AddWorldInventoryItem(fullType, ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0) then
                 count = count + 1
@@ -188,6 +274,8 @@ function Server.deliver(square, requester, requestId, notify)
     state.lastDrop = { x = x, y = y, hours = getGameTime():getWorldAgeHours() }
     MilitaryDrop.log(string.format("drop at %d,%d: %d crate/cases, %d zombies, for %s",
         x, y, count, zombies, tostring(requester)), true)
+    MilitaryDrop.Broadcast.dropped(x, y)
+    notify = notify or not MilitaryDrop.Broadcast.channel
     local player = notify and requester and Server.findPlayer(requester)
     if player then
         Net.toPlayer(player, "Dropped", { requestId = requestId, x = x, y = y })
@@ -237,7 +325,7 @@ function Server.onClientCommand(module, command, player, args)
 end
 
 Events.OnInitGlobalModData.Add(function()
-    Server.getState()
+    Server.getCode()
 end)
 Events.OnClientCommand.Add(Server.onClientCommand)
 

@@ -65,7 +65,7 @@ function Notes.createMemo(index)
         return nil
     end
     local frequency = Config.formatChannel(Config.getChannel())
-    local code = MilitaryDrop.Server.getState().code
+    local code = MilitaryDrop.Server.getCode()
     memo:addPage(1, getText("IGUI_MilitaryDrop_Note_" .. index, frequency, code))
     memo:setLockedBy(Notes.LOCKED_BY)
     return memo
