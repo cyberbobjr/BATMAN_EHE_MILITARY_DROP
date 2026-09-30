@@ -1,6 +1,6 @@
 # Military Drop v2 — plan d'implémentation (idées 4, 5, 6, 9)
 
-Rédigé le 2026-09-30, après le test solo de la v1. Idées retenues par l'utilisateur :
+Rédigé le 2026-09-30, après le test solo de la v1. État d'avancement de chaque élément : [SUIVI.md](SUIVI.md). Idées retenues par l'utilisateur :
 - 4 : code chiffré qui change chaque semaine ;
 - 5 : confiance de la base ;
 - 6 : formulaire de réquisition ;

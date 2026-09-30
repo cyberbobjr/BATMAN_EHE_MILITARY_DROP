@@ -8,6 +8,7 @@ This branch (`b42`) is a standalone rewrite for Build 42.21 of [Expanded Helicop
 
 - Mod ID: `batman_MilitaryDrop`
 - Work plan and design decisions: [docs/PLAN.md](docs/PLAN.md)
+- Roadmap v1.1-v1.5: [docs/PLAN-V2.md](docs/PLAN-V2.md) · implementation status of every decided item: [docs/SUIVI.md](docs/SUIVI.md)
 - The Build 41 sources are kept in `legacy-b41/` for reference during the port. They are not published.
 
 ## Layout
@@ -36,4 +37,4 @@ MIT, see [LICENSE](LICENSE).
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code d'authentification et demandez un largage de surplus militaire. Un hélicoptère arrive et largue une caisse… et le bruit attire les morts.
 
-Cette branche (`b42`) est une réécriture autonome pour la Build 42.21 de [Expanded Helicopter Events: Drop Military Cargo](https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085) (Build 41, branche `main`). Elle ne dépend plus d'Expanded Helicopter Events. Plan de travail : [docs/PLAN.md](docs/PLAN.md).
+Cette branche (`b42`) est une réécriture autonome pour la Build 42.21 de [Expanded Helicopter Events: Drop Military Cargo](https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085) (Build 41, branche `main`). Elle ne dépend plus d'Expanded Helicopter Events. Plan de travail : [docs/PLAN.md](docs/PLAN.md) et [docs/PLAN-V2.md](docs/PLAN-V2.md). Suivi de l'implémentation : [docs/SUIVI.md](docs/SUIVI.md).

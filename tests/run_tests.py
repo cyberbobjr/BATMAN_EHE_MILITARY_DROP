@@ -7,7 +7,9 @@
 3. traductions : JSON valides, mêmes clés et mêmes paramètres que EN, pas de % seul ;
 4. descriptions Steam (README.steam*) : 8 000 octets UTF-8 au plus, BBCode équilibré,
    mêmes liens et images que l'anglais, description de workshop.txt identique à README.steam ;
-5. tests Lua (tests/lua/test_*.lua) sous lupa, avec l'API du jeu simulée.
+5. suivi de l'implémentation (docs/SUIVI.md) : identifiants uniques, états connus,
+   preuve exigée pour un état « testé », commits cités présents dans git ;
+6. tests Lua (tests/lua/test_*.lua) sous lupa, avec l'API du jeu simulée.
 
 Dépendances : pip install lupa ; luacheck facultatif en local, exigé par la CI.
 Les tests qui lisent les fichiers vanilla sont ignorés si le jeu est absent
@@ -224,6 +226,77 @@ def check_lua_tests(report):
                 report.ok(label)
 
 
+TRACKING = REPO / "docs" / "SUIVI.md"
+TRACKING_STATES = {
+    "à décider", "décidé", "conçu", "codé", "testé hors jeu", "testé solo", "testé MP",
+    "publié", "bloqué", "abandonné",
+}
+TRACKING_ID = re.compile(r"^[A-Z]+-\d{2}$")
+TRACKING_COMMIT = re.compile(r"`([0-9a-f]{7,40})`")
+TRACKING_NEEDS_PROOF = {"testé hors jeu", "testé solo", "testé MP", "publié"}
+
+
+def tracking_rows(text):
+    """Lignes des tableaux de suivi : (numéro de ligne, cellules) dont la 1re cellule est un ID."""
+    for number, line in enumerate(text.splitlines(), 1):
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if len(cells) == 6 and re.match(r"^[A-Z]+-", cells[0]):
+            yield number, cells
+
+
+def commit_exists(sha):
+    result = subprocess.run(
+        ["git", "-C", str(REPO), "cat-file", "-e", f"{sha}^{{commit}}"],
+        capture_output=True,
+    )
+    return result.returncode == 0
+
+
+def shallow_clone():
+    """Vrai pour un clone tronqué (CI par défaut) : les anciens commits y sont absents."""
+    result = subprocess.run(
+        ["git", "-C", str(REPO), "rev-parse", "--is-shallow-repository"],
+        capture_output=True, text=True,
+    )
+    return result.returncode != 0 or result.stdout.strip() == "true"
+
+
+def check_tracking(report):
+    report.section("Suivi de l'implémentation (docs/SUIVI.md)")
+    if not TRACKING.exists():
+        report.fail("docs/SUIVI.md absent")
+        return
+    seen = {}
+    rows = 0
+    git = shutil.which("git") is not None and not shallow_clone()
+    for number, (ident, _, _, state, proofs, _) in tracking_rows(TRACKING.read_text(encoding="utf-8")):
+        rows += 1
+        where = f"SUIVI.md:{number} {ident}"
+        if not TRACKING_ID.match(ident):
+            report.fail(f"{where} : identifiant mal formé (FAMILLE-NN attendu)")
+        if ident in seen:
+            report.fail(f"{where} : identifiant déjà utilisé ligne {seen[ident]}")
+        seen.setdefault(ident, number)
+        if state not in TRACKING_STATES:
+            report.fail(f"{where} : état inconnu « {state} »")
+        if state in TRACKING_NEEDS_PROOF and proofs in ("", "—"):
+            report.fail(f"{where} : état « {state} » sans preuve")
+        if git:
+            for sha in TRACKING_COMMIT.findall(proofs):
+                if not commit_exists(sha):
+                    report.fail(f"{where} : commit {sha} introuvable")
+    if rows == 0:
+        report.fail("aucune ligne de suivi trouvée")
+    else:
+        states = Counter(state for _, (_, _, _, state, _, _) in tracking_rows(TRACKING.read_text(encoding="utf-8")))
+        summary = ", ".join(f"{count} {state}" for state, count in states.most_common())
+        report.ok(f"{rows} éléments : {summary}")
+    if not git:
+        report.skip("git absent ou historique tronqué : commits cités non vérifiés")
+
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -232,6 +305,7 @@ def main():
     check_kahlua(report)
     check_translations(report)
     check_steam_descriptions(report)
+    check_tracking(report)
     check_lua_tests(report)
     print()
     if report.failures:
