@@ -32,4 +32,13 @@ function Net.toPlayer(player, command, args)
     end
 end
 
+--- Serveur → tous les joueurs connectés.
+function Net.toAll(command, args)
+    if isServer() then
+        sendServerCommand(Net.MODULE, command, args or {})
+    elseif MilitaryDrop.Client then
+        MilitaryDrop.Client.onServerCommand(Net.MODULE, command, args or {})
+    end
+end
+
 return Net

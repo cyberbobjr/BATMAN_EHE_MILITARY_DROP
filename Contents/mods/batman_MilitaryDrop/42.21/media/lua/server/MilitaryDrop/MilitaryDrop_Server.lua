@@ -10,9 +10,10 @@
 -- partie, heure du dernier largage). Elle n'est jamais transmise aux clients :
 -- le code ne doit se lire que sur les notes.
 --
--- Livraison (provisoire, phase 2) : les caisses sont posées au sol sur une
--- case extérieure à 15-30 cases, avec la horde. La phase 3 la remplacera par
--- le passage de l'hélicoptère, et la phase 5 par une caisse larguée.
+-- Une demande acceptée lance un hélicoptère (MilitaryDrop_Flights.lua) vers
+-- une case extérieure à 15-30 cases de la radio. À son passage, deliver pose
+-- le largage (provisoire : caisses au sol, remplacées par une caisse larguée
+-- en phase 5) et la horde.
 -- ============================================================================
 
 if isClient() then
@@ -23,6 +24,7 @@ require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Loot"
+require "MilitaryDrop/MilitaryDrop_Flight"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
@@ -144,8 +146,30 @@ function Server.hordeSize()
     return ZombRand(low, high + 1)
 end
 
---- Livraison provisoire : caisses au sol et horde autour.
-function Server.deliver(player, square, requestId)
+--- Joueur connecté par son nom (serveur MP ou joueurs locaux), ou nil.
+function Server.findPlayer(username)
+    if isServer() then
+        local players = getOnlinePlayers()
+        for i = 0, players:size() - 1 do
+            local player = players:get(i)
+            if player:getUsername() == username then
+                return player
+            end
+        end
+        return nil
+    end
+    for i = 0, getNumActivePlayers() - 1 do
+        local player = getSpecificPlayer(i)
+        if player and player:getUsername() == username then
+            return player
+        end
+    end
+    return nil
+end
+
+--- Livraison provisoire : caisses au sol et horde autour. La case doit être
+--- chargée ; requester est le nom du joueur qui a appelé.
+function Server.deliver(square, requester, requestId)
     local x, y = square:getX(), square:getY()
     local entries = Loot.toEntries(Server.CASE_WEIGHTS)
     local rand = function(total) return ZombRandFloat(0, total) end
@@ -164,8 +188,11 @@ function Server.deliver(player, square, requestId)
     local state = Server.getState()
     state.lastDrop = { x = x, y = y, hours = getGameTime():getWorldAgeHours() }
     MilitaryDrop.log(string.format("drop at %d,%d: %d cases, %d zombies, for %s",
-        x, y, count, zombies, tostring(player:getUsername())), true)
-    Net.toPlayer(player, "Dropped", { requestId = requestId, x = x, y = y })
+        x, y, count, zombies, tostring(requester)), true)
+    local player = requester and Server.findPlayer(requester)
+    if player then
+        Net.toPlayer(player, "Dropped", { requestId = requestId, x = x, y = y })
+    end
 end
 
 function Server.handleRequest(player, args)
@@ -196,7 +223,7 @@ function Server.handleRequest(player, args)
         Server.getState().lastDropHours = now
     end
     Net.toPlayer(player, "Result", { requestId = requestId, status = "accepted" })
-    Server.deliver(player, square, requestId)
+    MilitaryDrop.Flights.launch(square, name, requestId)
 end
 
 function Server.onClientCommand(module, command, player, args)
@@ -205,6 +232,8 @@ function Server.onClientCommand(module, command, player, args)
     end
     if command == "Request" then
         Server.handleRequest(player, args)
+    elseif command == "Sync" then
+        MilitaryDrop.Flights.sendActive(player)
     end
 end
 

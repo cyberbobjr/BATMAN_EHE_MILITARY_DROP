@@ -13,6 +13,7 @@
 require "ISUI/ISTextBox"
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
+require "MilitaryDrop/MilitaryDrop_Heli"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
@@ -23,10 +24,11 @@ MilitaryDrop.Client = Client
 
 Client.CALL_COUNT = 5
 Client.ACK_COUNT = 5
--- Délais réels (ms) entre l'appel, la réponse et la confirmation du largage.
+-- Délais réels (ms) : code après l'appel, réponse de la base, confirmation
+-- après le largage (envoyé par le serveur au passage de l'hélicoptère).
 Client.CODE_DELAY_MS = 2500
 Client.REPLY_DELAY_MS = 5000
-Client.DROPPED_DELAY_MS = 12000
+Client.DROPPED_DELAY_MS = 4000
 Client.RADIO_COLOR = { r = 0.45, g = 0.85, b = 0.45 }
 
 local pending = {}
@@ -177,8 +179,18 @@ local function onDropped(request, args)
     end)
 end
 
+local FLIGHT_COMMANDS = {
+    FlightStart = "onFlightStart",
+    FlightSync = "onFlightSync",
+    FlightEnd = "onFlightEnd",
+}
+
 function Client.onServerCommand(module, command, args)
     if module ~= Net.MODULE or type(args) ~= "table" then
+        return
+    end
+    if FLIGHT_COMMANDS[command] then
+        MilitaryDrop.Heli[FLIGHT_COMMANDS[command]](args)
         return
     end
     local request = pending[args.requestId]
@@ -279,6 +291,15 @@ function Client.onFillWorldContextMenu(playerNum, context, worldObjects, test)
     end
 end
 
+--- MP : à l'arrivée en jeu, demande les vols déjà en cours (reconnexion).
+function Client.onGameStart()
+    local player = getSpecificPlayer(0)
+    if isClient() and player then
+        Net.toServer(player, "Sync", {})
+    end
+end
+
+Events.OnGameStart.Add(Client.onGameStart)
 Events.OnFillInventoryObjectContextMenu.Add(Client.onFillInventoryContextMenu)
 Events.OnFillWorldObjectContextMenu.Add(Client.onFillWorldContextMenu)
 Events.OnServerCommand.Add(Client.onServerCommand)

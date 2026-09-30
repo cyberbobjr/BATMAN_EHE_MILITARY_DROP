@@ -62,13 +62,20 @@ function T.setup()
     }
     getCell = function() return { getGridSquare = function() return LANDING end } end
     spawnHorde = function() end
+    SOUNDS = {}
+    addSound = function(_, x, y, z, radius, volume) SOUNDS[#SOUNDS + 1] = { x, y, radius, volume } end
+    PLAYER = makePlayer(makeRadio(true, CHANNEL))
+    getNumActivePlayers = function() return 1 end
+    getSpecificPlayer = function() return PLAYER end
     SENT = {}
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Codes.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Loot.lua")
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Flight.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")
     MilitaryDrop.Client = { onServerCommand = function(_, command, args)
         SENT[#SENT + 1] = { command = command, args = args }
     end }
@@ -123,22 +130,45 @@ function T.cooldown_expires()
     assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "délai écoulé")
 end
 
-function T.accepted_request_sets_cooldown_places_cases_and_replies()
-    MilitaryDrop.Server.handleRequest(makePlayer(makeRadio(true, CHANNEL)), request(CODE))
+--- Fait voler tous les vols en cours jusqu'à t secondes (pas de 0,25 s).
+local function fly(seconds)
+    for _ = 1, math.ceil(seconds / 0.25) do
+        local flights = MilitaryDrop.Server.getState().flights
+        for i = #flights, 1, -1 do
+            MilitaryDrop.Flights.advance(flights[i], 0.25)
+        end
+    end
+end
+
+local function commands()
+    local list = {}
+    for _, sent in ipairs(SENT) do
+        list[#list + 1] = sent.command
+    end
+    return table.concat(list, ",")
+end
+
+function T.accepted_request_launches_a_flight_then_drops()
+    MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
     assertEq(MilitaryDrop.Server.getState().lastDropHours, WORLD_HOURS, "délai démarré")
-    assertEq(#PLACED, 2, "CaseRolls caisses posées")
-    assertEq(SENT[1].command, "Result", "réponse")
     assertEq(SENT[1].args.status, "accepted", "acceptée")
-    assertEq(SENT[2].command, "Dropped", "confirmation du largage")
-    assertEq(SENT[2].args.x, 115, "coordonnées")
+    assertEq(#MilitaryDrop.Server.getState().flights, 1, "un vol lancé")
+    assertEq(#PLACED, 0, "rien avant le passage de l'hélicoptère")
+    local flight = MilitaryDrop.Server.getState().flights[1]
+    fly(MilitaryDrop.Flight.dropTime(flight) + 0.5)
+    assertEq(#PLACED, 2, "CaseRolls caisses posées au largage")
+    local sequence = commands()
+    assertTrue(sequence:find("^Result,FlightStart,FlightSync") ~= nil, "réponse, départ, synchronisation : " .. sequence)
+    assertTrue(sequence:find(",Dropped$") ~= nil, "confirmation en dernier : " .. sequence)
+    assertEq(SENT[#SENT].args.x, 115, "coordonnées")
 end
 
 function T.forced_drop_does_not_touch_cooldown()
     local args = request(nil)
     args.force = true
-    MilitaryDrop.Server.handleRequest(makePlayer(makeRadio(true, CHANNEL)), args)
+    MilitaryDrop.Server.handleRequest(PLAYER, args)
     assertEq(MilitaryDrop.Server.getState().lastDropHours, nil, "délai inchangé")
-    assertEq(#PLACED, 2, "livré quand même")
+    assertEq(#MilitaryDrop.Server.getState().flights, 1, "vol lancé quand même")
 end
 
 function T.request_burst_is_ignored()
