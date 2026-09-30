@@ -31,6 +31,8 @@ local DEFAULTS = {
     MaxZombies = 30,
     NoteDropRate = 4,
     NotesOnlyArmyPolice = true,
+    NoteOutfits = "Army;Police;Sheriff",
+    NoteOutfitsExcluded = "Stripper",
     CaseRolls = 6,
     RequireAuthCode = true,
     DebugLog = false,
@@ -44,6 +46,18 @@ function Config.get(name)
         return DEFAULTS[name]
     end
     return value
+end
+
+--- Liste d'une option texte « a;b;c » : mots en minuscules, sans vides.
+function Config.getList(name)
+    local words = {}
+    for word in string.gmatch(tostring(Config.get(name) or ""), "[^;]+") do
+        word = string.lower((word:gsub("^%s+", ""):gsub("%s+$", "")))
+        if word ~= "" then
+            words[#words + 1] = word
+        end
+    end
+    return words
 end
 
 --- Canal radio (kHz) correspondant à une fréquence en MHz : arrondi au pas de

@@ -104,6 +104,15 @@ function T.outfit_filter()
     assertTrue(not isArmyOrPolice("Farmer"), "civil")
 end
 
+function T.outfits_come_from_sandbox_options()
+    SandboxVars.MilitaryDrop.NoteOutfits = " Ranger ; PrisonGuard;"
+    SandboxVars.MilitaryDrop.NoteOutfitsExcluded = ""
+    local isArmyOrPolice = MilitaryDrop.Notes.isArmyOrPolice
+    assertTrue(isArmyOrPolice("Ranger"), "tenue listée (espaces ignorés)")
+    assertTrue(isArmyOrPolice("PrisonGuard"), "tenue d'un autre mod ou vanilla")
+    assertTrue(not isArmyOrPolice("ArmyCamoGreen"), "tenue non listée")
+end
+
 function T.memo_has_frequency_code_and_lock()
     local zombie = makeZombie("ArmyCamoGreen")
     MilitaryDrop.Notes.onZombieDead(zombie)

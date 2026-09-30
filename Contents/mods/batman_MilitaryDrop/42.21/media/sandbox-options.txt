@@ -49,6 +49,18 @@ option MilitaryDrop.NotesOnlyArmyPolice
     page = MilitaryDrop, translation = MilitaryDrop_NotesOnlyArmyPolice,
 }
 
+option MilitaryDrop.NoteOutfits
+{
+    type = string, default = Army;Police;Sheriff,
+    page = MilitaryDrop, translation = MilitaryDrop_NoteOutfits,
+}
+
+option MilitaryDrop.NoteOutfitsExcluded
+{
+    type = string, default = Stripper,
+    page = MilitaryDrop, translation = MilitaryDrop_NoteOutfitsExcluded,
+}
+
 option MilitaryDrop.DebugLog
 {
     type = boolean, default = false,

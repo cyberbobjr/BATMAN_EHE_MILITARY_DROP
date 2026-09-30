@@ -21,7 +21,11 @@
     "Sandbox_MilitaryDrop_NoteDropRate_option5": "Courante (1/25)",
     "Sandbox_MilitaryDrop_NoteDropRate_option6": "Débogage (1/2)",
     "Sandbox_MilitaryDrop_NotesOnlyArmyPolice": "Notes seulement sur les zombies militaires et policiers",
-    "Sandbox_MilitaryDrop_NotesOnlyArmyPolice_tooltip": "Seuls les zombies en tenue militaire ou de police peuvent porter les notes.",
+    "Sandbox_MilitaryDrop_NotesOnlyArmyPolice_tooltip": "Seuls les zombies dont la tenue correspond à la liste ci-dessous peuvent porter les notes.",
+    "Sandbox_MilitaryDrop_NoteOutfits": "Tenues qui portent les notes",
+    "Sandbox_MilitaryDrop_NoteOutfits_tooltip": "Mots cherchés dans le nom de la tenue du zombie, séparés par ; (reconnaît aussi les tenues des autres mods).",
+    "Sandbox_MilitaryDrop_NoteOutfitsExcluded": "Tenues exclues",
+    "Sandbox_MilitaryDrop_NoteOutfitsExcluded_tooltip": "Les tenues qui contiennent un de ces mots ne portent jamais de note, séparés par ;.",
     "Sandbox_MilitaryDrop_DebugLog": "Journal de débogage",
     "Sandbox_MilitaryDrop_DebugLog_tooltip": "Écrire les messages détaillés de Military Drop dans le journal de la console."
 }

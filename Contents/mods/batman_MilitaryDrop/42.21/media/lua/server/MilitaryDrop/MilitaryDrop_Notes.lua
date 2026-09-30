@@ -30,9 +30,8 @@ Notes.TEXT_COUNT = 8
 Notes.LOCKED_BY = "MilitaryDrop"
 -- Option NoteDropRate (1 à 6) : une chance sur N.
 Notes.RATES = { 1000, 500, 100, 50, 25, 2 }
--- Tenues vanilla militaires et de police (clothing.xml, 42.21), en minuscules.
-Notes.OUTFIT_WORDS = { "army", "police", "sheriff" }
-Notes.OUTFIT_EXCLUDED = { "stripper" }
+-- Tenues ciblées : options NoteOutfits et NoteOutfitsExcluded (mots contenus
+-- dans le nom de la tenue, séparés par « ; »), pour suivre les tenues des mods.
 
 local MODDATA_KEY = "MilitaryDrop_note"
 
@@ -45,13 +44,14 @@ local function containsAny(text, words)
     return false
 end
 
---- Tenue militaire ou de police (nom d'outfit vanilla ou de mod).
+--- Tenue ciblée par les options (nom d'outfit vanilla ou de mod).
 function Notes.isArmyOrPolice(outfitName)
     if type(outfitName) ~= "string" then
         return false
     end
     local lower = string.lower(outfitName)
-    return containsAny(lower, Notes.OUTFIT_WORDS) and not containsAny(lower, Notes.OUTFIT_EXCLUDED)
+    return containsAny(lower, Config.getList("NoteOutfits"))
+        and not containsAny(lower, Config.getList("NoteOutfitsExcluded"))
 end
 
 function Notes.dropRate()

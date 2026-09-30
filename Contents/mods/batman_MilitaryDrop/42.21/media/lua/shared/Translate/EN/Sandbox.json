@@ -21,7 +21,11 @@
     "Sandbox_MilitaryDrop_NoteDropRate_option5": "Common (1/25)",
     "Sandbox_MilitaryDrop_NoteDropRate_option6": "Debug (1/2)",
     "Sandbox_MilitaryDrop_NotesOnlyArmyPolice": "Notes only on military and police zombies",
-    "Sandbox_MilitaryDrop_NotesOnlyArmyPolice_tooltip": "Only zombies wearing a military or police outfit can carry the notes.",
+    "Sandbox_MilitaryDrop_NotesOnlyArmyPolice_tooltip": "Only zombies whose outfit matches the list below can carry the notes.",
+    "Sandbox_MilitaryDrop_NoteOutfits": "Outfits carrying notes",
+    "Sandbox_MilitaryDrop_NoteOutfits_tooltip": "Words searched in the zombie outfit name, separated by ; (also matches outfits from other mods).",
+    "Sandbox_MilitaryDrop_NoteOutfitsExcluded": "Excluded outfits",
+    "Sandbox_MilitaryDrop_NoteOutfitsExcluded_tooltip": "Outfits containing one of these words never carry notes, separated by ;.",
     "Sandbox_MilitaryDrop_DebugLog": "Debug log",
     "Sandbox_MilitaryDrop_DebugLog_tooltip": "Write detailed Military Drop messages to the console log."
 }

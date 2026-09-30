@@ -7,7 +7,7 @@ Chaque étape donne l'action, puis le résultat attendu. Noter tout écart et ga
 1. Lancer le jeu en mode debug (`-debug` dans les options de lancement Steam).
 2. Mods : activer **batman_Military Drop** seul (HEF désactivé pour ce premier passage).
 3. Nouvelle partie « bac à sable ». Page **Military Drop** des options :
-   - vérifier les 9 options et leurs libellés en français ;
+   - vérifier les 11 options et leurs libellés en français ;
    - **Heures entre deux largages** : 1 ; **Fréquence des notes militaires** : Débogage (1/2) ; **Journal de débogage** : activé ; le reste par défaut (151,4 MHz, code exigé).
 4. En jeu, se placer **dehors**, dans un endroit dégagé.
 
@@ -22,8 +22,6 @@ getPlayer():getInventory():AddItem("MilitaryDrop.MilitaryMemo")
 print(MilitaryDrop.Server.getCode())
 -- Caisses de ravitaillement
 getPlayer():getInventory():AddItem("MilitaryDrop.AmmoSupplyCase")
--- Abîmer l'objet tenu en main (test de réparation A4)
-getPlayer():getPrimaryHandItem():setCondition(3)
 ```
 
 ## A. Objets et recette (phase 1)
@@ -34,7 +32,6 @@ getPlayer():getPrimaryHandItem():setCondition(3)
 | A2 | Clic droit sur chaque caisse, dans l'inventaire | « Ouvrir la caisse de ravitaillement » ; munitions ×5, 1 arme **avec 2 chargeurs (si elle en prend) et 1 boîte de munitions**, équipement ×5, accessoires ×5 |
 | A5 | Ajouter une note par la console (`AddItem("MilitaryDrop.MilitaryMemo")`) | « Lire » disponible ; texte avec 151.4 et le code |
 | A3 | Poser une caisse au sol et l'ouvrir par clic droit | Même résultat, sans erreur |
-| A4 | Talkie-walkie militaire abîmé : menu Réparer | Réparation avec débris électroniques (Électricité 6) |
 
 ## B. Appel radio (phase 2)
 

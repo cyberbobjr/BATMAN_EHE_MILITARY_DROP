@@ -25,7 +25,7 @@ Aucune migration de sauvegarde : les parties B41 ne se chargent pas en B42. Les 
   - Quatre caisses `MilitaryDrop.{Ammo,Weapon,Armor,Attachment}SupplyCase` (icônes et modèles des étuis militaires vanilla), recette `OpenMilitarySupplyCase` (menu contextuel), contenu tiré dans `OnCreate` (`MilitaryDrop_Recipe.lua`, solo ou serveur).
   - Butin : tables `ArmyStorage*` filtrées par `ItemType` (armes seules dans la caisse d'armes, sans sacs vides dans celle de munitions), accessoires 42.21, tirage aux poids décimaux (`MilitaryDrop_Loot.lua`). La compatibilité Arsenal et VFE de la B41 est abandonnée : un mod peut remplacer `MilitaryDrop.Loot.CASES[type].source`.
   - Options sandbox lues à l'appel (`MilitaryDrop_Core.lua`) ; fréquence ramenée au pas de 0,2 MHz des radios, bornée à 0,2-1 000 MHz, 112,2 MHz (HEF) décalée.
-  - Réparation du talkie-walkie militaire reprise de la B41 (3 débris électroniques, Électricité 6), sans le `ConditionModifier : 100` d'origine.
+  - Réparation du talkie-walkie militaire reprise de la B41, puis supprimée le 2026-09-30 (aucun nom d'objet codé en dur).
 - [ ] **2. Autorité serveur** : le client envoie une demande ; le serveur vérifie radio, allumage, fréquence (arrondie au pas de 200 du talkie), code, délai global et droits admin, puis crée la caisse, le butin et la horde. Notes tirées côté serveur (ou solo). Branche solo sans commande réseau. *Code écrit et testé hors jeu (2026-09-30) ; test en jeu à faire.*
   - `MilitaryDrop_Net.lua` : `toServer`/`toPlayer`, appel direct en solo (où `sendServerCommand` ne fait rien).
   - `MilitaryDrop_Radio.lua` : radio militaire = `getIsHighTier` (talkie et poste nomade en main ou sur le dos, radio posée à 2 cases au plus). Le serveur résout lui-même la référence envoyée par le client.
@@ -66,7 +66,14 @@ Aucune migration de sauvegarde : les parties B41 ne se chargent pas en B42. Les 
     - note ajoutée par la console vide (« rien d'intéressant ») → remplie par l'`OnCreate` de l'objet ;
     - armes sans chargeur → 2 chargeurs et 1 boîte de munitions par arme ;
     - largage admin refusé avec une radio rangée → radio facultative pour l'admin.
-  - Pas encore testés : A4 (réparation), D3 (nom de la chaîne masqué), D4, E4 corrigé, F (sauvegarde), multijoueur.
+  - Retest solo du 2026-09-30 : largage admin avec radio rangée, caisses d'armes, de munitions et d'accessoires ouvertes sans erreur, option MaxZombies respectée (46 zombies).
+  - Pas encore testés : D3 (nom de la chaîne masqué), D4, F (sauvegarde), multijoueur.
+- [x] **Aucun nom d'objet codé en dur** (demande du 2026-09-30) :
+  - `MilitaryDrop_Loot.lua` reconnaît les objets par leur catégorie de jeu : arme à feu (`isRanged` et dégâts > 0, ce qui écarte les pistolets à amorces), munitions (chargeur ou boîte d'une arme à feu existante), équipement de protection (`getBulletDefense` > 0), accessoire (`WeaponPart`). Chaque caisse lit la table de l'armée, puis toutes les tables du jeu si elle manque ou ne donne rien. Les accessoires viennent de toutes les tables, poids additionnés. Les noms sans module sont cherchés dans tous les modules (`getItemsByType`).
+  - Vérifié sur les données vanilla 42.21 (tables et scripts réels) : 4 armes, 9 munitions, 26 équipements et 10 accessoires en temps normal. Avec les tables de l'armée absentes, le repli donne 20 armes à feu, 13 munitions et 35 protections, sans jouet.
+  - Tenues qui portent les notes : options sandbox `NoteOutfits` (`Army;Police;Sheriff`) et `NoteOutfitsExcluded` (`Stripper`), pour suivre aussi les tenues des mods.
+  - Réparation du talkie-walkie militaire **supprimée** (elle nommait deux objets vanilla).
+  - Restent écrits dans le mod : ses propres objets (caisses, note, véhicule) et les noms des tables de butin de l'armée, qui sont des sources et non des objets.
 - [ ] **8. Publication** : art (skill `pz-workshop-art`), suppression de `legacy-b41/`, nouvel élément Workshop, lien depuis la page B41.
 
 ## Défauts B41 à ne pas reproduire
