@@ -189,10 +189,10 @@ def check_steam_descriptions(report):
     for path in sorted(REPO.glob("README.steam*")):
         text = path.read_text(encoding="utf-8")
         before = report.failures
-        # Seule la description anglaise passe par l'envoi du jeu ; les autres langues
-        # se saisissent sur la page Steam, sans suffixe.
+        # Chaque langue est envoyée avec le suffixe « Workshop ID / Mod ID » en bas
+        # (.claude/tools/pz_workshop_project.py, Project.descriptions).
         size = len(text.encode("utf-8"))
-        limit = STEAM_DESCRIPTION_MAX_BYTES - (upload_suffix_length(workshop) if path == reference_path else 0)
+        limit = STEAM_DESCRIPTION_MAX_BYTES - upload_suffix_length(workshop)
         if size > limit:
             report.fail(f"{path.name} : {size} octets UTF-8 (Steam : {limit} au plus)")
         for tag in STEAM_TAGS:
