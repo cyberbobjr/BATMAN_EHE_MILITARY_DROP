@@ -36,7 +36,15 @@ local DEFAULTS = {
     CaseRolls = 6,
     DropMinDistance = 150,
     DropMaxDistance = 400,
-    RequireAuthCode = true,
+    -- 1 aucun, 2 fixe en clair, 3 de la semaine en clair, 4 de la semaine chiffré
+    -- (MilitaryDrop.Codes.MODE_*).
+    AuthCode = 4,
+    -- 0 : fréquence libre tirée dans la bande de la station (MilitaryDrop_NumbersStation.lua).
+    NumbersStationFrequency = 0,
+    CodebookDropRate = 3,
+    CodebookOutfits = "Army",
+    -- Fumée verte sur la caisse posée, si Signal Smoke est actif (0 = aucune).
+    CrateSmokeMinutes = 60,
     DebugLog = false,
 }
 
@@ -48,6 +56,12 @@ function Config.get(name)
         return DEFAULTS[name]
     end
     return value
+end
+
+--- Mode du code d'authentification (MilitaryDrop.Codes.MODE_*), borné à 1-4.
+function Config.codeMode()
+    local mode = math.floor(tonumber(Config.get("AuthCode")) or DEFAULTS.AuthCode)
+    return math.max(1, math.min(4, mode))
 end
 
 --- Liste d'une option texte « a;b;c » : mots en minuscules, sans vides.

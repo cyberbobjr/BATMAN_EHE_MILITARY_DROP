@@ -2,5 +2,6 @@
     "Tooltip_MilitaryDrop_AmmoSupplyCase": "Larguée par l'armée. L'ouvrir pour obtenir des munitions.",
     "Tooltip_MilitaryDrop_WeaponSupplyCase": "Larguée par l'armée. L'ouvrir pour obtenir une arme.",
     "Tooltip_MilitaryDrop_ArmorSupplyCase": "Larguée par l'armée. L'ouvrir pour obtenir des vêtements et de l'équipement militaires.",
-    "Tooltip_MilitaryDrop_AttachmentSupplyCase": "Larguée par l'armée. L'ouvrir pour obtenir des accessoires d'armes."
+    "Tooltip_MilitaryDrop_AttachmentSupplyCase": "Larguée par l'armée. L'ouvrir pour obtenir des accessoires d'armes.",
+    "Tooltip_MilitaryDrop_Codebook": "Table de codes militaire. Déchiffre le code de la semaine transmis par la station de chiffres."
 }

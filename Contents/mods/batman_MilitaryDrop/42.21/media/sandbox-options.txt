@@ -24,10 +24,17 @@ option MilitaryDrop.DropMaxDistance
     page = MilitaryDrop, translation = MilitaryDrop_DropMaxDistance,
 }
 
-option MilitaryDrop.RequireAuthCode
+option MilitaryDrop.AuthCode
 {
-    type = boolean, default = true,
-    page = MilitaryDrop, translation = MilitaryDrop_RequireAuthCode,
+    type = enum, numValues = 4, default = 4,
+    page = MilitaryDrop, translation = MilitaryDrop_AuthCode,
+    valueTranslation = MilitaryDrop_AuthCode,
+}
+
+option MilitaryDrop.NumbersStationFrequency
+{
+    type = double, min = 0.0, max = 1000.0, default = 0.0,
+    page = MilitaryDrop, translation = MilitaryDrop_NumbersStationFrequency,
 }
 
 option MilitaryDrop.MinZombies
@@ -71,6 +78,25 @@ option MilitaryDrop.NoteOutfitsExcluded
 {
     type = string, default = Stripper,
     page = MilitaryDrop, translation = MilitaryDrop_NoteOutfitsExcluded,
+}
+
+option MilitaryDrop.CodebookDropRate
+{
+    type = enum, numValues = 6, default = 3,
+    page = MilitaryDrop, translation = MilitaryDrop_CodebookDropRate,
+    valueTranslation = MilitaryDrop_NoteDropRate,
+}
+
+option MilitaryDrop.CodebookOutfits
+{
+    type = string, default = Army,
+    page = MilitaryDrop, translation = MilitaryDrop_CodebookOutfits,
+}
+
+option MilitaryDrop.CrateSmokeMinutes
+{
+    type = integer, min = 0, max = 1440, default = 60,
+    page = MilitaryDrop, translation = MilitaryDrop_CrateSmokeMinutes,
 }
 
 option MilitaryDrop.DebugLog

@@ -3,5 +3,6 @@
     "MilitaryDrop.WeaponSupplyCase": "Caisse de ravitaillement militaire (armes)",
     "MilitaryDrop.ArmorSupplyCase": "Caisse de ravitaillement militaire (équipement)",
     "MilitaryDrop.AttachmentSupplyCase": "Caisse de ravitaillement militaire (accessoires)",
-    "MilitaryDrop.MilitaryMemo": "Note de service militaire"
+    "MilitaryDrop.MilitaryMemo": "Note de service militaire",
+    "MilitaryDrop.Codebook": "Carnet de codes militaire"
 }

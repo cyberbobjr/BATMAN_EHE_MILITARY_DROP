@@ -8,7 +8,7 @@ Décisions prises le 2026-09-30. L'analyse complète (prérequis EHE, API, HEF) 
 
 | Sujet | Choix |
 |---|---|
-| Dépendances | Aucune. Mod **autonome**, sans Expanded Helicopter Events : EHE B42 n'est pas public et sa licence TEHE interdit de réutiliser son code ou ses ressources, même partiellement. |
+| Dépendances | Aucune. Mod **autonome** (intégration facultative de Signal Smoke, 2026-09-30 : fumée sur la caisse si ce mod est actif), sans Expanded Helicopter Events : EHE B42 n'est pas public et sa licence TEHE interdit de réutiliser son code ou ses ressources, même partiellement. |
 | Hélicoptère | Visible **à la manière d'EHE** : son 3D qui se déplace, ombre de rotor animée au sol et marqueur de direction. Le serveur calcule la trajectoire ; chaque client dessine l'hélicoptère. Écrit à partir des API du jeu, sans reprendre le code d'EHE. |
 | HEF (3672792485) | **Cohabitation propre**, sans intégration : espaces de noms, sons, commandes réseau et ModData distincts. Pas deux hélicoptères au même endroit, pas de bruits cumulés. HEF utilise 112,2 MHz pour son drone : cette fréquence est interdite ici. |
 | Workshop | **Nouvel élément B42**, `id=batman_MilitaryDrop`. La page B41 (3259615085, `batman_HTC_EHE_MilitaryDrop`) reste intacte et renverra vers la nouvelle. |

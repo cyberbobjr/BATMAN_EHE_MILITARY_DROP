@@ -8,11 +8,19 @@
 -- même réponse (« noAnswer ») : on ne peut trouver la fréquence en appelant
 -- chaque canal. Le délai n'est révélé qu'après un canal et un code justes.
 --
+-- Code (option AuthCode) : aucun, fixe, ou celui de la semaine (le précédent
+-- reste accepté 24 h). Après FAILED_CODE_LIMIT codes faux dans la même
+-- journée de jeu, la base ne répond plus à ce joueur jusqu'au lendemain,
+-- même avec le bon code : la réponse reste « noAnswer », rien ne trahit le
+-- silence (parade à la force brute : 676 codes quand les chiffres sont
+-- connus). Le compteur reste en mémoire du serveur : dans la ModData, il
+-- distinguerait un mauvais code (compté) d'un mauvais canal (non compté) et
+-- révélerait la fréquence. Un redémarrage le remet à zéro.
+--
 -- État persistant : ModData globale « MilitaryDrop » (heure du dernier
--- largage, vols, livraisons en attente). Tout client connecté peut lire une
--- ModData globale (ModData.request, GlobalModData.receiveRequest, 42.21) : le
--- code de la partie n'y est donc pas. Il est gardé dans un fichier du serveur
--- (Zomboid/Lua/MilitaryDrop/<mode>_<partie>_code.txt).
+-- largage, vols, livraisons en attente). Tout client connecté peut la lire :
+-- les secrets (code fixe, graine des codes de la semaine) sont dans des
+-- fichiers du serveur (MilitaryDrop_Secrets.lua).
 --
 -- Une demande acceptée lance un hélicoptère (MilitaryDrop_Flights.lua) vers
 -- un point tiré au hasard **loin du demandeur** (options DropMin/MaxDistance,
@@ -31,15 +39,18 @@ end
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Codes"
+require "MilitaryDrop/MilitaryDrop_Secrets"
 require "MilitaryDrop/MilitaryDrop_Loot"
 require "MilitaryDrop/MilitaryDrop_Flight"
 require "MilitaryDrop/MilitaryDrop_Crate"
 require "MilitaryDrop/MilitaryDrop_Broadcast"
+require "MilitaryDrop/MilitaryDrop_Smoke"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
 local Radio = MilitaryDrop.Radio
 local Codes = MilitaryDrop.Codes
+local Secrets = MilitaryDrop.Secrets
 
 local Server = {}
 MilitaryDrop.Server = Server
@@ -57,60 +68,86 @@ Server.HORDE_RADIUS = 4
 -- (un point lointain est tiré sans voir l'eau ni les obstacles).
 Server.RELOCATE_RADIUS = 30
 Server.CELL_SIZE = 256
+-- Codes faux permis par joueur et par journée de jeu avant le silence.
+Server.FAILED_CODE_LIMIT = 3
 local lastRequestMs = {}
-local secretCode = nil
+-- nom du joueur → { day, count } : mémoire du serveur seulement (voir en-tête).
+local failedCodes = {}
 
 --- État persistant de la partie (lisible par les clients : rien de secret).
 function Server.getState()
     return ModData.getOrCreate(Server.MODDATA_TAG)
 end
 
---- Fichier du code, propre à la partie (dossier Lua du serveur ou du joueur).
-function Server.codeFile()
-    local world = getWorld()
-    local key = tostring(world:getGameMode()) .. "_" .. tostring(world:getWorld())
-    return "MilitaryDrop/" .. key:gsub("[^%w_%-]", "_") .. "_code.txt"
+--- Horloge du calendrier du jeu, en heures (semaines alignées sur le lundi 00:00).
+function Server.clock()
+    return Codes.gameClock(getGameTime())
 end
 
-local function readCode(file)
-    local reader = getFileReader(file, false)
-    if not reader then
-        return nil
-    end
-    local line = reader:readLine()
-    reader:close()
-    if type(line) == "string" and line ~= "" then
-        return line
-    end
-    return nil
+local function isWeekly(mode)
+    return mode == Codes.MODE_WEEKLY_PLAIN or mode == Codes.MODE_WEEKLY_CIPHER
 end
 
-local function writeCode(file, code)
-    local writer = getFileWriter(file, true, false)
-    if writer then
-        writer:write(code)
-        writer:close()
-    else
-        MilitaryDrop.log("cannot write " .. file .. ": the code will change at the next restart", true)
+--- Code en vigueur (notes, console) : celui de la semaine, ou le code fixe.
+function Server.getCode(clock)
+    if isWeekly(Config.codeMode()) then
+        return Codes.weeklyCode(Secrets.getSeed(), Codes.weekOf(clock or Server.clock()))
+    end
+    return Secrets.getFixedCode()
+end
+
+--- Codes acceptés à cette heure : celui de la semaine et, pendant la grâce,
+--- celui de la semaine précédente ; ou le code fixe.
+function Server.acceptedCodes(clock)
+    local mode = Config.codeMode()
+    if mode == Codes.MODE_NONE then
+        return {}
+    end
+    if not isWeekly(mode) then
+        return { Secrets.getFixedCode() }
+    end
+    local codes = {}
+    for i, week in ipairs(Codes.acceptedWeeks(clock)) do
+        codes[i] = Codes.weeklyCode(Secrets.getSeed(), week)
+    end
+    return codes
+end
+
+--- La base ignore ce joueur jusqu'au lendemain (trop de codes faux).
+function Server.isSilenced(name, day)
+    local entry = failedCodes[name]
+    return entry ~= nil and entry.day == day and entry.count >= Server.FAILED_CODE_LIMIT
+end
+
+function Server.recordFailedCode(name, day)
+    local entry = failedCodes[name]
+    if not entry or entry.day ~= day then
+        entry = { day = day, count = 0 }
+        failedCodes[name] = entry
+    end
+    entry.count = entry.count + 1
+    if entry.count == Server.FAILED_CODE_LIMIT then
+        MilitaryDrop.log(name .. ": " .. entry.count .. " wrong codes today, ignored until tomorrow", true)
     end
 end
 
---- Code d'authentification de la partie, tiré à la première lecture.
-function Server.getCode()
-    if secretCode then
-        return secretCode
+--- Code juste (ou non exigé) ; compte les codes faux et applique le silence.
+function Server.checkCode(player, code)
+    if Config.codeMode() == Codes.MODE_NONE then
+        return true
     end
-    local file = Server.codeFile()
-    local state = Server.getState()
-    secretCode = readCode(file)
-    if not secretCode then
-        -- Reprise d'une version de développement qui le gardait en ModData.
-        secretCode = type(state.code) == "string" and state.code ~= "" and state.code or Codes.generate()
-        writeCode(file, secretCode)
-        MilitaryDrop.log("authentication code stored in " .. file)
+    local name = tostring(player:getUsername())
+    local clock = Server.clock()
+    local day = math.floor(clock / 24)
+    if Server.isSilenced(name, day) then
+        return false
     end
-    state.code = nil
-    return secretCode
+    if not Codes.matchesAny(code, Server.acceptedCodes(clock)) then
+        Server.recordFailedCode(name, day)
+        return false
+    end
+    failedCodes[name] = nil
+    return true
 end
 
 --- Heures de jeu avant le prochain largage permis (0 si permis).
@@ -156,7 +193,7 @@ function Server.evaluate(player, args, now)
     if status then
         return status
     end
-    if Config.get("RequireAuthCode") and not Codes.matches(args.code, Server.getCode()) then
+    if not Server.checkCode(player, args.code) then
         return "noAnswer"
     end
     local wait = Server.hoursUntilNextDrop(Server.getState(), now)
@@ -341,6 +378,8 @@ function Server.deliver(x, y, requester)
         MilitaryDrop.log("crate could not spawn: supply cases left on the ground", true)
     end
     x, y = square:getX(), square:getY()
+    -- Fumée de repérage (Signal Smoke, facultatif).
+    MilitaryDrop.Smoke.markCrate(x, y)
     local zombies = Server.hordeSize()
     if zombies > 0 then
         local r = Server.HORDE_RADIUS
@@ -401,6 +440,7 @@ function Server.onClientCommand(module, command, player, args)
 end
 
 Events.OnInitGlobalModData.Add(function()
+    Secrets.getSeed()
     Server.getCode()
 end)
 Events.OnClientCommand.Add(Server.onClientCommand)

@@ -16,9 +16,12 @@
 --
 -- Largage : les coordonnées sont annoncées au passage de l'hélicoptère, même
 -- si la zone n'est pas chargée (point lointain). La caisse est posée dès que
--- la zone l'est : aussitôt, ou à la fin du chargement d'un chunk proche
--- (LoadChunk : après les histoires de bâtiment et le butin, une fois par chunk
--- de 8 × 8 cases), jusqu'à ce qu'une case convienne.
+-- la case du point est chargée : aussitôt, ou à la fin du chargement d'un
+-- chunk (LoadChunk : après les histoires de bâtiment et le butin, une fois par
+-- chunk de 8 × 8 cases), jusqu'à ce qu'une case convienne. Livrer dès qu'un
+-- chunk voisin se chargeait posait la caisse sur la case chargée la plus
+-- proche, en bordure de la zone chargée, loin du repère (test solo du
+-- 2026-09-30 : 24 et 42 cases).
 --
 -- Persistance (ModData « MilitaryDrop ») : les vols en cours et les
 -- livraisons en attente. Au chargement de la partie, un vol interrompu reprend
@@ -76,33 +79,14 @@ end
 -- Livraisons en attente du chargement de leur chunk
 -- ----------------------------------------------------------------------------
 
---- Coin nord-ouest (x, y) d'un chunk, déduit d'une de ses cases au sol :
---- IsoChunk n'expose pas ses coordonnées à Lua.
-local function chunkOrigin(chunk)
-    for lx = 0, Flights.CHUNK_SIZE - 1 do
-        for ly = 0, Flights.CHUNK_SIZE - 1 do
-            local square = chunk:getGridSquare(lx, ly, 0)
-            if square then
-                return square:getX() - lx, square:getY() - ly
-            end
-        end
-    end
-    return nil
-end
-
-local function onLoadChunk(chunk)
-    local x0, y0 = chunkOrigin(chunk)
-    if not x0 then
-        return
-    end
+--- Livre les largages en attente dont la case du point est désormais chargée.
+local function onLoadChunk()
     local pending = state().pending
+    local cell = getCell()
     -- Kahlua : relever les entrées, puis les retirer après le pairs.
     local ready = {}
     for key, entry in pairs(pending) do
-        -- Chunk du point, ou assez proche pour contenir une case de repli.
-        local margin = Server.RELOCATE_RADIUS
-        if entry.x >= x0 - margin and entry.x < x0 + Flights.CHUNK_SIZE + margin
-            and entry.y >= y0 - margin and entry.y < y0 + Flights.CHUNK_SIZE + margin then
+        if cell:getGridSquare(entry.x, entry.y, 0) then
             ready[#ready + 1] = key
         end
     end
@@ -126,7 +110,7 @@ local function watchSquares()
 end
 
 --- Livre au point (x, y) : tout de suite si la zone est chargée, sinon en
---- attente d'un LoadChunk proche.
+--- attente du chargement de cette case.
 function Flights.deliverAt(x, y, requester)
     if getCell():getGridSquare(x, y, 0) and Server.deliver(x, y, requester) then
         return

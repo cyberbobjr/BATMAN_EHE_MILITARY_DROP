@@ -1,5 +1,6 @@
 -- MilitaryDrop_Server : décision sur une demande de largage, délai global,
--- anti-rafale et envoi des réponses.
+-- anti-rafale, code (fixe, de la semaine, grâce, silence après des codes faux)
+-- et envoi des réponses.
 
 local T = {}
 
@@ -39,7 +40,7 @@ local function makePlayer(radio, where)
 end
 
 function T.setup()
-    SandboxVars = { MilitaryDrop = { CooldownHours = 168, RequireAuthCode = true, Frequency = 151.4,
+    SandboxVars = { MilitaryDrop = { CooldownHours = 168, AuthCode = 2, Frequency = 151.4,
         MinZombies = 0, MaxZombies = 0, CaseRolls = 2 } }
     isClient = function() return false end
     isServer = function() return false end
@@ -57,7 +58,17 @@ function T.setup()
     NOW_MS = 0
     getTimestampMs = function() return NOW_MS end
     WORLD_HOURS = 1000
-    getGameTime = function() return { getWorldAgeHours = function() return WORLD_HOURS end } end
+    -- Calendrier du jeu : mercredi 14 juillet 1993, midi (mois et jour depuis 0).
+    DATE = { year = 1993, month = 6, day = 13, hour = 12 }
+    getGameTime = function()
+        return {
+            getWorldAgeHours = function() return WORLD_HOURS end,
+            getYear = function() return DATE.year end,
+            getMonth = function() return DATE.month end,
+            getDay = function() return DATE.day end,
+            getTimeOfDay = function() return DATE.hour end,
+        }
+    end
     PLACED = {}
     LANDING = {
         getX = function() return 115 end, getY = function() return 200 end,
@@ -130,6 +141,9 @@ function T.setup()
     addVehicleDebug = function(script) SPAWNED[#SPAWNED + 1] = script return VEHICLE end
     IsoDirections = { getRandom = function() return "N" end }
     loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Secrets.lua")
+    getActivatedMods = function() return { size = function() return 0 end } end
+    loadMod("server/MilitaryDrop/MilitaryDrop_Smoke.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")
@@ -181,8 +195,108 @@ function T.non_military_or_unknown_radio_is_refused()
 end
 
 function T.code_not_required_when_option_off()
-    SandboxVars.MilitaryDrop.RequireAuthCode = false
+    SandboxVars.MilitaryDrop.AuthCode = 1
     assertEq(evaluate(makeRadio(true, CHANNEL), request(nil)), "accepted", "sans code")
+end
+
+local SEED = 424242
+
+--- Code de la semaine du calendrier (DATE), pour la graine de test.
+local function weeklyCode(dayOffset)
+    local Codes = MilitaryDrop.Codes
+    local clock = Codes.clockHours(DATE.year, DATE.month, DATE.day + (dayOffset or 0), DATE.hour)
+    return Codes.weeklyCode(SEED, Codes.weekOf(clock))
+end
+
+function T.weekly_code_changes_on_monday_with_24_hours_of_grace()
+    SandboxVars.MilitaryDrop.AuthCode = 3
+    FILES["MilitaryDrop/Sandbox_Test_Save_seed.txt"] = tostring(SEED)
+    DATE.day, DATE.hour = 17, 23.5 -- dimanche 18 juillet, 23:30
+    local old = weeklyCode()
+    assertEq(MilitaryDrop.Server.getCode(), old, "code de la semaine")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(old)), "accepted", "dimanche soir")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "noAnswer", "code fixe ignoré")
+    DATE.day, DATE.hour = 18, 1 -- lundi 19 juillet, 01:00
+    local new = weeklyCode()
+    assertTrue(new ~= old, "nouveau code le lundi")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(new)), "accepted", "nouveau code")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(old)), "accepted", "ancien code pendant la grâce")
+    DATE.day, DATE.hour = 19, 0.5 -- mardi 00:30
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(old)), "noAnswer", "ancien code après 24 h")
+end
+
+function T.three_wrong_codes_silence_the_caller_until_the_next_day()
+    for i = 1, MilitaryDrop.Server.FAILED_CODE_LIMIT do
+        assertEq(evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i)), "noAnswer", "code faux " .. i)
+    end
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "noAnswer",
+        "silence : même le bon code reçoit la réponse d'un mauvais canal")
+    DATE.hour = 23.9
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "noAnswer", "jusqu'à minuit")
+    DATE.day, DATE.hour = DATE.day + 1, 0.1
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "le lendemain")
+end
+
+function T.wrong_frequency_and_good_code_reset_the_count()
+    for _ = 1, 5 do
+        evaluate(makeRadio(true, 107400), request("ALPHA-ALPHA-01"))
+    end
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "mauvais canal : non compté")
+    evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-01"))
+    evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-02"))
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "bon code : compteur remis à zéro")
+    evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-03"))
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "un seul code faux depuis")
+end
+
+function T.silence_is_per_player()
+    for i = 1, MilitaryDrop.Server.FAILED_CODE_LIMIT do
+        evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i))
+    end
+    local other = makePlayer(makeRadio(true, CHANNEL))
+    other.getUsername = function() return "other" end
+    assertEq(MilitaryDrop.Server.evaluate(other, request(CODE), WORLD_HOURS), "accepted", "autre joueur")
+end
+
+--- Toutes les chaînes et nombres de la ModData, à plat.
+local function modDataValues()
+    local values = {}
+    local function walk(t)
+        for _, v in pairs(t) do
+            if type(v) == "table" then
+                walk(v)
+            else
+                values[#values + 1] = tostring(v)
+            end
+        end
+    end
+    walk(MODDATA)
+    return table.concat(values, "|")
+end
+
+function T.no_secret_or_failure_count_in_mod_data()
+    SandboxVars.MilitaryDrop.AuthCode = 4
+    FILES["MilitaryDrop/Sandbox_Test_Save_seed.txt"] = tostring(SEED)
+    for i = 1, 4 do
+        evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i))
+    end
+    DATE.day = DATE.day + 1
+    MilitaryDrop.Server.handleRequest(PLAYER, request(weeklyCode()))
+    assertEq(#MilitaryDrop.Server.getState().flights, 1, "largage accepté")
+    local values = modDataValues()
+    assertTrue(values:find(tostring(SEED), 1, true) == nil, "graine absente de la ModData")
+    assertTrue(values:find(weeklyCode(), 1, true) == nil, "code absent de la ModData")
+    assertTrue(values:find("ALPHA-ALPHA", 1, true) == nil, "codes saisis absents de la ModData")
+    local state = MilitaryDrop.Server.getState()
+    assertTrue(state.failedCodes == nil and state.code == nil and state.seed == nil,
+        "ni compteur de codes faux, ni code, ni graine dans l'état lisible")
+end
+
+function T.seed_is_generated_once_and_written()
+    local first = MilitaryDrop.Secrets.getSeed()
+    assertEq(FILES["MilitaryDrop/Sandbox_Test_Save_seed.txt"], tostring(first), "écrite dans le fichier de la partie")
+    assertTrue(MilitaryDrop.Codes.validSeed(first) ~= nil, "graine valable")
+    assertEq(MilitaryDrop.Secrets.getSeed(), first, "graine conservée")
 end
 
 function T.force_needs_permission_and_skips_checks()
@@ -341,6 +455,20 @@ function T.landing_needs_the_four_squares_under_the_crate()
     local square = MilitaryDrop.Server.findLandingNear(115, 200)
     assertTrue(square ~= nil, "autre case trouvée")
     assertTrue(not (square:getX() == 115 and square:getY() == 200), "déplacée")
+end
+
+function T.delivery_marks_the_crate_with_smoke_when_signal_smoke_is_active()
+    getActivatedMods = function()
+        return { size = function() return 1 end, get = function() return "batman_SignalSmoke" end }
+    end
+    local smoke = {}
+    require = function(name)
+        return name == "SignalSmoke/SignalSmoke" and { start = function(opts) smoke[#smoke + 1] = opts return opts.id end }
+            or nil
+    end
+    assertTrue(MilitaryDrop.Server.deliver(115, 200, "tester"), "livré")
+    assertEq(#smoke, 1, "une fumée")
+    assertEq(smoke[1].x, 115, "sur la case de la caisse")
 end
 
 return T

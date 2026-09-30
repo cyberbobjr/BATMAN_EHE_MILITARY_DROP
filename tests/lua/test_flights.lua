@@ -31,8 +31,15 @@ function T.setup()
     getNumActivePlayers = function() return 0 end
     PLACED = {}
     LOADED = true
+    -- Zone chargée : tout (LOADED), ou seulement les cases x < LOADED_UP_TO_X.
+    LOADED_UP_TO_X = nil
     getCell = function()
-        return { getGridSquare = function(_, x, y) return LOADED and makeSquare(x, y) or nil end }
+        return { getGridSquare = function(_, x, y)
+            if LOADED or (LOADED_UP_TO_X and x < LOADED_UP_TO_X) then
+                return makeSquare(x, y)
+            end
+            return nil
+        end }
     end
     getText = function(key) return key end
     FILES = {}
@@ -90,6 +97,8 @@ function T.setup()
     addVehicleDebug = function(script) SPAWNED[#SPAWNED + 1] = script return VEHICLE end
     IsoDirections = { getRandom = function() return "N" end }
     loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
+    getActivatedMods = function() return { size = function() return 0 end } end
+    loadMod("server/MilitaryDrop/MilitaryDrop_Smoke.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")
@@ -153,17 +162,36 @@ function T.far_drop_is_announced_before_its_area_loads()
     assertEq(listenerCount("LoadChunk"), 1, "livraison en attente")
 end
 
-function T.unloaded_square_waits_for_a_nearby_chunk()
+function T.unloaded_square_waits_for_its_own_chunk()
     LOADED = false
     MilitaryDrop.Flights.deliverAt(500, 600, "tester")
     assertEq(#PLACED, 0, "case non chargée")
     assertEq(listenerCount("LoadChunk"), 1, "surveillance du chargement")
-    LOADED = true
-    triggerEvent("LoadChunk", makeChunk(800, 600))
-    assertEq(#PLACED, 0, "chunk lointain ignoré")
-    triggerEvent("LoadChunk", makeChunk(520, 600))
-    assertEq(#PLACED, 1, "livré depuis un chunk voisin (rayon de recherche)")
+    -- Le joueur arrive de l'ouest : la zone chargée s'arrête à 24 cases du point.
+    LOADED_UP_TO_X = 476
+    triggerEvent("LoadChunk", makeChunk(468, 600))
+    assertEq(#PLACED, 0, "bordure de la zone chargée : rien de posé loin du repère (bug du 2026-09-30)")
+    LOADED_UP_TO_X = 504
+    triggerEvent("LoadChunk", makeChunk(496, 600))
+    assertEq(#PLACED, 1, "case du point chargée : livré")
     assertEq(listenerCount("LoadChunk"), 0, "surveillance arrêtée")
+end
+
+function T.delivery_lands_at_the_announced_point()
+    LOADED = false
+    SPAWNED = {}
+    addVehicleDebug = function(script, _, _, square)
+        SPAWNED[#SPAWNED + 1] = square
+        return nil
+    end
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester")
+    LOADED_UP_TO_X = 476
+    triggerEvent("LoadChunk", makeChunk(468, 600))
+    LOADED_UP_TO_X = 600
+    triggerEvent("LoadChunk", makeChunk(496, 600))
+    local state = MilitaryDrop.Server.getState()
+    assertEq(state.lastDrop.x, 500, "posé au point annoncé")
+    assertEq(state.lastDrop.y, 600, "même ligne")
 end
 
 function T.no_ground_keeps_the_delivery_pending()

@@ -22,6 +22,7 @@ LuaError = lupa_module.LuaError
 
 REPO = Path(__file__).resolve().parent.parent
 MOD_LUA = REPO / "Contents" / "mods" / "batman_MilitaryDrop" / "42.21" / "media" / "lua"
+MOD_COMMON = REPO / "Contents" / "mods" / "batman_MilitaryDrop" / "common"
 PZ_MEDIA = Path(os.environ.get(
     "PZ_MEDIA", r"D:\SteamLibrary\steamapps\common\ProjectZomboid\media"))
 VANILLA_LUA = PZ_MEDIA / "lua"
@@ -124,6 +125,8 @@ def new_runtime():
 
     globals_.readModFile = read_mod_file
     globals_.readVanillaFile = lambda rel: _read(VANILLA_LUA, rel)
+    # Ressource du dossier common du mod (textures des documents…).
+    globals_.commonFileExists = lambda rel: (MOD_COMMON / rel).is_file()
     globals_.hasVanilla = VANILLA_LUA.is_dir()
     lua.execute(PRELUDE)
     return lua

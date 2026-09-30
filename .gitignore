@@ -5,3 +5,5 @@ __pycache__/
 *.bak
 *.tmp
 *.blend1
+# Aperçus des documents (python source/print_media/preview.py)
+source/print_media/preview/

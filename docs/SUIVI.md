@@ -33,10 +33,11 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | v1.0 | Parité B41 + code d'authentification | testé solo, MP à faire |
 | v1.1 | Largage loin du demandeur | testé hors jeu |
 | Phases 7-8 | Tests en jeu, publication | à faire |
-| v1.2 | Code chiffré de la semaine (idée 4) | conçu |
+| v1.2 | Code chiffré de la semaine (idée 4) | testé solo (parcours nominal), MP à faire |
 | v1.3 | Confiance de faction, sources de confiance, poste de commandement (idée 5) | décidé |
 | v1.4 | Formulaire de réquisition (idée 6) | conçu |
 | v1.5 | Largage leurre (idée 9) | conçu |
+| Intégrations | Fumée sur la caisse avec Signal Smoke (facultatif) | testé solo |
 | Idée 3 | Balises, détecteur, chasses au trésor | mis de côté |
 | Idée 8 | Mayday, épave démontable | à décider |
 | Idée 10 | Extraction, pont avec Opération Artemis | à décider |
@@ -71,7 +72,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
 | DROP-01 | Point tiré à 150-400 cases (sandbox), sur la carte et hors bâtiment (métagrille) | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_server | C1 en jeu ; MP |
-| DROP-02 | Annonce au passage, pose à l'arrivée d'un joueur, à 30 cases au plus | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_flights | E1 en jeu ; MP |
+| DROP-02 | Annonce au passage, pose à l'arrivée d'un joueur, quand la case du point est chargée, à 30 cases au plus | PLAN-V2 étape 0 | testé solo | `555593e`, test_flights, E1 (console du 2026-09-30 : livré en 8041,12035, point annoncé, caisse ouverte) | MP |
 | DROP-03 | Repli près du demandeur si aucun point lointain ne convient | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_server | — |
 | DROP-04 | Vol interrompu repris après un redémarrage, renvoyé aux clients | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_flights | F1 en jeu ; MP (reconnexion) |
 
@@ -86,15 +87,26 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | PUB-03 | Suppression de `legacy-b41/` avant la sortie | PLAN phase 8 | décidé | — | — |
 | PUB-04 | Nouvel élément Workshop B42, lien depuis la page B41 | PLAN décisions | décidé | — | Après TEST-03 |
 
+## Intégrations facultatives
+
+| ID | Élément | Réf. | État | Preuves | Reste |
+|---|---|---|---|---|---|
+| FUM-01 | Fumée verte sur la caisse posée si Signal Smoke (`batman_SignalSmoke`) est actif ; durée en option (`CrateSmokeMinutes`, 60 min, 0 = aucune) ; aucun `require` dans `mod.info` | PLAN-V2 décision 17 | testé solo | test_smoke, test_server, E5, « Signal Smoke found » dans la console (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | MP |
+
 ## v1.2 — Code chiffré de la semaine (idée 4)
 
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
-| CODE-01 | Code qui change chaque semaine de jeu, 24 h de grâce, dérivé d'une graine du serveur | PLAN-V2 §4 | conçu | — | — |
-| CODE-02 | Station de chiffres sur sa propre fréquence | PLAN-V2 §4 | conçu | — | — |
-| CODE-03 | Carnet de codes par édition, page écrite par le serveur | PLAN-V2 §4 | conçu | — | — |
-| CODE-04 | Option `PlainCodeOnNotes` (code en clair sur les notes) | PLAN-V2 décision 2 | conçu | — | — |
-| CODE-05 | Notes : fréquence militaire et fréquence de la station, plus le code | PLAN-V2 §4 | conçu | — | — |
+| CODE-01 | Code qui change chaque lundi à 00:00 (calendrier du jeu), 24 h de grâce, dérivé d'une graine gardée dans un fichier du serveur | PLAN-V2 §4, décisions 8 et 11 | testé solo | test_codes, test_server, G4 (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | G7 (changement de semaine) ; MP |
+| CODE-02 | Station de chiffres toutes les 30 min, ondes courtes 10-25 MHz (fréquence libre tirée de la graine, ou option), nom masqué | PLAN-V2 §4, décision 12 | testé solo | test_station, G2 (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | MP (les clients ne reçoivent que le texte chiffré) |
+| CODE-03 | Carnet de codes : **un seul par partie** (table fixe dérivée de la graine, seul le code change), 2 pages écrites par le serveur, sur les zombies militaires et dans les réserves de l'armée | PLAN-V2 §4, décision 15 | testé solo | test_notes, test_codes, G3 (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | G5 (rechargement), G9 (butin de l'armée) ; MP |
+| CODE-04 | Option `AuthCode` à 4 choix (aucun, fixe en clair, semaine en clair, semaine chiffré), qui remplace `RequireAuthCode` et `PlainCodeOnNotes` | PLAN-V2 décisions 2 et 9 | testé hors jeu | test_core, test_server, test_notes | G8 en jeu |
+| CODE-05 | Notes : fréquence militaire, plus, selon `AuthCode`, le code (fixe, ou de la semaine avec sa date de fin) ou la fréquence de la station | PLAN-V2 §4 | testé solo | test_notes, A5 (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | G8 (autres modes) ; MP |
+| CODE-07 | « Noter le message » de la station sur une feuille, avec de quoi écrire | PLAN-V2 décisions 14 et 16 | abandonné | — | Retiré le 2026-09-30 à la demande de l'utilisateur après le test solo : jugé inutile, et l'option ne fonctionnait pas en jeu (cause non identifiée, aucune erreur dans la console) |
+| DOC-01 | Note militaire en `printMedia` (« Inspecter ») : mémorandum dactylographié, en-tête et insigne, n° de série, fréquence entourée et annotée à la main, tampon SECRET | PLAN-V2 décision 13 | testé solo | test_notes, `source/print_media/preview.py`, A5 (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | MP |
+| DOC-02 | Carnet de codes en `printMedia` : dossier kraft ouvert, étiquette, tampon, trombone, feuille avec la grille « groupe / mot » sur deux colonnes | PLAN-V2 décision 13 | testé solo | test_notes, `source/print_media/preview.py`, G3 (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | MP |
+| DOC-03 | Textures originales des documents (papier, kraft, bloc de messages, étiquette, trombone, tampon, insigne, stylo, café) générées par `source/print_media/make_textures.py` | PLAN-V2 décision 13 | testé solo | test_notes (textures présentes), aperçu, A5, G3 (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | — |
+| CODE-06 | Silence de la base après 3 codes faux dans la journée de jeu, jusqu'au lendemain : même réponse qu'un mauvais canal, compteur en mémoire du serveur seulement | PLAN-V2 décision 10 | testé hors jeu | test_server | G6 en jeu ; MP ; un redémarrage du serveur remet le compteur à zéro |
 
 ## v1.3 — Confiance, sources de confiance, poste de commandement (idée 5)
 
@@ -116,7 +128,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | SRC-06 | Renseignement : documents militaires transmis, +1 à +3 | PLAN-V2 §5 | décidé | — | Après v1.2 |
 | SRC-07 | Largage perdu ou cache retrouvé au détecteur : +5 | PLAN-V2 §5 | décidé | — | Avec l'idée 3 |
 | SRC-08 | Enregistreur de vol récupéré dans l'épave : +10 | PLAN-V2 §5 | décidé | — | Avec l'idée 8 |
-| AUTH-01 | Un membre qui donne le code authentifie toute la faction jusqu'au changement de code | PLAN-V2 décision 7 | décidé | — | — |
+| AUTH-01 | Un membre qui donne le code authentifie toute la faction jusqu'au changement de code | PLAN-V2 décision 7 | décidé | — | À trancher en v1.3 : les missions exigent-elles le code ? Sinon, sans objet (en v1.2, le code ne sert qu'aux largages) |
 | AUTH-02 | Réglage et allumage automatiques de la radio pour une faction authentifiée | maquettes, base commune | à décider | — | Proposé avec les maquettes, pas tranché |
 | AUTH-03 | Talkie accroché à la ceinture accepté pour émettre | maquettes, base commune | à décider | — | ⚠ état d'une radio à la ceinture connu du serveur en MP ? |
 | POSTE-01 | Talkie-walkie : toutes les fonctions restent possibles | PLAN-V2 décision 7 | décidé | — | — |
@@ -160,6 +172,15 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 ## Journal
 
+- **2026-09-30** — Troisième test solo validé par l'utilisateur, sans erreur dans la console : A5, G2, G3, G4, E1, E5. CODE-01, CODE-02, CODE-03, CODE-05, DOC-01 à DOC-03 et FUM-01 passent en « testé solo ». Restent les cas limites (G5 à G9) et le multijoueur.
+- **2026-09-30** — FUM-01 : fumée de Signal Smoke sur la caisse, intégration facultative (Military Drop reste autonome), testée hors jeu (120 tests `lupa`).
+- **2026-09-30** — Second test solo : E1 réussi (DROP-02). Corrections : icônes des documents introuvables (`PaperReport`, `Paperwork` : les noms vanilla finissent par un chiffre), lecture trop longue (5 pages → tag `base:fastread`), fréquence décalée dans son ellipse (aperçu recalé sur une capture). « Noter le message » retiré (CODE-07 abandonné).
+- **2026-09-30** — Documents en rendu de journal (DOC-01 à DOC-03) et « Noter le message » (CODE-07) testés hors jeu : 122 tests `lupa`, aperçu des trois documents rendu avec les polices du jeu (`source/print_media/preview.py`). Les notes et carnets d'une partie déjà commencée gardent l'ancien format.
+- **2026-09-30** — Test solo : le carnet ne déchiffrait pas la station. Ce n'était pas un défaut de calcul : le carnet trouvé était de l'édition 2 (édition suivante, 1 fois sur 10) et la station diffusait l'édition 1. Décision 15 : un seul carnet par partie, option `CodeEditionWeeks` retirée ; la table unique est celle de l'ancienne édition 1, pour que les carnets déjà trouvés restent justes (CODE-03).
+- **2026-09-30** — Défaut du test solo (DROP-02) : caisse et horde posées à 24 et 42 cases du repère. La livraison en attente partait dès qu'un chunk se chargeait à moins de 30 cases du point, sur la case chargée la plus proche, en bordure de la zone chargée. Corrigé : on attend que la case du point soit chargée (test_flights).
+- **2026-09-30** — Défaut du test solo : réponse de la base en noir sur une radio posée (surcharge `int` de `IsoWaveSignal:AddDeviceText`), corrigé par des couleurs 0-255 (test_client) ; à revoir en jeu (APPEL-01).
+- **2026-09-30** — Premier test solo de la v1.2 (en cours) : note et carnet jugés laids dans la fenêtre d'écriture → DOC-01 à DOC-03 ; groupes de la station pénibles à retenir → CODE-07.
+- **2026-09-30** — v1.2 (CODE-01 à CODE-06) testée hors jeu : 110 tests `lupa`. Décisions : code réservé aux largages en v1.2 (AUTH-01 revu en v1.3), option `AuthCode` à 4 choix, silence après 3 codes faux par jour, changement le lundi à 00:00, station en ondes courtes 10-25 MHz.
 - **2026-09-30** — Création du suivi. Décisions du jour : confiance par faction avec indicatif, missions publiques et délais (4 h, 48 h, 72 h), poste de commandement (un par faction, journal allumé seulement), code qui authentifie la faction, talkie qui garde toutes les fonctions, 18 lots de réquisition, détecteur visuel et sonore, 8 sources de confiance.
 - **2026-09-30** — v1.1 (DROP-01 à DROP-04) testée hors jeu (`555593e`).
 - **2026-09-30** — v1.0 validée en solo par l'utilisateur, sauf C1, E1, F1, F2, D3, D4.

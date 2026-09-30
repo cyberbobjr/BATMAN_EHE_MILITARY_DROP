@@ -49,6 +49,16 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 
 ## Idée 4 — Code chiffré : station de chiffres et carnet de codes
 
+*Fait le 2026-09-30 (110 tests `lupa`), à tester en jeu (protocole G).* Écarts avec la conception ci-dessous, décidés le même jour (décisions 8 à 12) :
+- le code ne sert qu'aux largages ; la base ne garde pas en mémoire qui l'a donné (AUTH-01, revu en v1.3) ;
+- une seule option `AuthCode` à 4 choix remplace `RequireAuthCode`, `WeeklyCode` et `PlainCodeOnNotes` : aucun code, code fixe en clair sur les notes, code de la semaine en clair (daté), code de la semaine chiffré (défaut). Carnet et station n'existent qu'avec le dernier ;
+- le code change le **lundi à 00:00** du calendrier du jeu ;
+- **un seul carnet par partie** (décision 15) : la table est fixe, dérivée de la graine ; seul le code change chaque semaine. Les éditions, d'abord codées, ont été retirées après le test solo ;
+- station en **ondes courtes, 10-25 MHz** : fréquence libre dérivée de la graine (la ModData n'est pas chargée à `OnLoadRadioScripts`), ou option `NumbersStationFrequency` ; une diffusion par demi-heure de jeu : appel, trois fois le groupe « 17-04-58 », fin. Le groupe « 22-11 » de l'exemple est abandonné ;
+- **parade à la force brute** : 676 codes seulement quand les chiffres sont connus. Après 3 codes faux dans la journée, la base ignore l'appelant jusqu'au lendemain, avec la même réponse qu'un mauvais canal ; le compteur reste en mémoire du serveur, car dans la ModData il distinguerait un mauvais code d'un mauvais canal ;
+- carnet : deux pages (mode d'emploi, puis table triée par nombre), sur les tenues de l'option `CodebookOutfits` (`Army`) et dans `ArmyBunkerLockers`, `ArmyStorageElectronics`, `ArmyStorageOutfit`, ajouté à `OnInitGlobalModData` puis `ItemPickerJava.Parse()` ;
+- générateur reproductible Park-Miller, exact en flottants (Lua 5.1 n'a pas d'opérateurs binaires) ; graine dans `Zomboid/Lua/MilitaryDrop/<mode>_<partie>_seed.txt`.
+
 **Principe**
 - Le code d'authentification **change chaque semaine de jeu**. Le code de la semaine précédente reste accepté pendant 24 h de jeu.
 - Une **station de chiffres** (chaîne radio dédiée, fréquence propre) diffuse périodiquement le code chiffré : « ÉDITION 3 — 17-04 — 22-11 — 58 ».
@@ -93,7 +103,7 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 | 3 | **Reconnaissance** : la base diffuse « confirmez l'état de la zone en grille X/Y » ; le premier qui appelle depuis ce point avant l'échéance | +3 | position du joueur, échéance ; point tiré comme l'étape 0 | v1.3 |
 | 4 | **Nettoyage** : la base signale une horde dans une zone ; quota de morts atteint avant l'échéance | +5 pour chaque membre de la faction ayant participé | morts comptées dans la zone ; **à vérifier** : identification du tueur côté serveur en MP | v1.3 ou après |
 | 5 | **Appel de contrôle** : « toutes stations, confirmez réception » ; réponse dans les 10 min | +1 | radio allumée sur la fréquence, délai de réponse | v1.3 |
-| 6 | **Renseignement** : documents militaires transmis (notes périmées, carnets d'éditions passées) | +1 à +3 selon la rareté | document dans l'inventaire, consommé | après v1.2 |
+| 6 | **Renseignement** : documents militaires transmis (notes périmées) | +1 à +3 selon la rareté | document dans l'inventaire, consommé | après v1.2 |
 | 7 | **Largage perdu ou cache retrouvé** au détecteur, puis ouvert | +5 | ouverture sur le serveur | avec l'idée 3 |
 | 8 | **Enregistreur de vol** récupéré dans l'épave et transmis | +10 | objet dans l'inventaire, consommé | avec l'idée 8 |
 
@@ -199,7 +209,7 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 |---|---|---|---|
 | **v1.1** | Étape 0 (largage lointain) | aucune | S |
 | **v1.2** | Idée 4 (code chiffré) | étape 0 | M |
-| **v1.3** | Idée 5 (confiance par joueur) | ModData des largages | M |
+| **v1.3** | Idée 5 (confiance de faction) | ModData des largages | M |
 | **v1.4** | Idée 6 (réquisition) | idée 5 | M-L |
 | **v1.5** | Idée 9 (leurre) | étape 0, idée 6 (pour la commande) | S-M |
 
@@ -226,3 +236,13 @@ Chaque lot se termine par les tests `lupa`, un test en solo, puis un test sur se
    - Point 4 tranché : délais en **heures de jeu**, réglables en sandbox : appel de contrôle **4 h**, reconnaissance **48 h**, nettoyage **72 h**. Les « 10 minutes » de l'appel de contrôle sont abandonnées. En MP, le temps tourne pendant qu'un joueur est déconnecté (sauf serveur en pause quand il est vide) : ses missions peuvent expirer en son absence.
    - Point 8 tranché : un membre qui donne le bon code **authentifie tout l'indicatif de sa faction** jusqu'au changement de code (la semaine en v1.2). Plus de saisie du code pour les autres membres pendant cette période.
    - Retenus par défaut, sauf avis contraire : poste = radio **non portable, haut de gamme et capable d'émettre** (propriétés `DeviceData`, aucun nom d'objet ; exclut le talkie posé et la radio bricolée) ; console ouverte par une entrée « Poste de liaison » du menu contextuel, sans remplacer la fenêtre radio vanilla.
+8. Idée 4 (2026-09-30) : en v1.2, le code sert **seulement aux largages**. La mémoire de la base (AUTH-01) est revue en v1.3, avec la question : les missions exigent-elles le code ?
+9. Idée 4 : une **liste à 4 choix** (`AuthCode`) remplace les cases à cocher : aucun, fixe en clair sur les notes, de la semaine en clair sur les notes, de la semaine chiffré (station et carnet, défaut).
+10. Idée 4 : **silence après 3 codes faux** dans la journée de jeu : la base ignore l'appelant jusqu'au lendemain, sans le trahir.
+11. Idée 4 : le code change le **lundi à 00:00** du calendrier du jeu.
+12. Idée 4 : station de chiffres en **ondes courtes (10-25 MHz)** : radios militaires, radios de radioamateur et meilleur talkie civil.
+13. Documents (test solo du 2026-09-30) : la note et le carnet passent de la fenêtre d'écriture au rendu `printMedia` des journaux vanilla. Note : mémorandum dactylographié annoté à la main. Carnet : **dossier kraft ouvert**. Textures originales générées par script.
+14. Idée 4 (test solo du 2026-09-30) : **« Noter le message »** pendant la diffusion de la station, avec stylo et papier, crée une feuille manuscrite « Message intercepté », vérifiée par le serveur.
+15. Idée 4 (test solo du 2026-09-30) : **un seul carnet de codes par partie**, sans éditions : la table est fixe, seul le code change chaque semaine. La conception initiale ci-dessous (éditions, option `CodeEditionWeeks`) est abandonnée.
+16. Documents (second test solo du 2026-09-30) : **« Noter le message » est retiré** (jugé inutile ; il ne fonctionnait pas en jeu). Les documents s'ouvrent vite (tag `base:fastread`).
+17. Intégration (2026-09-30) : **fumée de Signal Smoke sur la caisse larguée**, facultative : active seulement si le mod `batman_SignalSmoke` l'est, sans `require` dans `mod.info` (Military Drop reste autonome, décision v1). Fumée verte au moment où la caisse est posée, durée en option.

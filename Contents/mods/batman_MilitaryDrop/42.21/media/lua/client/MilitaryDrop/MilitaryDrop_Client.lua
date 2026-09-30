@@ -13,12 +13,14 @@
 require "ISUI/ISTextBox"
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
+require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Heli"
 require "MilitaryDrop/MilitaryDrop_Announce"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
 local Radio = MilitaryDrop.Radio
+local Codes = MilitaryDrop.Codes
 
 local Client = {}
 MilitaryDrop.Client = Client
@@ -75,13 +77,23 @@ end
 
 --- La base répond par la radio ; si elle est éteinte ou perdue, par le
 --- personnage (il répète ce qu'il a entendu).
+--- Un appareil posé (IsoWaveSignal) a aussi une surcharge AddDeviceText en
+--- entiers 0-255 que Kahlua choisit pour des flottants : 0,45 devenait 0 et le
+--- texte s'affichait en noir. Il reçoit donc des entiers 0-255, qui donnent la
+--- même couleur avec les deux surcharges. Une radio d'inventaire (Radio) n'a
+--- que la version 0-1.
 function Client.radioSay(request, text)
     local player = getSpecificPlayer(request.playerNum)
     local device = request.device
     local data = device and device:getDeviceData()
     if data and data:getIsTurnedOn() and data:getDeviceVolume() > 0 then
         local color = Client.RADIO_COLOR
-        device:AddDeviceText(text, color.r, color.g, color.b, nil, nil, -1)
+        if Radio.isWorldRadio(device) then
+            device:AddDeviceText(text, math.floor(color.r * 255 + 0.5), math.floor(color.g * 255 + 0.5),
+                math.floor(color.b * 255 + 0.5), nil, nil, -1)
+        else
+            device:AddDeviceText(text, color.r, color.g, color.b, nil, nil, -1)
+        end
     elseif player then
         player:Say(text)
     end
@@ -135,7 +147,7 @@ local function onCodeEntered(_, button, player, device)
 end
 
 function Client.onRequest(player, device, force)
-    if force or not Config.get("RequireAuthCode") then
+    if force or Config.codeMode() == Codes.MODE_NONE then
         Client.sendRequest(player, device, nil, force)
         return
     end

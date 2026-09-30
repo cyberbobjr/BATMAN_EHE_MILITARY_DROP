@@ -49,19 +49,39 @@ module MilitaryDrop
         Tooltip = Tooltip_MilitaryDrop_AttachmentSupplyCase,
     }
 
-    /* Note militaire (MilitaryDrop_Notes.lua) : une page écrite par le serveur,
-       verrouillée (setLockedBy), donc seulement lisible. Modèle : SheetPaper2. */
+    /* Documents (MilitaryDrop_Notes.lua, MilitaryDrop_Documents.lua) : écrits par
+       le serveur à la création dans modData.printMedia, ouverts par « Inspecter »
+       dans la fenêtre des journaux vanilla. Ni CanBeWrite ni pages : le joueur ne
+       peut pas les modifier. Tag base:fastread : lecture courte (50 unités, comme les
+       prospectus), au lieu de 5 pages de lecture. Icônes vanilla : noms exacts, avec
+       leur chiffre (Item_PaperReport1, Item_Paperwork1). */
+
+    /* Note de service : fréquence et, selon l'option AuthCode, code ou station. */
     item MilitaryMemo
     {
         DisplayCategory = Literature,
         ItemType = base:literature,
         Weight = 0.1,
-        Icon = Paper,
-        CanBeWrite = true,
-        PageToWrite = 1,
+        Icon = PaperReport1,
         StaticModel = SheetOfPaper,
         WorldStaticModel = SheetOfPaper,
         ReadType = newspaper,
+        Tags = base:fastread,
         OnCreate = MilitaryDrop.Memo.onCreate,
+    }
+
+    /* Carnet de codes (AuthCode 4) : dossier kraft avec la table de la partie. */
+    item Codebook
+    {
+        DisplayCategory = Literature,
+        ItemType = base:literature,
+        Weight = 0.2,
+        Icon = Paperwork1,
+        StaticModel = Paperwork1,
+        WorldStaticModel = Paperwork1,
+        ReadType = newspaper,
+        Tags = base:fastread,
+        Tooltip = Tooltip_MilitaryDrop_Codebook,
+        OnCreate = MilitaryDrop.Memo.onCreateCodebook,
     }
 }

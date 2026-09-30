@@ -4,7 +4,7 @@
 
 1. luacheck (configuration .luacheckrc) ;
 2. syntaxe Lua 5.1 de tous les fichiers du mod, appels à next() (absent de Kahlua) ;
-3. traductions : JSON valides, mêmes clés et mêmes paramètres que EN, pas de % seul ;
+3. scripts du jeu : accolades équilibrées ; traductions : JSON valides, mêmes clés et mêmes paramètres que EN, pas de % seul ;
 4. descriptions Steam (README.steam*) : 8 000 octets UTF-8 au plus, BBCode équilibré,
    mêmes liens et images que l'anglais, description de workshop.txt identique à README.steam ;
 5. suivi de l'implémentation (docs/SUIVI.md) : identifiants uniques, états connus,
@@ -128,6 +128,23 @@ def check_lone_percent(report, path, data):
             report.fail(f"{path.relative_to(REPO)} {key} : % seul (écrire %%)")
 
 
+def check_scripts(report):
+    """Scripts du jeu (media/scripts) : accolades équilibrées, commentaires /* */ exclus."""
+    report.section("Scripts d'objets et de véhicules")
+    scripts = sorted((MOD_LUA.parent / "scripts").rglob("*.txt"))
+    for path in scripts:
+        text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.S)
+        depth = 0
+        for number, line in enumerate(text.splitlines(), 1):
+            depth += line.count("{") - line.count("}")
+            if depth < 0:
+                report.fail(f"{path.relative_to(REPO)}:{number} : « }} » sans « {{ »")
+                break
+        if depth > 0:
+            report.fail(f"{path.relative_to(REPO)} : {depth} accolade(s) non fermée(s)")
+    report.ok(f"{len(scripts)} scripts relus")
+
+
 def check_translations(report):
     report.section("Traductions")
     reference_dir = TRANSLATE / REFERENCE_LANGUAGE
@@ -237,12 +254,16 @@ TRACKING_NEEDS_PROOF = {"testé hors jeu", "testé solo", "testé MP", "publié"
 
 
 def tracking_rows(text):
-    """Lignes des tableaux de suivi : (numéro de ligne, cellules) dont la 1re cellule est un ID."""
+    """Lignes des tableaux de suivi : (numéro de ligne, cellules) dont la 1re cellule est un ID.
+
+    Une ligne d'élément qui n'a pas 6 cellules (un « | » dans un texte) est rendue
+    avec ses cellules telles quelles : check_tracking la signale au lieu de l'ignorer.
+    """
     for number, line in enumerate(text.splitlines(), 1):
         if not line.startswith("|"):
             continue
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if len(cells) == 6 and re.match(r"^[A-Z]+-", cells[0]):
+        if re.match(r"^[A-Z]+-\d", cells[0]):
             yield number, cells
 
 
@@ -271,8 +292,12 @@ def check_tracking(report):
     seen = {}
     rows = 0
     git = shutil.which("git") is not None and not shallow_clone()
-    for number, (ident, _, _, state, proofs, _) in tracking_rows(TRACKING.read_text(encoding="utf-8")):
+    for number, cells in tracking_rows(TRACKING.read_text(encoding="utf-8")):
         rows += 1
+        if len(cells) != 6:
+            report.fail(f"SUIVI.md:{number} {cells[0]} : {len(cells)} cellules au lieu de 6 (« | » dans un texte ?)")
+            continue
+        ident, _, _, state, proofs, _ = cells
         where = f"SUIVI.md:{number} {ident}"
         if not TRACKING_ID.match(ident):
             report.fail(f"{where} : identifiant mal formé (FAMILLE-NN attendu)")
@@ -290,7 +315,8 @@ def check_tracking(report):
     if rows == 0:
         report.fail("aucune ligne de suivi trouvée")
     else:
-        states = Counter(state for _, (_, _, _, state, _, _) in tracking_rows(TRACKING.read_text(encoding="utf-8")))
+        states = Counter(cells[3] for _, cells in tracking_rows(TRACKING.read_text(encoding="utf-8"))
+                         if len(cells) == 6)
         summary = ", ".join(f"{count} {state}" for state, count in states.most_common())
         report.ok(f"{rows} éléments : {summary}")
     if not git:
@@ -303,6 +329,7 @@ def main():
     report = Report()
     check_luacheck(report, "--require-luacheck" in sys.argv)
     check_kahlua(report)
+    check_scripts(report)
     check_translations(report)
     check_steam_descriptions(report)
     check_tracking(report)
