@@ -1,6 +1,7 @@
 /* Military Drop : caisses de ravitaillement larguées (ouvertes par la recette
-   OpenMilitarySupplyCase, MilitaryDrop_recipes.txt). Icônes et modèles au sol
-   des étuis militaires vanilla. Noms : Translate/<LANG>/ItemName.json. */
+   OpenMilitarySupplyCase, MilitaryDrop_recipes.txt). Icônes des étuis
+   militaires vanilla ; modèles au sol : MilitaryDrop_models.txt. Noms :
+   Translate/<LANG>/ItemName.json. */
 module MilitaryDrop
 {
     imports
@@ -14,7 +15,7 @@ module MilitaryDrop
         ItemType = base:normal,
         Weight = 6.3,
         Icon = AmmoCase,
-        WorldStaticModel = AmmoBox_Ground,
+        WorldStaticModel = MilitaryDrop_AmmoCase_Ground,
         Tooltip = Tooltip_MilitaryDrop_AmmoSupplyCase,
     }
 
@@ -24,7 +25,7 @@ module MilitaryDrop
         ItemType = base:normal,
         Weight = 6.3,
         Icon = ProtectiveCase_LargeGreen,
-        WorldStaticModel = ProtectiveCaseBulky_Ground,
+        WorldStaticModel = MilitaryDrop_WeaponCase_Ground,
         Tooltip = Tooltip_MilitaryDrop_WeaponSupplyCase,
     }
 
@@ -34,7 +35,7 @@ module MilitaryDrop
         ItemType = base:normal,
         Weight = 6.3,
         Icon = ProtectiveCase_MediumGreen,
-        WorldStaticModel = ProtectiveCase_Ground,
+        WorldStaticModel = MilitaryDrop_ArmorCase_Ground,
         Tooltip = Tooltip_MilitaryDrop_ArmorSupplyCase,
     }
 
@@ -44,7 +45,7 @@ module MilitaryDrop
         ItemType = base:normal,
         Weight = 6.3,
         Icon = ProtectiveCase_SmallGreen,
-        WorldStaticModel = ProtectiveCaseSmall_Ground,
+        WorldStaticModel = MilitaryDrop_AttachmentCase_Ground,
         Tooltip = Tooltip_MilitaryDrop_AttachmentSupplyCase,
     }
 
@@ -61,5 +62,6 @@ module MilitaryDrop
         StaticModel = SheetOfPaper,
         WorldStaticModel = SheetOfPaper,
         ReadType = newspaper,
+        OnCreate = MilitaryDrop.Memo.onCreate,
     }
 }

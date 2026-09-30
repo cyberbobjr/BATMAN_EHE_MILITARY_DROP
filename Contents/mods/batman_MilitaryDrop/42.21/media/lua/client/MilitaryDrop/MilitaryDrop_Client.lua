@@ -251,6 +251,7 @@ function Client.addOptions(player, context, device)
     else
         addTooltip(option, "IGUI_MilitaryDrop_RequestTooltip")
     end
+    -- Largage admin : jamais grisé, le serveur n'exige pas la radio en main.
     if Client.canForce(player) then
         context:addOption(getText("IGUI_MilitaryDrop_RequestDropAdmin"), player, Client.onRequest, device, true)
     end

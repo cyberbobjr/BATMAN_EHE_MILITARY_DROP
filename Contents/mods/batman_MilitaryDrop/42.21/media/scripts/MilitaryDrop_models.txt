@@ -1,0 +1,36 @@
+/* Modèles au sol des caisses de ravitaillement : maillages vanilla des étuis
+   militaires, avec leur texture militaire. Les modèles vanilla correspondants
+   (AmmoBox_Ground, ProtectiveCase*_Ground) n'ont pas de texture : l'objet
+   vanilla la reçoit de son ClothingItem. Sans lui, le jeu affiche un damier.
+   En module Base : un WorldStaticModel sans module est cherché dans Base
+   (ScriptBucketCollection.getScript, 42.21). */
+module Base
+{
+    model MilitaryDrop_AmmoCase_Ground
+    {
+        mesh = WorldItems/Clothing/AmmoBox_Ground,
+        texture = Clothes/Bag/AmmoBox,
+        scale = 0.125,
+    }
+
+    model MilitaryDrop_WeaponCase_Ground
+    {
+        mesh = WorldItems/Clothing/ProtectiveCaseBulky_Ground,
+        texture = Clothes/Bag/ProtectiveCaseBulky_Army,
+        scale = 0.125,
+    }
+
+    model MilitaryDrop_ArmorCase_Ground
+    {
+        mesh = WorldItems/Clothing/ProtectiveCase_Ground,
+        texture = Clothes/Bag/ProtectiveCase_Army,
+        scale = 0.125,
+    }
+
+    model MilitaryDrop_AttachmentCase_Ground
+    {
+        mesh = WorldItems/Clothing/ProtectiveCaseSmall_Ground,
+        texture = Clothes/Bag/ProtectiveCaseSmall_Army,
+        scale = 0.125,
+    }
+}

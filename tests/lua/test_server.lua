@@ -182,6 +182,16 @@ function T.force_needs_permission_and_skips_checks()
     assertEq(evaluate(makeRadio(false, 1), args), "accepted", "admin : radio éteinte et mauvais canal permis")
 end
 
+function T.forced_drop_needs_no_radio_in_hand()
+    local args = request(nil)
+    args.force = true
+    local status, radio = MilitaryDrop.Server.evaluate(makePlayer(makeRadio(true, CHANNEL), "bag"), args, WORLD_HOURS)
+    assertEq(status, "accepted", "admin : radio rangée acceptée")
+    assertEq(radio, nil, "pas de radio : l'appel part de la position du joueur")
+    MilitaryDrop.Server.handleRequest(makePlayer(makeRadio(true, CHANNEL), "bag"), args)
+    assertEq(#MilitaryDrop.Server.getState().flights, 1, "vol lancé")
+end
+
 function T.cooldown_expires()
     local state = MilitaryDrop.Server.getState()
     state.lastDropHours = WORLD_HOURS - 168

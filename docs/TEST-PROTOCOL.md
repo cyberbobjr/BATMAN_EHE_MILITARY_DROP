@@ -22,14 +22,17 @@ getPlayer():getInventory():AddItem("MilitaryDrop.MilitaryMemo")
 print(MilitaryDrop.Server.getCode())
 -- Caisses de ravitaillement
 getPlayer():getInventory():AddItem("MilitaryDrop.AmmoSupplyCase")
+-- Abîmer l'objet tenu en main (test de réparation A4)
+getPlayer():getPrimaryHandItem():setCondition(3)
 ```
 
 ## A. Objets et recette (phase 1)
 
 | # | Action | Attendu |
 |---|---|---|
-| A1 | Ajouter les 4 caisses `MilitaryDrop.*SupplyCase` | Noms « Caisse de ravitaillement militaire (…) », icônes d'étuis militaires, infobulle |
-| A2 | Clic droit sur chaque caisse, dans l'inventaire | « Ouvrir la caisse de ravitaillement » ; munitions ×5, 1 arme, équipement ×5, accessoires ×5 |
+| A1 | Ajouter les 4 caisses `MilitaryDrop.*SupplyCase`, puis les poser au sol | Noms « Caisse de ravitaillement militaire (…) », icônes d'étuis militaires, infobulle ; au sol, étuis verts texturés (pas de damier) |
+| A2 | Clic droit sur chaque caisse, dans l'inventaire | « Ouvrir la caisse de ravitaillement » ; munitions ×5, 1 arme **avec 2 chargeurs (si elle en prend) et 1 boîte de munitions**, équipement ×5, accessoires ×5 |
+| A5 | Ajouter une note par la console (`AddItem("MilitaryDrop.MilitaryMemo")`) | « Lire » disponible ; texte avec 151.4 et le code |
 | A3 | Poser une caisse au sol et l'ouvrir par clic droit | Même résultat, sans erreur |
 | A4 | Talkie-walkie militaire abîmé : menu Réparer | Réparation avec débris électroniques (Électricité 6) |
 
@@ -70,7 +73,7 @@ getPlayer():getInventory():AddItem("MilitaryDrop.AmmoSupplyCase")
 | E1 | Aller au point de largage | Caisse 3D (palette, caisse olive, sangles, « U.S. ARMY »), posée au sol, ni enfoncée ni flottante, taille d'environ une case |
 | E2 | Horde | Zombies autour de la caisse (3 à 30 par défaut) |
 | E3 | Ouvrir le coffre (clic droit / menu véhicule) | Coffre « Caisse de largage militaire » avec 6 caisses de ravitaillement |
-| E4 | Largage admin (« Forcer un largage ») sur une radio éteinte | Accepté ; coordonnées en message privé ; délai non modifié |
+| E4 | Largage admin (« Forcer un largage ») sur une radio éteinte, rangée dans l'inventaire | Accepté ; coordonnées en message privé ; délai non modifié |
 
 ## F. Sauvegarde
 

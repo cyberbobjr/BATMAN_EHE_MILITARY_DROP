@@ -121,6 +121,30 @@ function Loot.candidates(caseType)
     return result
 end
 
+-- Avec chaque arme à feu : ses chargeurs et une boîte de ses munitions.
+Loot.MAGAZINES_PER_WEAPON = 2
+Loot.AMMO_BOXES_PER_WEAPON = 1
+
+--- Types complets à ajouter avec une arme (HandWeapon) : chargeurs et boîte de
+--- munitions, s'ils existent dans le jeu.
+function Loot.weaponExtras(weapon)
+    local extras = {}
+    if not instanceof(weapon, "HandWeapon") then
+        return extras
+    end
+    local manager = getScriptManager()
+    local function add(fullType, count)
+        if type(fullType) == "string" and fullType ~= "" and manager:FindItem(fullType) then
+            for _ = 1, count do
+                extras[#extras + 1] = fullType
+            end
+        end
+    end
+    add(weapon:getMagazineType(), Loot.MAGAZINES_PER_WEAPON)
+    add(weapon:getAmmoBox(), Loot.AMMO_BOXES_PER_WEAPON)
+    return extras
+end
+
 --- Types complets des objets à créer pour une caisse ouverte.
 function Loot.roll(caseType, rand)
     local case = Loot.CASES[caseType]

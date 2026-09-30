@@ -134,11 +134,12 @@ function Server.evaluate(player, args, now)
         return "denied"
     end
     local radio = Radio.resolve(player, args.radio)
+    if force then
+        -- Largage admin : la radio ne sert qu'à situer l'appel (facultative).
+        return "accepted", radio
+    end
     if not radio then
         return "noRadio"
-    end
-    if force then
-        return "accepted", radio
     end
     local status = Radio.status(radio, Config.getChannel())
     if status == "wrongFrequency" then

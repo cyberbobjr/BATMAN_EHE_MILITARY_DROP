@@ -27,6 +27,12 @@ function Recipe.openSupplyCase(craftRecipeData, character)
                 local item = instanceItem(fullType)
                 if item then
                     Actions.addOrDropItem(character, item)
+                    for _, extraType in ipairs(MilitaryDrop.Loot.weaponExtras(item)) do
+                        local extra = instanceItem(extraType)
+                        if extra then
+                            Actions.addOrDropItem(character, extra)
+                        end
+                    end
                 end
             end
             MilitaryDrop.log("opened " .. caseType .. " for " .. tostring(character:getUsername()))

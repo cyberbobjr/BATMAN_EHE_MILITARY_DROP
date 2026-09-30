@@ -58,16 +58,21 @@ function Notes.dropRate()
     return Notes.RATES[Config.get("NoteDropRate")] or 50
 end
 
---- Crée la note (texte n° index) avec la fréquence et le code de la partie.
+--- Écrit le texte n° index (fréquence et code de la partie) et verrouille la note.
+function Notes.fillMemo(memo, index)
+    local frequency = Config.formatChannel(Config.getChannel())
+    local code = MilitaryDrop.Server.getCode()
+    memo:addPage(1, getText("IGUI_MilitaryDrop_Note_" .. index, frequency, code))
+    memo:setLockedBy(Notes.LOCKED_BY)
+end
+
+--- Crée la note avec le texte n° index (son OnCreate en a déjà tiré un).
 function Notes.createMemo(index)
     local memo = instanceItem(Notes.ITEM)
     if not memo then
         return nil
     end
-    local frequency = Config.formatChannel(Config.getChannel())
-    local code = MilitaryDrop.Server.getCode()
-    memo:addPage(1, getText("IGUI_MilitaryDrop_Note_" .. index, frequency, code))
-    memo:setLockedBy(Notes.LOCKED_BY)
+    Notes.fillMemo(memo, index)
     return memo
 end
 

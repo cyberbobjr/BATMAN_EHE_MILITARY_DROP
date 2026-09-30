@@ -67,6 +67,31 @@ function T.setup()
     loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Notes.lua")
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Memo.lua")
+end
+
+local function emptyMemo()
+    local memo = instanceItem("MilitaryDrop.MilitaryMemo")
+    memo.isEmptyPages = function(self) return self.page == nil end
+    return memo
+end
+
+function T.memo_created_anywhere_gets_a_text()
+    local memo = emptyMemo()
+    MilitaryDrop.Memo.onCreate(memo)
+    assertEq(memo.page[2], "IGUI_MilitaryDrop_Note_1|151.4|BRAVO-KILO-07", "note remplie (console, debug)")
+    assertEq(memo.lockedBy, "MilitaryDrop", "verrouillée")
+end
+
+function T.memo_on_client_or_already_written_is_untouched()
+    local memo = emptyMemo()
+    isClient = function() return true end
+    MilitaryDrop.Memo.onCreate(memo)
+    assertEq(memo.page, nil, "client MP : le serveur la remplit")
+    isClient = function() return false end
+    memo.page = { 1, "existing" }
+    MilitaryDrop.Memo.onCreate(memo)
+    assertEq(memo.page[2], "existing", "texte existant conservé")
 end
 
 function T.outfit_filter()

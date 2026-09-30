@@ -84,6 +84,35 @@ function T.empty_source_gives_nothing()
     assertEq(#results, 0, "table vide")
 end
 
+function T.weapon_comes_with_magazines_and_ammo()
+    instanceof = function(object, class) return object.kind == class end
+    SCRIPTS["Base.9mmClip"] = "Normal"
+    SCRIPTS["Base.Bullets9mmBox"] = "Normal"
+    local pistol = {
+        kind = "HandWeapon",
+        getMagazineType = function() return "Base.9mmClip" end,
+        getAmmoBox = function() return "Base.Bullets9mmBox" end,
+    }
+    local extras = MilitaryDrop.Loot.weaponExtras(pistol)
+    assertEq(#extras, 3, "deux chargeurs et une boîte")
+    assertEq(extras[1], "Base.9mmClip", "chargeur")
+    assertEq(extras[3], "Base.Bullets9mmBox", "munitions")
+end
+
+function T.shotgun_without_magazine_gets_ammo_only()
+    instanceof = function(object, class) return object.kind == class end
+    SCRIPTS["Base.ShotgunShellsBox"] = "Normal"
+    local shotgun = {
+        kind = "HandWeapon",
+        getMagazineType = function() return nil end,
+        getAmmoBox = function() return "Base.ShotgunShellsBox" end,
+    }
+    local extras = MilitaryDrop.Loot.weaponExtras(shotgun)
+    assertEq(#extras, 1, "une boîte de cartouches")
+    instanceof = function() return false end
+    assertEq(#MilitaryDrop.Loot.weaponExtras({}), 0, "pas une arme : rien")
+end
+
 function T.unknown_case_gives_nothing()
     assertEq(#MilitaryDrop.Loot.roll("Base.Nothing", fixed(0)), 0, "type inconnu")
 end
