@@ -75,7 +75,7 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 
 ## Idée 5 — Confiance de la base (« Logistics »)
 
-**Principe** : une note de confiance **par joueur** (décision du 2026-09-30), c'est-à-dire par compte en MP. Elle vaut de 0 à 100 et part de 50.
+**Principe** : une note de confiance **par faction** vanilla, et par joueur pour un joueur sans faction (décision du 2026-09-30, qui remplace « par joueur »). Elle vaut de 0 à 100 et part de 50. Tous les gains, pertes, budgets et plafonds s'appliquent à la faction.
 
 **Ce qui la fait varier (côté serveur)**
 - **Largage récupéré** : une caisse du largage est ouverte par le demandeur **ou par un membre de sa faction vanilla** (confirmé le 2026-09-30, pour ne pas pénaliser le jeu en équipe). Les caisses portent en ModData l'identifiant du largage et le nom du demandeur, posés au remplissage du coffre. L'ouverture passe déjà par l'`OnCreate` de la recette, sur le serveur. **+10** pour le demandeur, une fois par largage.
@@ -207,9 +207,22 @@ Chaque lot se termine par les tests `lupa`, un test en solo, puis un test sur se
 
 ## Décisions de l'utilisateur (2026-09-30)
 
-1. Idée 5 : confiance **par joueur**. L'ouverture par un membre de sa faction vanilla compte comme récupérée pour le demandeur.
+1. Idée 5 : confiance **par joueur** ; l'ouverture par un membre de sa faction vanilla compte comme récupérée. *Remplacé le 2026-09-30 (point 7 ci-dessous) : confiance par faction.*
 2. Idée 4 : chiffrement par défaut, avec l'option sandbox `PlainCodeOnNotes` pour écrire le code en clair sur les notes.
 3. Idée 9 : commande **seulement dans le formulaire**. L'annonce et toutes les données envoyées à tous ne doivent **jamais révéler le type de largage**.
 4. Idée 6 : les 18 lots de réquisition proposés sont retenus (tableau de l'idée 6).
 5. Idée 3 : le détecteur a un indicateur **visuel et sonore** : voyant et bip dont la cadence suit la distance (modèle : détecteurs de caches de S.T.A.L.K.E.R. GAMMA).
 6. Idée 5 : les **8 autres sources de confiance** sont toutes retenues (tableau de l'idée 5).
+7. Échanges avec la base : **poste de commandement** retenu (solution 4 des maquettes « Liaison Logistique », 2026-09-30), jugé plus réaliste. Une radio posée dans la base devient un poste de liaison : journal des transmissions, missions en cours, boîte à courrier. Les missions laissent le temps de recevoir l'ordre à la base, d'aller sur place, puis de confirmer au retour ou par talkie-walkie. Zones grises en cours de discussion.
+   - Point 1 tranché : **le talkie-walkie permet tout** (missions, courrier, rapports, largage). Le poste apporte le confort (journal des transmissions, missions en cours, boîte à courrier commune) et un **petit bonus de confiance** pour les échanges faits depuis la base.
+     Proposition à calibrer : +50 % sur les gains obtenus depuis le poste, dans la limite du plafond quotidien.
+   - Point 6 tranché : **toutes les missions sont publiques** (« à toutes les stations ») et la première équipe qui les remplit gagne. Hypothèse à confirmer : l'appel de contrôle récompense tous ceux qui répondent à temps (il mesure l'écoute, pas la vitesse) ; reconnaissance et nettoyage vont au premier.
+   - Point 5 tranché : **un poste actif par faction** (ou par joueur sans faction), enregistré à son nom. Journal, missions et état sont gardés par le serveur au nom de la faction, pas dans l'objet : déplacer, perdre ou voir brûler la radio ne fait rien perdre, il suffit d'en installer une autre. Un joueur d'une autre faction ne peut pas utiliser le poste.
+   - Point 7 tranché : **la confiance devient une note de faction** (par joueur pour un joueur sans faction). Le courrier commun crédite donc la faction, sans avoir à savoir qui a déposé quoi. Le plafond quotidien s'applique à la faction : un joueur seul progresse au même rythme qu'une grande équipe.
+     Contrainte vérifiée : une faction vanilla n'a pas d'identifiant stable, seulement un nom et un propriétaire modifiables (`Faction.java:255-269`). Le serveur attribue donc à chaque faction un **indicatif** (« Station Kilo-7 ») qui porte la note, et le retrouve après un renommage par le propriétaire ou la majorité des membres.
+   - Changements de faction tranchés : un joueur qui part, ou dont la faction est dissoute, **emporte la note de son ancienne faction plafonnée à 50** (il ne garde pas une excellente réputation mais n'échappe pas à une mauvaise) ; une ligne coupée le suit. Un joueur qui rejoint une faction adopte sa note. Une faction nouvelle part de la **plus basse note de ses fondateurs**. Le serveur détecte ces mouvements en comparant, à chaque échange et périodiquement, les membres mémorisés de chaque indicatif avec `Faction.getPlayers()`.
+   - Point 3 tranché : le journal du poste n'enregistre que ce que le poste **reçoit** : allumé, alimenté (réseau, groupe ou pile) et réglé sur la fréquence au moment de la diffusion. Sinon, une ligne « aucune réception » marque le trou.
+     Limite technique à traiter : quand personne n'est à la base, le chunk du poste n'est pas chargé et le serveur ne peut pas lire la radio. Règle proposée : garder le dernier état observé au déchargement (personne ne peut le modifier entre-temps), en tenant compte de la coupure du réseau à sa date. Consommation d'un groupe ou d'une pile hors chargement : **à vérifier** dans le moteur.
+   - Point 4 tranché : délais en **heures de jeu**, réglables en sandbox : appel de contrôle **4 h**, reconnaissance **48 h**, nettoyage **72 h**. Les « 10 minutes » de l'appel de contrôle sont abandonnées. En MP, le temps tourne pendant qu'un joueur est déconnecté (sauf serveur en pause quand il est vide) : ses missions peuvent expirer en son absence.
+   - Point 8 tranché : un membre qui donne le bon code **authentifie tout l'indicatif de sa faction** jusqu'au changement de code (la semaine en v1.2). Plus de saisie du code pour les autres membres pendant cette période.
+   - Retenus par défaut, sauf avis contraire : poste = radio **non portable, haut de gamme et capable d'émettre** (propriétés `DeviceData`, aucun nom d'objet ; exclut le talkie posé et la radio bricolée) ; console ouverte par une entrée « Poste de liaison » du menu contextuel, sans remplacer la fenêtre radio vanilla.
