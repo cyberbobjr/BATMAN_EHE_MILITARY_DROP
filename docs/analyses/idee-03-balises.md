@@ -45,6 +45,11 @@ Analyse du 2026-09-30, en lecture seule (sous-agent). Sources : Military Drop, J
 
 Le joueur tourne sur lui-même pour chercher le signal maximal.
 
+**Décision de l'utilisateur (2026-09-30) : indicateur visuel et sonore**, sur le modèle des détecteurs de caches de S.T.A.L.K.E.R. GAMMA (inspiration seulement). Le voyant clignote et le bip s'accélère à mesure que la distance effective diminue. Affinage proposé (maquette interactive de la page de présentation) :
+- 12 niveaux au lieu de 6, seuils ≈ ×0,7 : 600, 420, 300, 210, 150, 105, 75, 52, 36, 25, 17, 8 cases (distance effective) ; au-delà de 600, parasites sans bip ;
+- intervalle entre deux impulsions : 2,0 s × 0,8^(niveau − 1), soit 2 s au niveau 1 et ≈ 0,2 s au niveau 11 ; niveau 12 (≤ 8 cases) : voyant fixe et identifiant ;
+- le serveur n'envoie que le niveau (0 à 12). Le client en déduit seul la cadence du voyant et du bip (son local, sans paquet).
+
 **Interface.** Panneau déplaçable, visible quand le détecteur est allumé en main :
 - fréquence avec boutons ±0,2 ;
 - jauge et ligne de texte traduite ;

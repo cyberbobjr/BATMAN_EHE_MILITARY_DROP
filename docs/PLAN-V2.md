@@ -84,6 +84,23 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 - **Code faux répété** : 3 échecs dans l'heure. **−2**, un anti-force-brute qui s'ajoute à la cadence déjà limitée.
 - Érosion lente vers 50 si le groupe n'appelle pas (option).
 
+**Autres sources de confiance** (les 8 retenues par l'utilisateur le 2026-09-30, pour ne pas dépendre des seuls largages). Toutes vérifiées par le serveur, chacune avec une cause dans le monde :
+
+| # | Source | Gain | Vérification serveur | Lot |
+|---|---|---|---|---|
+| 1 | **Rapport de situation** : appel quotidien avec le code | +1, une fois par jour de jeu | code, radio, dernier rapport | v1.3 |
+| 2 | **Plaques d'identité** : objet du mod sur les soldats zombies, numéro tiré par le serveur ; « Transmettre le matricule » par radio | +2, plaque consommée | plaque dans l'inventaire, numéro jamais utilisé, plafond par jour | v1.3 |
+| 3 | **Reconnaissance** : la base diffuse « confirmez l'état de la zone en grille X/Y » ; le premier qui appelle depuis ce point avant l'échéance | +3 | position du joueur, échéance ; point tiré comme l'étape 0 | v1.3 |
+| 4 | **Nettoyage** : la base signale une horde dans une zone ; quota de morts atteint avant l'échéance | +5 pour chaque membre de la faction ayant participé | morts comptées dans la zone ; **à vérifier** : identification du tueur côté serveur en MP | v1.3 ou après |
+| 5 | **Appel de contrôle** : « toutes stations, confirmez réception » ; réponse dans les 10 min | +1 | radio allumée sur la fréquence, délai de réponse | v1.3 |
+| 6 | **Renseignement** : documents militaires transmis (notes périmées, carnets d'éditions passées) | +1 à +3 selon la rareté | document dans l'inventaire, consommé | après v1.2 |
+| 7 | **Largage perdu ou cache retrouvé** au détecteur, puis ouvert | +5 | ouverture sur le serveur | avec l'idée 3 |
+| 8 | **Enregistreur de vol** récupéré dans l'épave et transmis | +10 | objet dans l'inventaire, consommé | avec l'idée 8 |
+
+- Plafond commun proposé : **+8 par jour de jeu** pour toutes ces sources réunies, pour que les largages restent la source principale (option sandbox).
+- Chaque source est activable séparément en sandbox, avec son gain.
+- Annonces des missions (3, 4, 5) sur la chaîne militaire : textes du serveur, traduits dans sa langue.
+
 **Effets**
 - Délai entre deux largages multiplié par un facteur entre ×1,5 (confiance basse) et ×0,6 (confiance haute).
 - Budget de réquisition (idée 6).
@@ -111,6 +128,35 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 - Liste blanche **par option sandbox** (`RequisitionCategories`, par défaut les catégories utiles), sans nom d'objet.
 - Coût d'une catégorie calculé à partir de la rareté moyenne de ses objets dans les tables (poids), ajustable par option.
 - Les armes à feu et les munitions restent reconnues comme dans la v1 (dégâts > 0, chargeur ou boîte d'une arme).
+
+**Lots proposés** (2026-09-30, retenus par l'utilisateur ; coûts et budgets indicatifs, à calibrer en jeu). Chaque lot regroupe des catégories d'objet vanilla (`DisplayCategory`, libellés `IGUI_ItemCat_*`) ou une propriété, jamais un nom d'objet : les objets des mods rejoignent leur lot seuls.
+
+| Palier | Lot | Source dans le jeu | Coût |
+|---|---|---|---|
+| I (toute confiance) | Rations | `Food`, filtré sur la durée avant péremption | 1 |
+| I | Eau potable | récipients qui contiennent de l'eau | 1 |
+| I | Soins | `FirstAid`, `Bandage` | 2 |
+| I | Outils | `Tool`, `ToolWeapon` | 2 |
+| I | Matériaux | `Material` | 1 |
+| I | Bivouac | `Camping`, `FireSource`, `Fishing`, `Trapping` | 2 |
+| II (confiance ≥ 50) | Munitions | `Ammo`, chargeurs et boîtes des armes à feu connues | 2 |
+| II | Armes de mêlée | `Weapon` sans tir, dégâts > 0 (hors `WeaponCrafted`, `*Weapon` improvisées) | 3 |
+| II | Protection | `ProtectiveGear`, vêtements avec `getBulletDefense() > 0` | 3 |
+| II | Mécanique | `VehicleMaintenance` | 2 |
+| II | Transmissions | `Electronics`, `Communications`, `LightSource` | 2 |
+| II | Semences | `Gardening` | 1 |
+| II | Instruction | `SkillBook` | 2 |
+| II | Paquetage | `Bag`, `Container` | 2 |
+| III (confiance ≥ 75) | Armes à feu | `Weapon` à tir, dégâts > 0, + 2 chargeurs et 1 boîte | 5 |
+| III | Accessoires d'armes | `WeaponPart` | 3 |
+| III | Explosifs (option, désactivable) | `Explosives` | 5 |
+| III | Carburant (**à vérifier** : créer un récipient déjà plein d'essence en 42.21) | récipients qui contiennent de l'essence | 3 |
+| Spécial (v1.5) | Leurre à sirène | voir idée 9 | 3 |
+
+- Budget indicatif : 8 points à la confiance 25, 12 à 50, 16 à 75, 20 à 100 ; aucun formulaire sous 15 (ligne coupée).
+- Lots, paliers et multiplicateur de coût réglables en sandbox.
+- Idée à valider : les points non dépensés deviennent un lot surprise tiré parmi les lots permis.
+- L'annonce radio ne révèle jamais le contenu commandé.
 
 **Déroulé MP**
 1. Le client demande le formulaire (code juste). Le serveur répond avec les catégories permises pour ce groupe et leurs coûts, **sans le contenu des tables**.
@@ -164,3 +210,6 @@ Chaque lot se termine par les tests `lupa`, un test en solo, puis un test sur se
 1. Idée 5 : confiance **par joueur**. L'ouverture par un membre de sa faction vanilla compte comme récupérée pour le demandeur.
 2. Idée 4 : chiffrement par défaut, avec l'option sandbox `PlainCodeOnNotes` pour écrire le code en clair sur les notes.
 3. Idée 9 : commande **seulement dans le formulaire**. L'annonce et toutes les données envoyées à tous ne doivent **jamais révéler le type de largage**.
+4. Idée 6 : les 18 lots de réquisition proposés sont retenus (tableau de l'idée 6).
+5. Idée 3 : le détecteur a un indicateur **visuel et sonore** : voyant et bip dont la cadence suit la distance (modèle : détecteurs de caches de S.T.A.L.K.E.R. GAMMA).
+6. Idée 5 : les **8 autres sources de confiance** sont toutes retenues (tableau de l'idée 5).
