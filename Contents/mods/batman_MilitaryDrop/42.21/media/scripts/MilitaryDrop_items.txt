@@ -47,4 +47,19 @@ module MilitaryDrop
         WorldStaticModel = ProtectiveCaseSmall_Ground,
         Tooltip = Tooltip_MilitaryDrop_AttachmentSupplyCase,
     }
+
+    /* Note militaire (MilitaryDrop_Notes.lua) : une page écrite par le serveur,
+       verrouillée (setLockedBy), donc seulement lisible. Modèle : SheetPaper2. */
+    item MilitaryMemo
+    {
+        DisplayCategory = Literature,
+        ItemType = base:literature,
+        Weight = 0.1,
+        Icon = Paper,
+        CanBeWrite = true,
+        PageToWrite = 1,
+        StaticModel = SheetOfPaper,
+        WorldStaticModel = SheetOfPaper,
+        ReadType = newspaper,
+    }
 }
