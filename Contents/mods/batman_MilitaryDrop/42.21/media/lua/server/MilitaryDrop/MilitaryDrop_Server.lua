@@ -15,9 +15,13 @@
 -- (Zomboid/Lua/MilitaryDrop/<mode>_<partie>_code.txt).
 --
 -- Une demande acceptée lance un hélicoptère (MilitaryDrop_Flights.lua) vers
--- une case extérieure à 15-30 cases de la radio. À son passage, deliver pose
--- la caisse de largage (MilitaryDrop_Crate.lua ; à défaut, les caisses de
--- ravitaillement au sol) et la horde.
+-- un point tiré au hasard **loin du demandeur** (options DropMin/MaxDistance,
+-- 150-400 cases par défaut), sur la carte et hors bâtiment (métagrille : pas
+-- besoin que la zone soit chargée). Au passage de l'hélicoptère, les
+-- coordonnées sont annoncées ; deliver pose la caisse de largage
+-- (MilitaryDrop_Crate.lua ; à défaut, les caisses de ravitaillement au sol) et
+-- la horde dès que la zone est chargée, au besoin sur la case libre la plus
+-- proche.
 -- ============================================================================
 
 if isClient() then
@@ -43,12 +47,16 @@ MilitaryDrop.Server = Server
 Server.MODDATA_TAG = "MilitaryDrop"
 -- Une demande par joueur toutes les 3 s réelles au plus (anti-rafale).
 Server.REQUEST_INTERVAL_MS = 3000
+-- Repli quand aucun point lointain ne convient : près du demandeur (zone chargée).
 Server.LANDING_MIN_DISTANCE = 15
 Server.LANDING_MAX_DISTANCE = 30
 Server.LANDING_ATTEMPTS = 40
+Server.FAR_ATTEMPTS = 40
 Server.HORDE_RADIUS = 4
--- Rayon de recherche d'une autre case si la case prévue n'est plus libre.
-Server.RELOCATE_RADIUS = 6
+-- Rayon de recherche d'une case libre autour du point à la livraison
+-- (un point lointain est tiré sans voir l'eau ni les obstacles).
+Server.RELOCATE_RADIUS = 30
+Server.CELL_SIZE = 256
 local lastRequestMs = {}
 local secretCode = nil
 
@@ -194,13 +202,13 @@ function Server.findLandingSquare(centerX, centerY)
     return nil
 end
 
---- Case d'atterrissage la plus proche de (x, y), dans RELOCATE_RADIUS, ou nil.
-function Server.findLandingNear(x, y)
+--- Case la plus proche de (x, y), dans RELOCATE_RADIUS, qui satisfait accept, ou nil.
+local function searchAround(x, y, accept)
     for radius = 0, Server.RELOCATE_RADIUS do
         for dx = -radius, radius do
             for dy = -radius, radius do
                 if math.max(math.abs(dx), math.abs(dy)) == radius then
-                    local square = Server.landingSquareAt(x + dx, y + dy)
+                    local square = accept(x + dx, y + dy)
                     if square then
                         return square
                     end
@@ -209,6 +217,70 @@ function Server.findLandingNear(x, y)
         end
     end
     return nil
+end
+
+--- Case d'atterrissage la plus proche de (x, y), ou nil.
+function Server.findLandingNear(x, y)
+    return searchAround(x, y, Server.landingSquareAt)
+end
+
+--- Case extérieure hors de l'eau la plus proche (repli des caisses au sol), ou nil.
+function Server.findOpenGroundNear(x, y)
+    local cell = getCell()
+    return searchAround(x, y, function(sx, sy)
+        local square = cell:getGridSquare(sx, sy, 0)
+        if square and square:isOutside() and not square:isWaterSquare() then
+            return square
+        end
+        return nil
+    end)
+end
+
+--- Point (x, y) sur la carte et hors bâtiment, d'après la métagrille : valable
+--- même quand la zone n'est pas chargée (eau et obstacles : vus à la livraison).
+function Server.isOnMap(x, y)
+    local grid = getWorld():getMetaGrid()
+    if not grid:isValidSquare(x, y) then
+        return false
+    end
+    if not grid:getCellData(math.floor(x / Server.CELL_SIZE), math.floor(y / Server.CELL_SIZE)) then
+        return false
+    end
+    return grid:getBuildingAt(x, y) == nil
+end
+
+--- Point de largage tiré au hasard entre DropMinDistance et DropMaxDistance
+--- de (centerX, centerY), ou nil. Si la case est chargée, elle doit déjà être
+--- libre ; sinon elle sera revérifiée à la livraison.
+function Server.pickDropPoint(centerX, centerY)
+    local low = math.max(0, Config.get("DropMinDistance"))
+    local high = math.max(0, Config.get("DropMaxDistance"))
+    if high < low then
+        low, high = high, low
+    end
+    local cell = getCell()
+    for _ = 1, Server.FAR_ATTEMPTS do
+        local angle = ZombRandFloat(0, 2 * math.pi)
+        local distance = ZombRandFloat(low, high)
+        local x = math.floor(centerX + math.cos(angle) * distance)
+        local y = math.floor(centerY + math.sin(angle) * distance)
+        if Server.isOnMap(x, y) and (not cell:getGridSquare(x, y, 0) or Server.landingSquareAt(x, y)) then
+            return x, y
+        end
+    end
+    return nil
+end
+
+--- Envoie les coordonnées en privé au demandeur (largage admin, ou chaîne
+--- militaire absente : il n'entendrait pas l'annonce).
+function Server.notifyDrop(requester, requestId, x, y, forced)
+    if not forced and MilitaryDrop.Broadcast.channel then
+        return
+    end
+    local player = requester and Server.findPlayer(requester)
+    if player then
+        Net.toPlayer(player, "Dropped", { requestId = requestId, x = x, y = y })
+    end
 end
 
 --- Nombre de zombies de la horde (options Min/MaxZombies, 0 et 0 = aucun).
@@ -245,20 +317,22 @@ function Server.findPlayer(username)
     return nil
 end
 
---- Livraison : caisse de largage, horde autour et annonce sur la chaîne
---- militaire. La case doit être chargée ; elle est revérifiée (un véhicule a pu
---- s'y garer pendant le vol ou avant un redémarrage) et remplacée au besoin
---- par la plus proche. requester : nom du joueur qui a appelé. notify : lui
---- envoyer les coordonnées en privé (largage admin, qui n'exige pas d'être à
---- l'écoute ; ou chaîne militaire absente).
-function Server.deliver(square, requester, requestId, notify)
-    square = Server.findLandingNear(square:getX(), square:getY()) or square
-    local x, y = square:getX(), square:getY()
+--- Livraison au point (x, y), déjà annoncé : caisse de largage et horde
+--- autour. La zone doit être chargée ; la case est revérifiée (eau, obstacle,
+--- véhicule garé) et remplacée au besoin par la plus proche. Renvoie false si
+--- aucune case ne convient encore (la livraison reste en attente).
+function Server.deliver(x, y, requester)
+    local square = Server.findLandingNear(x, y)
     local count = 0
-    if MilitaryDrop.Crate.spawn(square) then
+    if square and MilitaryDrop.Crate.spawn(square) then
         count = 1
     else
         -- Repli : la caisse n'a pas pu apparaître (aucune place libre).
+        square = square or Server.findOpenGroundNear(x, y)
+        if not square then
+            MilitaryDrop.log(string.format("no ground near %d,%d yet: delivery waits", x, y))
+            return false
+        end
         for _, fullType in ipairs(MilitaryDrop.Crate.rollCases()) do
             if square:AddWorldInventoryItem(fullType, ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0) then
                 count = count + 1
@@ -266,6 +340,7 @@ function Server.deliver(square, requester, requestId, notify)
         end
         MilitaryDrop.log("crate could not spawn: supply cases left on the ground", true)
     end
+    x, y = square:getX(), square:getY()
     local zombies = Server.hordeSize()
     if zombies > 0 then
         local r = Server.HORDE_RADIUS
@@ -275,12 +350,7 @@ function Server.deliver(square, requester, requestId, notify)
     state.lastDrop = { x = x, y = y, hours = getGameTime():getWorldAgeHours() }
     MilitaryDrop.log(string.format("drop at %d,%d: %d crate/cases, %d zombies, for %s",
         x, y, count, zombies, tostring(requester)), true)
-    MilitaryDrop.Broadcast.dropped(x, y)
-    notify = notify or not MilitaryDrop.Broadcast.channel
-    local player = notify and requester and Server.findPlayer(requester)
-    if player then
-        Net.toPlayer(player, "Dropped", { requestId = requestId, x = x, y = y })
-    end
+    return true
 end
 
 function Server.handleRequest(player, args)
@@ -300,9 +370,14 @@ function Server.handleRequest(player, args)
         return
     end
 
-    local origin = Radio.isWorldRadio(extra) and extra:getSquare() or player:getCurrentSquare()
-    local square = origin and Server.findLandingSquare(origin:getX(), origin:getY())
-    if not square then
+    -- Loin du demandeur ; à défaut (carte trop petite, bord de la carte), près de lui.
+    local px, py = math.floor(player:getX()), math.floor(player:getY())
+    local x, y = Server.pickDropPoint(px, py)
+    if not x then
+        local square = Server.findLandingSquare(px, py)
+        x, y = square and square:getX(), square and square:getY()
+    end
+    if not x then
         MilitaryDrop.log("request from " .. name .. ": no landing square", true)
         Net.toPlayer(player, "Result", { requestId = requestId, status = "noSite" })
         return
@@ -311,7 +386,7 @@ function Server.handleRequest(player, args)
         Server.getState().lastDropHours = now
     end
     Net.toPlayer(player, "Result", { requestId = requestId, status = "accepted" })
-    MilitaryDrop.Flights.launch(square, name, requestId, args.force == true)
+    MilitaryDrop.Flights.launch(x, y, name, requestId, args.force == true)
 end
 
 function Server.onClientCommand(module, command, player, args)

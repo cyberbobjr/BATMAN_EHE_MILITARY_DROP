@@ -7,7 +7,7 @@ Chaque étape donne l'action, puis le résultat attendu. Noter tout écart et ga
 1. Lancer le jeu en mode debug (`-debug` dans les options de lancement Steam).
 2. Mods : activer **Military Drop** (id `batman_MilitaryDrop`) seul (HEF désactivé pour ce premier passage).
 3. Nouvelle partie « bac à sable ». Page **Military Drop** des options :
-   - vérifier les 11 options et leurs libellés en français ;
+   - vérifier les 13 options et leurs libellés en français ;
    - **Heures entre deux largages** : 1 ; **Fréquence des notes militaires** : Débogage (1/2) ; **Journal de débogage** : activé ; le reste par défaut (151,4 MHz, code exigé).
 4. En jeu, se placer **dehors**, dans un endroit dégagé.
 
@@ -49,7 +49,7 @@ getPlayer():getInventory():AddItem("MilitaryDrop.AmmoSupplyCase")
 
 | # | Action | Attendu |
 |---|---|---|
-| C1 | Écouter et regarder | Son d'hélicoptère qui approche (environ 50 s), flèche de direction à moins de 400 cases |
+| C1 | Écouter et regarder | Son d'hélicoptère qui passe au loin ; flèche de direction à moins de 400 cases de l'hélicoptère. Le point de largage est **entre 150 et 400 cases** du joueur (options « Distance minimale/maximale du largage ») |
 | C2 | Au passage | Ombre qui passe au sol, vol stationnaire ~8 s au-dessus du point |
 | C3 | Départ | L'hélicoptère repart, le son décroît puis s'arrête ; plus d'ombre ni de flèche |
 | C4 | Pause (Échap) pendant un vol | L'hélicoptère s'arrête aussi |
@@ -67,7 +67,7 @@ getPlayer():getInventory():AddItem("MilitaryDrop.AmmoSupplyCase")
 
 | # | Action | Attendu |
 |---|---|---|
-| E1 | Aller au point de largage | Caisse 3D (palette, caisse olive, sangles, « U.S. ARMY »), posée au sol, ni enfoncée ni flottante, taille d'environ une case |
+| E1 | Aller au point de largage (repère de carte) | En arrivant, la caisse 3D (palette, caisse olive, sangles, « U.S. ARMY ») apparaît au point annoncé ou à moins de 30 cases, posée au sol, ni enfoncée ni flottante |
 | E2 | Horde | Zombies autour de la caisse (3 à 30 par défaut) |
 | E3 | Ouvrir le coffre (clic droit / menu véhicule) | Coffre « Caisse de largage militaire » avec 6 caisses de ravitaillement |
 | E4 | Largage admin (« Forcer un largage ») sur une radio éteinte, rangée dans l'inventaire | Accepté ; coordonnées en message privé ; délai non modifié |
@@ -76,7 +76,7 @@ getPlayer():getInventory():AddItem("MilitaryDrop.AmmoSupplyCase")
 
 | # | Action | Attendu |
 |---|---|---|
-| F1 | Sauvegarder et quitter **pendant un vol**, recharger | Pas d'hélicoptère ; la caisse est livrée au point prévu quand la zone se charge |
+| F1 | Sauvegarder et quitter **pendant un vol**, recharger | L'hélicoptère reprend son vol (son, ombre) et largue normalement |
 | F2 | Recharger une partie avec une caisse déjà posée | Caisse toujours là, contenu conservé |
 
 ## Plus tard : multijoueur (hébergé, puis serveur dédié `C:\pzserver`)

@@ -25,6 +25,12 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 
 ## Étape 0 — Largage loin du demandeur (prérequis, demandé le 2026-09-30)
 
+*Fait le 2026-09-30 (80 tests `lupa`), à tester en jeu.* Écarts avec la conception ci-dessous :
+- le point est validé par la métagrille : `isValidSquare`, cellule présente, `getBuildingAt` nul ;
+- une livraison en attente est retentée à chaque `LoadChunk` situé à 30 cases ou moins, tant qu'aucune case ne convient ; il n'y a pas de second tirage à 50 cases ;
+- repli si aucun point lointain ne convient : près du demandeur, comme en v1 ;
+- un vol interrompu par un redémarrage **reprend** (il n'est plus converti en livraison sans hélicoptère), et il est renvoyé aux clients au premier tick.
+
 **Constat vérifié** : le point est aujourd'hui tiré à **15-30 cases** de la radio (`Server.LANDING_MIN/MAX_DISTANCE`), car sa case doit être chargée pour être validée. La zone chargée autour d'un joueur ne fait que 48 à 79 cases (`IsoChunkMap.java:131-139`).
 
 **Conception**

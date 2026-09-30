@@ -34,6 +34,8 @@ local DEFAULTS = {
     NoteOutfits = "Army;Police;Sheriff",
     NoteOutfitsExcluded = "Stripper",
     CaseRolls = 6,
+    DropMinDistance = 150,
+    DropMaxDistance = 400,
     RequireAuthCode = true,
     DebugLog = false,
 }

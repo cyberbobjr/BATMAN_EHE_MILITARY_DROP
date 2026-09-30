@@ -28,6 +28,8 @@ local function makePlayer(radio, where)
     local square = { getX = function() return 100 end, getY = function() return 200 end }
     return {
         getUsername = function() return "tester" end,
+        getX = function() return 100.5 end,
+        getY = function() return 200.5 end,
         getPrimaryHandItem = function() return where == "hand" and radio or nil end,
         getSecondaryHandItem = function() return nil end,
         getClothingItem_Back = function() return where == "back" and radio or nil end,
@@ -74,7 +76,17 @@ function T.setup()
     getText = function(key, a, b) return key .. "|" .. tostring(a) .. "|" .. tostring(b) end
     FILES = {}
     getWorld = function()
-        return { getGameMode = function() return "Sandbox" end, getWorld = function() return "Test Save" end }
+        return {
+            getGameMode = function() return "Sandbox" end,
+            getWorld = function() return "Test Save" end,
+        getMetaGrid = function()
+            return {
+                isValidSquare = function(_, x, y) return not (OFF_MAP and OFF_MAP(x, y)) end,
+                getCellData = function() return {} end,
+                getBuildingAt = function(_, x, y) return BUILDING and BUILDING(x, y) or nil end,
+            }
+        end,
+        }
     end
     getFileReader = function(name)
         local value = FILES[name]
@@ -230,7 +242,7 @@ function T.accepted_request_launches_a_flight_then_drops()
     assertTrue(sequence:find("^Result,FlightStart,FlightSync") ~= nil, "réponse, départ, synchronisation : " .. sequence)
     assertTrue(sequence:find(",DropAnnounce$") ~= nil, "annonce des coordonnées en dernier : " .. sequence)
     assertTrue(sequence:find("Dropped") == nil, "pas de message privé : la chaîne suffit")
-    assertEq(SENT[#SENT].args.x, 115, "coordonnées")
+    assertEq(SENT[#SENT].args.x, 250, "point lointain : 150 cases à l'est du joueur (100, 200)")
     assertTrue(AIRING ~= nil and #AIRING.lines >= 4, "coordonnées diffusées sur la chaîne")
 end
 
@@ -259,6 +271,35 @@ function T.request_burst_is_ignored()
     NOW_MS = 4000
     MilitaryDrop.Server.handleRequest(player, request(CODE))
     assertEq(#SENT, 2, "acceptée après 3 s")
+end
+
+function T.drop_point_is_far_from_the_requester()
+    SandboxVars.MilitaryDrop.DropMinDistance = 300
+    SandboxVars.MilitaryDrop.DropMaxDistance = 300
+    local x, y = MilitaryDrop.Server.pickDropPoint(100, 200)
+    assertEq(x, 400, "300 cases à l'est")
+    assertEq(y, 200, "même ligne")
+end
+
+function T.drop_point_avoids_buildings_and_off_map()
+    local tries = 0
+    ZombRandFloat = function(low, high)
+        tries = tries + 1
+        return tries <= 2 and low or high
+    end
+    BUILDING = function(x) return x == 250 end
+    local x = MilitaryDrop.Server.pickDropPoint(100, 200)
+    assertTrue(x ~= 250, "bâtiment écarté")
+    OFF_MAP = function() return true end
+    assertEq(MilitaryDrop.Server.pickDropPoint(100, 200), nil, "hors carte : aucun point")
+end
+
+function T.no_far_point_falls_back_near_the_requester()
+    OFF_MAP = function() return true end
+    MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
+    local flight = MilitaryDrop.Server.getState().flights[1]
+    assertTrue(flight ~= nil, "vol lancé quand même")
+    assertEq(flight.tx, 115.5, "repli près du joueur (15 cases)")
 end
 
 function T.code_is_kept_in_a_server_file_not_in_mod_data()

@@ -12,6 +12,18 @@ option MilitaryDrop.Frequency
     page = MilitaryDrop, translation = MilitaryDrop_Frequency,
 }
 
+option MilitaryDrop.DropMinDistance
+{
+    type = integer, min = 0, max = 3000, default = 150,
+    page = MilitaryDrop, translation = MilitaryDrop_DropMinDistance,
+}
+
+option MilitaryDrop.DropMaxDistance
+{
+    type = integer, min = 0, max = 3000, default = 400,
+    page = MilitaryDrop, translation = MilitaryDrop_DropMaxDistance,
+}
+
 option MilitaryDrop.RequireAuthCode
 {
     type = boolean, default = true,

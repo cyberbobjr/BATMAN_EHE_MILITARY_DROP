@@ -14,12 +14,15 @@
 -- cible (HTT.Server.state, lecture seule), le départ est retardé, au plus
 -- MAX_HOLD_SECONDS.
 --
--- Persistance (ModData « MilitaryDrop ») : les vols en cours. Au chargement de
--- la partie, un vol interrompu devient une livraison en attente, sans
--- hélicoptère. Une livraison dont la case n'est pas chargée attend la fin du
--- chargement de son chunk (LoadChunk : après les histoires de bâtiment et le
--- butin, une fois par chunk de 8 × 8 cases), puis Server.deliver revérifie la
--- case et annonce les coordonnées.
+-- Largage : les coordonnées sont annoncées au passage de l'hélicoptère, même
+-- si la zone n'est pas chargée (point lointain). La caisse est posée dès que
+-- la zone l'est : aussitôt, ou à la fin du chargement d'un chunk proche
+-- (LoadChunk : après les histoires de bâtiment et le butin, une fois par chunk
+-- de 8 × 8 cases), jusqu'à ce qu'une case convienne.
+--
+-- Persistance (ModData « MilitaryDrop ») : les vols en cours et les
+-- livraisons en attente. Au chargement de la partie, un vol interrompu reprend
+-- là où il en était ; les clients le redemandent (Sync).
 -- ============================================================================
 
 if isClient() then
@@ -96,16 +99,17 @@ local function onLoadChunk(chunk)
     -- Kahlua : relever les entrées, puis les retirer après le pairs.
     local ready = {}
     for key, entry in pairs(pending) do
-        if entry.x >= x0 and entry.x < x0 + Flights.CHUNK_SIZE and entry.y >= y0 and entry.y < y0 + Flights.CHUNK_SIZE then
+        -- Chunk du point, ou assez proche pour contenir une case de repli.
+        local margin = Server.RELOCATE_RADIUS
+        if entry.x >= x0 - margin and entry.x < x0 + Flights.CHUNK_SIZE + margin
+            and entry.y >= y0 - margin and entry.y < y0 + Flights.CHUNK_SIZE + margin then
             ready[#ready + 1] = key
         end
     end
     for _, key in ipairs(ready) do
         local entry = pending[key]
-        local square = getCell():getGridSquare(entry.x, entry.y, 0)
-        if square then
+        if Server.deliver(entry.x, entry.y, entry.requester) then
             pending[key] = nil
-            Server.deliver(square, entry.requester, entry.requestId, entry.forced)
         end
     end
     if not hasPending() then
@@ -121,18 +125,15 @@ local function watchSquares()
     end
 end
 
---- Livre sur la case (x, y, 0), tout de suite si elle est chargée.
-function Flights.deliverAt(x, y, requester, requestId, forced)
-    local square = getCell():getGridSquare(x, y, 0)
-    if square then
-        Server.deliver(square, requester, requestId, forced)
+--- Livre au point (x, y) : tout de suite si la zone est chargée, sinon en
+--- attente d'un LoadChunk proche.
+function Flights.deliverAt(x, y, requester)
+    if getCell():getGridSquare(x, y, 0) and Server.deliver(x, y, requester) then
         return
     end
-    state().pending[pendingKey(x, y)] = {
-        x = x, y = y, requester = requester, requestId = requestId, forced = forced,
-    }
+    state().pending[pendingKey(x, y)] = { x = x, y = y, requester = requester }
     watchSquares()
-    MilitaryDrop.log(string.format("drop at %d,%d waits for its square to load", x, y))
+    MilitaryDrop.log(string.format("drop at %d,%d waits for its area to load", x, y))
 end
 
 -- ----------------------------------------------------------------------------
@@ -158,7 +159,9 @@ local function drop(flight)
     flight.dropped = true
     local x, y = math.floor(flight.tx), math.floor(flight.ty)
     addSound(nil, x, y, 0, Flights.DROP_NOISE_RADIUS, Flights.DROP_NOISE_VOLUME)
-    Flights.deliverAt(x, y, flight.requester, flight.requestId, flight.forced)
+    MilitaryDrop.Broadcast.dropped(x, y)
+    Server.notifyDrop(flight.requester, flight.requestId, x, y, flight.forced)
+    Flights.deliverAt(x, y, flight.requester)
 end
 
 local function removeFlight(index)
@@ -179,6 +182,10 @@ function Flights.advance(flight, dt)
         Net.toAll("FlightStart", Flight.toArgs(flight))
         MilitaryDrop.Broadcast.inbound()
         MilitaryDrop.log(string.format("flight %d started toward %d,%d", flight.id, flight.tx, flight.ty))
+    elseif flight.resumed then
+        -- Vol repris après un chargement : les clients (solo compris) le redécouvrent.
+        flight.resumed = nil
+        Net.toAll("FlightStart", Flight.toArgs(flight))
     end
     flight.elapsed = flight.elapsed + dt
     local x, y, phase = Flight.position(flight, flight.elapsed)
@@ -222,11 +229,11 @@ local function startTicking()
     end
 end
 
---- Lance un hélicoptère vers une case d'atterrissage (forced : largage admin).
-function Flights.launch(square, requester, requestId, forced)
+--- Lance un hélicoptère vers le point (x, y) (forced : largage admin).
+function Flights.launch(x, y, requester, requestId, forced)
     local s = state()
     s.nextFlightId = (tonumber(s.nextFlightId) or 0) + 1
-    local flight = Flight.new(s.nextFlightId, square:getX() + 0.5, square:getY() + 0.5, ZombRandFloat(0, 2 * math.pi))
+    local flight = Flight.new(s.nextFlightId, x + 0.5, y + 0.5, ZombRandFloat(0, 2 * math.pi))
     flight.requester = requester
     flight.requestId = requestId
     flight.forced = forced == true
@@ -246,18 +253,16 @@ function Flights.sendActive(player)
     end
 end
 
---- Au chargement : les vols interrompus deviennent des livraisons en attente.
+--- Au chargement : les vols interrompus reprennent, les livraisons en attente
+--- guettent le chargement de leur zone.
 function Flights.restore()
     local s = state()
     for _, flight in ipairs(s.flights) do
-        if not flight.dropped then
-            local x, y = math.floor(flight.tx), math.floor(flight.ty)
-            s.pending[pendingKey(x, y)] = {
-                x = x, y = y, requester = flight.requester, requestId = flight.requestId, forced = flight.forced,
-            }
-        end
+        flight.resumed = true
     end
-    s.flights = {}
+    if #s.flights > 0 then
+        startTicking()
+    end
     if hasPending() then
         watchSquares()
     end

@@ -37,7 +37,17 @@ function T.setup()
     getText = function(key) return key end
     FILES = {}
     getWorld = function()
-        return { getGameMode = function() return "Sandbox" end, getWorld = function() return "Test Save" end }
+        return {
+            getGameMode = function() return "Sandbox" end,
+            getWorld = function() return "Test Save" end,
+        getMetaGrid = function()
+            return {
+                isValidSquare = function(_, x, y) return not (OFF_MAP and OFF_MAP(x, y)) end,
+                getCellData = function() return {} end,
+                getBuildingAt = function(_, x, y) return BUILDING and BUILDING(x, y) or nil end,
+            }
+        end,
+        }
     end
     getFileReader = function(name)
         local value = FILES[name]
@@ -89,7 +99,15 @@ function T.setup()
 end
 
 local function launch()
-    return MilitaryDrop.Flights.launch(makeSquare(500, 600), "tester", 1)
+    return MilitaryDrop.Flights.launch(500, 600, "tester", 1)
+end
+
+local function commands()
+    local list = {}
+    for _, sent in ipairs(SENT) do
+        list[#list + 1] = sent.command
+    end
+    return table.concat(list, ",")
 end
 
 function T.hef_event_near_target_delays_departure()
@@ -124,30 +142,53 @@ local function makeChunk(x0, y0)
     return { getGridSquare = function(_, lx, ly) return makeSquare(x0 + lx, y0 + ly) end }
 end
 
-function T.unloaded_square_waits_for_its_chunk()
+function T.far_drop_is_announced_before_its_area_loads()
     LOADED = false
-    MilitaryDrop.Flights.deliverAt(500, 600, "tester", 1)
+    local flight = launch()
+    for _ = 1, math.ceil((MilitaryDrop.Flight.dropTime(flight) + 0.5) / 0.25) do
+        MilitaryDrop.Flights.advance(flight, 0.25)
+    end
+    assertTrue(commands():find("DropAnnounce") ~= nil, "coordonnées annoncées au largage")
+    assertEq(#PLACED, 0, "zone non chargée : rien de posé")
+    assertEq(listenerCount("LoadChunk"), 1, "livraison en attente")
+end
+
+function T.unloaded_square_waits_for_a_nearby_chunk()
+    LOADED = false
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester")
     assertEq(#PLACED, 0, "case non chargée")
     assertEq(listenerCount("LoadChunk"), 1, "surveillance du chargement")
     LOADED = true
-    triggerEvent("LoadChunk", makeChunk(504, 600))
-    assertEq(#PLACED, 0, "autre chunk ignoré")
-    triggerEvent("LoadChunk", makeChunk(496, 600))
-    assertEq(#PLACED, 1, "livré à la fin du chargement de son chunk")
-    assertEq(SENT[#SENT].command, "DropAnnounce", "coordonnées annoncées")
+    triggerEvent("LoadChunk", makeChunk(800, 600))
+    assertEq(#PLACED, 0, "chunk lointain ignoré")
+    triggerEvent("LoadChunk", makeChunk(520, 600))
+    assertEq(#PLACED, 1, "livré depuis un chunk voisin (rayon de recherche)")
     assertEq(listenerCount("LoadChunk"), 0, "surveillance arrêtée")
 end
 
-function T.restart_turns_flights_into_pending_drops()
-    local flight = launch()
-    local dropped = launch()
-    dropped.dropped = true
-    flight.tx, flight.ty = 700.5, 800.5
-    MilitaryDrop.Flights.restore()
+function T.no_ground_keeps_the_delivery_pending()
+    LOADED = true
+    local water = function(square) square.isWaterSquare = function() return true end return square end
+    getCell = function()
+        return { getGridSquare = function(_, x, y) return water(makeSquare(x, y)) end }
+    end
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester")
+    assertEq(#PLACED, 0, "que de l'eau : rien de posé")
+    assertTrue(MilitaryDrop.Server.getState().pending["500,600"] ~= nil, "livraison toujours en attente")
+end
+
+function T.restart_resumes_flights_and_pending_deliveries()
+    -- État relu de la sauvegarde : un vol en cours et une livraison en attente.
     local state = MilitaryDrop.Server.getState()
-    assertEq(#state.flights, 0, "plus de vol en cours")
-    assertTrue(state.pending["700,800"] ~= nil, "livraison en attente")
-    assertEq(listenerCount("LoadChunk"), 1, "surveillance du chargement")
+    state.flights = { MilitaryDrop.Flight.new(9, 500, 600, 0) }
+    state.pending = { ["700,800"] = { x = 700, y = 800, requester = "tester" } }
+    MilitaryDrop.Flights.restore()
+    assertEq(#MilitaryDrop.Server.getState().flights, 1, "vol conservé")
+    assertEq(listenerCount("OnTick"), 1, "le vol reprend")
+    assertEq(listenerCount("LoadChunk"), 1, "livraison en attente surveillée")
+    state.flights[1].started = true
+    MilitaryDrop.Flights.advance(state.flights[1], 0.25)
+    assertEq(SENT[1].command, "FlightStart", "vol repris renvoyé aux clients")
 end
 
 return T
