@@ -1,0 +1,25 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install luacheck and lupa
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua-check
+          python -m pip install lupa
+
+      # Sans le jeu, les tests qui lisent les tables vanilla sont ignorés.
+      - name: Run checks
+        run: python tests/run_tests.py --require-luacheck

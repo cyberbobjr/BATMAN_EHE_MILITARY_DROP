@@ -1,0 +1,55 @@
+# Portage B42.21 — plan de travail
+
+Décisions prises le 2026-09-30. L'analyse complète (prérequis EHE, API) est dans
+`.claude/pz-knowledge/helicopter-events.md` du dossier `Zomboid\Workshop`.
+
+## Décisions
+
+| Sujet | Choix |
+|---|---|
+| Dépendances | Aucune. Mod **autonome**, sans Expanded Helicopter Events : EHE B42 n'est pas public et sa licence TEHE interdit de réutiliser son code ou ses ressources, même partiellement. |
+| Hélicoptère | Visible **à la manière d'EHE** : son 3D qui se déplace, ombre de rotor animée au sol et marqueur de direction. Le serveur calcule la trajectoire ; chaque client dessine l'hélicoptère. Écrit à partir des API du jeu, sans reprendre le code d'EHE. |
+| HEF (3672792485) | **Cohabitation propre**, sans intégration : espaces de noms, sons, commandes réseau et ModData distincts. Pas deux hélicoptères au même endroit, pas de bruits cumulés. HEF utilise 112,2 MHz pour son drone : cette fréquence est interdite ici. |
+| Workshop | **Nouvel élément B42**, `id=batman_MilitaryDrop`. La page B41 (3259615085, `batman_HTC_EHE_MilitaryDrop`) reste intacte et renverra vers la nouvelle. |
+| Caisse | **Nouveau modèle Blender** (skill `pz-blender-assets`), texture de l'auteur (`legacy-b41/media/textures/vehicles/EHE/Vehicle_MilitarySupplyDrop*.png`). Reste un véhicule avec coffre. Le maillage `Vehicle_FEMASupplyDrop` appartient à EHE : ne pas l'utiliser. |
+| Délai | **Global au serveur**, stocké côté serveur (ModData globale), durée réglable en sandbox. |
+| Contenu v1 | Parité B41 sûre en MP **+ code d'authentification** : les notes donnent la fréquence et un code, exigé lors de l'appel. |
+
+Aucune migration de sauvegarde : les parties B41 ne se chargent pas en B42. Les noms (`HTC`, `HTC_EHE_*`) peuvent donc changer librement.
+
+## Phases
+
+- [x] **0. Cadrage** : projet `Zomboid\Workshop\MilitaryDrop` (branche `b42`), structure `Contents/mods/batman_MilitaryDrop/{common,42.21}`, `workshop.txt` (privé), tests et CI, sources B41 déplacées dans `legacy-b41/` (non publiées, à supprimer avant la sortie).
+- [ ] **1. Socle 42.21 en solo** : traductions JSON UTF-8 (EN, FR), objets et `craftRecipe`, options sandbox, aucune surcharge de fichier vanilla.
+- [ ] **2. Autorité serveur** : le client envoie une demande ; le serveur vérifie radio, allumage, fréquence (arrondie au pas de 200 du talkie), code, délai global et droits admin, puis crée la caisse, le butin et la horde. Notes tirées côté serveur (ou solo). Branche solo sans commande réseau.
+- [ ] **3. Hélicoptère** : trajectoire côté serveur, envoi aux clients ; son, ombre et marqueur côté client ; reprise après reconnexion.
+- [ ] **4. Annonces** : chaîne radio dynamique sur la fréquence sandbox (fin du balayage de cellule) ; marqueur de carte pour les joueurs à l'écoute seulement.
+- [ ] **5. Caisse 3D** : modèle Blender, script de véhicule 42.21 (`frontEndDurability`…), coffre rempli par le serveur.
+- [ ] **6. Qualité** : espace de noms `MilitaryDrop`, aucune globale, traces de debug sous option, luacheck, tests `lupa` (tirage pondéré, délai, fréquence, code).
+- [ ] **7. Tests** : solo, hébergé, serveur dédié (`C:\pzserver`) avec 2 clients, reconnexion, commande forgée, partie avec HEF.
+- [ ] **8. Publication** : art (skill `pz-workshop-art`), suppression de `legacy-b41/`, nouvel élément Workshop, lien depuis la page B41.
+
+## Défauts B41 à ne pas reproduire
+
+Relevés dans `legacy-b41/` (numéros de ligne de ces fichiers).
+
+- `server/HTC_EHE_ServerHandler.lua:70-92` : la commande `CallMilitaryDrop` n'est pas validée (fréquence, délai, admin vérifiés sur le client seulement).
+- `client/HTC_EHE_ClientHandler.lua:26-56` : délai dans la ModData du joueur côté client (trichable, par joueur, non synchronisé).
+- `shared/HTC_EHE_NoteDrop.lua` : tirage des notes sur le client et le serveur ; nom sans `setCustomName` ; `outfitName` nil contourne l'option « militaires ou policiers » ; `print` à chaque mort de zombie ; globales.
+- `client/HTC_EHE_ClientHandler.lua:204` : variable `i` inexistante (plantage avec un talkie en inventaire).
+- `shared/HTC_EHE_preset.lua:37` : `sendServerCommand` inopérant en solo (aucune annonce ni marqueur).
+- `client/HTC_EHE_ClientHandler.lua:89-118` : balayage de toute la cellule sur tous les niveaux.
+- `client/HTC_EHE_ClientHandler.lua:68` : `setIsTurnedOn` côté client, non synchronisé.
+- `client/RadioCom/ISRadioWindow.lua` : copie B41 d'un fichier vanilla (casse l'interface radio B42).
+- `shared/lua_timers.lua` : globale `timer`, chemin partagé avec d'autres mods, `os.time` à la seconde.
+- `server/HTC_EHE_ServerHandler.lua:78-88` : `forceUnlaunchTime` mélange `getNightsSurvived` et l'âge du monde ; `HOUR > 24` au lieu de `>= 24`.
+- `shared/HTC_EHE_preset.lua:53-83` : tirage pondéré tronqué pour les poids décimaux ; IDs de compatibilité Arsenal et VFE de B41.
+- Traductions FR en ANSI ; `Tooltip_EN.txt` déclare `Tooltip_FR` ; libellés sandbox FR non traduits.
+
+## Idées pour après la v1
+
+Reprises de `legacy-b41/TODO (oneday).txt` et de l'analyse :
+- autres types de largage (médical, outils, semences), une fréquence par type ;
+- fréquence tirée au hasard par partie, diffusée à la télévision ;
+- zone de largage choisie au fumigène ou à la fusée éclairante ;
+- consommation de pile, risque d'interception de l'annonce.

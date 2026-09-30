@@ -1,0 +1,21 @@
+[h1]Military Drop - Radio Supply Airdrops[/h1]
+
+[b]Build 42.21 · Singleplayer & Multiplayer · Work in progress[/b]
+
+Tune a military radio to the right frequency, give the authentication code, and request an airdrop of military surplus. A helicopter flies in and drops a supply crate... and the noise draws the dead.
+
+[h2]Planned features[/h2]
+
+[list]
+[*]Call a supply drop with a military walkie-talkie or HAM radio.
+[*]The frequency and authentication code are found on notes carried by military and police zombies.
+[*]A helicopter you can hear and see approach: moving sound, rotor shadow on the ground, direction marker.
+[*]Crate loot comes from the game's army distribution tables, so it works with weapon mods.
+[*]Anyone listening on the frequency hears the drop coordinates, and the spot is marked on their map.
+[*]Server-authoritative multiplayer, with one server-wide cooldown set in the sandbox options.
+[*]Standalone: no other mod required. Compatible with HEF - Helicopter Event Framework.
+[/list]
+
+[h2]Credits[/h2]
+
+Build 42 rewrite of [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url] (Build 41). Source code (MIT) on [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url].
