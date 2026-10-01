@@ -241,6 +241,26 @@ def lamp_glow(size=(128, 128)):
 # Confiance : écusson et galon
 # ----------------------------------------------------------------------------
 
+def brushed(size, color, strength, offset):
+    """Métal brossé raccordable : stries horizontales fines sur un grain léger.
+
+    Reconstruite le 2026-10-01 (la version d'origine a été perdue) : les PNG
+    MDPost_Button et MDPost_DogTag livrés viennent de l'originale ; les
+    régénérer change légèrement leur grain."""
+    w, h = size
+    _, nrng = rng(offset)
+    rows = nrng.normal(0, 1, (h, 1)).astype(np.float32)
+    streaks = np.tile(rows, (1, w)) + nrng.normal(0, 0.35, (h, w)).astype(np.float32)
+    # Stries étirées dans le sens du brossage (flou horizontal raccordable).
+    tiled = np.tile(streaks, (1, 3))
+    kernel = np.ones(15, dtype=np.float32) / 15
+    blurred = np.apply_along_axis(lambda r: np.convolve(r, kernel, mode="same"), 1, tiled)[:, w:2 * w]
+    blurred /= blurred.std() or 1
+    base = np.ones((h, w, 3), dtype=np.float32) * np.array(color, dtype=np.float32)
+    base += (blurred * strength + seamless_noise(size, 2.0, offset + 1) * strength * 0.3)[..., None]
+    return base
+
+
 def weave(size, color, strength, offset):
     """Toile tissée : trame et chaîne, raccordable."""
     w, h = size

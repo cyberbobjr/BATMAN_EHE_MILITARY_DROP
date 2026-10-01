@@ -14,6 +14,7 @@ description=[*]The frequency is found on notes carried by military and police zo
 description=[*]A helicopter you can hear and see approach: moving sound, rotor shadow on the ground, direction marker.
 description=[*]Crate loot comes from the game's army distribution tables, so it works with weapon mods.
 description=[*]Anyone listening on the frequency hears the drop coordinates, and the spot is marked on their map.
+description=[*]Requisition form: spend points earned with trust on 18 supply lots, or order a decoy siren drop.
 description=[*]Earn the base's trust as a faction: daily reports, soldiers' dog tags, public missions and a command post radio.
 description=[*]Server-authoritative multiplayer, with one server-wide cooldown set in the sandbox options.
 description=[*]Standalone: no other mod required. Compatible with HEF - Helicopter Event Framework. With Signal Smoke, green smoke marks the crate.

@@ -27,7 +27,8 @@
 --   trust[teamId] = { value, lockedUntil (heures de jeu), day, dayGain,
 --                     lastCallHours, erodedDay }
 --   drops[dropId] = { team, requester, forced, requestedHours, deliveredHours,
---                     deadline, outcome, openedBy, closedHours }
+--                     deadline, outcome, openedBy, closedHours, order, decoy }
+--   (team nil : largage admin ou leurre, sans effet sur la confiance)
 --   nextDropId = compteur ("D1", "D2"…)
 -- Chaque caisse de ravitaillement d'un largage porte son dropId en ModData
 -- d'objet (Trust.ITEM_KEY). Compteur de codes faux : mémoire du serveur.
@@ -271,16 +272,21 @@ end
 -- ----------------------------------------------------------------------------
 
 --- Nouveau largage : identifiant, équipe du demandeur au moment de l'appel.
---- Un largage admin (forced) n'a pas d'effet sur la confiance.
-function Trust.registerDrop(teamId, requester, forced)
+--- Un largage admin (forced) n'a pas d'effet sur la confiance, ni un largage
+--- hors suivi (opts.untracked : leurre, LEURRE-04). opts.order et opts.decoy :
+--- commande du formulaire de réquisition (MilitaryDrop_Requisition.lua).
+function Trust.registerDrop(teamId, requester, forced, opts)
+    opts = type(opts) == "table" and opts or {}
     local s = state()
     s.nextDropId = (tonumber(s.nextDropId) or 0) + 1
     local dropId = "D" .. s.nextDropId
     s.drops[dropId] = {
-        team = not forced and teamId or nil,
+        team = not forced and not opts.untracked and teamId or nil,
         requester = requester,
         forced = forced == true,
         requestedHours = hoursNow(),
+        order = opts.order,
+        decoy = opts.decoy,
     }
     return dropId
 end

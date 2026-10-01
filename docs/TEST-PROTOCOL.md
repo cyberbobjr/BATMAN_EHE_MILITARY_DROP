@@ -7,7 +7,7 @@ Chaque étape donne l'action, puis le résultat attendu. Noter tout écart et ga
 1. Lancer le jeu en mode debug (`-debug` dans les options de lancement Steam).
 2. Mods : activer **Military Drop** (id `batman_MilitaryDrop`) seul (HEF désactivé pour ce premier passage).
 3. Nouvelle partie « bac à sable ». Page **Military Drop** des options :
-   - vérifier les 34 options et leurs libellés en français ;
+   - vérifier les 44 options et leurs libellés en français ;
    - **Heures entre deux largages** : 1 ; **Fréquence des notes militaires** : Débogage (1/2) ; **Fréquence des carnets de codes** : Débogage (1/2) ; **Journal de débogage** : activé ; le reste par défaut (**Fréquence radio** : 0 = tirée au hasard, **Code d'authentification** : code de la semaine chiffré).
 4. En jeu, se placer **dehors**, dans un endroit dégagé.
 
@@ -131,11 +131,36 @@ getPlayer():getInventory():AddItem("Base.Hammer"); getPlayer():getInventory():Ad
 | H14 | Caisse larguée vidée, marteau et scie dans l'inventaire : clic droit → « Démonter la caisse » ; essayer aussi caisse pleine et sans scie | Grisée avec la raison si pleine ou sans outil ; sinon animation, planches (ou bois inutilisable) au sol, XP de Menuiserie, caisse disparue |
 | H12 | Nouvelle partie avec **Fréquence radio** à 0 : lire une note | Fréquence militaire entre 120 et 170 MHz, différente d'une partie à l'autre, et la même après un rechargement de la partie |
 
+## I. Formulaire de réquisition (v1.4)
+
+Options par défaut (formulaire actif). Confiance réglable pour les essais : `MilitaryDrop.Trust.add("SOLO", 30, "drop")` (console Lua, solo).
+
+| # | Action | Attendu |
+|---|---|---|
+| I1 | Appel de largage avec le bon code (talkie ou radio posée) | La base répond « transmettez votre réquisition », puis la feuille s'ouvre avec le budget, le délai qui décroît et les lots par palier |
+| I2 | Remplir avec + et − jusqu'à épuiser le budget | « + » grisé quand le budget ne suffit plus ; paliers II et III grisés selon la confiance, avec la raison ; « points non utilisés perdus » |
+| I3 | « Transmettre la réquisition » | Le personnage annonce sa réquisition, la base accepte, puis l'hélicoptère et l'annonce habituelle (sans le contenu) |
+| I4 | Annuler, Échap, ou s'éloigner d'une radio posée ; puis rappeler | Rien n'est consommé, le délai entre largages n'est pas déclenché |
+| I5 | Ouvrir les caisses de réquisition du coffre (2 Rations, 1 Eau potable, 1 Carburant si permis) | Une caisse nommée par lot commandé ; contenu du lot ; bouteille pleine d'eau propre, bidon plein d'essence |
+| I6 | Option « Formulaire de réquisition » désactivée, nouvel appel | Largage direct avec les caisses aléatoires de la v1 |
+| I7 | Console du poste : « Demander un largage » | Saisie du code, puis la feuille |
+| I8 | Console au démarrage : chercher `requisition lots ready in` ; puis leurre vers un secteur hors de la carte (bord de carte) | Durée de préparation des lots notée au journal ; pour le leurre, la base dit qu'aucun point n'existe dans ce secteur et la feuille se rouvre |
+
+## J. Largage leurre (v1.5)
+
+| # | Action | Attendu |
+|---|---|---|
+| J1 | Formulaire : « Leurre à sirène », secteur Nord, transmettre | Les autres lots se désactivent ; même réponse, même hélicoptère, même annonce qu'un vrai largage ; point annoncé au nord |
+| J2 | Aller à la caisse | Sirène audible en approchant, zombies attirés ; le coffre ne contient qu'une balise « DIVERSION » |
+| J3 | Clic droit sur la caisse → « Couper la sirène » | Action de quelques secondes, puis silence |
+| J4 | Nouveau leurre : attendre l'échéance (6 h de jeu), ou démonter la caisse | La sirène s'arrête ; la confiance ne change pas (`Trust.debugPrint()`) |
+
 ## Plus tard : multijoueur (hébergé, puis serveur dédié `C:\pzserver`)
 
 - Deux joueurs : l'un appelle, l'autre écoute la fréquence (annonce et symbole) sans avoir appelé.
 - Déconnexion et reconnexion pendant un vol : l'hélicoptère réapparaît à sa position.
 - Joueur non admin : pas d'option « Forcer un largage » ; commande forgée refusée (journal serveur).
+- v1.4 : commande forgée refusée ; un autre joueur qui appelle pendant qu'une feuille est ouverte consomme le délai, la commande est alors refusée (« délai »). v1.5 : l'autre joueur n'entend la sirène qu'à portée, et ne distingue pas le leurre avant d'ouvrir le coffre ; reconnexion près d'une sirène.
 - v1.3 : un client ne connaît pas la fréquence militaire tirée au hasard (seules les notes la donnent) ; deux factions ; indicatif conservé après un renommage ; appel de contrôle crédité aux deux ; reconnaissance et nettoyage à la première ; un joueur de l'autre faction ne peut ni installer ni ouvrir le poste ; talkie à la ceinture : prise en main puis échange accepté par le serveur.
 - Code de la semaine : les deux clients entendent la station et lisent le même carnet ; la graine et le code restent absents de la ModData (`ModData.request("MilitaryDrop")` côté client) ; 3 codes faux d'un joueur ne font pas taire la base pour l'autre.
 - Avec HEF actif : départ retardé si un événement HEF est proche.

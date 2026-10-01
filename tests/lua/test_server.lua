@@ -40,6 +40,14 @@ local function makePlayer(radio, where)
 end
 
 function T.setup()
+    -- Objet créé par le serveur (repli au sol des caisses).
+    instanceItem = function(fullType)
+        local item = { fullType = fullType, modData = {} }
+        function item.getModData(self) return self.modData end
+        function item.setName(self, text) self.name = text end
+        function item.setCustomName(self, value) self.customName = value end
+        return item
+    end
     SandboxVars = { MilitaryDrop = { CooldownHours = 168, AuthCode = 2, Frequency = 151.4,
         MinZombies = 0, MaxZombies = 0, CaseRolls = 2 } }
     isClient = function() return false end
@@ -76,10 +84,10 @@ function T.setup()
         isOutside = function() return true end, isFree = function() return true end,
         isWaterSquare = function() return false end,
         getVehicleContainer = function() return nil end,
-        AddWorldInventoryItem = function(_, name)
-            PLACED[#PLACED + 1] = name
-            local item = { fullType = name, modData = {} }
-            function item.getModData(self) return self.modData end
+        -- Repli au sol : objet créé (instanceItem), marqué, puis posé.
+        AddWorldInventoryItem = function(_, item, _, _, _, transmit)
+            assert(type(item) == "table" and transmit == true, "objet déjà créé, transmis à la pose")
+            PLACED[#PLACED + 1] = item.fullType
             PLACED_ITEMS[#PLACED_ITEMS + 1] = item
             return item
         end,

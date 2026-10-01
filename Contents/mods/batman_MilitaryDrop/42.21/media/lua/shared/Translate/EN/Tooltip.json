@@ -3,5 +3,7 @@
     "Tooltip_MilitaryDrop_WeaponSupplyCase": "Airdropped by the military. Open it to get a weapon.",
     "Tooltip_MilitaryDrop_ArmorSupplyCase": "Airdropped by the military. Open it to get military clothing and gear.",
     "Tooltip_MilitaryDrop_AttachmentSupplyCase": "Airdropped by the military. Open it to get weapon attachments.",
-    "Tooltip_MilitaryDrop_Codebook": "Military code table. Deciphers the weekly code sent by the numbers station."
+    "Tooltip_MilitaryDrop_Codebook": "Military code table. Deciphers the weekly code sent by the numbers station.",
+    "Tooltip_MilitaryDrop_DecoyBeacon": "DIVERSION. This drop carries no supplies: its siren draws the dead toward the crate.",
+    "Tooltip_MilitaryDrop_RequisitionCase": "Delivered by the military on your requisition. Open it to get the ordered supplies."
 }

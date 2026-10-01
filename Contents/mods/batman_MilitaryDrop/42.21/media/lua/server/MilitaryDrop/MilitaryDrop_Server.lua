@@ -39,6 +39,13 @@
 -- révélé comme le délai après un canal et un code justes. Chaque largage
 -- accepté reçoit un dropId (équipe du demandeur au moment de l'appel), porté
 -- par le vol, la livraison en attente et chaque caisse de ravitaillement.
+--
+-- Réquisition (v1.4, MilitaryDrop_Requisition.lua) : avec l'option
+-- RequisitionForm, un appel accepté (hors largage admin) ouvre le formulaire
+-- au lieu d'envoyer l'hélicoptère ; la commande validée part par
+-- Server.launchDrop, comme un appel accepté. Un leurre (v1.5) est tiré dans
+-- le secteur choisi (pickDropPoint) ; sa livraison prévient
+-- MilitaryDrop.Decoy.onDelivered.
 -- ============================================================================
 
 if isClient() then
@@ -318,18 +325,30 @@ function Server.isOnMap(x, y)
     return grid:getBuildingAt(x, y) == nil
 end
 
+-- Secteurs du leurre : direction centrale (radians, x vers l'est, y vers le
+-- sud : le nord est en y décroissant, IsoDirections.N = (0, -1),
+-- IsoDirections.java:13). Chaque secteur est un quart de cercle.
+Server.SECTOR_ANGLES = { E = 0, S = math.pi / 2, W = math.pi, N = -math.pi / 2 }
+
 --- Point de largage tiré au hasard entre DropMinDistance et DropMaxDistance
 --- de (centerX, centerY), ou nil. Si la case est chargée, elle doit déjà être
---- libre ; sinon elle sera revérifiée à la livraison.
-function Server.pickDropPoint(centerX, centerY)
+--- libre ; sinon elle sera revérifiée à la livraison. sector (« N », « E »,
+--- « S », « W », facultatif) : quart de cercle centré sur cette direction.
+function Server.pickDropPoint(centerX, centerY, sector)
     local low = math.max(0, Config.get("DropMinDistance"))
     local high = math.max(0, Config.get("DropMaxDistance"))
     if high < low then
         low, high = high, low
     end
     local cell = getCell()
+    local center = sector and Server.SECTOR_ANGLES[sector]
     for _ = 1, Server.FAR_ATTEMPTS do
-        local angle = ZombRandFloat(0, 2 * math.pi)
+        local angle
+        if center then
+            angle = center + ZombRandFloat(-math.pi / 4, math.pi / 4)
+        else
+            angle = ZombRandFloat(0, 2 * math.pi)
+        end
         local distance = ZombRandFloat(low, high)
         local x = math.floor(centerX + math.cos(angle) * distance)
         local y = math.floor(centerY + math.sin(angle) * distance)
@@ -394,7 +413,8 @@ end
 function Server.deliver(x, y, requester, dropId)
     local square = Server.findLandingNear(x, y)
     local count = 0
-    if square and MilitaryDrop.Crate.spawn(square, dropId) then
+    local vehicle = square and MilitaryDrop.Crate.spawn(square, dropId) or nil
+    if vehicle then
         count = 1
     else
         -- Repli : la caisse n'a pas pu apparaître (aucune place libre).
@@ -403,10 +423,16 @@ function Server.deliver(x, y, requester, dropId)
             MilitaryDrop.log(string.format("no ground near %d,%d yet: delivery waits", x, y))
             return false
         end
-        for _, fullType in ipairs(MilitaryDrop.Crate.rollCases()) do
-            local item = square:AddWorldInventoryItem(fullType, ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0)
+        -- Même contenu que le coffre : commande, leurre ou caisses aléatoires.
+        -- L'objet est marqué (nom, ModData) avant d'être posé : la pose le
+        -- transmet aux clients (transmit = true :
+        -- IsoGridSquare.AddWorldInventoryItem(InventoryItem, x, y, h, transmit),
+        -- 42.21) ; la variante par nom le transmettrait avant applyEntry.
+        for _, entry in ipairs(MilitaryDrop.Crate.contentsFor(dropId)) do
+            local item = instanceItem(entry.fullType)
             if item then
-                MilitaryDrop.Trust.tagItem(item, dropId)
+                MilitaryDrop.Crate.applyEntry(item, entry, dropId)
+                square:AddWorldInventoryItem(item, ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0, true)
                 count = count + 1
             end
         end
@@ -423,6 +449,12 @@ function Server.deliver(x, y, requester, dropId)
     local state = Server.getState()
     state.lastDrop = { x = x, y = y, hours = getGameTime():getWorldAgeHours() }
     MilitaryDrop.Trust.onDropDelivered(dropId)
+    -- Leurre (v1.5) : la sirène démarre une fois la caisse posée (véhicule nil :
+    -- repli au sol).
+    local order = MilitaryDrop.Requisition and MilitaryDrop.Requisition.orderOf(dropId)
+    if order and order.decoy and MilitaryDrop.Decoy and MilitaryDrop.Decoy.onDelivered then
+        MilitaryDrop.Decoy.onDelivered(dropId, x, y, 0, vehicle)
+    end
     MilitaryDrop.log(string.format("drop at %d,%d: %d crate/cases, %d zombies, for %s",
         x, y, count, zombies, tostring(requester)), true)
     return true
@@ -449,29 +481,65 @@ function Server.handleRequest(player, args)
         return
     end
 
-    -- Loin du demandeur ; à défaut (carte trop petite, bord de la carte), près de lui.
+    local forced = args.force == true
+    -- Formulaire de réquisition (v1.4) : l'hélicoptère attend la commande.
+    if not forced and MilitaryDrop.Requisition and MilitaryDrop.Requisition.formEnabled() then
+        MilitaryDrop.Requisition.openForm(player, requestId)
+        return
+    end
+    Server.launchDrop(player, requestId, forced)
+end
+
+--- Point de largage d'un appel : loin du demandeur ; à défaut (carte trop
+--- petite, bord de la carte), près de lui. Avec un secteur (leurre),
+--- seulement dans ce secteur : refus plutôt qu'une sirène ailleurs ou près
+--- du demandeur. Renvoie x, y, ou nil.
+function Server.chooseDropPoint(player, sector)
     local px, py = math.floor(player:getX()), math.floor(player:getY())
-    local x, y = Server.pickDropPoint(px, py)
-    if not x then
+    local x, y = Server.pickDropPoint(px, py, sector)
+    if not x and not sector then
         local square = Server.findLandingSquare(px, py)
         x, y = square and square:getX(), square and square:getY()
     end
     if not x then
+        return nil
+    end
+    return x, y
+end
+
+--- Lance le largage d'un appel accepté (ou d'une commande validée) : point,
+--- délai global, dropId, réponse « accepted », vol. opts (facultatif) :
+--- point ({ x, y } déjà choisi par Server.chooseDropPoint), sector (leurre :
+--- point dans ce secteur, sans repli près du demandeur), untracked (hors
+--- suivi de confiance), order et decoy (rangés dans l'état privé du largage).
+--- Renvoie le dropId, ou nil (réponse « noSite », rien de consommé).
+function Server.launchDrop(player, requestId, forced, opts)
+    opts = opts or {}
+    local name = tostring(player:getUsername())
+    local now = getGameTime():getWorldAgeHours()
+    local x, y
+    if opts.point then
+        x, y = opts.point.x, opts.point.y
+    else
+        x, y = Server.chooseDropPoint(player, opts.sector)
+    end
+    if not x then
         MilitaryDrop.log("request from " .. name .. ": no landing square", true)
         Net.toPlayer(player, "Result", { requestId = requestId, status = "noSite" })
-        return
+        return nil
     end
-    local forced = args.force == true
     if not forced then
         Server.getState().lastDropHours = now
     end
     -- Équipe du demandeur au moment de l'appel ; réplique choisie par palier.
     local teamId = MilitaryDrop.Teams.idFor(player)
-    local dropId = MilitaryDrop.Trust.registerDrop(teamId, name, forced)
+    local dropId = MilitaryDrop.Trust.registerDrop(teamId, name, forced,
+        { untracked = opts.untracked, order = opts.order, decoy = opts.decoy })
     MilitaryDrop.Trust.touch(teamId)
     Net.toPlayer(player, "Result", { requestId = requestId, status = "accepted",
         tier = MilitaryDrop.Trust.tier(teamId), callsign = MilitaryDrop.Teams.callsign(teamId) })
     MilitaryDrop.Flights.launch(x, y, name, requestId, forced, dropId)
+    return dropId
 end
 
 --- Commandes des clients : nom → function(player, args). Chaque module inscrit

@@ -237,6 +237,31 @@ function T.forced_drop_has_no_effect_on_trust()
     assertEq(Trust.get("P:alice"), 50, "largage admin perdu : rien")
 end
 
+function T.decoy_drop_is_untracked()
+    -- Leurre (LEURRE-04) : ni +10, ni −5, ni −10.
+    local dropId = Trust.registerDrop("P:alice", "alice", false, { untracked = true, decoy = { sector = "N" } })
+    assertEq(STATE.drops[dropId].team, nil, "aucune équipe suivie")
+    assertEq(STATE.drops[dropId].decoy.sector, "N", "type gardé dans l'état privé")
+    Trust.onDropDelivered(dropId)
+    Trust.onCaseOpened(makeCase(dropId), makePlayer("alice"))
+    assertEq(Trust.get("P:alice"), 50, "ouvert par le demandeur : rien")
+    local other = Trust.registerDrop("P:alice", "alice", false, { untracked = true })
+    Trust.onDropDelivered(other)
+    Trust.onCaseOpened(makeCase(other), makePlayer("mallory"))
+    local lost = Trust.registerDrop("P:alice", "alice", false, { untracked = true })
+    Trust.onDropDelivered(lost)
+    wait(100)
+    Trust.checkDrops()
+    assertEq(Trust.get("P:alice"), 50, "pris par un autre ou perdu : rien")
+end
+
+function T.requisition_order_is_kept_with_the_drop()
+    local dropId = Trust.registerDrop("P:alice", "alice", false, { order = { lots = { rations = 2 } } })
+    assertEq(STATE.drops[dropId].team, "P:alice", "commande suivie normalement")
+    assertEq(STATE.drops[dropId].order.lots.rations, 2, "commande dans l'état privé")
+    assertEq(PUBLIC.drops, nil, "rien dans l'état public")
+end
+
 function T.case_without_drop_id_is_ignored()
     local item = { modData = {} }
     function item.getModData(self) return self.modData end

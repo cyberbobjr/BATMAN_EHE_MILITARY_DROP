@@ -201,6 +201,66 @@ option MilitaryDrop.ControlIntervalHours
     page = MilitaryDrop, translation = MilitaryDrop_ControlIntervalHours,
 }
 
+option MilitaryDrop.RequisitionForm
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_RequisitionForm,
+}
+
+option MilitaryDrop.RequisitionBudget
+{
+    type = integer, min = 10, max = 300, default = 100,
+    page = MilitaryDrop, translation = MilitaryDrop_RequisitionBudget,
+}
+
+option MilitaryDrop.RequisitionCostMultiplier
+{
+    type = integer, min = 10, max = 300, default = 100,
+    page = MilitaryDrop, translation = MilitaryDrop_RequisitionCostMultiplier,
+}
+
+option MilitaryDrop.RequisitionTier2
+{
+    type = integer, min = 0, max = 100, default = 50,
+    page = MilitaryDrop, translation = MilitaryDrop_RequisitionTier2,
+}
+
+option MilitaryDrop.RequisitionTier3
+{
+    type = integer, min = 0, max = 100, default = 75,
+    page = MilitaryDrop, translation = MilitaryDrop_RequisitionTier3,
+}
+
+option MilitaryDrop.RequisitionExplosives
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_RequisitionExplosives,
+}
+
+option MilitaryDrop.DecoyEnabled
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_DecoyEnabled,
+}
+
+option MilitaryDrop.DecoyCost
+{
+    type = integer, min = 1, max = 20, default = 3,
+    page = MilitaryDrop, translation = MilitaryDrop_DecoyCost,
+}
+
+option MilitaryDrop.DecoySirenHours
+{
+    type = integer, min = 1, max = 72, default = 6,
+    page = MilitaryDrop, translation = MilitaryDrop_DecoySirenHours,
+}
+
+option MilitaryDrop.DecoyNoiseRadius
+{
+    type = integer, min = 50, max = 300, default = 120,
+    page = MilitaryDrop, translation = MilitaryDrop_DecoyNoiseRadius,
+}
+
 option MilitaryDrop.DebugLog
 {
     type = boolean, default = false,

@@ -173,6 +173,43 @@ function T.candidates_are_cached()
         "Base.Tshirt_ArmyGreen,Base.Vest_BulletArmy", "liste calculée une seule fois")
 end
 
+function T.fallbacks_to_all_tables_share_one_pass()
+    ProceduralDistributions.list.ArmyStorageGuns = nil
+    ProceduralDistributions.list.ArmyStorageOutfit = nil
+    local passes = 0
+    local toEntries = MilitaryDrop.Loot.toEntries
+    MilitaryDrop.Loot.toEntries = function(flat)
+        passes = passes + 1
+        return toEntries(flat)
+    end
+    MilitaryDrop.Loot.warmAll()
+    -- Rang 1 : table des munitions (1) + pièces d'armes sur les 4 tables ;
+    -- rang 2 : armes et protections, ensemble, sur les 4 tables.
+    assertEq(passes, 1 + 4 + 4, "un passage partagé par rang")
+    assertEq(names(MilitaryDrop.Loot.candidates("MilitaryDrop.WeaponSupplyCase")), "Base.Shotgun", "armes")
+    assertEq(names(MilitaryDrop.Loot.candidates("MilitaryDrop.ArmorSupplyCase")), "Base.Vest_BulletArmy",
+        "protections")
+    assertEq(passes, 9, "lus depuis la mémoire")
+end
+
+function T.empty_result_is_kept()
+    ProceduralDistributions.list = { ToyStore = { items = { "Revolver_CapGun", 10 } } }
+    assertEq(#MilitaryDrop.Loot.candidates("MilitaryDrop.WeaponSupplyCase"), 0, "aucune arme à feu")
+    ProceduralDistributions.list.ToyStore.items = { "Shotgun", 1 }
+    assertEq(#MilitaryDrop.Loot.candidates("MilitaryDrop.WeaponSupplyCase"), 0, "vide gardé en mémoire")
+    MilitaryDrop.Loot.clearCache()
+    assertEq(#MilitaryDrop.Loot.candidates("MilitaryDrop.WeaponSupplyCase"), 1, "clearCache : recalcul")
+end
+
+function T.armor_reads_only_clothing_items()
+    MilitaryDrop.Loot.isArmor(makeScript("Base.Pistol"))
+    MilitaryDrop.Loot.isArmor(makeScript("Base.RedDot"))
+    assertEq(INSTANCED, 0, "pas de vêtement : aucun objet créé")
+    MilitaryDrop.Loot.isArmor(makeScript("Base.Vest_BulletArmy"))
+    MilitaryDrop.Loot.isArmor(makeScript("Base.Vest_BulletArmy"))
+    assertEq(INSTANCED, 1, "un vêtement : un seul exemplaire")
+end
+
 function T.roll_counts_and_unknown_case()
     assertEq(#MilitaryDrop.Loot.roll("MilitaryDrop.AmmoSupplyCase", fixed(0)), 5, "cinq tirages")
     assertEq(#MilitaryDrop.Loot.roll("MilitaryDrop.WeaponSupplyCase", fixed(0.99)), 1, "une arme")

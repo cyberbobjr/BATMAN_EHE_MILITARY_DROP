@@ -10,7 +10,9 @@
 --     alimentation), indicatif sur ruban, fréquence sur afficheur, journal sur
 --     écran à phosphore vert façon téléimprimeur, ordres de mission (échéance,
 --     barre de progression), casier des plaques d'identité (bouton
---     « Transmettre »), confiance en galons (paliers en mots, jamais de chiffre).
+--     « Transmettre »), confiance en galons (paliers en mots, jamais de chiffre),
+--     bouton « Demander un largage » (v1.4) : même appel que le menu de la
+--     radio (code, puis formulaire de réquisition), par la radio du poste.
 -- Tout est dessiné par la fenêtre (textures du mod, polices du jeu) ; les
 -- largeurs sont mesurées selon la langue et la taille de police.
 --
@@ -542,7 +544,8 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     local rackW = math.max(2 * L.tagW + 3 * u, btnW + 2 * u, rackHeader)
     -- Confiance en toutes lettres : phrase du commandement, puis effet sur
     -- les largages, renvoyés à la ligne dans une colonne de largeur bornée.
-    local standW = math.max(fh * 9, measure(getText("IGUI_MilitaryDrop_PostStanding")) + 2 * u)
+    local standW = math.max(fh * 9, measure(getText("IGUI_MilitaryDrop_PostStanding")) + 2 * u,
+        measure(getText("IGUI_MilitaryDrop_RequestDrop")) + 3 * u + fh)
     local ordersMin = math.max(fh * 14, measure(getText("IGUI_MilitaryDrop_PostOrders")) + 2 * u)
     local columnsW = ordersMin + rackW + standW + 2 * L.gap
 
@@ -558,7 +561,8 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     L.cardGap = math.floor(u / 2) + 1
     local ordersH = 3 * L.cardH + 2 * L.cardGap
     local rackH = 3 * (L.tagH + math.floor(u / 2)) + 2 * L.btnH + 2 * u
-    local standH = PostWindow.STANDING_LINES * fh + u
+    -- Confiance : texte, puis le bouton « Demander un largage » en bas.
+    local standH = PostWindow.STANDING_LINES * fh + u + L.btnH + u
     L.contentH = math.max(ordersH, rackH, standH)
     L.labelH = fh + math.floor(u / 2)
     L.bezel = u
@@ -621,9 +625,10 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
         end
         slotY = slotY + L.tagH + math.floor(u / 2)
     end
-    -- Confiance : texte sur toute la colonne.
+    -- Confiance : bouton d'appel en bas, texte au-dessus.
+    L.request = rect(standX + u, L.standing.y + L.standing.h - u - L.btnH, standW - 2 * u, L.btnH)
     L.standText = rect(standX + u, contentY + math.floor(u / 2), standW - 2 * u,
-        L.standing.y + L.standing.h - u - contentY)
+        L.request.y - u - contentY - math.floor(u / 2))
     return L
 end
 
@@ -777,6 +782,25 @@ function PostWindow:onTransmit()
     sendToServer(self.player, "PostTransmit", self.object)
 end
 
+--- Appel de la base possible : poste allumé et alimenté (état envoyé par le
+--- serveur ; il revérifie tout à l'appel).
+function PostWindow:canRequest()
+    return self.data ~= nil and PostWindow.lamps(self.data).on
+end
+
+--- « Demander un largage » : même parcours que le menu de la radio (code si
+--- l'option l'exige, puis appel par la radio du poste). La console se ferme
+--- pour laisser la place à la saisie du code et au formulaire.
+function PostWindow:onRequest()
+    local Client = MilitaryDrop.Client
+    if not self:canRequest() or not self:objectValid() or not Client or type(Client.onRequest) ~= "function" then
+        return
+    end
+    local player, object = self.player, self.object
+    self:close()
+    Client.onRequest(player, object, false)
+end
+
 --- La radio est toujours là et le joueur à côté (même étage).
 function PostWindow:objectValid()
     local object, player = self.object, self.player
@@ -812,6 +836,8 @@ function PostWindow:hitTest(x, y)
         return "deposit"
     elseif inside(L.transmit, x, y) then
         return "transmit"
+    elseif inside(L.request, x, y) then
+        return "request"
     elseif inside(L.standText, x, y) then
         return "standing"
     elseif inside(L.lampsArea, x, y) or inside(L.tape, x, y) or inside(L.freq, x, y) then
@@ -850,6 +876,8 @@ function PostWindow:isEnabled(target)
         return self:canDeposit()
     elseif target == "transmit" then
         return self:canTransmit()
+    elseif target == "request" then
+        return self:canRequest()
     end
     return target == "close"
 end
@@ -862,12 +890,14 @@ function PostWindow:activate(target)
         self:onDeposit()
     elseif target == "transmit" then
         self:onTransmit()
+    elseif target == "request" then
+        self:onRequest()
     end
 end
 
 function PostWindow:onMouseDown(x, y)
     local target = self:hitTest(x, y)
-    if target == "close" or target == "deposit" or target == "transmit" then
+    if target == "close" or target == "deposit" or target == "transmit" or target == "request" then
         self.pressed = self:isEnabled(target) and target or nil
         return true
     end
@@ -926,6 +956,8 @@ function PostWindow:tooltipFor(target, payload)
             names[i] = escape(label)
         end
         return table.concat(names, " <LINE> ")
+    elseif target == "request" then
+        return escape(getText(self:canRequest() and "IGUI_MilitaryDrop_RequestTooltip" or "IGUI_MilitaryDrop_TurnOn"))
     elseif target == "close" then
         return escape(getText("IGUI_MilitaryDrop_PostClose"))
     end
@@ -1381,6 +1413,9 @@ end
 function PostWindow:drawStanding(hover)
     local L, data = self.L, self.data
     self:drawCompartment(L.standing, getText("IGUI_MilitaryDrop_PostStanding"))
+    local joypad = self.drawJoypadFocus and Joypad and Joypad.Texture
+    self:drawButton(L.request, getText("IGUI_MilitaryDrop_RequestDrop"), self:canRequest(), hover == "request",
+        self.pressed == "request", false, joypad and Joypad.Texture.YButton or nil)
     local box = L.standText
     local alpha = hover == "standing" and 1 or 0.92
     local y = box.y
@@ -1450,7 +1485,8 @@ function PostWindow:onKeyRelease(key)
     end
 end
 
--- Manette : A transmet, X dépose, B ferme ; haut et bas font défiler le journal.
+-- Manette : A transmet, X dépose, Y demande un largage, B ferme ; haut et bas
+-- font défiler le journal.
 function PostWindow:onGainJoypadFocus(joypadData)
     ISPanelJoypad.onGainJoypadFocus(self, joypadData)
     self.drawJoypadFocus = true
@@ -1470,6 +1506,8 @@ function PostWindow:onJoypadDown(button)
         if self:canDeposit() then
             self:onDeposit()
         end
+    elseif button == Joypad.YButton then
+        self:onRequest()
     elseif button == Joypad.BButton then
         self:close()
     end
@@ -1489,6 +1527,10 @@ end
 
 function PostWindow:getXPrompt()
     return getText("IGUI_MilitaryDrop_PostDeposit", tostring(#PostWindow.dogTags(self.player)))
+end
+
+function PostWindow:getYPrompt()
+    return getText("IGUI_MilitaryDrop_RequestDrop")
 end
 
 function PostWindow:getBPrompt()

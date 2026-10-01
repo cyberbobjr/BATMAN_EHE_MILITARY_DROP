@@ -2,7 +2,8 @@
 -- Disposition mesurée selon la langue (aucun texte ne déborde, petit écran),
 -- voyants sans indice sur la fréquence, ordres de mission (barres), galons sans
 -- chiffre, plaques du casier ({ id, name, by }), troncature sans caractère
--- coupé, plaques du joueur par MilitaryDrop.Exchange et repli sans lui.
+-- coupé, plaques du joueur par MilitaryDrop.Exchange et repli sans lui,
+-- bouton « Demander un largage » (v1.4).
 -- Les tests du protocole avec le serveur sont dans test_post.lua.
 
 local T = {}
@@ -215,6 +216,45 @@ function T.player_dog_tags_come_from_the_exchange_module()
     MilitaryDrop.Exchange = nil
     assertEq(#W.dogTags(player), 3, "repli : toutes les plaques non portées")
     assertEq(W.dogTagLabel(other), "Dog Tag: John Doe", "repli : nom de l'objet")
+end
+
+function T.request_button_calls_the_base_like_the_radio_menu()
+    getText = function(k, a)
+        if k == "IGUI_MilitaryDrop_RequestDrop" then
+            return "Demander un largage de ravitaillement"
+        end
+        return k .. "|" .. tostring(a)
+    end
+    local L = W.computeLayout(sampleData())
+    assertTrue(within(L.request, L.standing), "bouton dans la colonne de confiance")
+    assertTrue(disjoint(L.request, L.standText), "sous le texte de confiance")
+    assertTrue(measure(getText("IGUI_MilitaryDrop_RequestDrop")) <= L.request.w - 2 * L.u, "libellé entier")
+    assertTrue(L.standText.h >= 4 * FONT_H, "place pour la phrase et l'effet")
+    -- Même appel que le menu de la radio, par la radio du poste ; la console se ferme.
+    local calls = {}
+    MilitaryDrop.Client.onRequest = function(player, device, force)
+        calls[#calls + 1] = { player = player, device = device, force = force }
+    end
+    local player = { getPlayerNum = function() return 0 end, isDead = function() return false end,
+        getX = function() return 10.5 end, getY = function() return 10.5 end, getZ = function() return 0 end }
+    local object = { getObjectIndex = function() return 3 end,
+        getSquare = function() return { getX = function() return 10 end, getY = function() return 10 end,
+            getZ = function() return 0 end } end }
+    local closed = false
+    local window = setmetatable({ player = player, object = object, data = sampleData(), L = L,
+        close = function() closed = true end }, { __index = W })
+    assertTrue(window:canRequest(), "poste allumé et alimenté")
+    assertEq(window:hitTest(L.request.x + 1, L.request.y + 1), "request", "cible du clic")
+    window:onRequest()
+    assertEq(#calls, 1, "un appel")
+    assertEq(calls[1].device, object, "radio du poste")
+    assertEq(calls[1].force, false, "jamais un largage admin")
+    assertTrue(closed, "console fermée")
+    window.data = sampleData()
+    window.data.power = "none"
+    assertTrue(not window:canRequest(), "sans courant : grisé")
+    window:onRequest()
+    assertEq(#calls, 1, "aucun appel sans courant")
 end
 
 return T

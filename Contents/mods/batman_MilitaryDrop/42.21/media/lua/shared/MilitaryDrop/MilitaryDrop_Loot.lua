@@ -17,8 +17,12 @@
 --
 -- Un nom de table sans module est cherché dans tous les modules (le
 -- ScriptManager ne cherche que dans Base : ScriptBucketCollection, 42.21).
--- Les listes calculées sont gardées en mémoire : les tables ne changent plus
--- après le chargement.
+-- Les listes calculées sont gardées en mémoire, vides comprises : les tables
+-- ne changent plus après le chargement. Loot.warm calcule plusieurs caisses
+-- d'un seul passage sur toutes les tables (~34 000 entrées en 42.21) et
+-- n'appelle le filtre d'une caisse qu'une fois par type d'objet ; un filtre
+-- teste d'abord le script (catégorie, propriétés, tags) et n'instancie un
+-- objet qu'en dernier recours.
 --
 -- Extension : MilitaryDrop.Loot.CASES[type].sources est remplaçable par un
 -- mod de compatibilité.
@@ -210,46 +214,125 @@ local function gameRand(total)
     return ZombRandFloat(0, total)
 end
 
---- Objets acceptés d'une source, poids additionnés par type complet.
-local function collect(source)
-    local byType = {}
-    local ordered = {}
-    for _, flat in ipairs(Loot.tables(source.tables)) do
+--- Un seul passage sur des listes { nom, poids, … } pour plusieurs sources :
+--- objets acceptés par chacune, poids additionnés par type complet. Le filtre
+--- d'une source n'est appelé qu'une fois par type complet.
+local function collectMany(flats, sources)
+    local results, byType = {}, {}
+    for i = 1, #sources do
+        results[i], byType[i] = {}, {}
+    end
+    -- nom de table → type complet (false : objet inconnu) ; type → sources qui l'acceptent.
+    local fullTypes, verdicts = {}, {}
+    for _, flat in ipairs(flats) do
         for _, entry in ipairs(Loot.toEntries(flat)) do
-            local script = Loot.resolve(entry.name)
-            if script and (not source.accept or source.accept(script)) then
-                local fullType = script:getFullName()
-                local known = byType[fullType]
-                if known then
-                    known.weight = known.weight + entry.weight
-                else
-                    known = { name = entry.name, fullType = fullType, weight = entry.weight }
-                    byType[fullType] = known
-                    ordered[#ordered + 1] = known
+            local fullType = fullTypes[entry.name]
+            local script = nil
+            if fullType == nil then
+                script = Loot.resolve(entry.name)
+                fullType = script and script:getFullName() or false
+                fullTypes[entry.name] = fullType
+            end
+            if fullType then
+                local accepted = verdicts[fullType]
+                if not accepted then
+                    script = script or Loot.resolve(entry.name)
+                    accepted = {}
+                    for i, source in ipairs(sources) do
+                        if not source.accept or source.accept(script) then
+                            accepted[#accepted + 1] = i
+                        end
+                    end
+                    verdicts[fullType] = accepted
+                end
+                for _, i in ipairs(accepted) do
+                    local known = byType[i][fullType]
+                    if known then
+                        known.weight = known.weight + entry.weight
+                    else
+                        known = { name = entry.name, fullType = fullType, weight = entry.weight }
+                        byType[i][fullType] = known
+                        results[i][#results[i] + 1] = known
+                    end
                 end
             end
         end
     end
-    return ordered
+    return results
+end
+
+--- Calcule et garde les candidats de plusieurs caisses (clés de Loot.CASES).
+--- Source par source (la première non vide gagne) ; à chaque rang, toutes les
+--- sources « toutes les tables » partagent un seul passage. Un résultat vide
+--- est gardé aussi, sauf si le jeu n'a encore aucune table (avant la fusion
+--- des distributions).
+function Loot.warm(caseTypes)
+    local waiting, queued = {}, {}
+    for _, caseType in ipairs(caseTypes or {}) do
+        if candidateCache[caseType] == nil and not queued[caseType] then
+            queued[caseType] = true
+            waiting[#waiting + 1] = caseType
+        end
+    end
+    if #waiting == 0 then
+        return
+    end
+    local keepEmpty = #Loot.tables() > 0
+    local rank = 1
+    while #waiting > 0 do
+        local still, shared, sharedKeys = {}, {}, {}
+        local function settle(caseType, result)
+            if #result > 0 then
+                candidateCache[caseType] = result
+            else
+                still[#still + 1] = caseType
+            end
+        end
+        for _, caseType in ipairs(waiting) do
+            local case = Loot.CASES[caseType]
+            local source = case and case.sources and case.sources[rank]
+            if not source then
+                if keepEmpty then
+                    candidateCache[caseType] = {}
+                end
+            elseif source.tables then
+                settle(caseType, collectMany(Loot.tables(source.tables), { source })[1])
+            else
+                shared[#shared + 1] = source
+                sharedKeys[#sharedKeys + 1] = caseType
+            end
+        end
+        if #shared > 0 then
+            local results = collectMany(Loot.tables(), shared)
+            for i, caseType in ipairs(sharedKeys) do
+                settle(caseType, results[i])
+            end
+        end
+        waiting = still
+        rank = rank + 1
+    end
+end
+
+--- Toutes les caisses connues (Loot.CASES), d'un seul passage par rang.
+function Loot.warmAll()
+    local keys = {}
+    for caseType in pairs(Loot.CASES) do
+        keys[#keys + 1] = caseType
+    end
+    Loot.warm(keys)
+end
+
+--- Oublie les listes calculées (mod de compatibilité qui change les sources).
+function Loot.clearCache()
+    candidateCache = {}
 end
 
 --- Entrées valides pour un type de caisse (première source non vide).
 function Loot.candidates(caseType)
-    if candidateCache[caseType] then
-        return candidateCache[caseType]
+    if candidateCache[caseType] == nil then
+        Loot.warm({ caseType })
     end
-    local case = Loot.CASES[caseType]
-    local result = {}
-    for _, source in ipairs(case and case.sources or {}) do
-        result = collect(source)
-        if #result > 0 then
-            break
-        end
-    end
-    if #result > 0 then
-        candidateCache[caseType] = result
-    end
-    return result
+    return candidateCache[caseType] or {}
 end
 
 --- Types complets des objets à créer pour une caisse ouverte.

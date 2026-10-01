@@ -253,3 +253,4 @@ Chaque lot se termine par les tests `lupa`, un test en solo, puis un test sur se
 22. SRC-06 reporté après la v1.3.
 
 23. Après la relecture de la v1.3 (2026-10-01) : la **fréquence militaire est tirée au hasard par défaut** (option à 0), par choix de jeu : les notes gardent leur intérêt d'une partie à l'autre ; un admin peut fixer une valeur. L'état de la v1.3 (équipes, confiance, largages, missions, postes) est rangé dans une table de ModData privée. La triche n'est pas un enjeu (jeu entre amis, mode debug réservé aux admins, Lua des clients vérifié par le serveur) : pas de silence contre le balayage des canaux ; seuls restent la cadence anti-rafale et le silence après 3 codes faux par jour.
+24. v1.4 et v1.5 (2026-10-01) : livrées d'un bloc par sous-agents, spécification [PLAN-V14.md](PLAN-V14.md). REQ-07 : les points de réquisition non dépensés sont **perdus**. LEURRE-04 : un leurre n'a **aucun effet sur la confiance**.

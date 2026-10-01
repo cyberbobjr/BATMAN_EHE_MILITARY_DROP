@@ -34,9 +34,9 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | v1.1 | Largage loin du demandeur | testé hors jeu |
 | Phases 7-8 | Tests en jeu, publication | à faire |
 | v1.2 | Code chiffré de la semaine (idée 4) | testé solo (parcours nominal), MP à faire |
-| v1.3 | Confiance de faction, sources de confiance, poste de commandement (idée 5) | testé hors jeu ([PLAN-V13.md](PLAN-V13.md)) |
-| v1.4 | Formulaire de réquisition (idée 6) | conçu |
-| v1.5 | Largage leurre (idée 9) | conçu |
+| v1.3 | Confiance de faction, sources de confiance, poste de commandement (idée 5) | testé solo, sauf H3, H5, H8, H10 ; MP à faire ([PLAN-V13.md](PLAN-V13.md)) |
+| v1.4 | Formulaire de réquisition (idée 6) | testé hors jeu ([PLAN-V14.md](PLAN-V14.md)) |
+| v1.5 | Largage leurre (idée 9) | testé hors jeu ([PLAN-V14.md](PLAN-V14.md)) |
 | Intégrations | Fumée sur la caisse avec Signal Smoke (facultatif) | testé solo |
 | Idée 3 | Balises, détecteur, chasses au trésor | mis de côté |
 | Idée 8 | Mayday, épave démontable | à décider |
@@ -146,23 +146,23 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
-| REQ-01 | Formulaire : budget de points selon la confiance, sélection revalidée par le serveur | PLAN-V2 §6 | conçu | — | Ouverture depuis le talkie et la console du poste |
-| REQ-02 | 18 lots en 3 paliers (catégories vanilla, aucun nom d'objet) | PLAN-V2 §6, décision 4 | conçu | — | Coûts à calibrer |
-| REQ-03 | Budget indicatif : 8 à 20 points selon la confiance | PLAN-V2 §6 | conçu | — | À calibrer |
-| REQ-04 | Annonce radio sans le contenu commandé | PLAN-V2 §6 | conçu | — | — |
-| REQ-05 | Lot Carburant : récipient déjà plein d'essence | PLAN-V2 §6 | conçu | — | ⚠ faisabilité en 42.21 |
-| REQ-06 | Lot Explosifs désactivable | PLAN-V2 §6 | conçu | — | — |
-| REQ-07 | Points restants convertis en lot surprise | PLAN-V2 §6 | à décider | — | — |
-| REQ-08 | Sans formulaire : caisses aléatoires de la v1 | PLAN-V2 §6 | conçu | — | — |
+| REQ-01 | Formulaire de réquisition après un appel accepté (talkie, radio posée ou console du poste) : budget selon la confiance, sélection revalidée par le serveur (autorisation de 5 min, radio, ligne, délai, paliers, budget) | PLAN-V14 | testé hors jeu | test_requisition, test_requisitionwindow, test_client, test_postwindow | I1-I4 ; MP |
+| REQ-02 | 18 lots en 3 paliers (catégories vanilla, aucun nom d'objet) | PLAN-V2 §6, décision 4 | testé hors jeu | test_lots, test_requisition | I2, I5 ; coûts à calibrer en jeu |
+| REQ-03 | Budget : (4 + note × 0,16) × option, soit 8 à 20 points ; paliers 50 et 75 en option | PLAN-V2 §6 | testé hors jeu | test_requisition | À calibrer en jeu |
+| REQ-04 | Annonce radio sans le contenu commandé | PLAN-V2 §6 | testé hors jeu | test_requisition, test_server | I3 ; MP (l'autre joueur entend l'annonce habituelle) |
+| REQ-05 | Lots Eau potable et Carburant : récipient vidé puis rempli à sa capacité (`Fluid` du moteur), sans nom d'objet | PLAN-V2 §6 | testé hors jeu | test_lots, test_requisition | I5 (bouteille pleine d'eau propre, bidon plein d'essence) ; MP |
+| REQ-06 | Lot Explosifs désactivable | PLAN-V2 §6 | testé hors jeu | test_lots | — |
+| REQ-07 | Points restants convertis en lot surprise | PLAN-V14 décisions | testé hors jeu | test_requisitionwindow, test_requisition | Décidé le 2026-10-01 : points non dépensés perdus ; I2 |
+| REQ-08 | Sans formulaire : caisses aléatoires de la v1 | PLAN-V2 §6 | testé hors jeu | test_requisition, test_server | I6 (option désactivée) |
 
 ## v1.5 — Largage leurre (idée 9)
 
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
-| LEURRE-01 | Commandé seulement par le formulaire, dans un secteur choisi | PLAN-V2 §9, décision 3 | conçu | — | — |
-| LEURRE-02 | Indiscernable : mêmes messages, type jamais envoyé ni stocké en clair | PLAN-V2 §9, décision 3 | conçu | — | — |
-| LEURRE-03 | Sirène : bruit serveur si la zone est chargée, son local aux joueurs à portée, arrêt par un joueur ou pile vide | PLAN-V2 §9 | conçu | — | — |
-| LEURRE-04 | Effet sur la confiance d'un leurre ouvert par une autre faction | PLAN-V2 §9 | à décider | — | À redéfinir avec la confiance de faction |
+| LEURRE-01 | Commandé seulement par le formulaire, exclusif, dans un secteur N, E, S ou O (point tiré dans le quart de cercle) | PLAN-V2 §9, décision 3 | testé hors jeu | test_requisition, test_requisitionwindow | J1 ; MP |
+| LEURRE-02 | Indiscernable : mêmes messages, type jamais envoyé ni stocké en clair | PLAN-V2 §9, décision 3 | testé hors jeu | test_decoy, test_requisition | J1, J2 ; MP (l'autre joueur ne peut rien distinguer avant le coffre) |
+| LEURRE-03 | Sirène à la pose : bruit serveur répété (modèle de la sirène de véhicule) si la case est chargée, boucle locale pour les joueurs à 300 cases, échéance en option ; coupée par un joueur (action revérifiée) ou au démontage | PLAN-V2 §9 | testé hors jeu | test_decoy, test_siren, test_dismantle | J2-J4 ; MP (portée, reconnexion) |
+| LEURRE-04 | Effet sur la confiance d'un leurre ouvert par une autre faction | PLAN-V14 décisions | testé hors jeu | test_trust, test_requisition | Décidé le 2026-10-01 : aucun effet sur la confiance |
 
 ## Idées à l'étude
 
@@ -173,8 +173,12 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | BAL-03 | Chasses au trésor aléatoires | analyses/idee-03 | à décider | — | — |
 | MAY-01 | Hélicoptère abattu, épave 3D démontable, pilote et documents | analyses/idee-08 | à décider | — | Estimation 11 à 15 jours |
 | EXT-01 | Extraction et pont avec Opération Artemis | analyses/idee-10 | à décider | — | Modèle MP d'Artemis à trancher ; coût en confiance de faction |
+| RADIO-06 | Tout faire depuis l'écran de la radio : saisie du code, formulaire de réquisition, échanges, sans fenêtres séparées | Note de l'utilisateur du 2026-10-01 | à décider | — | À discuter après la livraison de la v1.4 et de la v1.5 |
 
 ## Journal
+
+- **2026-10-01** — v1.4 et v1.5 codées par trois sous-agents (réquisition serveur, formulaire client, leurre) et intégrées : 18 lots tirés des catégories du jeu, budget selon la confiance, formulaire papier militaire (aussi depuis la console du poste), caisses de réquisition ouvertes comme les caisses de ravitaillement, eau et essence remplies à la création ; leurre à sirène exclusif, par secteur, indiscernable jusqu'au coffre, sans effet sur la confiance. 426 tests `lupa`, 44 options. Relecture indépendante, sans bloquant, corrigée : formulaire précalculé au démarrage en un seul passage des tables (au lieu de 18, sans instancier pour le carburant) ; sirène : resynchronisation qui n'efface plus les autres auditeurs, écran partagé ; repli au sol nommé avant l'envoi aux clients ; lot Paquetage limité aux vrais sacs et contenants de transport ; leurre sans point dans le secteur : la feuille se rouvre sans rappeler. Limite documentée : nom des caisses dans la langue du serveur. 444 tests.
+- **2026-10-01** — v1.4 et v1.5 lancées d'un bloc par trois sous-agents (réquisition serveur, formulaire client, leurre), spécification [PLAN-V14.md](PLAN-V14.md). Décisions : REQ-07 points non dépensés perdus ; LEURRE-04 aucun effet sur la confiance. v1.3 committée (`4b96f44`).
 
 - **2026-10-01** — Test solo de la v1.3 (H1, H2, H4 en main, H6, H7, H9, H11, H12) : RADIO-03, SRC-01, CONF-04, POSTE-02 et POSTE-03 passent en « testé solo ». Corrections demandées, faites par quatre sous-agents puis intégrées : talkie à la ceinture (RADIO-04), repère de la reconnaissance (RADIO-05), plaques vanilla seulement (SRC-02 révisé, option `DogTagDropRate` retirée), console du poste redessinée (POSTE-04), démontage de la caisse (BUTIN-05). Le démontage suit la définition vanilla active du bois, qui demande aussi une scie. Retour suivant de l'utilisateur : le talkie à la ceinture n'entendait pas la station de chiffres (seule la chaîne militaire était suivie) ; corrigé, les deux chaînes du mod sont suivies. Retour sur la console (POSTE-04) : heure du journal collée au texte (espaces avalés par `ISRichTextPanel`, corrigé par `<SPACE>`) ; écusson de confiance jugé peu clair, remplacé à la demande de l'utilisateur par du texte seul (phrase du commandement et effet sur les largages). Le reste du test est validé par l'utilisateur. Relecture indépendante, corrigée : brouillage de l'orage appliqué au talkie à la ceinture (sinon coordonnées en clair et repère posé), enveloppe de la fenêtre radio reposée après rechargement, plaques gardées quand la confiance est au maximum, dépôt au poste refusé si les plaques sont désactivées ou la ligne coupée, console de chaque joueur en écran partagé et fermée quand le poste n'est plus le sien. Limites connues : la pile d'un talkie à la ceinture ne baisse qu'à sa reprise en main (règle vanilla) ; un joueur qui arrive après l'annonce d'une reconnaissance n'a pas son repère. 338 tests `lupa`.
 - **2026-10-01** — Relecture indépendante de la v1.3 et corrections : état de la v1.3 (équipes, confiance, largages, missions, postes, courrier) déplacé de la ModData publique vers une table privée au nom tiré de la graine (la position des postes ne fuit plus) ; fréquence militaire tirée au hasard par défaut (RADIO-03, décision 23) ; un joueur réduit au silence compte encore pour CONF-06 ; cadence de 3 s sur la transmission du courrier et réponses « occupé » (POSTE-04) ; resynchronisation des radios d'inventaire en MP (AUTH-03) ; factions relues au démarrage (CONF-02) ; console du poste en écran partagé. Silence après balayage des fréquences écarté : la triche par client modifié n'est pas une priorité (serveur entre amis, mode debug réservé aux admins). 280 tests `lupa`.

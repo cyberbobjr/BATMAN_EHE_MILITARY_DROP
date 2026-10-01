@@ -4,5 +4,7 @@
     "MilitaryDrop.ArmorSupplyCase": "Caisse de ravitaillement militaire (équipement)",
     "MilitaryDrop.AttachmentSupplyCase": "Caisse de ravitaillement militaire (accessoires)",
     "MilitaryDrop.MilitaryMemo": "Note de service militaire",
-    "MilitaryDrop.Codebook": "Carnet de codes militaire"
+    "MilitaryDrop.Codebook": "Carnet de codes militaire",
+    "MilitaryDrop.DecoyBeacon": "Balise-sirène - DIVERSION",
+    "MilitaryDrop.RequisitionCase": "Caisse de réquisition militaire"
 }

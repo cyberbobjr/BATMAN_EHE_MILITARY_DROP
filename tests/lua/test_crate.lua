@@ -95,4 +95,68 @@ function T.spawned_crate_cases_carry_the_drop_id()
     assertEq(later.items[1].modData.MilitaryDrop_dropId, nil, "hors de Crate.spawn : aucun dropId")
 end
 
+--- Commandes simulées : D1 réquisition, D2 leurre, D3 sans formulaire.
+local function withOrders()
+    MilitaryDrop.Lots = { ITEM_KEY = "MilitaryDrop_lot" }
+    MilitaryDrop.Requisition = {
+        orderOf = function(dropId)
+            return ({ D1 = { lots = { rations = 2 } }, D2 = { decoy = "N" } })[dropId]
+        end,
+        casesFor = function()
+            return {
+                { fullType = "MilitaryDrop.RequisitionCase", lot = "rations", name = "Case: Rations" },
+                { fullType = "MilitaryDrop.RequisitionCase", lot = "rations", name = "Case: Rations" },
+            }
+        end,
+    }
+    local beacon = { fullType = "MilitaryDrop.DecoyBeacon", name = "DIVERSION" }
+    MilitaryDrop.Decoy = { trunkContents = function() return { beacon } end }
+end
+
+--- Coffre rempli pendant Crate.spawn pour le largage dropId.
+local function fillFor(dropId)
+    local container = makeItemContainer()
+    container.AddItem = function(self, fullType)
+        local item = { fullType = fullType, modData = {} }
+        function item.getModData(this) return this.modData end
+        function item.setName(this, text) this.name = text end
+        function item.setCustomName(this, value) this.custom = value end
+        self.items[#self.items + 1] = item
+        return item
+    end
+    addVehicleDebug = function()
+        triggerEvent("OnFillContainer", "MilitaryDrop_SupplyCrate", "TrailerTrunk", container)
+        return VEHICLE
+    end
+    MilitaryDrop.Crate.spawn({ getVehicleContainer = function() return nil end }, dropId)
+    return container.items
+end
+
+function T.trunk_follows_the_requisition_order()
+    withOrders()
+    local items = fillFor("D1")
+    assertEq(#items, 2, "une caisse par unité commandée")
+    assertEq(items[1].fullType, "MilitaryDrop.RequisitionCase", "caisse de réquisition")
+    assertEq(items[1].modData.MilitaryDrop_lot, "rations", "lot en ModData")
+    assertEq(items[1].modData.MilitaryDrop_dropId, "D1", "dropId")
+    assertEq(items[1].name, "Case: Rations", "nom composé")
+    assertEq(items[1].custom, true, "setCustomName")
+end
+
+function T.decoy_trunk_holds_only_the_decoy_contents()
+    withOrders()
+    local items = fillFor("D2")
+    assertEq(#items, 1, "une seule balise")
+    assertEq(items[1].fullType, "MilitaryDrop.DecoyBeacon", "fournie par le module leurre")
+    MilitaryDrop.Decoy = nil
+    assertEq(#fillFor("D2"), 0, "module leurre absent : coffre vide, jamais de fournitures")
+end
+
+function T.drop_without_order_keeps_random_cases()
+    withOrders()
+    local items = fillFor("D3")
+    assertEq(#items, 4, "CaseRolls caisses")
+    assertEq(items[1].name, nil, "pas de nom composé")
+end
+
 return T

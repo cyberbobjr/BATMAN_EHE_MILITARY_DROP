@@ -234,6 +234,10 @@ function Dismantle.perform(player, vehicle)
     end
     props:scrapHaloNoteCheck(player, added)
     MilitaryDrop.log(string.format("crate dismantled by %s (%d materials)", tostring(player:getUsername()), added))
+    -- Leurre (v1.5) : la sirène de cette caisse se tait (module serveur).
+    if MilitaryDrop.Decoy then
+        MilitaryDrop.Decoy.onCrateRemoved(vehicle)
+    end
     vehicle:permanentlyRemove()
     return true
 end

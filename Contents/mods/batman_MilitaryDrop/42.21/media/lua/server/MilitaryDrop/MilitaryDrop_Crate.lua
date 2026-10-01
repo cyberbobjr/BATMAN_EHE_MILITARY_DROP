@@ -14,6 +14,13 @@
 -- pendant l'appel (addToWorld → createPhysics → randomizeContainers →
 -- OnFillContainer, BaseVehicle.java:804-888, 42.21) : le dropId en cours est
 -- donc connu de onFillContainer.
+--
+-- Contenu (Crate.contentsFor) : sans commande, CaseRolls caisses de
+-- ravitaillement tirées au hasard ; commande du formulaire (v1.4) : une
+-- caisse de réquisition par unité commandée (MilitaryDrop.Requisition.casesFor :
+-- lot en ModData, nom composé) ; leurre (v1.5) : ce que fournit
+-- MilitaryDrop.Decoy.trunkContents (balise de diversion). Même contenu au sol
+-- quand la caisse ne peut pas apparaître (Server.deliver).
 -- ============================================================================
 
 if isClient() then
@@ -59,6 +66,46 @@ function Crate.rollCases(rand)
     return cases
 end
 
+--- Contenu d'un largage : { { fullType, name?, lot? }, … }.
+function Crate.contentsFor(dropId)
+    local Requisition = MilitaryDrop.Requisition
+    local order = dropId and Requisition and Requisition.orderOf(dropId)
+    if order and order.decoy then
+        local Decoy = MilitaryDrop.Decoy
+        local contents = Decoy and Decoy.trunkContents and Decoy.trunkContents(dropId)
+        if type(contents) ~= "table" then
+            MilitaryDrop.log("decoy " .. tostring(dropId) .. ": no decoy module, empty trunk", true)
+            return {}
+        end
+        return contents
+    end
+    if order and order.lots then
+        return Requisition.casesFor(dropId)
+    end
+    local entries = {}
+    for i, fullType in ipairs(Crate.rollCases()) do
+        entries[i] = { fullType = fullType }
+    end
+    return entries
+end
+
+--- Marque un objet créé pour un largage : dropId (confiance), lot d'une
+--- caisse de réquisition, nom composé (setName + setCustomName, sauvegardé et
+--- transmis au client).
+function Crate.applyEntry(item, entry, dropId)
+    local modData = item:getModData()
+    if dropId then
+        modData[Crate.DROP_KEY] = dropId
+    end
+    if entry.lot and MilitaryDrop.Lots then
+        modData[MilitaryDrop.Lots.ITEM_KEY] = entry.lot
+    end
+    if type(entry.name) == "string" and entry.name ~= "" then
+        item:setName(entry.name)
+        item:setCustomName(true)
+    end
+end
+
 function Crate.registerDistribution()
     local tables = VehicleDistributions and VehicleDistributions[1]
     if type(tables) ~= "table" then
@@ -72,10 +119,10 @@ function Crate.onFillContainer(roomType, _, container)
     if roomType ~= Crate.SCRIPT or not instanceof(container, "ItemContainer") then
         return
     end
-    for _, fullType in ipairs(Crate.rollCases()) do
-        local item = container:AddItem(fullType)
-        if item and fillingDropId then
-            item:getModData()[Crate.DROP_KEY] = fillingDropId
+    for _, entry in ipairs(Crate.contentsFor(fillingDropId)) do
+        local item = container:AddItem(entry.fullType)
+        if item then
+            Crate.applyEntry(item, entry, fillingDropId)
         end
     end
 end

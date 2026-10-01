@@ -22,6 +22,15 @@
 --
 -- La fréquence militaire n'est connue du client MP que si l'option Frequency
 -- la fixe ; par défaut, elle est tirée par le serveur et lue sur les notes.
+--
+-- Réquisition (v1.4, docs/PLAN-V14.md) : un appel accepté peut recevoir
+-- Result « form » au lieu de « accepted ». La base le dit à la radio, puis le
+-- formulaire s'ouvre (MilitaryDrop.RequisitionWindow) ; la demande reste en
+-- attente jusqu'à la commande (RequisitionOrder, même requestId et même
+-- radio) ou l'annulation (RequisitionCancel). La réponse à la commande est un
+-- Result ordinaire (accepted, ou orderInvalid, expired, cooldown…). Les
+-- répliques du personnage (player:Say) restent locales en MP : le contenu de
+-- la commande n'est jamais prononcé.
 -- ============================================================================
 
 require "ISUI/ISTextBox"
@@ -192,10 +201,92 @@ end
 -- ----------------------------------------------------------------------------
 
 -- Mauvais canal ou mauvais code : même réponse du serveur (« noAnswer »).
+-- Réquisition : autorisation expirée, commande refusée par le serveur.
 local RADIO_REPLIES = {
     noAnswer = "IGUI_MilitaryDrop_NoAnswer",
     noSite = "IGUI_MilitaryDrop_NoSite",
+    expired = "IGUI_MilitaryDrop_ReqExpired",
+    orderInvalid = "IGUI_MilitaryDrop_ReqOrderInvalid",
 }
+
+-- ----------------------------------------------------------------------------
+-- Réquisition (v1.4)
+-- ----------------------------------------------------------------------------
+
+-- Refus d'une commande qui gardent l'autorisation du serveur (radio éteinte
+-- ou introuvable, cadence, aucun point de largage : secteur du leurre hors
+-- carte) : le formulaire se rouvre, rempli, pour renvoyer.
+Client.REQUISITION_RETRY = { busy = true, radioOff = true, noRadio = true, notMilitary = true, noSite = true }
+
+--- La base invite à transmettre, puis le formulaire s'ouvre. Le délai de
+--- validité part de la réception (receivedMs), pas de l'ouverture.
+local function openForm(requestId, request, args, receivedMs)
+    if pending[requestId] ~= request or request.formOpen then
+        return
+    end
+    Client.radioSay(request, getText("IGUI_MilitaryDrop_ReqFormSay", tostring(args.callsign or "")))
+    local Window = MilitaryDrop.RequisitionWindow
+    local player = getSpecificPlayer(request.playerNum)
+    if not Window or not player then
+        Client.cancelRequisition(requestId, false)
+        return
+    end
+    request.formOpen = true
+    Window.open(player, request.device, args, receivedMs)
+end
+
+--- Radio de la demande désignable pour le serveur (appareil posé encore sur
+--- sa case) : référence comme pour Request, sinon nil.
+local function radioRef(device)
+    if not device then
+        return nil
+    end
+    if Radio.isWorldRadio(device) and not device:getSquare() then
+        return nil
+    end
+    return Radio.makeRef(device)
+end
+
+--- Transmet la commande (RequisitionOrder) : order = { [lotId] = quantité },
+--- decoy = secteur ou nil ; form : formulaire gardé pour le rouvrir si le
+--- serveur garde l'autorisation (REQUISITION_RETRY). Renvoie false si la
+--- demande n'attend plus rien.
+function Client.sendRequisition(requestId, order, decoy, form)
+    local request = pending[requestId]
+    if not request or request.ordered then
+        return false
+    end
+    local player = getSpecificPlayer(request.playerNum)
+    if not player then
+        pending[requestId] = nil
+        return false
+    end
+    request.ordered = true
+    request.form = form
+    player:Say(getText("IGUI_MilitaryDrop_ReqOrderSay", tostring(request.callsign or "")))
+    Net.toServer(player, "RequisitionOrder", { requestId = requestId, radio = radioRef(request.device),
+        order = order or {}, decoy = decoy })
+    return true
+end
+
+--- Annule la réquisition (RequisitionCancel) ; spoken : le personnage le dit
+--- (bouton « Annuler »), sinon silence (feuille fermée, radio hors de portée).
+function Client.cancelRequisition(requestId, spoken)
+    local request = pending[requestId]
+    if not request or request.ordered then
+        return false
+    end
+    pending[requestId] = nil
+    local player = getSpecificPlayer(request.playerNum)
+    if not player then
+        return false
+    end
+    if spoken then
+        player:Say(getText("IGUI_MilitaryDrop_ReqCancelSay", tostring(request.callsign or "")))
+    end
+    Net.toServer(player, "RequisitionCancel", { requestId = requestId })
+    return true
+end
 
 --- Réplique d'accord : selon le palier de confiance reçu, sinon la réplique neutre.
 function Client.ackText(args)
@@ -208,9 +299,21 @@ end
 
 local function onResult(request, args)
     local status = args.status
-    if status == "accepted" then
+    if status == "form" then
+        local receivedMs = getTimestampMs()
+        local requestId = args.requestId
+        request.callsign = args.callsign
+        Client.later(Client.REPLY_DELAY_MS, function()
+            openForm(requestId, request, args, receivedMs)
+        end)
+    elseif status == "accepted" then
         Client.later(Client.REPLY_DELAY_MS, function()
             Client.radioSay(request, Client.ackText(args))
+        end)
+    elseif status == "noSite" and args.sector then
+        -- Leurre : aucun point de largage dans le secteur choisi.
+        Client.later(Client.REPLY_DELAY_MS, function()
+            Client.radioSay(request, getText("IGUI_MilitaryDrop_ReqNoSector"))
         end)
     elseif status == "lineCut" then
         -- Ligne coupée : la base le dit (révélé seulement après un canal et un code justes).
@@ -277,10 +380,28 @@ function Client.onServerCommand(module, command, args)
         return
     end
     if command == "Result" then
+        local Window = MilitaryDrop.RequisitionWindow
+        if request.ordered and request.form and Client.REQUISITION_RETRY[args.status] and Window
+            and not Window.expired(request.form, getTimestampMs()) then
+            -- Commande refusée mais autorisation gardée : le personnage dit le
+            -- motif, puis la feuille se rouvre telle quelle.
+            onResult(request, args)
+            local player = getSpecificPlayer(request.playerNum)
+            if player then
+                request.ordered = false
+                Window.show(player, request.device, request.form)
+                return
+            end
+        end
+        if args.status ~= "form" and request.formOpen and Window then
+            -- Réponse du serveur pendant que la feuille est ouverte : elle se ferme.
+            Window.dismiss(args.requestId)
+        end
         onResult(request, args)
         -- Seul un largage admin attend encore un message (coordonnées privées) ;
-        -- les autres les entendent sur la chaîne militaire.
-        if args.status ~= "accepted" or not request.force then
+        -- les autres les entendent sur la chaîne militaire. Un formulaire
+        -- attend la commande ou l'annulation.
+        if args.status ~= "form" and (args.status ~= "accepted" or not request.force) then
             pending[args.requestId] = nil
         end
     elseif command == "Dropped" then

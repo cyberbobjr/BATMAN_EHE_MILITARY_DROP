@@ -1,6 +1,7 @@
 /* Ouverture des caisses : aucune sortie déclarée, le contenu est tiré par
    MilitaryDrop.Recipe.openSupplyCase (solo, ou serveur en MP :
-   ISHandcraftAction:performRecipe, 42.21). */
+   ISHandcraftAction:performRecipe, 42.21). Caisse de réquisition (v1.4) :
+   contenu selon le lot gardé en ModData. */
 module MilitaryDrop
 {
     imports
@@ -17,7 +18,7 @@ module MilitaryDrop
         OnCreate = MilitaryDrop.Recipe.openSupplyCase,
         inputs
         {
-            item 1 [MilitaryDrop.AmmoSupplyCase;MilitaryDrop.WeaponSupplyCase;MilitaryDrop.ArmorSupplyCase;MilitaryDrop.AttachmentSupplyCase],
+            item 1 [MilitaryDrop.AmmoSupplyCase;MilitaryDrop.WeaponSupplyCase;MilitaryDrop.ArmorSupplyCase;MilitaryDrop.AttachmentSupplyCase;MilitaryDrop.RequisitionCase],
         }
     }
 }

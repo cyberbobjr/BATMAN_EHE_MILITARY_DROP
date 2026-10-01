@@ -4,5 +4,7 @@
     "MilitaryDrop.ArmorSupplyCase": "Military Gear Supply Case",
     "MilitaryDrop.AttachmentSupplyCase": "Military Attachment Supply Case",
     "MilitaryDrop.MilitaryMemo": "Military Memo",
-    "MilitaryDrop.Codebook": "Military Codebook"
+    "MilitaryDrop.Codebook": "Military Codebook",
+    "MilitaryDrop.DecoyBeacon": "Siren Beacon - DIVERSION",
+    "MilitaryDrop.RequisitionCase": "Military Requisition Case"
 }

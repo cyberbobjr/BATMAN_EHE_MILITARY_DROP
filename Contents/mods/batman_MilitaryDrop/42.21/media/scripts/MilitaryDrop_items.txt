@@ -49,6 +49,21 @@ module MilitaryDrop
         Tooltip = Tooltip_MilitaryDrop_AttachmentSupplyCase,
     }
 
+    /* Caisse de réquisition (v1.4) : une par unité commandée dans le formulaire.
+       Son lot est en ModData (MilitaryDrop_lot) et son nom est composé avec le
+       libellé du lot (MilitaryDrop_Requisition.lua) ; contenu tiré à l'ouverture
+       (même recette que les caisses de ravitaillement). Icône vanilla de l'étui
+       militaire marqué, modèle au sol de la caisse d'armes. */
+    item RequisitionCase
+    {
+        DisplayCategory = Container,
+        ItemType = base:normal,
+        Weight = 3.0,
+        Icon = ProtectiveCase_LargeGreen_Military,
+        WorldStaticModel = MilitaryDrop_WeaponCase_Ground,
+        Tooltip = Tooltip_MilitaryDrop_RequisitionCase,
+    }
+
     /* Documents (MilitaryDrop_Notes.lua, MilitaryDrop_Documents.lua) : écrits par
        le serveur à la création dans modData.printMedia, ouverts par « Inspecter »
        dans la fenêtre des journaux vanilla. Ni CanBeWrite ni pages : le joueur ne
