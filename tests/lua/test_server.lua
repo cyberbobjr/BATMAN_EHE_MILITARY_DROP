@@ -70,12 +70,19 @@ function T.setup()
         }
     end
     PLACED = {}
+    PLACED_ITEMS = {}
     LANDING = {
         getX = function() return 115 end, getY = function() return 200 end,
         isOutside = function() return true end, isFree = function() return true end,
         isWaterSquare = function() return false end,
         getVehicleContainer = function() return nil end,
-        AddWorldInventoryItem = function(_, name) PLACED[#PLACED + 1] = name return {} end,
+        AddWorldInventoryItem = function(_, name)
+            PLACED[#PLACED + 1] = name
+            local item = { fullType = name, modData = {} }
+            function item.getModData(self) return self.modData end
+            PLACED_ITEMS[#PLACED_ITEMS + 1] = item
+            return item
+        end,
     }
     getCell = function() return { getGridSquare = function() return LANDING end } end
     spawnHorde = function() end
@@ -142,9 +149,12 @@ function T.setup()
     IsoDirections = { getRandom = function() return "N" end }
     loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Secrets.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Guard.lua")
     getActivatedMods = function() return { size = function() return 0 end } end
     loadMod("server/MilitaryDrop/MilitaryDrop_Smoke.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Teams.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Trust.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")
     MilitaryDrop.Client = { onServerCommand = function(_, command, args)
@@ -270,7 +280,7 @@ local function modDataValues()
             end
         end
     end
-    walk(MODDATA)
+    walk(MODDATA.MilitaryDrop or {})
     return table.concat(values, "|")
 end
 
@@ -290,6 +300,28 @@ function T.no_secret_or_failure_count_in_mod_data()
     local state = MilitaryDrop.Server.getState()
     assertTrue(state.failedCodes == nil and state.code == nil and state.seed == nil,
         "ni compteur de codes faux, ni code, ni graine dans l'état lisible")
+end
+
+function T.private_state_is_named_from_the_seed()
+    FILES["MilitaryDrop/Sandbox_Test_Save_seed.txt"] = tostring(SEED)
+    local tag = MilitaryDrop.Secrets.privateTag()
+    assertTrue(tag:match("^MilitaryDrop_%x%x%x%x%x%x%x%x%x%x%x%x$") ~= nil, "nom privé : " .. tag)
+    assertTrue(tag:find(tostring(SEED), 1, true) == nil, "la graine n'y est pas en clair")
+    assertEq(MilitaryDrop.Secrets.privateState(), MODDATA[tag], "ModData globale de ce nom")
+    -- Même graine (nouveau chargement du Lua) : même nom.
+    loadMod("server/MilitaryDrop/MilitaryDrop_Secrets.lua")
+    assertEq(MilitaryDrop.Secrets.privateTag(), tag, "nom stable pour une même graine")
+    FILES["MilitaryDrop/Sandbox_Test_Save_seed.txt"] = tostring(SEED + 1)
+    loadMod("server/MilitaryDrop/MilitaryDrop_Secrets.lua")
+    assertTrue(MilitaryDrop.Secrets.privateTag() ~= tag, "autre partie, autre nom")
+end
+
+function T.private_state_is_read_again_after_the_mod_data_reset()
+    local before = MilitaryDrop.Secrets.privateState()
+    before.marker = true
+    -- GlobalModData.init vide toutes les tables et relit la sauvegarde.
+    MODDATA = {}
+    assertEq(MilitaryDrop.Secrets.privateState().marker, nil, "table relue, pas gardée d'avant")
 end
 
 function T.seed_is_generated_once_and_written()
@@ -376,15 +408,21 @@ function T.forced_drop_does_not_touch_cooldown()
     assertTrue(commands():find("Dropped") ~= nil, "admin : coordonnées en privé")
 end
 
-function T.request_burst_is_ignored()
+function T.request_burst_gets_a_busy_answer()
     local player = makePlayer(makeRadio(true, 107400))
     MilitaryDrop.Server.handleRequest(player, request(CODE))
+    assertEq(SENT[1].args.status, "noAnswer", "première demande traitée")
     NOW_MS = 1000
+    local counted = 0
+    MilitaryDrop.Trust.onFailedCode = function() counted = counted + 1 end
     MilitaryDrop.Server.handleRequest(player, request(CODE))
-    assertEq(#SENT, 1, "seconde demande ignorée")
+    assertEq(#SENT, 2, "seconde demande : une réponse")
+    assertEq(SENT[2].args.status, "busy", "refusée par la cadence, sans texte de la base")
+    assertEq(SENT[2].args.requestId, 1, "le client libère sa demande")
+    assertEq(counted, 0, "rien de compté pour la demande refusée")
     NOW_MS = 4000
     MilitaryDrop.Server.handleRequest(player, request(CODE))
-    assertEq(#SENT, 2, "acceptée après 3 s")
+    assertEq(SENT[3].args.status, "noAnswer", "traitée après 3 s")
 end
 
 function T.drop_point_is_far_from_the_requester()
@@ -469,6 +507,139 @@ function T.delivery_marks_the_crate_with_smoke_when_signal_smoke_is_active()
     assertTrue(MilitaryDrop.Server.deliver(115, 200, "tester"), "livré")
     assertEq(#smoke, 1, "une fumée")
     assertEq(smoke[1].x, 115, "sur la case de la caisse")
+end
+
+function T.back_radio_is_refused_on_a_multiplayer_server()
+    isServer = function() return true end
+    assertEq(MilitaryDrop.Server.evaluate(makePlayer(makeRadio(true, CHANNEL), "back"), request(CODE), WORLD_HOURS),
+        "noRadio", "MP : état d'une radio sur le dos inconnu du serveur (seule la main compte)")
+    assertEq(MilitaryDrop.Server.evaluate(makePlayer(makeRadio(true, CHANNEL), "hand"), request(CODE), WORLD_HOURS),
+        "accepted", "MP : radio en main acceptée")
+end
+
+-- ----------------------------------------------------------------------------
+-- Confiance (v1.3) : palier et indicatif, dropId, ligne coupée, délai, codes faux
+-- ----------------------------------------------------------------------------
+
+function T.accepted_request_carries_tier_callsign_and_a_drop_id()
+    withChannel()
+    MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
+    local result = SENT[1].args
+    assertEq(result.status, "accepted", "acceptée")
+    assertEq(result.tier, 3, "palier d'une note de 50")
+    assertEq(result.callsign, MilitaryDrop.Teams.callsign(MilitaryDrop.Teams.SOLO_ID), "indicatif de l'équipe")
+    local flight = MilitaryDrop.Server.getState().flights[1]
+    local drop = MilitaryDrop.Secrets.privateState().drops[flight.dropId]
+    assertTrue(drop ~= nil, "largage enregistré")
+    assertEq(drop.team, MilitaryDrop.Teams.SOLO_ID, "équipe du demandeur au moment de l'appel")
+    assertEq(drop.requester, "tester", "demandeur")
+    fly(MilitaryDrop.Flight.dropTime(flight) + 0.5)
+    assertEq(#PLACED_ITEMS, 2, "caisses au sol (repli)")
+    for _, item in ipairs(PLACED_ITEMS) do
+        assertEq(item.modData.MilitaryDrop_dropId, flight.dropId, "dropId sur chaque caisse de ravitaillement")
+    end
+    assertEq(drop.deadline, WORLD_HOURS + 48, "échéance de 48 h depuis la pose")
+end
+
+function T.line_cut_is_revealed_only_after_channel_and_code()
+    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    MilitaryDrop.Trust.add(team, -40, "drop")
+    assertTrue(MilitaryDrop.Trust.isLineCut(team), "note sous 15 : ligne coupée")
+    assertEq(evaluate(makeRadio(true, 107400), request(CODE)), "noAnswer", "mauvais canal : rien ne trahit la coupure")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request("x")), "noAnswer", "mauvais code : idem")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "lineCut", "canal et code justes : ligne coupée")
+    MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
+    assertEq(SENT[1].args.status, "lineCut", "réponse au joueur")
+    assertEq(SENT[1].args.callsign, MilitaryDrop.Teams.callsign(team), "indicatif dans la réponse")
+    assertEq(SENT[1].args.tier, nil, "aucun palier ni chiffre")
+    assertEq(#(MilitaryDrop.Server.getState().flights or {}), 0, "aucun vol")
+end
+
+function T.cooldown_is_scaled_by_the_caller_team_trust()
+    local state = MilitaryDrop.Server.getState()
+    state.lastDropHours = WORLD_HOURS
+    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    MilitaryDrop.Trust.add(team, 50, "drop")
+    local private = MilitaryDrop.Secrets.privateState()
+    local status, hours = evaluate(makeRadio(true, CHANNEL), request(CODE))
+    assertEq(status, "cooldown", "délai")
+    assertEq(hours, 101, "note 100 : 168 × 0,6")
+    private.trust[team].value = 0
+    status, hours = evaluate(makeRadio(true, CHANNEL), request(CODE))
+    assertEq(status, "cooldown", "délai allongé")
+    assertEq(hours, 252, "note 0 : 168 × 1,5")
+    state.lastDropHours = WORLD_HOURS - 101
+    private.trust[team].value = 100
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "délai raccourci écoulé")
+end
+
+function T.repeated_wrong_codes_cost_trust_at_the_next_hour()
+    for i = 1, MilitaryDrop.Server.FAILED_CODE_LIMIT do
+        evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i))
+    end
+    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    assertEq(MilitaryDrop.Trust.get(team), 50, "rien de visible sur-le-champ")
+    triggerEvent("EveryHours")
+    assertEq(MilitaryDrop.Trust.get(team), 48, "−2 au changement d'heure")
+end
+
+function T.repeated_unanswered_calls_cost_trust_whatever_the_cause()
+    -- 3 appels sans réponse dans l'heure (mauvais canal compris) : −2 au
+    -- changement d'heure, comme 3 codes faux. La note ne révèle pas le canal.
+    for _ = 1, 3 do
+        evaluate(makeRadio(true, 107400), request("ALPHA-ALPHA-01"))
+    end
+    triggerEvent("EveryHours")
+    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Teams.idFor(PLAYER)), 48, "mauvais canal : compté comme un code faux")
+end
+
+function T.silenced_caller_still_counts_for_trust()
+    -- CONF-06 : réduit au silence par 3 codes faux, le joueur qui rappelle
+    -- (même avec le bon code) compte comme un appel sans réponse.
+    local counted = {}
+    MilitaryDrop.Trust.onFailedCode = function(name) counted[#counted + 1] = name end
+    for i = 1, MilitaryDrop.Server.FAILED_CODE_LIMIT do
+        evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i))
+    end
+    assertEq(#counted, 3, "trois codes faux")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "noAnswer", "silence")
+    assertEq(#counted, 4, "l'appel réduit au silence compte aussi")
+end
+
+function T.wrong_frequency_and_wrong_code_cost_the_same_trust()
+    -- La note est lisible par les clients : elle ne doit pas révéler qu'un
+    -- appel était sur la bonne fréquence.
+    local counted = {}
+    MilitaryDrop.Trust.onFailedCode = function(name) counted[#counted + 1] = name end
+    evaluate(makeRadio(true, 107400), request(CODE))
+    evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-01"))
+    assertEq(#counted, 2, "mauvaise fréquence et mauvais code comptés pareil")
+    SandboxVars.MilitaryDrop.AuthCode = 1
+    evaluate(makeRadio(true, 107400), request(nil))
+    assertEq(#counted, 2, "sans code exigé : rien à cacher, rien de compté")
+end
+
+function T.v13_state_never_goes_to_the_public_mod_data()
+    withChannel()
+    MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
+    local flight = MilitaryDrop.Server.getState().flights[1]
+    fly(MilitaryDrop.Flight.dropTime(flight) + 0.5)
+    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    MilitaryDrop.Trust.add(team, 5, "report")
+    MilitaryDrop.Trust.onCaseOpened(PLACED_ITEMS[1], PLAYER)
+    for i = 1, 3 do
+        evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i))
+    end
+    triggerEvent("EveryHours")
+    local public = MilitaryDrop.Server.getState()
+    for _, key in ipairs({ "teams", "teamPlayers", "nextTeamId", "trust", "drops", "nextDropId", "missions",
+        "posts", "postLogs", "postMail", "nextPostUid" }) do
+        assertEq(public[key], nil, key .. " absent de la table publique")
+    end
+    local private = MilitaryDrop.Secrets.privateState()
+    assertTrue(private.teams[team] ~= nil and private.trust[team] ~= nil, "équipes et confiance dans l'état privé")
+    assertEq(private.drops[flight.dropId].outcome, "recovered", "largages dans l'état privé")
+    assertTrue(public.flights ~= nil and public.lastDropHours ~= nil, "vols et délai restent publics")
 end
 
 return T

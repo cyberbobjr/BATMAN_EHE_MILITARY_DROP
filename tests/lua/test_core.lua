@@ -9,7 +9,20 @@ end
 
 function T.defaults_without_sandbox()
     assertEq(MilitaryDrop.Config.get("CooldownHours"), 168, "délai par défaut")
-    assertEq(MilitaryDrop.Config.getChannel(), 151400, "canal par défaut")
+    assertEq(MilitaryDrop.Config.isFixedFrequency(), false, "défaut : fréquence libre, secrète")
+    assertEq(MilitaryDrop.Config.getChannel(), nil, "sans module serveur (client MP) : jamais connue")
+end
+
+function T.fixed_frequency_is_used_as_is()
+    SandboxVars.MilitaryDrop = { Frequency = 151.4 }
+    assertTrue(MilitaryDrop.Config.isFixedFrequency(), "valeur > 0 : fixe")
+    assertEq(MilitaryDrop.Config.getChannel(), 151400, "canal fixe")
+end
+
+function T.free_frequency_comes_from_the_server_module()
+    SandboxVars.MilitaryDrop = { Frequency = 0 }
+    MilitaryDrop.Broadcast = { freeChannel = function() return 133600 end }
+    assertEq(MilitaryDrop.Config.getChannel(), 133600, "serveur ou solo : fréquence tirée")
 end
 
 function T.sandbox_value_wins_even_when_false()

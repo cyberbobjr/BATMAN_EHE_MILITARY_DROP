@@ -62,6 +62,43 @@ function T.no_announce_no_mark()
     assertEq(#SYMBOLS, 0, "rien à marquer")
 end
 
+function T.recon_marked_once_per_mission_with_its_own_symbol()
+    MilitaryDrop.Announce.onReconAnnounce({ id = "M3", x = 700, y = 800 })
+    triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
+    triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 1, "un seul symbole malgré la répétition")
+    assertEq(SYMBOLS[1].getSymbolID(), "Eye", "symbole de la reconnaissance")
+    assertEq(SYMBOLS[1].getWorldX(), 700, "position")
+    -- Même mission annoncée de nouveau : pas de second repère, même effacé.
+    SYMBOLS[1] = nil
+    MilitaryDrop.Announce.onReconAnnounce({ id = "M3", x = 700, y = 800 })
+    triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 0, "une fois par mission")
+    MilitaryDrop.Announce.onReconAnnounce({ id = "M4", x = 900, y = 950 })
+    triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 1, "mission suivante marquée")
+end
+
+function T.recon_and_drop_codes_are_distinct()
+    MilitaryDrop.Announce.onDropAnnounce({ x = 500, y = 600 })
+    MilitaryDrop.Announce.onReconAnnounce({ id = "M1", x = 700, y = 800 })
+    triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 1, "seule la reconnaissance")
+    assertEq(SYMBOLS[1].getSymbolID(), "Eye", "symbole de la reconnaissance")
+    triggerEvent("OnDeviceText", "guid", "MDRP", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 2, "puis le largage")
+    assertEq(SYMBOLS[2].getSymbolID(), "Target", "symbole du largage")
+end
+
+function T.recon_needs_a_radio_that_hears_it()
+    MilitaryDrop.Announce.onReconAnnounce({ id = "M1", x = 700, y = 800 })
+    triggerEvent("OnDeviceText", "guid", "MDRC", 300, 300, 0, "line", {})
+    triggerEvent("OnDeviceText", "guid", "", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 0, "radio posée trop loin, ou ligne sans code")
+    MilitaryDrop.Announce.onReconAnnounce({ id = 5, x = 700, y = 800 })
+    assertTrue(true, "identifiant invalide ignoré sans erreur")
+end
+
 function T.existing_symbol_is_not_duplicated()
     MilitaryDrop.Announce.markMap(500, 600)
     assertEq(MilitaryDrop.Announce.markMap(500, 600), false, "doublon refusé")

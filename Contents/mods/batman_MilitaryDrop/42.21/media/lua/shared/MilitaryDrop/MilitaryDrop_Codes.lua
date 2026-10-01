@@ -203,6 +203,9 @@ Codes.USE_CIPHER_TABLE = 2
 -- « édition 1 », pour que les carnets déjà écrits restent justes.
 Codes.CIPHER_TABLE_ID = 1
 Codes.USE_STATION = 3
+-- Fréquence militaire libre (option Frequency à 0) et nom de la ModData privée.
+Codes.USE_MILITARY_CHANNEL = 4
+Codes.USE_PRIVATE_STATE = 5
 
 function Codes.weeklyCode(seed, week)
     return Codes.generate(Codes.newRandom(seed, Codes.USE_WEEKLY_CODE, week))

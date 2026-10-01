@@ -3,10 +3,12 @@
 --
 -- Le client envoie seulement une demande (commande « Request » : référence de
 -- la radio, code saisi, demande admin). Le serveur revérifie tout, dans cet
--- ordre : droits admin, radio à portée, radio militaire allumée, puis canal et
--- code ensemble, puis délai global. Mauvais canal et mauvais code donnent la
--- même réponse (« noAnswer ») : on ne peut trouver la fréquence en appelant
--- chaque canal. Le délai n'est révélé qu'après un canal et un code justes.
+-- ordre : cadence, droits admin, radio à portée, radio militaire allumée, puis
+-- canal et code ensemble, puis délai global. Mauvais canal et mauvais code
+-- donnent la même réponse (« noAnswer ») : on ne peut trouver la fréquence en
+-- appelant chaque canal. Le délai n'est révélé qu'après un canal et un code
+-- justes. Fréquence : option Frequency, ou fréquence libre secrète tirée par
+-- le serveur (MilitaryDrop_Broadcast.lua).
 --
 -- Code (option AuthCode) : aucun, fixe, ou celui de la semaine (le précédent
 -- reste accepté 24 h). Après FAILED_CODE_LIMIT codes faux dans la même
@@ -17,10 +19,11 @@
 -- distinguerait un mauvais code (compté) d'un mauvais canal (non compté) et
 -- révélerait la fréquence. Un redémarrage le remet à zéro.
 --
--- État persistant : ModData globale « MilitaryDrop » (heure du dernier
+-- État persistant public : ModData globale « MilitaryDrop » (heure du dernier
 -- largage, vols, livraisons en attente). Tout client connecté peut la lire :
--- les secrets (code fixe, graine des codes de la semaine) sont dans des
--- fichiers du serveur (MilitaryDrop_Secrets.lua).
+-- les secrets (code fixe, graine) sont dans des fichiers du serveur, et l'état
+-- de la v1.3 (équipes, confiance, largages, missions, postes) dans une ModData
+-- privée au nom tiré de la graine (MilitaryDrop.Secrets.privateState).
 --
 -- Une demande acceptée lance un hélicoptère (MilitaryDrop_Flights.lua) vers
 -- un point tiré au hasard **loin du demandeur** (options DropMin/MaxDistance,
@@ -30,6 +33,12 @@
 -- (MilitaryDrop_Crate.lua ; à défaut, les caisses de ravitaillement au sol) et
 -- la horde dès que la zone est chargée, au besoin sur la case libre la plus
 -- proche.
+--
+-- Confiance (v1.3, MilitaryDrop_Trust.lua) : le délai global est multiplié par
+-- le facteur de l'équipe qui appelle ; une ligne coupée répond « lineCut »,
+-- révélé comme le délai après un canal et un code justes. Chaque largage
+-- accepté reçoit un dropId (équipe du demandeur au moment de l'appel), porté
+-- par le vol, la livraison en attente et chaque caisse de ravitaillement.
 -- ============================================================================
 
 if isClient() then
@@ -40,23 +49,28 @@ require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Secrets"
+require "MilitaryDrop/MilitaryDrop_Guard"
 require "MilitaryDrop/MilitaryDrop_Loot"
 require "MilitaryDrop/MilitaryDrop_Flight"
 require "MilitaryDrop/MilitaryDrop_Crate"
 require "MilitaryDrop/MilitaryDrop_Broadcast"
 require "MilitaryDrop/MilitaryDrop_Smoke"
+require "MilitaryDrop/MilitaryDrop_Teams"
+require "MilitaryDrop/MilitaryDrop_Trust"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
 local Radio = MilitaryDrop.Radio
 local Codes = MilitaryDrop.Codes
 local Secrets = MilitaryDrop.Secrets
+local Guard = MilitaryDrop.Guard
 
 local Server = {}
 MilitaryDrop.Server = Server
 
 Server.MODDATA_TAG = "MilitaryDrop"
--- Une demande par joueur toutes les 3 s réelles au plus (anti-rafale).
+-- Une demande par joueur toutes les 3 s réelles au plus (anti-rafale) ; une
+-- demande refusée reçoit le statut « busy ».
 Server.REQUEST_INTERVAL_MS = 3000
 -- Repli quand aucun point lointain ne convient : près du demandeur (zone chargée).
 Server.LANDING_MIN_DISTANCE = 15
@@ -70,11 +84,11 @@ Server.RELOCATE_RADIUS = 30
 Server.CELL_SIZE = 256
 -- Codes faux permis par joueur et par journée de jeu avant le silence.
 Server.FAILED_CODE_LIMIT = 3
-local lastRequestMs = {}
 -- nom du joueur → { day, count } : mémoire du serveur seulement (voir en-tête).
 local failedCodes = {}
 
---- État persistant de la partie (lisible par les clients : rien de secret).
+--- État persistant public (lisible par les clients : vols, livraisons en
+--- attente, délai). L'état privé : MilitaryDrop.Secrets.privateState().
 function Server.getState()
     return ModData.getOrCreate(Server.MODDATA_TAG)
 end
@@ -129,6 +143,9 @@ function Server.recordFailedCode(name, day)
     if entry.count == Server.FAILED_CODE_LIMIT then
         MilitaryDrop.log(name .. ": " .. entry.count .. " wrong codes today, ignored until tomorrow", true)
     end
+    -- Code faux répété : perte de confiance de l'équipe (CONF-06). Un appel
+    -- sur une mauvaise fréquence compte aussi (Server.evaluate).
+    MilitaryDrop.Trust.onFailedCode(name)
 end
 
 --- Code juste (ou non exigé) ; compte les codes faux et applique le silence.
@@ -140,6 +157,9 @@ function Server.checkCode(player, code)
     local clock = Server.clock()
     local day = math.floor(clock / 24)
     if Server.isSilenced(name, day) then
+        -- Appel sans réponse compté comme les autres (CONF-06) : la confiance
+        -- ne distingue pas le silence d'un code faux.
+        MilitaryDrop.Trust.onFailedCode(name)
         return false
     end
     if not Codes.matchesAny(code, Server.acceptedCodes(clock)) then
@@ -150,13 +170,14 @@ function Server.checkCode(player, code)
     return true
 end
 
---- Heures de jeu avant le prochain largage permis (0 si permis).
-function Server.hoursUntilNextDrop(state, now)
+--- Heures de jeu avant le prochain largage permis (0 si permis) ; factor :
+--- facteur de confiance de l'équipe qui appelle (1 par défaut).
+function Server.hoursUntilNextDrop(state, now, factor)
     local last = tonumber(state.lastDropHours)
     if not last then
         return 0
     end
-    local remaining = last + Config.get("CooldownHours") - now
+    local remaining = last + Config.get("CooldownHours") * (factor or 1) - now
     if remaining > 0 then
         return remaining
     end
@@ -188,6 +209,12 @@ function Server.evaluate(player, args, now)
     end
     local status = Radio.status(radio, Config.getChannel())
     if status == "wrongFrequency" then
+        -- Appel sans réponse compté comme un code faux pour la perte de
+        -- confiance (CONF-06) : elle ne doit pas distinguer une mauvaise
+        -- fréquence d'un mauvais code.
+        if Config.codeMode() ~= Codes.MODE_NONE then
+            MilitaryDrop.Trust.onFailedCode(tostring(player:getUsername()))
+        end
         return "noAnswer"
     end
     if status then
@@ -196,7 +223,12 @@ function Server.evaluate(player, args, now)
     if not Server.checkCode(player, args.code) then
         return "noAnswer"
     end
-    local wait = Server.hoursUntilNextDrop(Server.getState(), now)
+    -- Ligne coupée et délai : révélés seulement après un canal et un code justes.
+    local teamId = MilitaryDrop.Teams.idFor(player)
+    if MilitaryDrop.Trust.isLineCut(teamId) then
+        return "lineCut"
+    end
+    local wait = Server.hoursUntilNextDrop(Server.getState(), now, MilitaryDrop.Trust.factor(teamId))
     if wait > 0 then
         return "cooldown", math.ceil(wait)
     end
@@ -357,11 +389,12 @@ end
 --- Livraison au point (x, y), déjà annoncé : caisse de largage et horde
 --- autour. La zone doit être chargée ; la case est revérifiée (eau, obstacle,
 --- véhicule garé) et remplacée au besoin par la plus proche. Renvoie false si
---- aucune case ne convient encore (la livraison reste en attente).
-function Server.deliver(x, y, requester)
+--- aucune case ne convient encore (la livraison reste en attente). dropId :
+--- largage (confiance), porté par chaque caisse de ravitaillement.
+function Server.deliver(x, y, requester, dropId)
     local square = Server.findLandingNear(x, y)
     local count = 0
-    if square and MilitaryDrop.Crate.spawn(square) then
+    if square and MilitaryDrop.Crate.spawn(square, dropId) then
         count = 1
     else
         -- Repli : la caisse n'a pas pu apparaître (aucune place libre).
@@ -371,7 +404,9 @@ function Server.deliver(x, y, requester)
             return false
         end
         for _, fullType in ipairs(MilitaryDrop.Crate.rollCases()) do
-            if square:AddWorldInventoryItem(fullType, ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0) then
+            local item = square:AddWorldInventoryItem(fullType, ZombRandFloat(0.2, 0.8), ZombRandFloat(0.2, 0.8), 0)
+            if item then
+                MilitaryDrop.Trust.tagItem(item, dropId)
                 count = count + 1
             end
         end
@@ -387,6 +422,7 @@ function Server.deliver(x, y, requester)
     end
     local state = Server.getState()
     state.lastDrop = { x = x, y = y, hours = getGameTime():getWorldAgeHours() }
+    MilitaryDrop.Trust.onDropDelivered(dropId)
     MilitaryDrop.log(string.format("drop at %d,%d: %d crate/cases, %d zombies, for %s",
         x, y, count, zombies, tostring(requester)), true)
     return true
@@ -394,18 +430,22 @@ end
 
 function Server.handleRequest(player, args)
     local name = tostring(player:getUsername())
-    local nowMs = getTimestampMs()
-    if lastRequestMs[name] and nowMs - lastRequestMs[name] < Server.REQUEST_INTERVAL_MS then
+    local requestId = type(args) == "table" and tonumber(args.requestId) or nil
+    if Guard.throttled(player, "Request", Server.REQUEST_INTERVAL_MS) then
+        -- Réponse sans texte de la base : le client libère sa demande.
+        Net.toPlayer(player, "Result", { requestId = requestId, status = "busy" })
         return
     end
-    lastRequestMs[name] = nowMs
 
-    local requestId = type(args) == "table" and tonumber(args.requestId) or nil
     local now = getGameTime():getWorldAgeHours()
     local status, extra = Server.evaluate(player, args, now)
     if status ~= "accepted" then
         MilitaryDrop.log("request from " .. name .. " refused: " .. status)
-        Net.toPlayer(player, "Result", { requestId = requestId, status = status, hours = extra })
+        local reply = { requestId = requestId, status = status, hours = extra }
+        if status == "lineCut" then
+            reply.callsign = MilitaryDrop.Teams.callsign(MilitaryDrop.Teams.idFor(player))
+        end
+        Net.toPlayer(player, "Result", reply)
         return
     end
 
@@ -421,21 +461,33 @@ function Server.handleRequest(player, args)
         Net.toPlayer(player, "Result", { requestId = requestId, status = "noSite" })
         return
     end
-    if args.force ~= true then
+    local forced = args.force == true
+    if not forced then
         Server.getState().lastDropHours = now
     end
-    Net.toPlayer(player, "Result", { requestId = requestId, status = "accepted" })
-    MilitaryDrop.Flights.launch(x, y, name, requestId, args.force == true)
+    -- Équipe du demandeur au moment de l'appel ; réplique choisie par palier.
+    local teamId = MilitaryDrop.Teams.idFor(player)
+    local dropId = MilitaryDrop.Trust.registerDrop(teamId, name, forced)
+    MilitaryDrop.Trust.touch(teamId)
+    Net.toPlayer(player, "Result", { requestId = requestId, status = "accepted",
+        tier = MilitaryDrop.Trust.tier(teamId), callsign = MilitaryDrop.Teams.callsign(teamId) })
+    MilitaryDrop.Flights.launch(x, y, name, requestId, forced, dropId)
 end
+
+--- Commandes des clients : nom → function(player, args). Chaque module inscrit
+--- les siennes (Server.COMMANDS.X = …) dans son propre fichier.
+Server.COMMANDS = {
+    Request = function(player, args) Server.handleRequest(player, args) end,
+    Sync = function(player) MilitaryDrop.Flights.sendActive(player) end,
+}
 
 function Server.onClientCommand(module, command, player, args)
     if module ~= Net.MODULE or not player then
         return
     end
-    if command == "Request" then
-        Server.handleRequest(player, args)
-    elseif command == "Sync" then
-        MilitaryDrop.Flights.sendActive(player)
+    local handler = type(command) == "string" and Server.COMMANDS[command]
+    if handler then
+        handler(player, type(args) == "table" and args or {})
     end
 end
 

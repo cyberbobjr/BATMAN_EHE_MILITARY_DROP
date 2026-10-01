@@ -8,11 +8,26 @@
 --
 -- La fréquence militaire n'est jamais vérifiée ici : griser l'option sur une
 -- mauvaise fréquence permettrait de la trouver en balayant les canaux.
+--
+-- Confiance (v1.3) : le serveur envoie avec l'accord le palier de l'équipe
+-- (args.tier, 1 à 4) et son indicatif ; la réplique de la base en dépend. Aucun
+-- chiffre n'est jamais affiché.
+--
+-- AUTH-03 (v1.3) : un talkie à la ceinture, sur le dos ou dans un sac n'est
+-- plus un motif de refus. Après la saisie du code, le personnage le prend en
+-- main (MilitaryDrop.Exchange.run : action vanilla), puis appelle ; en MP,
+-- l'état de toute radio d'inventaire est renvoyé au serveur avant l'appel,
+-- même déjà en main. Le serveur ne connaît l'état d'une radio d'inventaire
+-- que si elle est en main au moment du réglage.
+--
+-- La fréquence militaire n'est connue du client MP que si l'option Frequency
+-- la fixe ; par défaut, elle est tirée par le serveur et lue sur les notes.
 -- ============================================================================
 
 require "ISUI/ISTextBox"
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
+require "MilitaryDrop/MilitaryDrop_Exchange"
 require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Heli"
 require "MilitaryDrop/MilitaryDrop_Announce"
@@ -27,6 +42,9 @@ MilitaryDrop.Client = Client
 
 Client.CALL_COUNT = 5
 Client.ACK_COUNT = 5
+-- Répliques d'accord par palier de confiance (IGUI_MilitaryDrop_AckTier<palier>_<n>).
+Client.TIER_COUNT = 4
+Client.TIER_ACK_COUNT = 3
 -- Délais réels (ms) : code après l'appel, réponse de la base, confirmation
 -- après le largage (envoyé par le serveur au passage de l'hélicoptère).
 Client.CODE_DELAY_MS = 2500
@@ -136,19 +154,31 @@ function Client.sendRequest(player, device, code, force)
     Net.toServer(player, "Request", args)
 end
 
+--- Appel par la radio : prise en main du talkie si besoin (AUTH-03), puis
+--- demande. Le largage admin n'exige pas la radio : envoyé aussitôt.
+function Client.call(player, device, code, force)
+    if force then
+        Client.sendRequest(player, device, code, force)
+        return
+    end
+    MilitaryDrop.Exchange.run(player, device, nil, function()
+        Client.sendRequest(player, device, code, false)
+    end)
+end
+
 local function onCodeEntered(_, button, player, device)
     if button.internal ~= "OK" then
         return
     end
     local code = button.parent.entry:getText()
     if code and code ~= "" then
-        Client.sendRequest(player, device, code, false)
+        Client.call(player, device, code, false)
     end
 end
 
 function Client.onRequest(player, device, force)
     if force or Config.codeMode() == Codes.MODE_NONE then
-        Client.sendRequest(player, device, nil, force)
+        Client.call(player, device, nil, force)
         return
     end
     local modal = ISTextBox:new(0, 0, 280, 180, getText("IGUI_MilitaryDrop_EnterCode"), "", nil,
@@ -167,11 +197,25 @@ local RADIO_REPLIES = {
     noSite = "IGUI_MilitaryDrop_NoSite",
 }
 
+--- Réplique d'accord : selon le palier de confiance reçu, sinon la réplique neutre.
+function Client.ackText(args)
+    local tier = math.floor(tonumber(args.tier) or 0)
+    if tier >= 1 and tier <= Client.TIER_COUNT and type(args.callsign) == "string" then
+        return getText("IGUI_MilitaryDrop_AckTier" .. tier .. "_" .. (ZombRand(Client.TIER_ACK_COUNT) + 1), args.callsign)
+    end
+    return randomText("IGUI_MilitaryDrop_Ack_", Client.ACK_COUNT)
+end
+
 local function onResult(request, args)
     local status = args.status
     if status == "accepted" then
         Client.later(Client.REPLY_DELAY_MS, function()
-            Client.radioSay(request, randomText("IGUI_MilitaryDrop_Ack_", Client.ACK_COUNT))
+            Client.radioSay(request, Client.ackText(args))
+        end)
+    elseif status == "lineCut" then
+        -- Ligne coupée : la base le dit (révélé seulement après un canal et un code justes).
+        Client.later(Client.REPLY_DELAY_MS, function()
+            Client.radioSay(request, getText("IGUI_MilitaryDrop_LineCut", tostring(args.callsign or "")))
         end)
     elseif RADIO_REPLIES[status] then
         Client.later(Client.REPLY_DELAY_MS, function()
@@ -181,6 +225,9 @@ local function onResult(request, args)
         playerSay(request, getText("IGUI_MilitaryDrop_Cooldown", tostring(args.hours or "?")))
     elseif status == "radioOff" then
         playerSay(request, getText("IGUI_MilitaryDrop_TurnOn"))
+    elseif status == "busy" then
+        -- Demande trop rapprochée (cadence du serveur) : rien de la base.
+        playerSay(request, getText("IGUI_MilitaryDrop_Busy"))
     else
         playerSay(request, getText("IGUI_MilitaryDrop_CannotCall"))
     end
@@ -198,8 +245,19 @@ local FLIGHT_COMMANDS = {
     FlightEnd = "onFlightEnd",
 }
 
+--- Commandes du serveur traitées par d'autres modules client (poste…) :
+--- nom → function(args). En solo, Net.toPlayer appelle directement
+--- Client.onServerCommand ; en MP, Client.onServerCommand est l'abonné
+--- d'OnServerCommand : un seul point d'entrée dans les deux cas.
+Client.HANDLERS = {}
+
 function Client.onServerCommand(module, command, args)
     if module ~= Net.MODULE or type(args) ~= "table" then
+        return
+    end
+    local handler = Client.HANDLERS[command]
+    if handler then
+        handler(args)
         return
     end
     if FLIGHT_COMMANDS[command] then
@@ -208,6 +266,10 @@ function Client.onServerCommand(module, command, args)
     end
     if command == "DropAnnounce" then
         MilitaryDrop.Announce.onDropAnnounce(args)
+        return
+    end
+    if command == "ReconAnnounce" then
+        MilitaryDrop.Announce.onReconAnnounce(args)
         return
     end
     local request = pending[args.requestId]
@@ -239,23 +301,10 @@ local function addTooltip(option, key)
     option.toolTip = tooltip
 end
 
---- Motif d'indisponibilité affichable sans révéler la fréquence, ou nil.
-local function unavailableReason(player, device)
-    if Radio.isInventoryRadio(device) then
-        if not Radio.isCarried(player, device) then
-            return "IGUI_MilitaryDrop_NotCarried"
-        end
-    elseif not Radio.isNear(player, device) then
-        return "IGUI_MilitaryDrop_TooFar"
-    end
-    if not device:getDeviceData():getIsTurnedOn() then
-        return "IGUI_MilitaryDrop_TurnOn"
-    end
-    return nil
-end
-
 function Client.addOptions(player, context, device)
-    local reason = unavailableReason(player, device)
+    -- Motif affichable sans révéler la fréquence (radio hors de l'inventaire,
+    -- trop loin, éteinte), ou nil : un talkie hors des mains sera pris en main.
+    local reason = MilitaryDrop.Exchange.unavailableReason(player, device)
     local option = context:addOption(getText("IGUI_MilitaryDrop_RequestDrop"), player, Client.onRequest, device, false)
     if reason then
         option.notAvailable = true

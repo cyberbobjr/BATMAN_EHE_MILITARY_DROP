@@ -65,4 +65,34 @@ function T.occupied_square_does_not_spawn()
     assertEq(#SPAWNED, 0, "rien créé")
 end
 
+--- Conteneur dont AddItem renvoie l'objet créé (ItemContainer.AddItem(String)).
+local function makeItemContainer()
+    local container = makeContainer()
+    container.AddItem = function(self, fullType)
+        local item = { fullType = fullType, modData = {} }
+        function item.getModData(this) return this.modData end
+        self.items[#self.items + 1] = item
+        return item
+    end
+    return container
+end
+
+function T.spawned_crate_cases_carry_the_drop_id()
+    local container = makeItemContainer()
+    -- addVehicleDebug remplit le coffre pendant l'appel (randomizeContainers).
+    addVehicleDebug = function()
+        triggerEvent("OnFillContainer", "MilitaryDrop_SupplyCrate", "TrailerTrunk", container)
+        return VEHICLE
+    end
+    local square = { getVehicleContainer = function() return nil end }
+    assertEq(MilitaryDrop.Crate.spawn(square, "D3"), VEHICLE, "caisse posée")
+    assertEq(#container.items, 4, "coffre rempli")
+    for _, item in ipairs(container.items) do
+        assertEq(item.modData.MilitaryDrop_dropId, "D3", "dropId sur chaque caisse de ravitaillement")
+    end
+    local later = makeItemContainer()
+    triggerEvent("OnFillContainer", "MilitaryDrop_SupplyCrate", "TrailerTrunk", later)
+    assertEq(later.items[1].modData.MilitaryDrop_dropId, nil, "hors de Crate.spawn : aucun dropId")
+end
+
 return T

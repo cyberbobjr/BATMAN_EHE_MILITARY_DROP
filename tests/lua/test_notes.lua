@@ -30,7 +30,7 @@ end
 
 function T.setup()
     SandboxVars = { MilitaryDrop = { NoteDropRate = 6, NotesOnlyArmyPolice = true, AuthCode = 2,
-        CodebookDropRate = 6 } }
+        CodebookDropRate = 6, Frequency = 151.4 } }
     isClient = function() return false end
     isServer = function() return false end
     ModData = { getOrCreate = function() return {} end }
@@ -95,7 +95,10 @@ function T.setup()
     IsoDirections = { getRandom = function() return "N" end }
     loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Secrets.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Guard.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Teams.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Trust.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_NumbersStation.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_PrintMedia.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Documents.lua")
@@ -291,6 +294,26 @@ function T.memo_on_a_dead_soldier_has_frequency_and_code()
     assertEq(memo.fullType, "MilitaryDrop.MilitaryMemo", "note ajoutée")
     assertTrue(memo:getModData().printMedia.info:find("IGUI_MilitaryDrop_Note_1|151.4|BRAVO-KILO-07", 1, true) ~= nil,
         "fréquence et code")
+end
+
+function T.free_frequency_is_written_on_the_notes()
+    SandboxVars.MilitaryDrop.Frequency = 0
+    ChannelCategory = { Military = "Military" }
+    local channels = {}
+    DynamicRadioChannel = { new = function(_, freq, _, uuid) return { freq = freq, uuid = uuid } end }
+    getZomboidRadio = function() return { removeChannelName = function() end } end
+    local manager = {
+        AddChannel = function(_, channel) channels[channel.uuid] = channels[channel.uuid] or channel end,
+        getRadioChannel = function(_, uuid) return channels[uuid] end,
+    }
+    loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
+    triggerEvent("OnLoadRadioScripts", manager, false)
+    local frequency = MilitaryDrop.Broadcast.frequency
+    assertTrue(frequency >= 120000 and frequency <= 170000, "fréquence tirée : " .. tostring(frequency))
+    local text = MilitaryDrop.Config.formatChannel(frequency)
+    assertEq(MilitaryDrop.Notes.memoText(1), "IGUI_MilitaryDrop_Note_1|" .. text .. "|BRAVO-KILO-07",
+        "la note écrit la fréquence réelle")
+    assertTrue(MilitaryDrop.Notes.memoMedia(1).info:find(text, 1, true) ~= nil, "document de la note aussi")
 end
 
 function T.civilian_gets_nothing_when_option_on()

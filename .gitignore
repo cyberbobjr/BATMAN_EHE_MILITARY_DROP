@@ -7,3 +7,4 @@ __pycache__/
 *.blend1
 # Aperçus des documents (python source/print_media/preview.py)
 source/print_media/preview/
+source/post_console/preview/

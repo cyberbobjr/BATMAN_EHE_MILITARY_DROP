@@ -3,12 +3,15 @@
 --
 -- Radio militaire = appareil « haut de gamme » vanilla (DeviceData:getIsHighTier :
 -- WalkieTalkie5, ManPackRadio, HamRadio2). Deux formes :
---   * objet d'inventaire (Radio) : en main ou porté sur le dos. En solo, seule
---     cette radio « équipée » reçoit les chaînes (ZomboidRadio.DistributeToPlayer
+--   * objet d'inventaire (Radio) : en main, ou en solo porté sur le dos. En solo,
+--     seule cette radio « équipée » reçoit les chaînes (ZomboidRadio.DistributeToPlayer
 --     → getEquipedRadio, 42.21) : dans l'inventaire, le joueur n'entendrait pas
---     l'annonce des coordonnées. En MP, l'état d'un appareil d'inventaire
---     (allumage, canal) n'est envoyé au serveur que s'il est équipé ou dans
---     l'inventaire principal (DeviceData.sendDeviceDataStatePacket) ;
+--     l'annonce des coordonnées (exception : un talkie accroché à la ceinture
+--     entend la chaîne militaire du mod, MilitaryDrop_BeltRadio.lua ; pour
+--     émettre, il est pris en main). En MP, le serveur n'applique l'état d'une radio
+--     d'inventaire (allumage, canal) que si elle est EN MAIN
+--     (GameServer.receiveRadioDeviceDataState, hand 1 ou 2) : sur le dos, son
+--     état serveur est périmé, donc refusé (le client la fait prendre en main) ;
 --   * appareil posé (IsoWaveSignal), à MAX_WORLD_DISTANCE cases au plus.
 --
 -- Le client désigne l'appareil par une référence ; le serveur la résout
@@ -30,12 +33,19 @@ function Radio.isWorldRadio(object)
     return object ~= nil and instanceof(object, "IsoWaveSignal")
 end
 
---- Radios d'inventaire équipées : les deux mains et le dos (nil possibles).
-local function equippedItems(player)
-    return { player:getPrimaryHandItem(), player:getSecondaryHandItem(), player:getClothingItem_Back() }
+--- Le dos compte seulement en solo : en MP, le serveur ignore l'état d'une
+--- radio d'inventaire qui n'est pas en main.
+function Radio.backAllowed()
+    return not isClient() and not isServer()
 end
 
---- L'objet d'inventaire est en main ou porté sur le dos.
+--- Radios d'inventaire utilisables : les deux mains, et le dos en solo (nil possibles).
+local function equippedItems(player)
+    return { player:getPrimaryHandItem(), player:getSecondaryHandItem(),
+        Radio.backAllowed() and player:getClothingItem_Back() or nil }
+end
+
+--- L'objet d'inventaire est en main (ou porté sur le dos, en solo).
 function Radio.isCarried(player, item)
     local items = equippedItems(player)
     -- Pas d'ipairs : il s'arrête au premier emplacement vide (nil).

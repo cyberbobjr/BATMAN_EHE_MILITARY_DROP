@@ -24,8 +24,9 @@
 -- 2026-09-30 : 24 et 42 cases).
 --
 -- Persistance (ModData « MilitaryDrop ») : les vols en cours et les
--- livraisons en attente. Au chargement de la partie, un vol interrompu reprend
--- là où il en était ; les clients le redemandent (Sync).
+-- livraisons en attente, avec le dropId du largage (confiance, jamais envoyé
+-- aux clients). Au chargement de la partie, un vol interrompu reprend là où il
+-- en était ; les clients le redemandent (Sync).
 -- ============================================================================
 
 if isClient() then
@@ -92,7 +93,7 @@ local function onLoadChunk()
     end
     for _, key in ipairs(ready) do
         local entry = pending[key]
-        if Server.deliver(entry.x, entry.y, entry.requester) then
+        if Server.deliver(entry.x, entry.y, entry.requester, entry.dropId) then
             pending[key] = nil
         end
     end
@@ -110,12 +111,12 @@ local function watchSquares()
 end
 
 --- Livre au point (x, y) : tout de suite si la zone est chargée, sinon en
---- attente du chargement de cette case.
-function Flights.deliverAt(x, y, requester)
-    if getCell():getGridSquare(x, y, 0) and Server.deliver(x, y, requester) then
+--- attente du chargement de cette case. dropId : largage (confiance).
+function Flights.deliverAt(x, y, requester, dropId)
+    if getCell():getGridSquare(x, y, 0) and Server.deliver(x, y, requester, dropId) then
         return
     end
-    state().pending[pendingKey(x, y)] = { x = x, y = y, requester = requester }
+    state().pending[pendingKey(x, y)] = { x = x, y = y, requester = requester, dropId = dropId }
     watchSquares()
     MilitaryDrop.log(string.format("drop at %d,%d waits for its area to load", x, y))
 end
@@ -145,7 +146,7 @@ local function drop(flight)
     addSound(nil, x, y, 0, Flights.DROP_NOISE_RADIUS, Flights.DROP_NOISE_VOLUME)
     MilitaryDrop.Broadcast.dropped(x, y)
     Server.notifyDrop(flight.requester, flight.requestId, x, y, flight.forced)
-    Flights.deliverAt(x, y, flight.requester)
+    Flights.deliverAt(x, y, flight.requester, flight.dropId)
 end
 
 local function removeFlight(index)
@@ -213,14 +214,16 @@ local function startTicking()
     end
 end
 
---- Lance un hélicoptère vers le point (x, y) (forced : largage admin).
-function Flights.launch(x, y, requester, requestId, forced)
+--- Lance un hélicoptère vers le point (x, y) (forced : largage admin ;
+--- dropId : largage, Trust.registerDrop).
+function Flights.launch(x, y, requester, requestId, forced, dropId)
     local s = state()
     s.nextFlightId = (tonumber(s.nextFlightId) or 0) + 1
     local flight = Flight.new(s.nextFlightId, x + 0.5, y + 0.5, ZombRandFloat(0, 2 * math.pi))
     flight.requester = requester
     flight.requestId = requestId
     flight.forced = forced == true
+    flight.dropId = dropId
     flight.dropped = false
     flight.started = false
     table.insert(s.flights, flight)

@@ -8,7 +8,7 @@ option MilitaryDrop.CooldownHours
 
 option MilitaryDrop.Frequency
 {
-    type = double, min = 0.2, max = 1000.0, default = 151.4,
+    type = double, min = 0.0, max = 1000.0, default = 0.0,
     page = MilitaryDrop, translation = MilitaryDrop_Frequency,
 }
 
@@ -97,6 +97,108 @@ option MilitaryDrop.CrateSmokeMinutes
 {
     type = integer, min = 0, max = 1440, default = 60,
     page = MilitaryDrop, translation = MilitaryDrop_CrateSmokeMinutes,
+}
+
+option MilitaryDrop.TrustDailyCap
+{
+    type = integer, min = 0, max = 100, default = 8,
+    page = MilitaryDrop, translation = MilitaryDrop_TrustDailyCap,
+}
+
+option MilitaryDrop.TrustPostBonus
+{
+    type = integer, min = 0, max = 500, default = 50,
+    page = MilitaryDrop, translation = MilitaryDrop_TrustPostBonus,
+}
+
+option MilitaryDrop.TrustLineCutDays
+{
+    type = integer, min = 0, max = 30, default = 3,
+    page = MilitaryDrop, translation = MilitaryDrop_TrustLineCutDays,
+}
+
+option MilitaryDrop.TrustDropLostHours
+{
+    type = integer, min = 1, max = 720, default = 48,
+    page = MilitaryDrop, translation = MilitaryDrop_TrustDropLostHours,
+}
+
+option MilitaryDrop.TrustErosion
+{
+    type = boolean, default = false,
+    page = MilitaryDrop, translation = MilitaryDrop_TrustErosion,
+}
+
+option MilitaryDrop.ReportGain
+{
+    type = integer, min = 0, max = 20, default = 1,
+    page = MilitaryDrop, translation = MilitaryDrop_ReportGain,
+}
+
+option MilitaryDrop.DogTagGain
+{
+    type = integer, min = 0, max = 20, default = 2,
+    page = MilitaryDrop, translation = MilitaryDrop_DogTagGain,
+}
+
+option MilitaryDrop.ReconGain
+{
+    type = integer, min = 0, max = 20, default = 3,
+    page = MilitaryDrop, translation = MilitaryDrop_ReconGain,
+}
+
+option MilitaryDrop.ReconHours
+{
+    type = integer, min = 1, max = 720, default = 48,
+    page = MilitaryDrop, translation = MilitaryDrop_ReconHours,
+}
+
+option MilitaryDrop.ReconIntervalHours
+{
+    type = integer, min = 1, max = 720, default = 24,
+    page = MilitaryDrop, translation = MilitaryDrop_ReconIntervalHours,
+}
+
+option MilitaryDrop.CleanupGain
+{
+    type = integer, min = 0, max = 20, default = 5,
+    page = MilitaryDrop, translation = MilitaryDrop_CleanupGain,
+}
+
+option MilitaryDrop.CleanupHours
+{
+    type = integer, min = 1, max = 720, default = 72,
+    page = MilitaryDrop, translation = MilitaryDrop_CleanupHours,
+}
+
+option MilitaryDrop.CleanupQuota
+{
+    type = integer, min = 1, max = 1000, default = 30,
+    page = MilitaryDrop, translation = MilitaryDrop_CleanupQuota,
+}
+
+option MilitaryDrop.CleanupIntervalHours
+{
+    type = integer, min = 1, max = 720, default = 48,
+    page = MilitaryDrop, translation = MilitaryDrop_CleanupIntervalHours,
+}
+
+option MilitaryDrop.ControlGain
+{
+    type = integer, min = 0, max = 20, default = 1,
+    page = MilitaryDrop, translation = MilitaryDrop_ControlGain,
+}
+
+option MilitaryDrop.ControlHours
+{
+    type = integer, min = 1, max = 72, default = 4,
+    page = MilitaryDrop, translation = MilitaryDrop_ControlHours,
+}
+
+option MilitaryDrop.ControlIntervalHours
+{
+    type = integer, min = 1, max = 720, default = 24,
+    page = MilitaryDrop, translation = MilitaryDrop_ControlIntervalHours,
 }
 
 option MilitaryDrop.DebugLog

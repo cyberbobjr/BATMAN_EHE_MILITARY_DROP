@@ -9,7 +9,13 @@ local function makeSquare(x, y)
         isOutside = function() return true end, isFree = function() return true end,
         isWaterSquare = function() return false end,
         getVehicleContainer = function() return nil end,
-        AddWorldInventoryItem = function(_, name) PLACED[#PLACED + 1] = name return {} end,
+        AddWorldInventoryItem = function(_, name)
+            PLACED[#PLACED + 1] = name
+            local item = { fullType = name, modData = {} }
+            function item.getModData(self) return self.modData end
+            PLACED_ITEMS[#PLACED_ITEMS + 1] = item
+            return item
+        end,
     }
 end
 
@@ -30,6 +36,7 @@ function T.setup()
     spawnHorde = function() end
     getNumActivePlayers = function() return 0 end
     PLACED = {}
+    PLACED_ITEMS = {}
     LOADED = true
     -- Zone chargée : tout (LOADED), ou seulement les cases x < LOADED_UP_TO_X.
     LOADED_UP_TO_X = nil
@@ -97,9 +104,13 @@ function T.setup()
     addVehicleDebug = function(script) SPAWNED[#SPAWNED + 1] = script return VEHICLE end
     IsoDirections = { getRandom = function() return "N" end }
     loadMod("server/MilitaryDrop/MilitaryDrop_Crate.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Secrets.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Guard.lua")
     getActivatedMods = function() return { size = function() return 0 end } end
     loadMod("server/MilitaryDrop/MilitaryDrop_Smoke.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Server.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Teams.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Trust.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")
     MilitaryDrop.Client = { onServerCommand = function(_, command, args)
@@ -217,6 +228,42 @@ function T.restart_resumes_flights_and_pending_deliveries()
     state.flights[1].started = true
     MilitaryDrop.Flights.advance(state.flights[1], 0.25)
     assertEq(SENT[1].command, "FlightStart", "vol repris renvoyé aux clients")
+end
+
+--- Largue le vol (avance jusqu'au passage au-dessus du point).
+local function flyOver(flight)
+    for _ = 1, math.ceil((MilitaryDrop.Flight.dropTime(flight) + 0.5) / 0.25) do
+        MilitaryDrop.Flights.advance(flight, 0.25)
+    end
+end
+
+function T.drop_id_follows_the_flight_and_the_pending_delivery()
+    LOADED = false
+    local flight = MilitaryDrop.Flights.launch(500, 600, "tester", 1, false, "D7")
+    flyOver(flight)
+    assertEq(MilitaryDrop.Server.getState().pending["500,600"].dropId, "D7", "dropId de la livraison en attente")
+    for _, sent in ipairs(SENT) do
+        assertEq(sent.args.dropId, nil, "jamais envoyé aux clients (" .. sent.command .. ")")
+    end
+    LOADED = true
+    triggerEvent("LoadChunk", makeChunk(496, 600))
+    assertEq(#PLACED_ITEMS, 1, "livré")
+    assertEq(PLACED_ITEMS[1].modData.MilitaryDrop_dropId, "D7", "caisse marquée")
+end
+
+function T.restart_keeps_the_drop_id_of_flights_and_pending_deliveries()
+    local state = MilitaryDrop.Server.getState()
+    local flight = MilitaryDrop.Flight.new(9, 500.5, 600.5, 0)
+    flight.requester, flight.dropId, flight.started, flight.dropped = "tester", "D5", true, false
+    state.flights = { flight }
+    state.pending = { ["700,800"] = { x = 700, y = 800, requester = "tester", dropId = "D9" } }
+    LOADED = false
+    MilitaryDrop.Flights.restore()
+    LOADED = true
+    triggerEvent("LoadChunk", makeChunk(696, 800))
+    assertEq(PLACED_ITEMS[1].modData.MilitaryDrop_dropId, "D9", "livraison en attente reprise avec son dropId")
+    flyOver(state.flights[1])
+    assertEq(PLACED_ITEMS[2].modData.MilitaryDrop_dropId, "D5", "vol repris avec son dropId")
 end
 
 return T

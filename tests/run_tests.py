@@ -128,6 +128,42 @@ def check_lone_percent(report, path, data):
             report.fail(f"{path.relative_to(REPO)} {key} : % seul (écrire %%)")
 
 
+def check_references(report):
+    """Clés et options citées en toutes lettres dans le Lua : présentes dans les
+    traductions anglaises et dans sandbox-options.txt. Les clés composées à
+    l'exécution (préfixe .. numéro) ne sont pas vérifiées ici."""
+    report.section("Clés de traduction et options citées par le Lua")
+    keys = set()
+    for path in (TRANSLATE / REFERENCE_LANGUAGE).glob("*.json"):
+        try:
+            keys.update(json.loads(path.read_text(encoding="utf-8-sig")))
+        except json.JSONDecodeError:
+            return
+    options = set(re.findall(r"^option MilitaryDrop\.(\w+)", (MOD_LUA.parent / "sandbox-options.txt")
+                             .read_text(encoding="utf-8"), flags=re.M))
+    text_key = re.compile(r"getText(?:OrNull)?\(\s*\"((?:IGUI|Tooltip|Sandbox)_[A-Za-z0-9_]+)\"\s*[,)]")
+    option_use = re.compile(r"Config\.get\(\s*\"(\w+)\"\s*\)")
+    missing = 0
+    for path in mod_lua_files():
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            code = strip_comments(line)
+            for key in text_key.findall(code):
+                if key not in keys:
+                    missing += 1
+                    report.fail(f"{path.relative_to(REPO)}:{number} : clé {key} absente de {REFERENCE_LANGUAGE}")
+            for name in option_use.findall(code):
+                if name not in options:
+                    missing += 1
+                    report.fail(f"{path.relative_to(REPO)}:{number} : option {name} absente de sandbox-options.txt")
+    for name in sorted(options):
+        for key in (f"Sandbox_MilitaryDrop_{name}", f"Sandbox_MilitaryDrop_{name}_tooltip"):
+            if key not in keys:
+                missing += 1
+                report.fail(f"sandbox-options.txt : {name} sans traduction {key}")
+    if not missing:
+        report.ok(f"{len(options)} options et toutes les clés citées présentes")
+
+
 def check_scripts(report):
     """Scripts du jeu (media/scripts) : accolades équilibrées, commentaires /* */ exclus."""
     report.section("Scripts d'objets et de véhicules")
@@ -330,6 +366,7 @@ def main():
     check_luacheck(report, "--require-luacheck" in sys.argv)
     check_kahlua(report)
     check_scripts(report)
+    check_references(report)
     check_translations(report)
     check_steam_descriptions(report)
     check_tracking(report)

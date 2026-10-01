@@ -5,6 +5,10 @@
 -- serveur en MP, jamais sur un client (ISHandcraftAction:performRecipe, 42.21).
 -- Actions.addOrDropItem ajoute l'objet à l'inventaire (ou le pose au sol si le
 -- personnage est trop chargé) et l'envoie au client (sendAddItemToContainer).
+--
+-- Confiance (v1.3) : la caisse porte le dropId de son largage ; la première
+-- ouverte le clôt (MilitaryDrop.Trust.onCaseOpened, fichier serveur, absent
+-- d'un client).
 -- ============================================================================
 
 require "MilitaryDrop/MilitaryDrop_Loot"
@@ -23,6 +27,9 @@ function Recipe.openSupplyCase(craftRecipeData, character)
         local case = consumed:get(i)
         local caseType = case and case:getFullType()
         if caseType and MilitaryDrop.Loot.CASES[caseType] then
+            if MilitaryDrop.Trust and MilitaryDrop.Trust.onCaseOpened then
+                MilitaryDrop.Trust.onCaseOpened(case, character)
+            end
             for _, fullType in ipairs(MilitaryDrop.Loot.roll(caseType)) do
                 local item = instanceItem(fullType)
                 if item then

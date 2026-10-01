@@ -246,3 +246,10 @@ Chaque lot se termine par les tests `lupa`, un test en solo, puis un test sur se
 15. Idée 4 (test solo du 2026-09-30) : **un seul carnet de codes par partie**, sans éditions : la table est fixe, seul le code change chaque semaine. La conception initiale ci-dessous (éditions, option `CodeEditionWeeks`) est abandonnée.
 16. Documents (second test solo du 2026-09-30) : **« Noter le message » est retiré** (jugé inutile ; il ne fonctionnait pas en jeu). Les documents s'ouvrent vite (tag `base:fastread`).
 17. Intégration (2026-09-30) : **fumée de Signal Smoke sur la caisse larguée**, facultative : active seulement si le mod `batman_SignalSmoke` l'est, sans `require` dans `mod.info` (Military Drop reste autonome, décision v1). Fumée verte au moment où la caisse est posée, durée en option.
+18. v1.3 (2026-09-30) : livrée d'un seul bloc, par sous-agents ; spécification dans [PLAN-V13.md](PLAN-V13.md), qui fait foi.
+19. AUTH-01 sans objet (le code ne sert qu'aux largages) ; AUTH-02 abandonné (le joueur règle sa radio).
+20. AUTH-03 : le personnage prend le talkie en main pour émettre (en MP, seul l'état d'une radio en main est connu du serveur).
+21. SRC-05 : toutes les factions qui répondent dans les 4 h gagnent +1.
+22. SRC-06 reporté après la v1.3.
+
+23. Après la relecture de la v1.3 (2026-10-01) : la **fréquence militaire est tirée au hasard par défaut** (option à 0), par choix de jeu : les notes gardent leur intérêt d'une partie à l'autre ; un admin peut fixer une valeur. L'état de la v1.3 (équipes, confiance, largages, missions, postes) est rangé dans une table de ModData privée. La triche n'est pas un enjeu (jeu entre amis, mode debug réservé aux admins, Lua des clients vérifié par le serveur) : pas de silence contre le balayage des canaux ; seuls restent la cadence anti-rafale et le silence après 3 codes faux par jour.

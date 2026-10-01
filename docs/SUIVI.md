@@ -34,7 +34,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | v1.1 | Largage loin du demandeur | testé hors jeu |
 | Phases 7-8 | Tests en jeu, publication | à faire |
 | v1.2 | Code chiffré de la semaine (idée 4) | testé solo (parcours nominal), MP à faire |
-| v1.3 | Confiance de faction, sources de confiance, poste de commandement (idée 5) | décidé |
+| v1.3 | Confiance de faction, sources de confiance, poste de commandement (idée 5) | testé hors jeu ([PLAN-V13.md](PLAN-V13.md)) |
 | v1.4 | Formulaire de réquisition (idée 6) | conçu |
 | v1.5 | Largage leurre (idée 9) | conçu |
 | Intégrations | Fumée sur la caisse avec Signal Smoke (facultatif) | testé solo |
@@ -46,7 +46,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
-| APPEL-01 | Appel par radio militaire : en main, sur le dos, ou posée à 2 cases | PLAN phase 2 | testé solo | `1275061`, `4afeea8`, test_server, B1-B5 | MP |
+| APPEL-01 | Appel par radio militaire : en main, sur le dos, ou posée à 2 cases | PLAN phase 2 | testé solo | `1275061`, `4afeea8`, test_server, B1-B5 | MP : radio d'inventaire exigée en main (dos refusé en MP, 2026-09-30, test_server) ; prise en main automatique avec AUTH-03 |
 | APPEL-02 | Code d'authentification (deux mots OTAN + deux chiffres), gardé dans un fichier du serveur | PLAN décisions | testé solo | `1275061`, `d43869e`, test_codes, test_server, B5 | MP : client qui lit la ModData |
 | APPEL-03 | Même réponse pour mauvaise fréquence et mauvais code | PLAN phase 2 | testé solo | `d43869e`, test_server, B3-B4 | MP |
 | APPEL-04 | Délai global au serveur (sandbox) et cadence de 3 s par joueur | PLAN décisions | testé solo | `1275061`, test_server, B6 | MP |
@@ -57,10 +57,14 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | BUTIN-02 | Contenu tiré dans les tables du jeu et des mods, aucun nom d'objet | PLAN phase 6 | testé solo | `9b7d3db`, test_loot, A2 | — |
 | BUTIN-03 | Arme livrée avec 2 chargeurs et 1 boîte de munitions | PLAN phase 1 | testé solo | `4afeea8`, test_loot, A2 | — |
 | BUTIN-04 | Modèles au sol avec leur texture | PLAN phase 1 | testé solo | `4afeea8`, A1 | — |
+| BUTIN-05 | Démonter la caisse larguée vide, avec les règles vanilla du bois (marteau et scie, Menuiserie, durée, planches lues dans les définitions du jeu) ; le serveur revérifie tout | Demande du test solo du 2026-10-01 | testé solo | test_dismantle, H14 (validé par l'utilisateur (test solo du 2026-10-01, second passage)) | MP (caisse retirée chez tous, deux joueurs en même temps) |
 | HELI-01 | Hélicoptère simulé : son, ombre, flèche, vol stationnaire | PLAN phase 3 | testé solo | `4aee311`, test_heli, test_flight, C1-C4 | C1 à refaire avec la distance v1.1 ; MP |
 | HELI-02 | Cohabitation avec HEF : attente de ses événements, 112,2 MHz réservée | PLAN décisions | testé hors jeu | `4aee311`, test_flights, test_core | Partie avec HEF |
 | RADIO-01 | Chaîne « Logistique » : départ, coordonnées répétées, fin ; nom caché | PLAN phase 4 | testé solo | `8132d90`, test_broadcast, D1 | D3 (nom caché) ; MP |
+| RADIO-03 | Fréquence militaire tirée au hasard par défaut (120-170 MHz, dérivée de la graine du serveur) ; une valeur fixée en option est publique | PLAN-V2 décision 23 | testé solo | test_broadcast, test_core, test_notes, H12 (test solo du 2026-10-01) | MP (fréquence absente du client) |
 | RADIO-02 | Repère de carte pour les seuls auditeurs | PLAN phase 4 | testé solo | `8132d90`, test_announce, D2 | D4 (radio éteinte) ; MP |
+| RADIO-04 | Talkie accroché à la ceinture : « Options de l'appareil », reste allumé quand sa fenêtre est ouverte, entend en solo les messages du mod (base, missions, largages, station de chiffres) ; les autres chaînes restent vanilla | Retour du test solo du 2026-10-01 | testé solo | test_beltradio, test_client, H13 (validé par l'utilisateur (test solo du 2026-10-01, second passage)) | MP (un client reçoit déjà à la ceinture : aucune ligne en double) |
+| RADIO-05 | Repère de carte de la reconnaissance (symbole « Eye » bleu) pour les seuls auditeurs de l'annonce | Retour du test solo du 2026-10-01 | testé solo | test_announce, test_broadcast, test_missions, H4 (validé par l'utilisateur (test solo du 2026-10-01, second passage)) | MP |
 | CAISSE-01 | Caisse 3D originale : véhicule sans roues avec coffre | PLAN phase 5 | testé solo | `e6b5ceb`, test_crate, E1-E3 | F2 ; MP |
 | CAISSE-02 | Horde (3-30) et bruit au largage | PLAN phase 2 | testé solo | `1275061`, test_server, E2 | MP |
 | OPT-01 | Options sandbox traduites EN/FR | PLAN phase 1 | testé solo | `cdaadf5`, `555593e`, test_core, run_tests (traductions) | — |
@@ -112,31 +116,31 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
-| CONF-01 | Note de confiance par faction (par joueur sans faction), 0 à 100, départ à 50 | PLAN-V2 §5, décision 7 | décidé | — | — |
-| CONF-02 | Indicatif attribué par le serveur, retrouvé après renommage de la faction | PLAN-V2 décision 7 | décidé | — | Faction vanilla sans identifiant stable |
-| CONF-03 | Changement de faction : note emportée plafonnée à 50 ; nouvelle faction = plus basse note des fondateurs | PLAN-V2 décision 7 | décidé | — | — |
-| CONF-04 | Largages : récupéré +10, perdu −10, pris par une autre faction −5 | PLAN-V2 §5 | conçu | — | À réécrire en termes de faction |
-| CONF-05 | Effets : délai ×1,5 à ×0,6, ligne coupée 3 jours sous 15, répliques radio | PLAN-V2 §5 | conçu | — | — |
-| CONF-06 | Code faux répété : −2 | PLAN-V2 §5 | conçu | — | — |
-| CONF-07 | Érosion lente vers 50 (option) | PLAN-V2 §5 | conçu | — | — |
-| CONF-08 | Plafond de +8 par jour et par faction, hors largages | PLAN-V2 §5 | décidé | — | — |
-| SRC-01 | Rapport de situation quotidien : +1 | PLAN-V2 §5 | décidé | — | — |
-| SRC-02 | Plaques d'identité, matricule transmis : +2 | PLAN-V2 §5 | décidé | — | — |
-| SRC-03 | Reconnaissance publique, 48 h de jeu : +3 à la première faction | PLAN-V2 §5, décision 7 | décidé | — | — |
-| SRC-04 | Nettoyage public, 72 h de jeu : +5 à la première faction au quota | PLAN-V2 §5, décision 7 | décidé | — | ⚠ tueur d'un zombie connu du serveur en MP ? |
-| SRC-05 | Appel de contrôle, 4 h de jeu : +1 à toutes les factions qui répondent | PLAN-V2 §5, décision 7 | à décider | — | Hypothèse « tous ceux qui répondent » à confirmer |
-| SRC-06 | Renseignement : documents militaires transmis, +1 à +3 | PLAN-V2 §5 | décidé | — | Après v1.2 |
+| CONF-01 | Note de confiance par faction (par joueur sans faction), 0 à 100, départ à 50 | PLAN-V2 §5, décision 7 | testé hors jeu | test_trust, test_teams | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| CONF-02 | Indicatif attribué par le serveur, retrouvé après renommage de la faction | PLAN-V2 décision 7 | testé hors jeu | test_teams | Solo : une seule équipe « SOLO » (le nom du joueur change avec chaque personnage) ; MP : renommage, changement de propriétaire, dissolution |
+| CONF-03 | Changement de faction : note emportée plafonnée à 50 ; nouvelle faction = plus basse note des fondateurs | PLAN-V2 décision 7 | testé hors jeu | test_teams | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| CONF-04 | Largages : récupéré +10, perdu −10, pris par une autre faction −5 | PLAN-V13, Confiance | testé solo | test_trust, test_crate, test_flights, H9 (test solo du 2026-10-01) | Caisse perdue (48 h) ou prise par une autre faction ; MP |
+| CONF-05 | Effets : délai ×1,5 à ×0,6, ligne coupée 3 jours sous 15, répliques radio | PLAN-V2 §5 | testé hors jeu | test_trust, test_server, test_client | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| CONF-06 | Code faux répété : −2 | PLAN-V2 §5 | testé hors jeu | test_trust, test_server | Un appel sur une mauvaise fréquence compte aussi (la note ne doit pas révéler le canal) ; protocole H ; MP |
+| CONF-07 | Érosion lente vers 50 (option) | PLAN-V2 §5 | testé hors jeu | test_trust | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| CONF-08 | Plafond de +8 par jour et par faction, hors largages | PLAN-V2 §5 | testé hors jeu | test_trust | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| SRC-01 | Rapport de situation quotidien : +1 | PLAN-V2 §5 | testé solo | test_missions, test_exchange, H1 (test solo du 2026-10-01) | MP (serveur dédié, 2 clients) |
+| SRC-02 | Plaques d'identité vanilla des soldats tombés (tag du jeu, nom du soldat, ni la sienne ni une plaque vierge), transmises une fois : +2 | PLAN-V2 §5 | testé solo | test_missions, test_exchange, test_post, H2 (validé par l'utilisateur (test solo du 2026-10-01, second passage)) | MP (plaque retirée chez les autres clients) |
+| SRC-03 | Reconnaissance publique, 48 h de jeu : +3 à la première faction | PLAN-V2 §5, décision 7 | testé solo | test_missions, H4 (validé par l'utilisateur (test solo du 2026-10-01, second passage)) | MP |
+| SRC-04 | Nettoyage public, 72 h de jeu : +5 à la première faction au quota | PLAN-V13, SRC-04 | testé hors jeu | test_missions | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| SRC-05 | Appel de contrôle, 4 h de jeu : +1 à toutes les factions qui répondent | PLAN-V13, SRC-05 | testé hors jeu | test_missions | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| SRC-06 | Renseignement : documents militaires transmis, +1 à +3 | PLAN-V2 §5 | décidé | — | Reporté après la v1.3 (2026-09-30) : attend de nouveaux documents (idée 8) |
 | SRC-07 | Largage perdu ou cache retrouvé au détecteur : +5 | PLAN-V2 §5 | décidé | — | Avec l'idée 3 |
 | SRC-08 | Enregistreur de vol récupéré dans l'épave : +10 | PLAN-V2 §5 | décidé | — | Avec l'idée 8 |
-| AUTH-01 | Un membre qui donne le code authentifie toute la faction jusqu'au changement de code | PLAN-V2 décision 7 | décidé | — | À trancher en v1.3 : les missions exigent-elles le code ? Sinon, sans objet (en v1.2, le code ne sert qu'aux largages) |
-| AUTH-02 | Réglage et allumage automatiques de la radio pour une faction authentifiée | maquettes, base commune | à décider | — | Proposé avec les maquettes, pas tranché |
-| AUTH-03 | Talkie accroché à la ceinture accepté pour émettre | maquettes, base commune | à décider | — | ⚠ état d'une radio à la ceinture connu du serveur en MP ? |
-| POSTE-01 | Talkie-walkie : toutes les fonctions restent possibles | PLAN-V2 décision 7 | décidé | — | — |
-| POSTE-02 | Poste de commandement : radio non portable, haut de gamme, émettrice (propriétés, aucun nom) | PLAN-V2 décision 7 | décidé | — | — |
-| POSTE-03 | Un poste actif par faction, données gardées par le serveur | PLAN-V2 décision 7 | décidé | — | — |
-| POSTE-04 | Console « Poste de liaison » : journal, missions en cours, boîte à courrier | PLAN-V2 décision 7 | décidé | — | Maquette : solution 4 |
-| POSTE-05 | Journal : messages reçus poste allumé seulement, sinon « aucune réception » | PLAN-V2 décision 7 | décidé | — | ⚠ usure d'une pile ou d'un groupe hors zone chargée |
-| POSTE-06 | Bonus de confiance pour les échanges depuis le poste | PLAN-V2 décision 7 | décidé | — | Valeur à calibrer (proposé : +50 %) |
+| AUTH-01 | Un membre qui donne le code authentifie toute la faction jusqu'au changement de code | PLAN-V13 décisions | abandonné | — | Sans objet (2026-09-30) : le code de la semaine ne sert qu'aux largages ; rapports, plaques, missions et poste se font sans code |
+| AUTH-02 | Réglage et allumage automatiques de la radio pour une faction authentifiée | PLAN-V13 décisions | abandonné | — | Abandonné (2026-09-30) : le joueur règle sa radio ; un réglage automatique révélerait la fréquence |
+| AUTH-03 | Talkie accroché à la ceinture accepté pour émettre | PLAN-V13 décisions | testé hors jeu | test_exchange, test_server | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| POSTE-01 | Talkie-walkie : toutes les fonctions restent possibles | PLAN-V2 décision 7 | testé hors jeu | test_exchange | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| POSTE-02 | Poste de commandement : radio non portable, haut de gamme, émettrice (propriétés, aucun nom) | PLAN-V2 décision 7 | testé solo | test_post, H6 (test solo du 2026-10-01) | MP (serveur dédié, 2 clients) |
+| POSTE-03 | Un poste actif par faction, données gardées par le serveur | PLAN-V2 décision 7 | testé solo | test_post, H6, H7 (test solo du 2026-10-01) | MP : autre faction refusée |
+| POSTE-04 | Console « Poste de liaison » au style d'un poste radio militaire : journal sur écran à phosphore, voyants, ordres de mission avec échéance, plaques de l'équipe à annoncer (« Annoncer les matricules », plus de notion de courrier), confiance en toutes lettres | PLAN-V2 décision 7 | testé hors jeu | test_post, test_postwindow | Fonctionnelle au test solo du 2026-10-01 (H6, H7, H11) ; redessinée ensuite à la demande de l'utilisateur : H6 à rejouer ; MP |
+| POSTE-05 | Journal : messages reçus poste allumé seulement, sinon « aucune réception » | PLAN-V2 décision 7 | testé hors jeu | test_post | Protocole H en solo ; MP (serveur dédié, 2 clients) |
+| POSTE-06 | Bonus de confiance pour les échanges depuis le poste | PLAN-V2 décision 7 | testé hors jeu | test_post, test_trust | Protocole H en solo ; MP (serveur dédié, 2 clients) |
 
 ## v1.4 — Formulaire de réquisition (idée 6)
 
@@ -172,6 +176,10 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 ## Journal
 
+- **2026-10-01** — Test solo de la v1.3 (H1, H2, H4 en main, H6, H7, H9, H11, H12) : RADIO-03, SRC-01, CONF-04, POSTE-02 et POSTE-03 passent en « testé solo ». Corrections demandées, faites par quatre sous-agents puis intégrées : talkie à la ceinture (RADIO-04), repère de la reconnaissance (RADIO-05), plaques vanilla seulement (SRC-02 révisé, option `DogTagDropRate` retirée), console du poste redessinée (POSTE-04), démontage de la caisse (BUTIN-05). Le démontage suit la définition vanilla active du bois, qui demande aussi une scie. Retour suivant de l'utilisateur : le talkie à la ceinture n'entendait pas la station de chiffres (seule la chaîne militaire était suivie) ; corrigé, les deux chaînes du mod sont suivies. Retour sur la console (POSTE-04) : heure du journal collée au texte (espaces avalés par `ISRichTextPanel`, corrigé par `<SPACE>`) ; écusson de confiance jugé peu clair, remplacé à la demande de l'utilisateur par du texte seul (phrase du commandement et effet sur les largages). Le reste du test est validé par l'utilisateur. Relecture indépendante, corrigée : brouillage de l'orage appliqué au talkie à la ceinture (sinon coordonnées en clair et repère posé), enveloppe de la fenêtre radio reposée après rechargement, plaques gardées quand la confiance est au maximum, dépôt au poste refusé si les plaques sont désactivées ou la ligne coupée, console de chaque joueur en écran partagé et fermée quand le poste n'est plus le sien. Limites connues : la pile d'un talkie à la ceinture ne baisse qu'à sa reprise en main (règle vanilla) ; un joueur qui arrive après l'annonce d'une reconnaissance n'a pas son repère. 338 tests `lupa`.
+- **2026-10-01** — Relecture indépendante de la v1.3 et corrections : état de la v1.3 (équipes, confiance, largages, missions, postes, courrier) déplacé de la ModData publique vers une table privée au nom tiré de la graine (la position des postes ne fuit plus) ; fréquence militaire tirée au hasard par défaut (RADIO-03, décision 23) ; un joueur réduit au silence compte encore pour CONF-06 ; cadence de 3 s sur la transmission du courrier et réponses « occupé » (POSTE-04) ; resynchronisation des radios d'inventaire en MP (AUTH-03) ; factions relues au démarrage (CONF-02) ; console du poste en écran partagé. Silence après balayage des fréquences écarté : la triche par client modifié n'est pas une priorité (serveur entre amis, mode debug réservé aux admins). 280 tests `lupa`.
+- **2026-10-01** — v1.3 (CONF-01 à CONF-08, SRC-01 à SRC-05, AUTH-03, POSTE-01 à POSTE-06) codée par trois sous-agents (équipes et confiance ; sources et missions ; poste de commandement) et testée hors jeu : 257 tests `lupa`. Revue du coordinateur : fuite de la fréquence par la note de confiance corrigée (CONF-06), branchements explicites entre modules (`Client.HANDLERS`, journal du poste appelé par la chaîne militaire), contrôle des clés de traduction et des options citées ajouté à `run_tests.py`.
+- **2026-09-30** — v1.3 conçue ([PLAN-V13.md](PLAN-V13.md)), développée d'un bloc par sous-agents. Décisions : AUTH-01 et AUTH-02 abandonnés, AUTH-03 (talkie pris en main), SRC-05 (toutes les factions à temps), SRC-06 reporté. Vérifications du moteur : tueur d'un zombie connu du serveur ; état d'une radio d'inventaire appliqué par le serveur en main seulement (radio sur le dos refusée en MP).
 - **2026-09-30** — Troisième test solo validé par l'utilisateur, sans erreur dans la console : A5, G2, G3, G4, E1, E5. CODE-01, CODE-02, CODE-03, CODE-05, DOC-01 à DOC-03 et FUM-01 passent en « testé solo ». Restent les cas limites (G5 à G9) et le multijoueur.
 - **2026-09-30** — FUM-01 : fumée de Signal Smoke sur la caisse, intégration facultative (Military Drop reste autonome), testée hors jeu (120 tests `lupa`).
 - **2026-09-30** — Second test solo : E1 réussi (DROP-02). Corrections : icônes des documents introuvables (`PaperReport`, `Paperwork` : les noms vanilla finissent par un chiffre), lecture trop longue (5 pages → tag `base:fastread`), fréquence décalée dans son ellipse (aperçu recalé sur une capture). « Noter le message » retiré (CODE-07 abandonné).

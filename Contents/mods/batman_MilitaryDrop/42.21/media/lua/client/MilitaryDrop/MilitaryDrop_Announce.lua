@@ -10,6 +10,13 @@
 -- Symbole « Target » ajouté par l'API de symboles d'une carte cachée (sans
 -- ouvrir la carte du monde) : sauvegardé comme une note du joueur, qui peut
 -- l'effacer.
+--
+-- Reconnaissance (SRC-03) : même principe. Le serveur envoie la grille à tous
+-- (ReconAnnounce, { id, x, y }, MilitaryDrop.Broadcast.reconAnnounced) et
+-- l'annonce de la mission porte le code RECON_CODE ; symbole « Eye », bleu,
+-- posé une fois par mission (id), seulement si une radio du joueur l'entend.
+-- Un talkie accroché à la ceinture compte aussi (MilitaryDrop_BeltRadio.lua
+-- en solo, le vanilla sur un client MP).
 -- ============================================================================
 
 require "MilitaryDrop/MilitaryDrop_Core"
@@ -20,15 +27,30 @@ MilitaryDrop.Announce = Announce
 Announce.CODE = "MDRP"
 Announce.SYMBOL = "Target"
 Announce.COLOR = { r = 0.2, g = 0.55, b = 0.2, a = 1 }
+-- Reconnaissance : code de 4 caractères (ignoré par ISRadioInteractions) et
+-- symbole vanilla distinct (MapSymbolDefinitions).
+Announce.RECON_CODE = "MDRC"
+Announce.RECON_SYMBOL = "Eye"
+Announce.RECON_COLOR = { r = 0.15, g = 0.35, b = 0.75, a = 1 }
 -- Radio posée : OnDeviceText donne sa position, même loin du joueur (solo).
 Announce.HEARING_DISTANCE = 5
 
 local lastDrop = nil
+local lastRecon = nil
+-- Missions de reconnaissance déjà marquées (id → true) : une fois par mission.
+local markedRecons = {}
 local symbolsApi = nil
 
 function Announce.onDropAnnounce(args)
     if type(args) == "table" and type(args.x) == "number" and type(args.y) == "number" then
         lastDrop = { x = args.x, y = args.y, marked = false }
+    end
+end
+
+function Announce.onReconAnnounce(args)
+    if type(args) == "table" and type(args.id) == "string" and type(args.x) == "number"
+        and type(args.y) == "number" then
+        lastRecon = { id = args.id, x = args.x, y = args.y, marked = markedRecons[args.id] == true }
     end
 end
 
@@ -43,18 +65,20 @@ local function getSymbolsApi()
     return symbolsApi
 end
 
---- Ajoute le symbole, sauf s'il existe déjà à cet endroit.
-function Announce.markMap(x, y)
+--- Ajoute le symbole (par défaut celui du largage), sauf s'il existe déjà à
+--- cet endroit.
+function Announce.markMap(x, y, symbolId, color)
+    symbolId = symbolId or Announce.SYMBOL
     local api = getSymbolsApi()
     for i = 0, api:getSymbolCount() - 1 do
         local symbol = api:getSymbolByIndex(i)
-        if symbol:isTexture() and symbol:getSymbolID() == Announce.SYMBOL
+        if symbol:isTexture() and symbol:getSymbolID() == symbolId
             and math.floor(symbol:getWorldX()) == x and math.floor(symbol:getWorldY()) == y then
             return false
         end
     end
-    local symbol = api:addTexture(Announce.SYMBOL, x, y)
-    local c = Announce.COLOR
+    local symbol = api:addTexture(symbolId, x, y)
+    local c = color or Announce.COLOR
     symbol:setRGBA(c.r, c.g, c.b, c.a)
     symbol:setAnchor(0.5, 0.5)
     return true
@@ -77,17 +101,27 @@ local function heardByLocalPlayer(x, y, z)
     return false
 end
 
+local function hasCode(codes, code)
+    return type(codes) == "string" and string.find(codes, code, 1, true) ~= nil
+end
+
 function Announce.onDeviceText(_, codes, x, y, z)
-    if not lastDrop or lastDrop.marked or type(codes) ~= "string"
-        or not string.find(codes, Announce.CODE, 1, true) then
+    local drop = lastDrop and not lastDrop.marked and hasCode(codes, Announce.CODE)
+    local recon = lastRecon and not lastRecon.marked and hasCode(codes, Announce.RECON_CODE)
+    if not (drop or recon) or not heardByLocalPlayer(x, y, z) then
         return
     end
-    if not heardByLocalPlayer(x, y, z) then
-        return
+    if drop then
+        lastDrop.marked = true
+        Announce.markMap(lastDrop.x, lastDrop.y)
+        MilitaryDrop.log("drop marked on the map at " .. lastDrop.x .. "," .. lastDrop.y)
     end
-    lastDrop.marked = true
-    Announce.markMap(lastDrop.x, lastDrop.y)
-    MilitaryDrop.log("drop marked on the map at " .. lastDrop.x .. "," .. lastDrop.y)
+    if recon then
+        lastRecon.marked = true
+        markedRecons[lastRecon.id] = true
+        Announce.markMap(lastRecon.x, lastRecon.y, Announce.RECON_SYMBOL, Announce.RECON_COLOR)
+        MilitaryDrop.log("recon " .. lastRecon.id .. " marked on the map at " .. lastRecon.x .. "," .. lastRecon.y)
+    end
 end
 
 Events.OnDeviceText.Add(Announce.onDeviceText)

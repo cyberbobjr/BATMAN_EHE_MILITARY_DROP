@@ -12,6 +12,7 @@ Tune a military radio to the right frequency, give the authentication code, and 
 [*]A helicopter you can hear and see approach: moving sound, rotor shadow on the ground, direction marker.
 [*]Crate loot comes from the game's army distribution tables, so it works with weapon mods.
 [*]Anyone listening on the frequency hears the drop coordinates, and the spot is marked on their map.
+[*]Earn the base's trust as a faction: daily reports, soldiers' dog tags, public missions and a command post radio.
 [*]Server-authoritative multiplayer, with one server-wide cooldown set in the sandbox options.
 [*]Standalone: no other mod required. Compatible with HEF - Helicopter Event Framework. With Signal Smoke, green smoke marks the crate.
 [/list]

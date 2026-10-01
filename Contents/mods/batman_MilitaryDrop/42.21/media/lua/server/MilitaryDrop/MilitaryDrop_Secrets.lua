@@ -6,10 +6,21 @@
 -- gardés dans des fichiers du serveur, propres à la partie :
 --   Zomboid/Lua/MilitaryDrop/<mode>_<partie>_code.txt : code fixe (AuthCode 2) ;
 --   Zomboid/Lua/MilitaryDrop/<mode>_<partie>_seed.txt : graine des codes de la
---     semaine, des tables du carnet et de la fréquence de la station.
+--     semaine, des tables du carnet, des fréquences libres (station de
+--     chiffres, chaîne militaire) et du nom de l'état privé.
 --
--- La graine est lue dès OnLoadRadioScripts (station de chiffres), avant le
--- chargement de la ModData : elle n'en dépend pas.
+-- La graine est lue dès OnLoadRadioScripts (station de chiffres, chaîne
+-- militaire), avant le chargement de la ModData : elle n'en dépend pas.
+--
+-- État privé de la v1.3 (équipes, confiance, largages, missions, plaques,
+-- postes de liaison) : une table de ModData globale dont le nom est tiré de la
+-- graine (Secrets.privateTag). ModData.request ne rend une table qu'à qui en
+-- donne le nom exact (GlobalModData.receiveRequest, 42.21), et le serveur ne
+-- publie jamais la liste de ses tables : ce nom ne quitte pas le serveur,
+-- la table n'est jamais transmise. Elle est sauvegardée avec la partie comme
+-- toute ModData globale. La table publique « MilitaryDrop »
+-- (MilitaryDrop.Server.getState) ne garde que les vols, les livraisons en
+-- attente et le délai global.
 -- ============================================================================
 
 if isClient() then
@@ -25,8 +36,11 @@ MilitaryDrop.Secrets = Secrets
 
 Secrets.MODDATA_TAG = "MilitaryDrop"
 
+Secrets.PRIVATE_PREFIX = "MilitaryDrop_"
+
 local fixedCode = nil
 local seed = nil
+local privateTag = nil
 
 --- Fichier propre à la partie (dossier Lua du serveur ou du joueur).
 function Secrets.file(suffix)
@@ -89,6 +103,23 @@ function Secrets.getSeed()
         writeLine(file, string.format("%d", seed), "code seed")
     end
     return seed
+end
+
+--- Nom de la table de ModData privée : « MilitaryDrop_ » et 12 chiffres
+--- hexadécimaux tirés de la graine (stable pour une même partie).
+function Secrets.privateTag()
+    if not privateTag then
+        local rand = Codes.newRandom(Secrets.getSeed(), Codes.USE_PRIVATE_STATE)
+        privateTag = Secrets.PRIVATE_PREFIX .. string.format("%04x%04x%04x", rand(65536), rand(65536), rand(65536))
+    end
+    return privateTag
+end
+
+--- État privé de la partie (jamais transmis aux clients). Relu à chaque usage :
+--- la ModData globale est vidée puis relue juste avant OnInitGlobalModData
+--- (GlobalModData.init), une table gardée d'avant serait perdue.
+function Secrets.privateState()
+    return ModData.getOrCreate(Secrets.privateTag())
 end
 
 return Secrets

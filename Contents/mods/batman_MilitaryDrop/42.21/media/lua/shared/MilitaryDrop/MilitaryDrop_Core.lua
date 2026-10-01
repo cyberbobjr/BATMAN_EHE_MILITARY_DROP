@@ -26,7 +26,8 @@ Config.RESERVED_CHANNELS = { [112200] = true }
 
 local DEFAULTS = {
     CooldownHours = 168,
-    Frequency = 151.4,
+    -- 0 : fréquence libre tirée par le serveur (MilitaryDrop_Broadcast.lua), secrète.
+    Frequency = 0,
     MinZombies = 3,
     MaxZombies = 30,
     NoteDropRate = 4,
@@ -58,6 +59,15 @@ function Config.get(name)
     return value
 end
 
+--- Valeurs par défaut des options d'un module (sans écraser celles déjà connues).
+function Config.addDefaults(values)
+    for name, value in pairs(values) do
+        if DEFAULTS[name] == nil then
+            DEFAULTS[name] = value
+        end
+    end
+end
+
 --- Mode du code d'authentification (MilitaryDrop.Codes.MODE_*), borné à 1-4.
 function Config.codeMode()
     local mode = math.floor(tonumber(Config.get("AuthCode")) or DEFAULTS.AuthCode)
@@ -79,7 +89,7 @@ end
 --- Canal radio (kHz) correspondant à une fréquence en MHz : arrondi au pas de
 --- réglage des radios, borné, et décalé d'un pas s'il est réservé.
 function Config.toChannel(mhz)
-    local steps = math.floor((tonumber(mhz) or DEFAULTS.Frequency) * 1000 / Config.CHANNEL_STEP + 0.5)
+    local steps = math.floor((tonumber(mhz) or 0) * 1000 / Config.CHANNEL_STEP + 0.5)
     local channel = steps * Config.CHANNEL_STEP
     if channel < Config.MIN_CHANNEL then
         channel = Config.MIN_CHANNEL
@@ -92,9 +102,25 @@ function Config.toChannel(mhz)
     return channel
 end
 
---- Canal militaire de la partie (kHz).
+--- Fréquence militaire fixée par l'option Frequency (> 0) : publique, car les
+--- options sandbox sont envoyées à tous les clients.
+function Config.isFixedFrequency()
+    return (tonumber(Config.get("Frequency")) or 0) > 0
+end
+
+--- Canal militaire de la partie (kHz). Option Frequency > 0 : ce canal fixe.
+--- Option à 0 : fréquence libre tirée par le serveur à partir de la graine
+--- secrète (MilitaryDrop.Broadcast.freeChannel, fichier serveur). Un client MP
+--- ne la connaît jamais : nil (aucun code client n'en a besoin).
 function Config.getChannel()
-    return Config.toChannel(Config.get("Frequency"))
+    if Config.isFixedFrequency() then
+        return Config.toChannel(Config.get("Frequency"))
+    end
+    local Broadcast = MilitaryDrop.Broadcast
+    if Broadcast and Broadcast.freeChannel then
+        return Broadcast.freeChannel()
+    end
+    return nil
 end
 
 --- Texte affiché d'un canal : 151400 → "151.4".

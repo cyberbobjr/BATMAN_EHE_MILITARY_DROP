@@ -8,6 +8,12 @@
 -- relire les tables de butin après leur fusion).
 --
 -- Serveur MP ou solo seulement : un client ne crée ni ne remplit de véhicule.
+--
+-- Confiance : chaque caisse de ravitaillement du coffre porte le dropId du
+-- largage (ModData MilitaryDrop_dropId). addVehicleDebug remplit le coffre
+-- pendant l'appel (addToWorld → createPhysics → randomizeContainers →
+-- OnFillContainer, BaseVehicle.java:804-888, 42.21) : le dropId en cours est
+-- donc connu de onFillContainer.
 -- ============================================================================
 
 if isClient() then
@@ -23,9 +29,14 @@ local Loot = MilitaryDrop.Loot
 local Crate = {}
 MilitaryDrop.Crate = Crate
 
+-- Largage de la caisse en cours de création (Crate.spawn), ou nil.
+local fillingDropId = nil
+
 Crate.SCRIPT = "MilitaryDrop_SupplyCrate"
 Crate.FULL_SCRIPT = "Base." .. Crate.SCRIPT
 Crate.TRUNK = "TrailerTrunk"
+-- ModData d'objet : largage d'une caisse de ravitaillement (MilitaryDrop_Trust.lua).
+Crate.DROP_KEY = "MilitaryDrop_dropId"
 -- Caisses de ravitaillement tirées à chaque option CaseRolls.
 Crate.CASE_WEIGHTS = {
     "MilitaryDrop.AmmoSupplyCase", 45,
@@ -62,19 +73,27 @@ function Crate.onFillContainer(roomType, _, container)
         return
     end
     for _, fullType in ipairs(Crate.rollCases()) do
-        container:AddItem(fullType)
+        local item = container:AddItem(fullType)
+        if item and fillingDropId then
+            item:getModData()[Crate.DROP_KEY] = fillingDropId
+        end
     end
 end
 
 --- Fait apparaître la caisse sur la case (chargée) ; renvoie le véhicule ou nil.
+--- dropId : largage, posé sur chaque caisse de ravitaillement du coffre.
 --- addVehicleDebug renvoie le véhicule même quand sa position est refusée
 --- (collision avec un autre véhicule), sans l'ajouter au monde : seul un
 --- véhicule ajouté reçoit un identifiant de base (VehiclesDB2.addVehicle).
-function Crate.spawn(square)
+function Crate.spawn(square, dropId)
     if square:getVehicleContainer() then
         return nil
     end
+    -- Une erreur Java laisserait fillingDropId posé : seul Crate.spawn crée ce
+    -- véhicule, et il le repose à chaque appel.
+    fillingDropId = dropId
     local vehicle = addVehicleDebug(Crate.FULL_SCRIPT, IsoDirections.getRandom(), 0, square)
+    fillingDropId = nil
     if vehicle and vehicle:getSqlId() ~= -1 then
         return vehicle
     end
