@@ -6,7 +6,6 @@
 
 All options are on the **Military Drop** page of the sandbox options. Hours and days are game time.
 
-![Military Drop sandbox options](../images/ingame-sandbox-options.png)
 
 ### Drops
 

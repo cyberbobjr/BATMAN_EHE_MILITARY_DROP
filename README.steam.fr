@@ -26,7 +26,7 @@ Dépensez un budget de points sur 18 lots tirés des tables de butin du jeu, mod
 
 [h2]Rejoindre la caisse[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/crate-model.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-crate-trunk.png[/img]
 
 Entendez l'hélicoptère, voyez son ombre, puis foncez vers la grille annoncée, à 150 à 400 cases. Tous ceux qui écoutent la fréquence reçoivent le repère sur la carte, et une horde garde la caisse. La caisse vide se démonte pour son bois.
 

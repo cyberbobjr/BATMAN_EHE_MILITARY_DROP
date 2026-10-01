@@ -78,9 +78,8 @@ A red **skull** marks the zone. The horde appears when the first player comes ne
 - **Clearance status** asks the base how it is going: zombies of the horde brought down by your station, and how many are left.
 - When **90%** of the horde is dead, the station that killed the most gets +5. Fire and traps kill zombies but credit nobody.
 
-![The clearance horde](../images/ingame-cleanup-horde.png)
 
-![Mission markers on the map](../images/ingame-map-missions.png)
+Map symbols of the missions: <img src="../images/map-symbol-recon.png" width="32" alt="Blue eye"> reconnaissance, <img src="../images/map-symbol-clearance.png" width="32" alt="Red skull"> clearance (see [Map symbols](02-calling-a-drop.md#map-symbols)).
 
 ### Radio check
 

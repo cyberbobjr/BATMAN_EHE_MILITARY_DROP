@@ -81,7 +81,7 @@ A placed **US Army Ham Radio** shows a single **Liaison post** button instead: d
 
 On the military frequency, the base announces: *"All stations, Logistics. Supply helicopter en route to a requested drop zone, ETA one minute."*
 
-The drop point is **150 to 400 tiles** from the caller, outside buildings. You hear the helicopter pass, see its **shadow** on the ground and a **direction arrow** while it is within 400 tiles. It hovers a few seconds over the point, then leaves.
+The drop point is **150 to 400 tiles** from the caller, on a road or next to a building, never in water. You hear the helicopter pass, see its **shadow** on the ground and a **direction arrow** while it is within 400 tiles. It hovers a few seconds over the point, then leaves.
 
 ![Helicopter shadow and direction arrow](../images/ingame-helicopter.png)
 
@@ -95,11 +95,23 @@ Every radio **on and tuned** to the military frequency at that moment hears it, 
 
 ![Drop marker on the map](../images/ingame-map-drop-marker.png)
 
+### Map symbols
+
+The base marks your map only if one of your radios **hears** the announcement. The symbols are the game's own map symbols: you can erase them like any map note.
+
+| Symbol | Meaning | Where |
+|---|---|---|
+| <img src="../images/map-symbol-drop.png" width="48" alt="Green target"> | **Supply drop**: the announced grid of a crate (or of a decoy, which looks the same) | On a road or next to a building, never in water |
+| <img src="../images/map-symbol-recon.png" width="48" alt="Blue eye"> | **Reconnaissance**: the building or road to check | Confirm within 25 tiles of the symbol |
+| <img src="../images/map-symbol-clearance.png" width="48" alt="Red skull"> | **Clearance**: centre of the zone where the horde was reported | The horde is spread within 40 tiles around it |
+
+Symbols stay on the map after the mission or the drop: erase them yourself when you no longer need them.
+
 ## 6. The crate
 
 Go to the grid. The crate appears when someone arrives and the area is loaded, at most 30 tiles from the announced point. A horde waits around it (3 to 30 zombies by default).
 
-![The crate on the ground, with green smoke](../images/ingame-crate-smoke.png)
+![The crate on the ground with green smoke, and its trunk full of requisition cases](../images/ingame-crate-trunk.png)
 
 ![The supply crate model](../images/crate-model.png)
 
@@ -115,4 +127,3 @@ Be quick: the first case opened by your station gives **+10 trust**. If nothing 
 
 Empty the crate, carry a **hammer** and a **saw**, right-click it: **Dismantle the crate**. You get planks (or unusable wood) and Carpentry experience, like dismantling wooden furniture. The option is greyed with the reason if the crate is not empty or a tool is missing.
 
-![Dismantle the crate](../images/ingame-dismantle.png)

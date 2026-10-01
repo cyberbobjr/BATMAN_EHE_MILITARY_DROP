@@ -4,6 +4,27 @@
 
 local T = {}
 
+-- Carte simulée : par défaut, une route couvre toute la carte (le point tiré
+-- est donc retenu tel quel). ROADS (liste { x, y, w, h }) remplace ce réseau ;
+-- les bâtiments : aucun.
+local function stubList(items)
+    return { size = function() return #items end, get = function(_, i) return items[i + 1] end }
+end
+function TEST_ZONES(x, y, w, h)
+    local roads = ROADS or { { x = 0, y = 0, w = 100000, h = 100000 } }
+    local found = {}
+    for _, r in ipairs(roads) do
+        if r.x < x + w and x < r.x + r.w and r.y < y + h and y < r.y + r.h then
+            found[#found + 1] = {
+                getType = function() return "Nav" end, isRectangle = function() return true end,
+                getX = function() return r.x end, getY = function() return r.y end,
+                getWidth = function() return r.w end, getHeight = function() return r.h end,
+            }
+        end
+    end
+    return stubList(found)
+end
+
 local CHANNEL = 151400
 local CODE = "BRAVO-KILO-07"
 
@@ -108,8 +129,9 @@ function T.setup()
         getMetaGrid = function()
             return {
                 isValidSquare = function(_, x, y) return not (OFF_MAP and OFF_MAP(x, y)) end,
-                getCellData = function() return {} end,
+                getCellData = function() return { getBuildingsIntersecting = function() end } end,
                 getBuildingAt = function(_, x, y) return BUILDING and BUILDING(x, y) or nil end,
+                getZonesIntersecting = function(_, x, y, _z, w, h) return TEST_ZONES(x, y, w, h) end,
             }
         end,
         }
@@ -453,6 +475,21 @@ function T.drop_point_avoids_buildings_and_off_map()
     assertTrue(x ~= 250, "bâtiment écarté")
     OFF_MAP = function() return true end
     assertEq(MilitaryDrop.Server.pickDropPoint(100, 200), nil, "hors carte : aucun point")
+end
+
+function T.drop_point_lands_on_a_road_never_in_open_water()
+    -- Point tiré au milieu d'un lac (400, 200) : la seule route passe à
+    -- x 430-433 ; le point retenu est sur la route, jamais le point brut.
+    SandboxVars.MilitaryDrop.DropMinDistance = 300
+    SandboxVars.MilitaryDrop.DropMaxDistance = 300
+    ROADS = { { x = 430, y = 0, w = 4, h = 1000 } }
+    local x, y = MilitaryDrop.Server.pickDropPoint(100, 200)
+    assertEq(x, 430, "case de route la plus proche")
+    assertEq(y, 200, "même ligne")
+    ROADS = {}
+    ArrayList = ArrayList or { new = function() return { size = function() return 0 end } end }
+    assertEq(MilitaryDrop.Server.pickDropPoint(100, 200), nil, "ni route ni bâtiment : aucun point brut")
+    ROADS = nil
 end
 
 function T.no_far_point_falls_back_near_the_requester()

@@ -332,30 +332,121 @@ end
 -- IsoDirections.java:13). Chaque secteur est un quart de cercle.
 Server.SECTOR_ANGLES = { E = 0, S = math.pi / 2, W = math.pi, N = -math.pi / 2 }
 
---- Point de largage tiré au hasard entre DropMinDistance et DropMaxDistance
---- de (centerX, centerY), ou nil. Si la case est chargée, elle doit déjà être
---- libre ; sinon elle sera revérifiée à la livraison. sector (« N », « E »,
---- « S », « W », facultatif) : quart de cercle centré sur cette direction.
-function Server.pickDropPoint(centerX, centerY, sector)
+-- Point de largage sur la terre ferme. La métagrille ne connaît pas l'eau
+-- (WaterFlow/WaterZone hors métagrille, zone « Water » des biomes créée au
+-- chargement d'un chunk) : un point tiré au hasard peut tomber dans un lac. On
+-- vise donc une route (zone « Nav » de streets.xml), sinon le pied d'un
+-- bâtiment ; la caisse se pose ensuite sur la case libre la plus proche
+-- (Server.findLandingNear, RELOCATE_RADIUS).
+Server.ROAD_ZONE = "Nav"
+-- Demi-côté de la fenêtre de recherche autour d'un point de l'anneau.
+Server.LAND_WINDOW = 48
+-- Bâtiments visés en dernier recours : pas trop grands (la caisse se pose à
+-- l'extérieur, à RELOCATE_RADIUS cases au plus du centre).
+Server.LAND_MAX_BUILDING = 40
+
+local function clampTo(value, low, high)
+    return math.max(low, math.min(high, value))
+end
+
+--- Point tiré dans l'anneau DropMinDistance-DropMaxDistance (quart de cercle
+--- du secteur s'il est donné), sur la carte.
+function Server.ringPoint(centerX, centerY, sector)
     local low = math.max(0, Config.get("DropMinDistance"))
     local high = math.max(0, Config.get("DropMaxDistance"))
     if high < low then
         low, high = high, low
     end
-    local cell = getCell()
     local center = sector and Server.SECTOR_ANGLES[sector]
-    for _ = 1, Server.FAR_ATTEMPTS do
-        local angle
-        if center then
-            angle = center + ZombRandFloat(-math.pi / 4, math.pi / 4)
-        else
-            angle = ZombRandFloat(0, 2 * math.pi)
+    local angle
+    if center then
+        angle = center + ZombRandFloat(-math.pi / 4, math.pi / 4)
+    else
+        angle = ZombRandFloat(0, 2 * math.pi)
+    end
+    local distance = ZombRandFloat(low, high)
+    return math.floor(centerX + math.cos(angle) * distance), math.floor(centerY + math.sin(angle) * distance)
+end
+
+--- Case de route (zone « Nav » rectangulaire) la plus proche de (px, py),
+--- dans la fenêtre LAND_WINDOW, hors bâtiment ; ou nil.
+function Server.roadPointNear(grid, px, py)
+    local w = Server.LAND_WINDOW
+    local zones = grid:getZonesIntersecting(math.max(0, px - w), math.max(0, py - w), 0, 2 * w, 2 * w)
+    local best, bestD2 = nil, nil
+    for i = 0, zones:size() - 1 do
+        local zone = zones:get(i)
+        if zone:getType() == Server.ROAD_ZONE and zone:isRectangle() and zone:getWidth() > 0
+            and zone:getHeight() > 0 then
+            local x = clampTo(px, zone:getX(), zone:getX() + zone:getWidth() - 1)
+            local y = clampTo(py, zone:getY(), zone:getY() + zone:getHeight() - 1)
+            local d2 = (x - px) * (x - px) + (y - py) * (y - py)
+            if Server.isOnMap(x, y) and (not bestD2 or d2 < bestD2) then
+                best, bestD2 = { x = x, y = y }, d2
+            end
         end
-        local distance = ZombRandFloat(low, high)
-        local x = math.floor(centerX + math.cos(angle) * distance)
-        local y = math.floor(centerY + math.sin(angle) * distance)
-        if Server.isOnMap(x, y) and (not cell:getGridSquare(x, y, 0) or Server.landingSquareAt(x, y)) then
-            return x, y
+    end
+    if best then
+        return best.x, best.y
+    end
+    return nil
+end
+
+--- Case juste au sud d'un bâtiment visable près de (px, py), ou nil.
+function Server.buildingPointNear(grid, px, py)
+    local w = Server.LAND_WINDOW
+    local list = ArrayList.new()
+    local x0, y0 = math.max(0, px - w), math.max(0, py - w)
+    for cy = math.floor(y0 / Server.CELL_SIZE), math.floor((py + w) / Server.CELL_SIZE) do
+        for cx = math.floor(x0 / Server.CELL_SIZE), math.floor((px + w) / Server.CELL_SIZE) do
+            local cell = grid:getCellData(cx, cy)
+            if cell then
+                cell:getBuildingsIntersecting(x0, y0, px + w - x0, py + w - y0, list)
+            end
+        end
+    end
+    for i = 0, list:size() - 1 do
+        local b = list:get(i)
+        local bw, bh = b:getW(), b:getH()
+        if not b:isUserDefined() and not b:isBasement() and bw >= 1 and bh >= 1
+            and bw <= Server.LAND_MAX_BUILDING and bh <= Server.LAND_MAX_BUILDING then
+            local x, y = b:getX() + math.floor(bw / 2), b:getY() + bh + 2
+            if Server.isOnMap(x, y) then
+                return x, y
+            end
+        end
+    end
+    return nil
+end
+
+--- Point de largage entre DropMinDistance et DropMaxDistance de (centerX,
+--- centerY), sur la terre ferme (route, sinon pied d'un bâtiment), ou nil.
+--- sector (« N », « E », « S », « W », facultatif) : quart de cercle centré
+--- sur cette direction. Si la case est chargée, elle doit déjà être libre ;
+--- sinon elle sera revérifiée à la livraison.
+function Server.pickDropPoint(centerX, centerY, sector)
+    local grid = getWorld():getMetaGrid()
+    local cell = getCell()
+    local function usable(x, y)
+        return x and (not cell:getGridSquare(x, y, 0) or Server.landingSquareAt(x, y) ~= nil
+            or Server.findLandingNear(x, y) ~= nil)
+    end
+    for _ = 1, Server.FAR_ATTEMPTS do
+        local px, py = Server.ringPoint(centerX, centerY, sector)
+        if grid:isValidSquare(px, py) then
+            local x, y = Server.roadPointNear(grid, px, py)
+            if usable(x, y) then
+                return x, y
+            end
+        end
+    end
+    for _ = 1, Server.FAR_ATTEMPTS do
+        local px, py = Server.ringPoint(centerX, centerY, sector)
+        if grid:isValidSquare(px, py) then
+            local x, y = Server.buildingPointNear(grid, px, py)
+            if usable(x, y) then
+                return x, y
+            end
         end
     end
     return nil

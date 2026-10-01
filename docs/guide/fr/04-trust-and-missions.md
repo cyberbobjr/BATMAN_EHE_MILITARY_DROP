@@ -80,9 +80,8 @@ Un **crâne** rouge marque la zone. La horde apparaît quand le premier joueur a
 - **Faire le point** demande à la base où en est le nettoyage : zombies de la horde abattus par votre station, et nombre restant.
 - Quand **90 %** de la horde est mort, la station qui en a abattu le plus gagne +5. Le feu et les pièges tuent, mais ne créditent personne.
 
-![La horde du nettoyage](../images/ingame-cleanup-horde.png)
 
-![Repères des missions sur la carte](../images/ingame-map-missions.png)
+Symboles des missions sur la carte : <img src="../images/map-symbol-recon.png" width="32" alt="Œil bleu"> reconnaissance, <img src="../images/map-symbol-clearance.png" width="32" alt="Tête de mort rouge"> nettoyage (voir [Symboles sur la carte](02-calling-a-drop.md#symboles-sur-la-carte)).
 
 ### Appel de contrôle
 

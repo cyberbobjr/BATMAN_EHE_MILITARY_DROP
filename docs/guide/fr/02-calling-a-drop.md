@@ -81,7 +81,7 @@ Un **Radioamateur de l'Armée américaine** posé n'affiche qu'un bouton **Poste
 
 Sur la fréquence militaire, la base annonce : *« À toutes les stations, ici Logistique. Hélicoptère de ravitaillement en route vers une zone de largage demandée, arrivée dans une minute. »*
 
-Le point de largage est à **150 à 400 cases** de l'appelant, hors des bâtiments. On entend l'hélicoptère passer, on voit son **ombre** au sol et une **flèche de direction** tant qu'il est à moins de 400 cases. Il reste quelques secondes au-dessus du point, puis repart.
+Le point de largage est à **150 à 400 cases** de l'appelant, sur une route ou au pied d'un bâtiment, jamais dans l'eau. On entend l'hélicoptère passer, on voit son **ombre** au sol et une **flèche de direction** tant qu'il est à moins de 400 cases. Il reste quelques secondes au-dessus du point, puis repart.
 
 ![Ombre de l'hélicoptère et flèche de direction](../images/ingame-helicopter.png)
 
@@ -95,11 +95,23 @@ Toute radio **allumée et réglée** sur la fréquence militaire à ce moment l'
 
 ![Repère du largage sur la carte](../images/ingame-map-drop-marker.png)
 
+### Symboles sur la carte
+
+La base marque votre carte seulement si l'une de vos radios **entend** l'annonce. Ce sont les symboles de carte du jeu : on les efface comme n'importe quelle note de carte.
+
+| Symbole | Signification | Où |
+|---|---|---|
+| <img src="../images/map-symbol-drop.png" width="48" alt="Cible verte"> | **Largage** : la grille annoncée d'une caisse (ou d'un leurre, identique) | Sur une route ou au pied d'un bâtiment, jamais dans l'eau |
+| <img src="../images/map-symbol-recon.png" width="48" alt="Œil bleu"> | **Reconnaissance** : le bâtiment ou la route à vérifier | Confirmer à 25 cases au plus du symbole |
+| <img src="../images/map-symbol-clearance.png" width="48" alt="Tête de mort rouge"> | **Nettoyage** : centre de la zone où la horde est signalée | La horde est répartie dans un rayon de 40 cases autour |
+
+Les symboles restent sur la carte après la mission ou le largage : effacez-les vous-même quand ils ne servent plus.
+
 ## 6. La caisse
 
 Rendez-vous à la grille. La caisse apparaît quand quelqu'un arrive et que la zone est chargée, à 30 cases au plus du point annoncé. Une horde l'attend (3 à 30 zombies par défaut).
 
-![La caisse au sol, avec la fumée verte](../images/ingame-crate-smoke.png)
+![La caisse au sol avec sa fumée verte, et son coffre rempli de caisses de réquisition](../images/ingame-crate-trunk.png)
 
 ![Le modèle de la caisse de largage](../images/crate-model.png)
 
@@ -115,4 +127,3 @@ Faites vite : la première caisse ouverte par votre station rapporte **+10 de co
 
 Videz la caisse, munissez-vous d'un **marteau** et d'une **scie**, clic droit : **Démonter la caisse**. Vous récupérez des planches (ou du bois inutilisable) et de l'expérience en Menuiserie, comme pour un meuble en bois. L'option est grisée avec sa raison si la caisse n'est pas vide ou s'il manque un outil.
 
-![Démonter la caisse](../images/ingame-dismantle.png)

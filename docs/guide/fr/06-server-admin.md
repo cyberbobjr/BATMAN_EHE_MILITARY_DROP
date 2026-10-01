@@ -6,7 +6,6 @@
 
 Toutes les options sont sur la page **Military Drop** des options du bac à sable. Heures et jours sont en temps de jeu.
 
-![Options Military Drop du bac à sable](../images/ingame-sandbox-options.png)
 
 ### Largages
 

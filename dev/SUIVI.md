@@ -75,7 +75,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
-| DROP-01 | Point tiré à 150-400 cases (sandbox), sur la carte et hors bâtiment (métagrille) | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_server | C1 en jeu ; MP |
+| DROP-01 | Point tiré à 150-400 cases (sandbox), sur la terre ferme : route (zone « Nav »), sinon pied d'un bâtiment (la métagrille ne connaît pas l'eau) | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_server, test_server (drop_point_lands_on_a_road_never_in_open_water) | Corrigé le 2026-10-01 après un largage dans l'eau : à rejouer (largage forcé près d'un lac) ; C1 ; MP |
 | DROP-02 | Annonce au passage, pose à l'arrivée d'un joueur, quand la case du point est chargée, à 30 cases au plus | PLAN-V2 étape 0 | testé solo | `555593e`, test_flights, E1 (console du 2026-09-30 : livré en 8041,12035, point annoncé, caisse ouverte) | MP |
 | DROP-03 | Repli près du demandeur si aucun point lointain ne convient | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_server | — |
 | DROP-04 | Vol interrompu repris après un redémarrage, renvoyé aux clients | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_flights | F1 en jeu ; MP (reconnexion) |
@@ -180,6 +180,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 ## Journal
 
+- **2026-10-01** — Largage forcé tombé dans l'eau (test de l'utilisateur) : le point de largage était encore tiré au hasard sur la métagrille, qui ne connaît pas l'eau (les missions étaient déjà corrigées). Il vise maintenant une route (zone « Nav »), sinon le pied d'un bâtiment, avec le secteur du leurre respecté ; la caisse se pose ensuite sur la case libre la plus proche.
 - **2026-10-01** — Cinquième test solo : bouton « Poste de liaison » (POSTE-07), silence après 3 codes faux (CODE-06), largage et missions de l'admin (SRC-09, I9) réussis. Guide public (`docs/guide/`, EN/FR) et descriptions Steam EN/FR rédigés ; `b42` fusionnée dans `main`.
 - **2026-10-01** — Confiance de départ abaissée à 25 (palier I seulement, délai ×1,25, 8 points de réquisition) ; palier II de nouveau à 50, palier III à 75 ; le délai reste ×1 à 50. Notes internes déplacées de `docs/` vers `dev/` ; guide public en préparation dans `docs/guide/`.
 - **2026-10-01** — Console du poste : elle reste ouverte quand on clique sur ses boutons (« Demander un largage » la fermait pour laisser la place au formulaire ; la feuille s'ouvre maintenant collée à elle) ; une réponse « trop loin » du serveur ne la ferme plus ; chaque fermeture est notée au journal avec sa cause.
