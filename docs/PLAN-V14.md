@@ -46,7 +46,7 @@ Aucun de ces messages ne part vers les autres joueurs. Le contenu des tables de 
 
 Table ordonnée des 18 lots (PLAN-V2 idée 6) : `id`, `group` (1, 2, 3), `cost`, `count` (objets tirés par caisse de réquisition), clés de texte, et un filtre sur le script d'objet (catégorie d'affichage, propriétés). Les candidats d'un lot sont les objets présents dans **toutes les tables de butin** (comme `Loot`), pondérés par leur poids ; un lot sans candidat est refusé (`reason = "empty"`). Cas particuliers : Armes à feu = une arme + `Loot.weaponExtras` (2 chargeurs, 1 boîte) ; Eau potable et Carburant = récipient vide qui accepte un fluide, rempli à la création (`Fluid` du moteur, à vérifier en 42.21 : REQ-05) ; Explosifs désactivable (`RequisitionExplosives`, REQ-06).
 
-Paliers : groupe 1 toujours ; groupe 2 si la note ≥ `RequisitionTier2` (50) ; groupe 3 si ≥ `RequisitionTier3` (75). Budget (REQ-03) : `floor((4 + note × 0,16) × RequisitionBudget / 100)` (8 à la note 25, 12 à 50, 16 à 75, 20 à 100). Coût effectif : `max(1, round(coût × RequisitionCostMultiplier / 100))`. Ligne coupée : aucun formulaire.
+Paliers : groupe 1 toujours ; groupe 2 si la note ≥ `RequisitionTier2` (60 ; 50 avant le test du 2026-10-01) ; groupe 3 si ≥ `RequisitionTier3` (75). Budget (REQ-03) : `floor((4 + note × 0,16) × RequisitionBudget / 100)` (8 à la note 25, 12 à 50, 16 à 75, 20 à 100). Coût effectif : `max(1, round(coût × RequisitionCostMultiplier / 100))`. Ligne coupée : aucun formulaire.
 
 ## Livraison (v1.4)
 
@@ -70,7 +70,7 @@ Paliers : groupe 1 toujours ; groupe 2 si la note ≥ `RequisitionTier2` (50) ; 
 | `RequisitionForm` | vrai | réquisition |
 | `RequisitionBudget` (%) | 100 | réquisition |
 | `RequisitionCostMultiplier` (%) | 100 | réquisition |
-| `RequisitionTier2` | 50 | réquisition |
+| `RequisitionTier2` | 60 (révisé le 2026-10-01 : une équipe neuve, à 50, n'a que le palier I) | réquisition |
 | `RequisitionTier3` | 75 | réquisition |
 | `RequisitionExplosives` | vrai | réquisition |
 | `DecoyEnabled` | vrai | leurre |

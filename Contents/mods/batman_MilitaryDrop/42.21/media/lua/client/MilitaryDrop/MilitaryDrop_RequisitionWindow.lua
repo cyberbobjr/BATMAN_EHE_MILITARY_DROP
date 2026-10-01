@@ -31,6 +31,11 @@
 -- fenêtre, ou à gauche si elle déborderait de l'écran du joueur ; sinon au
 -- centre de l'écran.
 --
+-- Largage forcé de l'admin (Result « form » avec forced = true) : tampon
+-- « ADMIN » au lieu de « Autorisé » ; la feuille ne se ferme pas quand le
+-- joueur s'éloigne de la radio (le serveur ne l'exige pas) ; sans fenêtre
+-- radio d'origine (menu contextuel), elle s'ouvre au centre de l'écran.
+--
 -- Lots ajoutés par l'admin : lot.texts = { EN = { label, desc }, FR = … }
 -- (textes libres, prioritaires sur les clés label/desc) ; affichés dans la
 -- langue du client, sinon sa langue de base, sinon l'anglais, sinon la
@@ -58,7 +63,7 @@ RW.SAFETY_MS = 2000
 RW.MAX_QTY = 99
 -- Seuils de confiance affichés pour un lot réservé à un palier (options
 -- sandbox, lues par nom composé ; valeurs par défaut du PLAN-V14).
-RW.TIER_OPTIONS = { [2] = { "RequisitionTier2", 50 }, [3] = { "RequisitionTier3", 75 } }
+RW.TIER_OPTIONS = { [2] = { "RequisitionTier2", 60 }, [3] = { "RequisitionTier3", 75 } }
 RW.GROUP_COUNT = 3
 -- Fermeture quand le joueur s'éloigne de la radio posée (même portée que le serveur).
 RW.CLOSE_DISTANCE = Radio.MAX_WORLD_DISTANCE + 0.5
@@ -150,6 +155,7 @@ function RW.newForm(args, nowMs)
         budget = math.max(0, toInt(args.budget, 0)),
         lots = {}, byId = {}, qty = {},
         decoy = nil, decoyOn = false, sector = nil,
+        forced = args.forced == true,
     }
     local expires = tonumber(args.expiresMs) or RW.DEFAULT_EXPIRES_MS
     form.deadline = (nowMs or 0) + math.max(0, expires - RW.SAFETY_MS)
@@ -335,6 +341,12 @@ function RW.buildOrder(form, radioRef)
     end
     return { requestId = form.requestId, radio = radioRef, order = order,
         decoy = form.decoyOn and form.sector or nil }
+end
+
+--- Clé du mot du tampon tant que la feuille est valide : « ADMIN » pour un
+--- largage forcé, sinon « Autorisé ».
+function RW.stampKey(form)
+    return form.forced and "IGUI_MilitaryDrop_ReqStampAdmin" or "IGUI_MilitaryDrop_ReqStamp"
 end
 
 --- Temps restant « m:ss » (jamais négatif).
@@ -686,7 +698,7 @@ local function place(form, mode, view)
     end
 
     -- En-tête : titre, service, demandeur et référence ; tampon à droite.
-    local stampTitleW = math.max(measure(getText("IGUI_MilitaryDrop_ReqStamp"), title),
+    local stampTitleW = math.max(measure(getText(RW.stampKey(form)), title),
         measure(getText("IGUI_MilitaryDrop_ReqStampExpired"), title))
     L.stampW = math.max(stampTitleW, measure(getText("IGUI_MilitaryDrop_ReqValid", "88:88"), font)) + 3 * u
     L.stampH = ft + fh + u
@@ -1047,6 +1059,10 @@ end
 --- dos en solo), ou appareil posé à portée, au même étage.
 function RW:deviceValid()
     local device, player = self.device, self.player
+    if self.form.forced then
+        -- Largage admin : la radio ne sert qu'à situer l'appel.
+        return player ~= nil and not player:isDead()
+    end
     if not device or not player or player:isDead() then
         return false
     end
@@ -1507,7 +1523,7 @@ function RW:drawStamp(now)
     self:drawRectBorder(s.x + 3, s.y + 3, s.w - 6, s.h - 6, alpha * 0.8, RED[1], RED[2], RED[3])
     local cx = s.x + s.w / 2
     local ty = s.y + math.floor(L.u / 2) + 1
-    local word = getText(expired and "IGUI_MilitaryDrop_ReqStampExpired" or "IGUI_MilitaryDrop_ReqStamp")
+    local word = getText(expired and "IGUI_MilitaryDrop_ReqStampExpired" or RW.stampKey(form))
     local wordY = expired and (s.y + (s.h - L.ft) / 2) or ty
     self:drawText(word, cx - measure(word, L.title) / 2, wordY, RED[1], RED[2], RED[3], alpha, L.title)
     -- Encre usée du tampon : grain du papier par-dessus le cadre et le mot.

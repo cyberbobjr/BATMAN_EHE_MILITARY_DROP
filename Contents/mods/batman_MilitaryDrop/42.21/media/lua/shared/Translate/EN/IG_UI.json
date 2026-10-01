@@ -325,5 +325,6 @@
     "IGUI_MilitaryDrop_RadioModule_TypeCode": "Type the code",
     "IGUI_MilitaryDrop_RadioModule_Back": "Back",
     "IGUI_MilitaryDrop_ReqPage": "Page %1/%2",
-    "IGUI_MilitaryDrop_UnknownLotCase": "This slip matches no lot on file. I'll keep the case shut."
+    "IGUI_MilitaryDrop_UnknownLotCase": "This slip matches no lot on file. I'll keep the case shut.",
+    "IGUI_MilitaryDrop_ReqStampAdmin": "ADMIN"
 }

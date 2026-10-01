@@ -17,6 +17,12 @@
 -- posé une fois par mission (id), seulement si une radio du joueur l'entend.
 -- Un talkie accroché à la ceinture compte aussi (MilitaryDrop_BeltRadio.lua
 -- en solo, le vanilla sur un client MP).
+--
+-- Nettoyage (SRC-04) : même principe (CleanupAnnounce, { id, x, y, radius },
+-- MilitaryDrop.Broadcast.cleanupAnnounced), code CLEANUP_CODE, symbole
+-- « Skull » rouge au centre de la zone. Le rayon n'est pas dessiné : l'API
+-- des symboles n'a ni cercle ni échelle réglable (WorldMapSymbolsV2.java:
+-- 62-83, 370-520) ; l'annonce le donne.
 -- ============================================================================
 
 require "MilitaryDrop/MilitaryDrop_Core"
@@ -32,14 +38,26 @@ Announce.COLOR = { r = 0.2, g = 0.55, b = 0.2, a = 1 }
 Announce.RECON_CODE = "MDRC"
 Announce.RECON_SYMBOL = "Eye"
 Announce.RECON_COLOR = { r = 0.15, g = 0.35, b = 0.75, a = 1 }
+-- Nettoyage : autre code, autre symbole vanilla, autre couleur.
+Announce.CLEANUP_CODE = "MDCU"
+Announce.CLEANUP_SYMBOL = "Skull"
+Announce.CLEANUP_COLOR = { r = 0.75, g = 0.15, b = 0.1, a = 1 }
 -- Radio posée : OnDeviceText donne sa position, même loin du joueur (solo).
 Announce.HEARING_DISTANCE = 5
 
 local lastDrop = nil
-local lastRecon = nil
--- Missions de reconnaissance déjà marquées (id → true) : une fois par mission.
-local markedRecons = {}
+-- Dernière mission annoncée par type (recon, cleanup) : { id, x, y, marked }.
+local lastMission = {}
+-- Missions déjà marquées (id → true) : une fois par mission. Les id
+-- (« M<n> ») sont communs aux types.
+local markedMissions = {}
 local symbolsApi = nil
+
+-- Repère de chaque type de mission : code de ligne, symbole, couleur.
+local MISSION_MARKS = {
+    { kind = "recon", code = "RECON_CODE", symbol = "RECON_SYMBOL", color = "RECON_COLOR" },
+    { kind = "cleanup", code = "CLEANUP_CODE", symbol = "CLEANUP_SYMBOL", color = "CLEANUP_COLOR" },
+}
 
 function Announce.onDropAnnounce(args)
     if type(args) == "table" and type(args.x) == "number" and type(args.y) == "number" then
@@ -47,11 +65,19 @@ function Announce.onDropAnnounce(args)
     end
 end
 
-function Announce.onReconAnnounce(args)
+local function onMissionAnnounce(kind, args)
     if type(args) == "table" and type(args.id) == "string" and type(args.x) == "number"
         and type(args.y) == "number" then
-        lastRecon = { id = args.id, x = args.x, y = args.y, marked = markedRecons[args.id] == true }
+        lastMission[kind] = { id = args.id, x = args.x, y = args.y, marked = markedMissions[args.id] == true }
     end
+end
+
+function Announce.onReconAnnounce(args)
+    onMissionAnnounce("recon", args)
+end
+
+function Announce.onCleanupAnnounce(args)
+    onMissionAnnounce("cleanup", args)
 end
 
 local function getSymbolsApi()
@@ -107,8 +133,14 @@ end
 
 function Announce.onDeviceText(_, codes, x, y, z)
     local drop = lastDrop and not lastDrop.marked and hasCode(codes, Announce.CODE)
-    local recon = lastRecon and not lastRecon.marked and hasCode(codes, Announce.RECON_CODE)
-    if not (drop or recon) or not heardByLocalPlayer(x, y, z) then
+    local missions = {}
+    for _, mark in ipairs(MISSION_MARKS) do
+        local mission = lastMission[mark.kind]
+        if mission and not mission.marked and hasCode(codes, Announce[mark.code]) then
+            missions[#missions + 1] = { mission = mission, mark = mark }
+        end
+    end
+    if not (drop or #missions > 0) or not heardByLocalPlayer(x, y, z) then
         return
     end
     if drop then
@@ -116,11 +148,12 @@ function Announce.onDeviceText(_, codes, x, y, z)
         Announce.markMap(lastDrop.x, lastDrop.y)
         MilitaryDrop.log("drop marked on the map at " .. lastDrop.x .. "," .. lastDrop.y)
     end
-    if recon then
-        lastRecon.marked = true
-        markedRecons[lastRecon.id] = true
-        Announce.markMap(lastRecon.x, lastRecon.y, Announce.RECON_SYMBOL, Announce.RECON_COLOR)
-        MilitaryDrop.log("recon " .. lastRecon.id .. " marked on the map at " .. lastRecon.x .. "," .. lastRecon.y)
+    for _, entry in ipairs(missions) do
+        local mission, mark = entry.mission, entry.mark
+        mission.marked = true
+        markedMissions[mission.id] = true
+        Announce.markMap(mission.x, mission.y, Announce[mark.symbol], Announce[mark.color])
+        MilitaryDrop.log(mark.kind .. " " .. mission.id .. " marked on the map at " .. mission.x .. "," .. mission.y)
     end
 end
 

@@ -222,7 +222,8 @@ function T.default_file_is_created_with_the_18_lots_and_a_notice()
         count = count + 1
     end
     assertEq(count, 18, "18 lots écrits (l'exemple de la notice est commenté)")
-    assertTrue(text:find("[EN]", 1, true) and text:find("[FR]", 1, true), "notice en anglais et en français")
+    assertTrue(text:find("Lots offered by the requisition form", 1, true) ~= nil, "notice en anglais")
+    assertEq(text:find("[FR]", 1, true), nil, "notice en anglais seulement (demande de l'utilisateur)")
     assertTrue(text:find("Base.", 1, true) == nil, "aucun nom d'objet dans le fichier par défaut")
     assertTrue(text:find("ReloadLots", 1, true) ~= nil, "commande de rechargement documentée")
     -- Le fichier relu donne exactement les définitions par défaut.
@@ -647,7 +648,6 @@ function T.notice_says_the_file_is_shared_by_all_saves_and_servers()
     LotsFile.ensureLoaded()
     local text = FILES[PATH]
     assertTrue(text:find("EVERY single-player save and EVERY server", 1, true) ~= nil, "notice anglaise")
-    assertTrue(text:find("TOUTES les parties solo et à TOUS les serveurs", 1, true) ~= nil, "notice française")
     assertTrue(text:find("set enabled = false rather than deleting it", 1, true) ~= nil, "retrait conseillé")
 end
 

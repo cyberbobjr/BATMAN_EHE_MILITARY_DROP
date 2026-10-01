@@ -41,9 +41,11 @@
 -- par le vol, la livraison en attente et chaque caisse de ravitaillement.
 --
 -- Réquisition (v1.4, MilitaryDrop_Requisition.lua) : avec l'option
--- RequisitionForm, un appel accepté (hors largage admin) ouvre le formulaire
--- au lieu d'envoyer l'hélicoptère ; la commande validée part par
--- Server.launchDrop, comme un appel accepté. Un leurre (v1.5) est tiré dans
+-- RequisitionForm, un appel accepté ouvre le formulaire au lieu d'envoyer
+-- l'hélicoptère ; la commande validée part par Server.launchDrop, comme un
+-- appel accepté. Le largage admin l'ouvre aussi (feuille « admin » : tous
+-- les lots, budget maximal, sans radio ni délai, Server.canForce revérifié
+-- à la commande). Un leurre (v1.5) est tiré dans
 -- le secteur choisi (pickDropPoint) ; sa livraison prévient
 -- MilitaryDrop.Decoy.onDelivered.
 -- ============================================================================
@@ -483,8 +485,9 @@ function Server.handleRequest(player, args)
 
     local forced = args.force == true
     -- Formulaire de réquisition (v1.4) : l'hélicoptère attend la commande.
-    if not forced and MilitaryDrop.Requisition and MilitaryDrop.Requisition.formEnabled() then
-        MilitaryDrop.Requisition.openForm(player, requestId)
+    -- Largage admin : feuille « admin » (MilitaryDrop.Requisition.openForm).
+    if MilitaryDrop.Requisition and MilitaryDrop.Requisition.formEnabled() then
+        MilitaryDrop.Requisition.openForm(player, requestId, forced)
         return
     end
     Server.launchDrop(player, requestId, forced)

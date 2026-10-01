@@ -320,8 +320,8 @@ function T.costs_and_tiers_follow_options()
     assertEq(R.cost(5), 8, "5 × 1,5 arrondi")
     SandboxVars.MilitaryDrop.RequisitionCostMultiplier = 10
     assertEq(R.cost(2), 1, "au moins 1 point")
-    assertEq(R.maxGroup(49), 1, "sous 50 : groupe 1")
-    assertEq(R.maxGroup(50), 2, "dès 50 : groupe 2")
+    assertEq(R.maxGroup(59), 1, "sous 60 : groupe 1")
+    assertEq(R.maxGroup(60), 2, "dès 60 : groupe 2")
     assertEq(R.maxGroup(75), 3, "dès 75 : groupe 3")
     SandboxVars.MilitaryDrop.RequisitionTier2 = 20
     assertEq(R.maxGroup(20), 2, "option RequisitionTier2")
@@ -357,6 +357,26 @@ function T.accepted_call_opens_the_form_without_launching()
     assertEq(#BROADCAST, 0, "rien envoyé à tous")
 end
 
+function T.new_team_has_only_tier_one()
+    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Teams.idFor(PLAYER)), MilitaryDrop.Trust.START, "équipe neuve")
+    assertEq(MilitaryDrop.Trust.START, 50, "confiance de départ inchangée")
+    for _, lot in ipairs(call().lots) do
+        if lot.group == 1 then
+            assertEq(lot.allowed, true, lot.id .. " : palier I permis")
+        else
+            assertEq(lot.allowed, false, lot.id .. " : palier " .. lot.group .. " fermé à 50")
+            assertEq(lot.reason, "tier", lot.id .. " : motif palier")
+        end
+    end
+    setNote(60)
+    NOW_MS = NOW_MS + 5000
+    for _, lot in ipairs(call().lots) do
+        if lot.group == 2 then
+            assertEq(lot.allowed, true, lot.id .. " : palier II ouvert à 60")
+        end
+    end
+end
+
 function T.form_marks_empty_and_disabled_lots()
     setNote(80)
     ProceduralDistributions.list.Everything.items = { "Hammer", 1, "PipeBomb", 1 }
@@ -384,9 +404,111 @@ function T.form_option_off_keeps_random_cases()
     assertTrue(PLACED_ITEMS[1].fullType ~= "MilitaryDrop.RequisitionCase", "caisses de ravitaillement")
 end
 
-function T.admin_drop_skips_the_form()
-    MilitaryDrop.Server.handleRequest(PLAYER, { requestId = 2, force = true })
-    assertEq(SENT[#SENT].args.status, "accepted", "largage admin inchangé")
+-- ----------------------------------------------------------------------------
+-- Largage forcé de l'admin : feuille « admin »
+-- ----------------------------------------------------------------------------
+
+local function forceCall(player)
+    NOW_MS = NOW_MS + 5000
+    MilitaryDrop.Server.handleRequest(player or PLAYER, { requestId = 2, force = true })
+    return SENT[#SENT].args
+end
+
+function T.admin_drop_opens_the_admin_form_with_every_lot_and_the_max_budget()
+    -- Radio éteinte, délai en cours, confiance basse : rien de cela ne compte.
+    PLAYER = makePlayer(makeRadio(false, CHANNEL))
+    MilitaryDrop.Server.getState().lastDropHours = WORLD_HOURS
+    setNote(30)
+    local reply = forceCall()
+    assertEq(reply.status, "form", "la feuille s'ouvre")
+    assertEq(reply.forced, true, "feuille marquée admin")
+    assertEq(reply.budget, MilitaryDrop.Requisition.budget(MilitaryDrop.Trust.MAX), "budget d'une confiance 100")
+    assertEq(reply.budget, 20, "20 points")
+    for _, lot in ipairs(reply.lots) do
+        assertTrue(lot.reason ~= "tier", lot.id .. " : aucun palier fermé")
+    end
+    local allowed = {}
+    for _, lot in ipairs(reply.lots) do
+        allowed[lot.id] = lot.allowed
+    end
+    assertEq(allowed.firearms, true, "palier III permis")
+    assertEq(allowed.ammo, true, "palier II permis")
+    assertEq(reply.decoy and reply.decoy.allowed, true, "leurre compris")
+    assertEq(#flights(), 0, "pas encore d'hélicoptère")
+    assertEq(MilitaryDrop.Requisition.pendingFor("tester").forced, true, "autorisation marquée forcée")
+    -- Feuille d'un appel ordinaire : rien de marqué.
+    PLAYER = makePlayer(makeRadio(true, CHANNEL))
+    MilitaryDrop.Server.getState().lastDropHours = nil
+    setNote(50)
+    NOW_MS = NOW_MS + 5000
+    local normal = call()
+    assertEq(normal.status, "form", "appel ordinaire")
+    assertEq(normal.forced, nil, "pas de marque admin")
+    assertEq(MilitaryDrop.Requisition.pendingFor("tester").forced, nil, "autorisation ordinaire")
+end
+
+function T.admin_order_launches_a_forced_drop_without_cooldown_or_trust()
+    PLAYER = makePlayer(nil)
+    setNote(10)
+    MilitaryDrop.Server.getState().lastDropHours = WORLD_HOURS - 1
+    forceCall()
+    local reply = order({ firearms = 2, ammo = 3, rations = 4 }, nil, PLAYER, 2)
+    assertEq(reply.status, "accepted", "sans radio, ligne coupée, délai en cours : accepté")
+    assertEq(#flights(), 1, "vol lancé")
+    assertEq(MilitaryDrop.Server.getState().lastDropHours, WORLD_HOURS - 1, "délai global non consommé")
+    local flight = flights()[1]
+    local drop = MilitaryDrop.Secrets.privateState().drops[flight.dropId]
+    assertEq(drop.forced, true, "largage forcé")
+    assertEq(drop.team, nil, "hors suivi de confiance")
+    assertEq(drop.order.lots.firearms, 2, "commande gardée")
+    assertEq(MilitaryDrop.Requisition.pendingFor("tester"), nil, "autorisation consommée")
+    assertEq(order({ rations = 1 }, nil, PLAYER, 2).status, "expired", "une seule commande")
+end
+
+function T.admin_order_respects_the_max_budget()
+    forceCall()
+    assertEq(order({ firearms = 5 }, nil, PLAYER, 2).status, "orderInvalid", "25 points sur 20")
+    assertEq(order({ firearms = 4 }, nil, PLAYER, 2).status, "accepted", "20 points sur 20")
+end
+
+function T.admin_decoy_order_is_a_forced_untracked_decoy()
+    forceCall()
+    local reply = order({}, "E", PLAYER, 2)
+    assertEq(reply.status, "accepted", "leurre accepté")
+    local drop = MilitaryDrop.Secrets.privateState().drops[flights()[1].dropId]
+    assertEq(drop.decoy.sector, "E", "secteur")
+    assertEq(drop.forced, true, "forcé")
+    assertEq(drop.team, nil, "hors suivi")
+    assertEq(MilitaryDrop.Server.getState().lastDropHours, nil, "délai non consommé")
+end
+
+function T.admin_rights_are_checked_again_at_the_order()
+    forceCall()
+    checkPermissions = function() return false end
+    local reply = order({ rations = 1 }, nil, PLAYER, 2)
+    assertEq(reply.status, "denied", "droit retiré entre-temps")
+    assertEq(#flights(), 0, "aucun vol")
+    assertEq(MilitaryDrop.Requisition.pendingFor("tester"), nil, "autorisation oubliée")
+end
+
+function T.non_admin_gets_no_admin_form()
+    checkPermissions = function() return false end
+    local reply = forceCall()
+    assertEq(reply.status, "denied", "largage forcé refusé")
+    assertEq(MilitaryDrop.Requisition.pendingFor("tester"), nil, "aucune autorisation")
+    -- Une feuille ordinaire ne devient pas admin par la commande.
+    NOW_MS = NOW_MS + 5000
+    assertEq(call().status, "form", "appel ordinaire")
+    local args = { requestId = 1, radio = { kind = "item", id = 7 }, order = { firearms = 1 }, force = true }
+    NOW_MS = NOW_MS + 5000
+    MilitaryDrop.Server.onClientCommand("MilitaryDrop", "RequisitionOrder", PLAYER, args)
+    assertEq(SENT[#SENT].args.status, "orderInvalid", "palier III refusé à la note 50")
+    assertEq(#flights(), 0, "aucun vol")
+end
+
+function T.admin_drop_skips_the_form_when_the_form_is_off()
+    SandboxVars.MilitaryDrop.RequisitionForm = false
+    assertEq(forceCall().status, "accepted", "largage admin direct")
     assertEq(#flights(), 1, "vol lancé")
 end
 

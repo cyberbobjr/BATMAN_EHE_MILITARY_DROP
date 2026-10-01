@@ -35,7 +35,10 @@
 -- radio) ou l'annulation (RequisitionCancel). La réponse à la commande est un
 -- Result ordinaire (accepted, ou orderInvalid, expired, cooldown…). Les
 -- répliques du personnage (player:Say) restent locales en MP : le contenu de
--- la commande n'est jamais prononcé.
+-- la commande n'est jamais prononcé. Le largage forcé de l'admin reçoit aussi
+-- « form » (args.forced : feuille « ADMIN », tous les lots, budget maximal,
+-- sans radio exigée) ; accepté, il attend ensuite ses coordonnées privées
+-- (Dropped), comme un largage forcé direct.
 --
 -- Module « Logistique » de la fenêtre radio (MilitaryDrop_RadioModule.lua) :
 -- même appel (Client.call), avec opts.anchor = fenêtre radio pour coller la
@@ -420,6 +423,10 @@ function Client.onServerCommand(module, command, args)
     end
     if command == "ReconAnnounce" then
         MilitaryDrop.Announce.onReconAnnounce(args)
+        return
+    end
+    if command == "CleanupAnnounce" then
+        MilitaryDrop.Announce.onCleanupAnnounce(args)
         return
     end
     local request = pending[args.requestId]

@@ -66,6 +66,13 @@ function T.recon_announce_reaches_the_map_module()
     assertEq(received and received.id, "M2", "grille transmise au repère de carte")
 end
 
+function T.cleanup_announce_reaches_the_map_module()
+    local received = nil
+    MilitaryDrop.Announce = { onCleanupAnnounce = function(args) received = args end }
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "CleanupAnnounce", { id = "M3", x = 1, y = 2, radius = 40 })
+    assertEq(received and received.radius, 40, "zone transmise au repère de carte")
+end
+
 -- ----------------------------------------------------------------------------
 -- Réquisition (v1.4)
 -- ----------------------------------------------------------------------------
@@ -152,6 +159,29 @@ function T.form_result_opens_the_form_after_the_base_speaks()
     wait(Client.REPLY_DELAY_MS)
     assertEq(w.device.said.text, "IGUI_MilitaryDrop_AckTier2_1|Station Kilo-7", "accord de la base")
     assertTrue(not Client.sendRequisition(requestId, { rations = 1 }, nil, form), "demande close")
+end
+
+function T.admin_drop_opens_the_admin_form_then_waits_for_its_coordinates()
+    local w = requisitionWorld()
+    local Client = MilitaryDrop.Client
+    Client.sendRequest(w.player, w.device, nil, true)
+    local request = w.toServer[1]
+    assertEq(request.args.force, true, "largage forcé demandé")
+    local requestId = request.args.requestId
+    local args = formResult(requestId)
+    args.forced, args.budget = true, 20
+    result(args)
+    wait(Client.REPLY_DELAY_MS)
+    assertEq(#w.opened, 1, "feuille ouverte")
+    assertEq(w.opened[1].args.forced, true, "marquée admin")
+    assertEq(w.opened[1].args.budget, 20, "budget maximal")
+    assertTrue(Client.sendRequisition(requestId, { firearms = 1 }, nil, { deadline = NOW + 100000 }), "commande")
+    result({ requestId = requestId, status = "accepted", tier = 2, callsign = "Station Kilo-7" })
+    wait(Client.REPLY_DELAY_MS)
+    -- Largage forcé : coordonnées privées attendues (Dropped).
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "Dropped", { requestId = requestId, x = 10, y = 20 })
+    wait(Client.DROPPED_DELAY_MS)
+    assertEq(w.device.said.text, "IGUI_MilitaryDrop_Dropped|10", "coordonnées données par la radio")
 end
 
 function T.cancelled_form_sends_requisition_cancel()

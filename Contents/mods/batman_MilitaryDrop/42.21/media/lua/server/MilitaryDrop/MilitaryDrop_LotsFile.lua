@@ -8,8 +8,8 @@
 -- le jeu ou le serveur (ou celui de l'option -cachedir) : le fichier est
 -- commun à TOUTES les parties solo et à TOUS les serveurs lancés par ce
 -- compte, pas propre à une partie. Écrit au premier démarrage avec les 18
--- lots par défaut (MilitaryDrop.Lots.DEFAULTS) et une notice en anglais et en
--- français, qui le dit.
+-- lots par défaut (MilitaryDrop.Lots.DEFAULTS) et une notice en anglais
+-- (seulement, demande de l'utilisateur du 2026-10-01), qui le dit.
 --
 -- Extension : getFileWriter refuse toute extension hors ini, cfg, txt, log et
 -- json (LuaManager.java:1045 ALLOWED_FILE_EXTENSIONS, 5535-5540) : un fichier
@@ -767,10 +767,9 @@ end
 
 LotsFile.NOTICE = [[
 -- ============================================================================
--- Military Drop - requisition lots / lots de réquisition
+-- Military Drop - requisition lots
 -- ============================================================================
 --
--- [EN]
 -- Lots offered by the requisition form. This file lives in the Zomboid/Lua
 -- folder of the system account that runs the game or the server: it is
 -- shared by EVERY single-player save and EVERY server started by this account
@@ -832,68 +831,6 @@ LotsFile.NOTICE = [[
 --     sendClientCommand(getPlayer(), "MilitaryDrop", "ReloadLots", {})
 --   (admin role only; once every few seconds for the whole server; the
 --   summary and the problems are printed in the admin's console)
---
--- [FR]
--- Lots proposés par le formulaire de réquisition. Ce fichier est dans le
--- dossier Zomboid/Lua du compte système qui lance le jeu ou le serveur : il
--- est commun à TOUTES les parties solo et à TOUS les serveurs lancés par ce
--- compte (pas à une seule partie). Il a été écrit avec les 18 lots par
--- défaut : modifiez-le, puis redémarrez ou rechargez (voir plus bas).
--- Supprimez-le pour retrouver le fichier par défaut au prochain démarrage.
---
--- Seules des données sont lues : une table, aucun code (fonctions, noms et
--- opérateurs refusés). Une erreur de syntaxe garde tous les lots par défaut.
--- Un lot invalide garde le lot par défaut de même id ; un lot ajouté invalide
--- est écarté. Un lot par défaut absent du fichier est gardé : mettez
--- enabled = false pour le retirer. Les problèmes sont écrits dans la console
--- du serveur (console.txt), « [MilitaryDrop] ». Les options sandbox
--- s'appliquent toujours : budget, multiplicateur de coût, paliers, explosifs.
---
--- Champs d'un lot :
---   id        nom (lettres, chiffres, _). Les 18 id par défaut gardent leur
---             nom et leur description traduits.
---   enabled   true ou false (false : lot non proposé).
---   group     palier 1, 2 ou 3 (options RequisitionTier2, RequisitionTier3).
---   cost      points par caisse, 1 à 99 (avant RequisitionCostMultiplier).
---   count     objets tirés à l'ouverture d'une caisse de réquisition, 1 à 20.
--- Filtre : chaque champ donné doit correspondre ; une liste vaut « l'un d'eux ».
---   categories  catégories d'affichage des scripts d'objets (DisplayCategory) :
---               Food, Tool, Material, Cooking, Literature, Clothing...
---   tags        tags d'objet, au moins l'un d'eux (« base:petrol »).
---   notTags     tags que l'objet ne doit pas porter.
---   minWeight, maxWeight   bornes du poids de l'objet.
---   kind        famille reconnue par le mod : ration, firearm, melee, ammo,
---               armor, attachment, pack.
---   fluid       récipient qui accepte ce fluide (Water, Petrol), livré plein ;
---               minLiters, maxLiters bornent sa contenance.
---   extras      true : chaque arme à feu arrive avec 2 chargeurs et 1 boîte.
--- Candidats : les objets de toutes les tables de butin (jeu et mods actifs),
--- pondérés par leur poids. Des champs de filtre donnés pour un id par défaut
--- remplacent tout son filtre par défaut.
---
--- Lot ajouté : un nouvel id avec group, cost, count, un filtre et ses textes
--- (texts, exemple ci-dessus). Le formulaire affiche la langue du joueur,
--- sinon l'anglais, sinon la première langue. texts est réservé aux lots
--- ajoutés (un id par défaut avec texts est refusé). 40 lots au plus en
--- tout, les 18 lots par défaut compris.
--- Pour retirer un lot ajouté, mettez enabled = false plutôt que de le
--- supprimer : les caisses de réquisition déjà livrées gardent son id, et une
--- caisse dont le lot n'est plus dans ce fichier ne s'ouvre pas (elle est
--- rendue fermée) tant que le lot n'est pas revenu.
---
--- Option d'admin, jamais utilisée par défaut : items = { "Module.Type", ... }
--- ne tire que ces objets, à poids égaux, même hors des tables de butin. Elle
--- remplace le filtre (seul fluid peut s'y ajouter).
---
--- Recharger sans redémarrer (admin) :
---   solo, console de débogage :  MilitaryDrop.Requisition.reload()
---   multijoueur, console de débogage d'un admin :
---     sendClientCommand(getPlayer(), "MilitaryDrop", "ReloadLots", {})
---   (rôle admin seulement ; une fois toutes les quelques secondes pour tout
---   le serveur ; le résumé et les problèmes s'affichent dans la console de
---   l'admin)
--- ============================================================================
-
 ]]
 
 --- Texte du fichier par défaut : notice, puis les 18 lots.

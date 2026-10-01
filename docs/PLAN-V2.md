@@ -149,7 +149,7 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 | I | Outils | `Tool`, `ToolWeapon` | 2 |
 | I | Matériaux | `Material` | 1 |
 | I | Bivouac | `Camping`, `FireSource`, `Fishing`, `Trapping` | 2 |
-| II (confiance ≥ 50) | Munitions | `Ammo`, chargeurs et boîtes des armes à feu connues | 2 |
+| II (confiance ≥ 60, révisé le 2026-10-01) | Munitions | `Ammo`, chargeurs et boîtes des armes à feu connues | 2 |
 | II | Armes de mêlée | `Weapon` sans tir, dégâts > 0 (hors `WeaponCrafted`, `*Weapon` improvisées) | 3 |
 | II | Protection | `ProtectiveGear`, vêtements avec `getBulletDefense() > 0` | 3 |
 | II | Mécanique | `VehicleMaintenance` | 2 |

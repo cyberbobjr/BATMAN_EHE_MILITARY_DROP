@@ -290,7 +290,9 @@ function T.greyed_lots_show_their_reason()
     args.lots[17].reason = "disabled"
     args.lots[18].reason = "weird"
     local form = RW.newForm(args, NOW)
-    assertEq(RW.reasonText(form.byId.ammo), "IGUI_MilitaryDrop_ReqReasonTier|50", "palier II : seuil par défaut")
+    assertEq(RW.reasonText(form.byId.ammo), "IGUI_MilitaryDrop_ReqReasonTier|60", "palier II : seuil par défaut")
+    SandboxVars.MilitaryDrop.RequisitionTier2 = 55
+    assertEq(RW.reasonText(form.byId.ammo), "IGUI_MilitaryDrop_ReqReasonTier|55", "palier II : seuil de l'option")
     assertEq(RW.reasonText(form.byId.firearms), "IGUI_MilitaryDrop_ReqReasonTier|75", "palier III")
     SandboxVars.MilitaryDrop.RequisitionTier3 = 80
     assertEq(RW.reasonText(form.byId.firearms), "IGUI_MilitaryDrop_ReqReasonTier|80", "seuil de l'option")
@@ -634,6 +636,24 @@ function T.sheet_is_anchored_to_the_radio_window()
     assertEq(window.y, 20, "même hauteur")
     local centred = RW.open(player, nil, formArgs(1, 8, false), NOW)
     assertEq(centred.x, math.floor((1920 - centred.width) / 2), "sans ancre : centrée")
+end
+
+function T.admin_form_is_stamped_admin_and_ignores_the_radio()
+    local args = formArgs(3, 20)
+    args.forced = true
+    local form = RW.newForm(args, NOW)
+    local normal = RW.newForm(formArgs(1, 8), NOW)
+    assertEq(form.forced, true, "feuille admin")
+    assertEq(normal.forced, false, "feuille ordinaire")
+    assertEq(RW.stampKey(form), "IGUI_MilitaryDrop_ReqStampAdmin", "tampon ADMIN")
+    assertEq(RW.stampKey(normal), "IGUI_MilitaryDrop_ReqStamp", "tampon ordinaire")
+    assertTrue(RW.add(form, "firearms") and RW.add(form, "firearms"), "palier III, budget de 20")
+    assertTrue(RW.toggleDecoy(form) == false, "leurre exclusif des lots")
+    local alive = { isDead = function() return false end }
+    assertEq(RW.deviceValid({ form = form, player = alive }), true, "sans radio : la feuille reste ouverte")
+    assertEq(RW.deviceValid({ form = normal, player = alive }), false, "feuille ordinaire : radio exigée")
+    local L = RW.computeLayout(form, 1920, 1080)
+    checkLayout(L, form, "feuille admin")
 end
 
 return T

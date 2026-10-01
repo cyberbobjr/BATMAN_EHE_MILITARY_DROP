@@ -119,10 +119,10 @@ getPlayer():getInventory():AddItem("Base.Hammer"); getPlayer():getInventory():Ad
 | # | Action | Attendu |
 |---|---|---|
 | H1 | Talkie militaire accroché à la ceinture, réglé sur la fréquence militaire et allumé : « Options de l'appareil » → section **Logistique** → « Envoyer un rapport de situation » | Le personnage prend le talkie en main, parle, puis la base répond avec l'indicatif ; un second rapport le même jour : la base le refuse poliment |
-| H2 | Tuer des zombies militaires | Une seule plaque par soldat, la plaque vanilla à son nom (plus de plaque du mod) ; « Transmettre les matricules » : plaques consommées, remerciement de la base ; une plaque déjà transmise ne rapporte rien |
+| H2 | Tuer des zombies militaires | Une seule plaque par soldat, la plaque vanilla à son nom (plus de plaque du mod) ; « Annoncer les matricules » : plaques consommées, la base cite les noms et remercie ; une plaque déjà annoncée ne rapporte rien |
 | H3 | `Missions.launch("control")` puis « Confirmer réception » | Annonce « toutes stations » sur la fréquence militaire ; réponse acceptée une fois |
-| H4 | `Missions.launch("recon")` en écoutant la fréquence militaire, ouvrir la carte, aller à la grille annoncée, « Confirmer la reconnaissance » | Symbole « œil » bleu au point annoncé, posé une seule fois ; refusée loin du point, acceptée à 25 cases ; annonce de clôture |
-| H5 | `Missions.launch("cleanup")`, tuer des zombies dans la zone annoncée | La progression avance (console du poste) ; au quota, annonce de clôture ; les zombies brûlés ne comptent pas |
+| H4 | `Missions.launch("recon")` (plusieurs fois, dont près d'un lac ; journal « mission site … (building) ») en écoutant la fréquence militaire, ouvrir la carte, aller à la grille annoncée, « Confirmer la reconnaissance » | Symbole « œil » bleu au point annoncé, posé une seule fois ; refusée loin du point, acceptée à 25 cases ; annonce de clôture |
+| H5 | `Missions.launch("cleanup")` en écoutant la fréquence militaire, tuer des zombies dans la zone annoncée | Crâne rouge sur la carte au centre de la zone (un hameau), une seule fois ; la progression avance (console du poste) ; au quota, annonce de clôture ; les zombies brûlés ne comptent pas |
 | H6 | Radio HAM militaire posée (non portable) : clic droit → « Installer le poste de liaison », puis « Poste de liaison » | Console : journal (annonces reçues), missions en cours avec échéance, plaques à annoncer, barre d'état avec l'indicatif et un palier de confiance en mots |
 | H7 | « Déposer mes plaques », puis « Annoncer les matricules » | Plaques retirées de l'inventaire et listées au poste ; le personnage annonce les matricules, la base cite les noms et remercie |
 | H8 | Éteindre le poste, faire diffuser une annonce (largage ou mission), rallumer | Le journal marque « aucune réception » pour le trou |
@@ -146,6 +146,8 @@ Options par défaut (formulaire actif). Confiance réglable pour les essais : `M
 | I5 | Ouvrir les caisses de réquisition du coffre (2 Rations, 1 Eau potable, 1 Carburant si permis) | Une caisse nommée par lot commandé ; contenu du lot ; bouteille pleine d'eau propre, bidon plein d'essence |
 | I6 | Option « Formulaire de réquisition » désactivée, nouvel appel | Largage direct avec les caisses aléatoires de la v1 |
 | I7 | Console du poste : « Demander un largage » | Saisie du code, puis la feuille |
+| I9 | Clic droit sur une radio militaire → « Largage forcé (admin) » | Feuille tamponnée ADMIN : tous les lots et le leurre, 20 points ; elle reste ouverte loin de la radio ; après commande, coordonnées en privé et un appel normal juste après n'est pas bloqué par le délai |
+| I10 | Nouvelle partie, premier appel | Seul le palier I est permis ; le palier II affiche « confiance 60+ » |
 | I8 | Console au démarrage : chercher `requisition lots ready in` ; puis leurre vers un secteur hors de la carte (bord de carte) | Durée de préparation des lots notée au journal ; pour le leurre, la base dit qu'aucun point n'existe dans ce secteur et la feuille se rouvre |
 
 ## J. Largage leurre (v1.5)
@@ -166,7 +168,7 @@ Options par défaut (formulaire actif). Confiance réglable pour les essais : `M
 | K3 | Rapport, matricules, contrôle depuis la section | Mêmes échanges qu'au menu ; la dernière réponse de la base s'affiche dans la section |
 | K4 | Refermer et rouvrir la fenêtre radio, nouvel appel | Code prérempli (mémorisé pendant la session, pas sauvegardé) |
 | K5 | Manette : entrer dans la section, saisir le code au clavier à l'écran | Navigation haut et bas, A valide, B ressort |
-| K6 | Premier démarrage : dossier `Zomboid/Lua/MilitaryDrop/` | `requisition.txt` créé, notice en anglais et en français ; journal « requisition lots: 18 » |
+| K6 | Premier démarrage : dossier `Zomboid/Lua/MilitaryDrop/` | `requisition.txt` créé, notice en anglais ; journal « requisition lots: 18 » |
 | K7 | Mettre `enabled = false` sur un lot, ajouter le lot d'exemple de la notice, recharger (`MilitaryDrop.Requisition.reload()` en solo) | Le lot disparaît du formulaire ; le lot ajouté apparaît avec ses textes ; ses caisses portent son nom |
 | K8 | Introduire une erreur de syntaxe, recharger | Journal avec le numéro de ligne ; les 18 lots par défaut restent |
 

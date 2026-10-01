@@ -99,6 +99,45 @@ function T.recon_needs_a_radio_that_hears_it()
     assertTrue(true, "identifiant invalide ignoré sans erreur")
 end
 
+function T.cleanup_zone_marked_once_with_its_own_symbol_and_color()
+    local colors = {}
+    local api = UIWorldMap.new():getAPIv3():getSymbolsAPIv2()
+    local addTexture = api.addTexture
+    api.addTexture = function(self, id, x, y)
+        local symbol = addTexture(self, id, x, y)
+        symbol.setRGBA = function(_, r, g, b) colors[#colors + 1] = { r, g, b } end
+        return symbol
+    end
+    MilitaryDrop.Announce.onReconAnnounce({ id = "M1", x = 700, y = 800 })
+    MilitaryDrop.Announce.onCleanupAnnounce({ id = "M2", x = 1200, y = 1300, radius = 40 })
+    triggerEvent("OnDeviceText", "guid", "MDCU", -1, -1, -1, "line", {})
+    triggerEvent("OnDeviceText", "guid", "MDCU", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 1, "seul le nettoyage, une fois")
+    assertEq(SYMBOLS[1].getSymbolID(), "Skull", "symbole du nettoyage")
+    assertEq(SYMBOLS[1].getWorldX() .. "," .. SYMBOLS[1].getWorldY(), "1200,1300", "centre de la zone")
+    local A = MilitaryDrop.Announce
+    assertTrue(A.CLEANUP_SYMBOL ~= A.RECON_SYMBOL and A.CLEANUP_SYMBOL ~= A.SYMBOL, "symbole distinct")
+    assertTrue(A.CLEANUP_CODE ~= A.RECON_CODE and A.CLEANUP_CODE ~= A.CODE, "code distinct")
+    assertTrue(A.CLEANUP_COLOR.r ~= A.RECON_COLOR.r and A.CLEANUP_COLOR.r ~= A.COLOR.r, "couleur distincte")
+    assertEq(colors[1][1], A.CLEANUP_COLOR.r, "couleur appliquée")
+    triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
+    assertEq(SYMBOLS[2].getSymbolID(), "Eye", "puis la reconnaissance, indépendante")
+    -- Même mission annoncée de nouveau (reconnexion) : pas de second repère.
+    MilitaryDrop.Announce.onCleanupAnnounce({ id = "M2", x = 1200, y = 1300, radius = 40 })
+    SYMBOLS = {}
+    triggerEvent("OnDeviceText", "guid", "MDCU", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 0, "une fois par mission")
+end
+
+function T.cleanup_needs_a_radio_that_hears_it()
+    MilitaryDrop.Announce.onCleanupAnnounce({ id = "M5", x = 1200, y = 1300, radius = 40 })
+    triggerEvent("OnDeviceText", "guid", "MDCU", 300, 300, 0, "line", {})
+    triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 0, "radio posée trop loin, ou ligne d'une autre mission")
+    triggerEvent("OnDeviceText", "guid", "MDCU", 102, 99, 0, "line", {})
+    assertEq(#SYMBOLS, 1, "radio posée à portée")
+end
+
 function T.existing_symbol_is_not_duplicated()
     MilitaryDrop.Announce.markMap(500, 600)
     assertEq(MilitaryDrop.Announce.markMap(500, 600), false, "doublon refusé")

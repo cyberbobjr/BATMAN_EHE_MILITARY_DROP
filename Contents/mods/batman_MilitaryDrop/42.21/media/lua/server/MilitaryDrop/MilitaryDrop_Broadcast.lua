@@ -51,6 +51,9 @@ Broadcast.CODE = "MDRP"
 -- Annonce d'une reconnaissance (SRC-03) : repère « Eye » chez qui l'entend
 -- (MilitaryDrop.Announce.RECON_CODE, même valeur).
 Broadcast.RECON_CODE = "MDRC"
+-- Annonce d'un nettoyage (SRC-04) : repère « Skull » chez qui l'entend
+-- (MilitaryDrop.Announce.CLEANUP_CODE, même valeur).
+Broadcast.CLEANUP_CODE = "MDCU"
 Broadcast.REPEATS = 3
 Broadcast.COLOR = { r = 0.45, g = 0.85, b = 0.45 }
 -- Bande de la fréquence libre (kHz, comme DeviceData:getChannel()).
@@ -181,6 +184,14 @@ end
 function Broadcast.reconAnnounced(missionId, x, y)
     Net.toAll("ReconAnnounce", { id = tostring(missionId), x = x, y = y })
     return Broadcast.RECON_CODE
+end
+
+--- Nettoyage lancé (MilitaryDrop_Missions.lua) : même principe que
+--- reconAnnounced, avec le rayon de la zone (CleanupAnnounce { id, x, y,
+--- radius }). Renvoie le code des lignes de l'annonce.
+function Broadcast.cleanupAnnounced(missionId, x, y, radius)
+    Net.toAll("CleanupAnnounce", { id = tostring(missionId), x = x, y = y, radius = radius })
+    return Broadcast.CLEANUP_CODE
 end
 
 Events.OnLoadRadioScripts.Add(Broadcast.onLoadRadioScripts)

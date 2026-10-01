@@ -16,6 +16,14 @@
 -- chemin d'un appel accepté (Server.launchDrop). Points non dépensés : perdus
 -- (REQ-07).
 --
+-- Largage admin (« Largage forcé », Server.canForce) : avec RequisitionForm,
+-- il ouvre aussi la feuille, marquée « forced » : tous les paliers, budget
+-- d'une note de Trust.MAX, leurre compris s'il est actif (lots désactivés ou
+-- vides exclus comme pour tous). Sans radio, code, ligne ni délai, comme le
+-- largage admin direct. À la commande, le droit est revérifié
+-- (Server.canForce) au lieu de la radio ; le vol part en largage forcé
+-- (délai global non consommé, hors suivi de confiance, coordonnées privées).
+--
 -- Budget (REQ-03) : floor((4 + note × 0,16) × RequisitionBudget / 100).
 -- Paliers : groupe 1 toujours, 2 dès RequisitionTier2, 3 dès RequisitionTier3.
 -- Coût effectif : max(1, arrondi(coût × RequisitionCostMultiplier / 100)),
@@ -89,11 +97,11 @@ Config.addDefaults({
     RequisitionForm = true,
     RequisitionBudget = 100,
     RequisitionCostMultiplier = 100,
-    RequisitionTier2 = 50,
+    RequisitionTier2 = 60,
     RequisitionTier3 = 75,
 })
 
--- nom du joueur → { requestId, expiresAt (ms réelles) }
+-- nom du joueur → { requestId, expiresAt (ms réelles), forced (largage admin) }
 local pending = {}
 
 local function round(value)
@@ -136,7 +144,7 @@ function Requisition.maxGroup(note)
     if value >= (tonumber(Config.get("RequisitionTier3")) or 75) then
         return 3
     end
-    if value >= (tonumber(Config.get("RequisitionTier2")) or 50) then
+    if value >= (tonumber(Config.get("RequisitionTier2")) or 60) then
         return 2
     end
     return 1
@@ -152,12 +160,13 @@ local function decoyOffer()
 end
 
 --- Offre d'une équipe : budget, palier de lots, lots (ordre d'affichage) et
---- leurre. Contrat de la réponse « form » (docs/PLAN-V14.md).
-function Requisition.offer(teamId)
+--- leurre. Contrat de la réponse « form » (docs/PLAN-V14.md). forced :
+--- largage admin, tous les paliers et le budget d'une note maximale.
+function Requisition.offer(teamId, forced)
     -- Repli paresseux : un seul passage sur les tables pour les 18 lots.
     Lots.warm()
-    local note = MilitaryDrop.Trust.get(teamId)
-    local maxGroup = Requisition.maxGroup(note)
+    local note = forced and MilitaryDrop.Trust.MAX or MilitaryDrop.Trust.get(teamId)
+    local maxGroup = forced and math.huge or Requisition.maxGroup(note)
     local lots = {}
     for _, lot in ipairs(Lots.LIST) do
         local reason = nil
@@ -244,16 +253,22 @@ end
 -- ----------------------------------------------------------------------------
 
 --- Ouvre le formulaire : autorisation en attente et réponse « form » au seul
---- demandeur (appelé par Server.handleRequest, appel déjà accepté).
-function Requisition.openForm(player, requestId)
+--- demandeur (appelé par Server.handleRequest, appel déjà accepté). forced :
+--- largage admin (droit déjà vérifié par Server.evaluate).
+function Requisition.openForm(player, requestId, forced)
+    forced = forced == true
     local name = tostring(player:getUsername())
     local teamId = MilitaryDrop.Teams.idFor(player)
-    local offer = Requisition.offer(teamId)
-    pending[name] = { requestId = requestId, expiresAt = getTimestampMs() + Requisition.AUTH_MS }
-    MilitaryDrop.Trust.touch(teamId)
-    MilitaryDrop.log("request from " .. name .. ": requisition form, budget " .. offer.budget)
+    local offer = Requisition.offer(teamId, forced)
+    pending[name] = { requestId = requestId, expiresAt = getTimestampMs() + Requisition.AUTH_MS,
+        forced = forced or nil }
+    if not forced then
+        MilitaryDrop.Trust.touch(teamId)
+    end
+    MilitaryDrop.log("request from " .. name .. ": " .. (forced and "admin " or "") .. "requisition form, budget "
+        .. offer.budget)
     Net.toPlayer(player, "Result", {
-        requestId = requestId, status = "form",
+        requestId = requestId, status = "form", forced = forced or nil,
         callsign = MilitaryDrop.Teams.callsign(teamId), tier = MilitaryDrop.Trust.tier(teamId),
         budget = offer.budget, expiresMs = Requisition.AUTH_MS,
         lots = offer.lots, decoy = offer.decoy,
@@ -295,6 +310,10 @@ function Requisition.handleOrder(player, args)
         pending[name] = nil
         MilitaryDrop.log("order from " .. name .. " refused: authorization expired")
         reply(player, requestId, "expired")
+        return
+    end
+    if auth.forced then
+        Requisition.handleForcedOrder(player, args, auth)
         return
     end
     -- Radio : comme Server.evaluate, sans redemander le code. Ces refus gardent
@@ -350,6 +369,42 @@ function Requisition.handleOrder(player, args)
             { sector = order.decoy, point = point, untracked = true, decoy = { sector = order.decoy } })
     else
         Server.launchDrop(player, requestId, false, { point = point, order = { lots = order.lots } })
+    end
+end
+
+--- Commande d'une feuille admin : droit revérifié (il a pu être retiré
+--- depuis l'ouverture), puis vol forcé. Ni radio, ni ligne, ni délai.
+function Requisition.handleForcedOrder(player, args, auth)
+    local name = tostring(player:getUsername())
+    local requestId = auth.requestId
+    if not Server.canForce(player) then
+        pending[name] = nil
+        MilitaryDrop.log("admin order from " .. name .. " refused: no longer allowed", true)
+        reply(player, requestId, "denied")
+        return
+    end
+    local teamId = MilitaryDrop.Teams.idFor(player)
+    local order, why = Requisition.validate(args.order, args.decoy, Requisition.offer(teamId, true))
+    if not order then
+        MilitaryDrop.log("admin order from " .. name .. " refused: " .. tostring(why))
+        reply(player, requestId, "orderInvalid")
+        return
+    end
+    local x, y = Server.chooseDropPoint(player, order.decoy)
+    if not x then
+        MilitaryDrop.log("admin order from " .. name .. ": no landing point"
+            .. (order.decoy and (" in sector " .. order.decoy) or "") .. ", authorization kept")
+        reply(player, requestId, "noSite", { sector = order.decoy })
+        return
+    end
+    pending[name] = nil
+    local point = { x = x, y = y }
+    MilitaryDrop.log("admin order from " .. name .. " accepted", true)
+    if order.decoy then
+        Server.launchDrop(player, requestId, true,
+            { sector = order.decoy, point = point, untracked = true, decoy = { sector = order.decoy } })
+    else
+        Server.launchDrop(player, requestId, true, { point = point, untracked = true, order = { lots = order.lots } })
     end
 end
 

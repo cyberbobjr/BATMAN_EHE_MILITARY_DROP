@@ -86,6 +86,99 @@ local function giveTag(owner, id, soldier)
     return tag
 end
 
+--- Liste Java simulée (add, contains, size, get).
+local function javaList()
+    local l = { items = {} }
+    function l.add(self, v) self.items[#self.items + 1] = v end
+    function l.contains(self, v)
+        for _, item in ipairs(self.items) do
+            if item == v then
+                return true
+            end
+        end
+        return false
+    end
+    function l.size(self) return #self.items end
+    function l.get(self, i) return self.items[i + 1] end
+    return l
+end
+
+local function overlaps(x, y, w, h, r)
+    return not (x + w <= r.x or x >= r.x + r.w or y + h <= r.y or y >= r.y + r.h)
+end
+
+--- Métagrille simulée, carte de 16 × 16 cellules : bâtiments { x, y, w, h,
+--- userDefined, basement } rangés dans la cellule de leur coin (comme leurs
+--- pièces), zones { type, x, y, w, h, polyline }. Pas de
+--- getBuildingsIntersecting sur la grille : son parcours des cellules est
+--- faux en 42.21, le mod interroge chaque cellule.
+local function makeGrid(buildings, zones)
+    local defs = {}
+    for _, b in ipairs(buildings or {}) do
+        local def = { b = b }
+        function def.getX() return b.x end
+        function def.getY() return b.y end
+        function def.getW() return b.w end
+        function def.getH() return b.h end
+        function def.isUserDefined() return b.userDefined == true end
+        function def.isBasement() return b.basement == true end
+        defs[#defs + 1] = def
+    end
+    local zoneObjects = {}
+    for _, z in ipairs(zones or {}) do
+        local zone = { z = z }
+        function zone.getType() return z.type end
+        function zone.isRectangle() return not z.polyline end
+        function zone.getX() return z.x end
+        function zone.getY() return z.y end
+        function zone.getWidth() return z.w end
+        function zone.getHeight() return z.h end
+        zoneObjects[#zoneObjects + 1] = zone
+    end
+    local grid = { cellCalls = 0 }
+    function grid.isValidSquare(_, x, y) return x >= 0 and y >= 0 and x < 4096 and y < 4096 end
+    function grid.getCellData(self, cx, cy)
+        if cx < 0 or cy < 0 or cx >= 16 or cy >= 16 then
+            return nil
+        end
+        self.cellCalls = self.cellCalls + 1
+        return {
+            getBuildingsIntersecting = function(_, x, y, w, h, list)
+                for _, def in ipairs(defs) do
+                    local b = def.b
+                    if math.floor(b.x / 256) == cx and math.floor(b.y / 256) == cy and overlaps(x, y, w, h, b)
+                        and not list:contains(def) then
+                        list:add(def)
+                    end
+                end
+            end,
+        }
+    end
+    function grid.getZonesIntersecting(_, x, y, z, w, h)
+        assertEq(z, 0, "zones du rez-de-chaussée")
+        local found = javaList()
+        for _, zone in ipairs(zoneObjects) do
+            if overlaps(x, y, w, h, zone.z) then
+                found:add(zone)
+            end
+        end
+        return found
+    end
+    return grid
+end
+
+--- Tirages pseudo-aléatoires reproductibles (comme ZombRand / ZombRandFloat).
+local function seededRandom(seed)
+    math.randomseed(seed)
+    ZombRand = function(low, high)
+        if high then
+            return math.random(low, high - 1)
+        end
+        return math.random(low) - 1
+    end
+    ZombRandFloat = function(low, high) return low + math.random() * (high - low) end
+end
+
 local function radioRef(player)
     return { kind = "item", id = player.radio:getID() }
 end
@@ -148,7 +241,10 @@ function T.setup()
     REMOVED = {}
     sendRemoveItemFromContainer = function(_, item) REMOVED[#REMOVED + 1] = item end
     ItemTag = { DOG_TAG = "base:dogtag" }
-    ArrayList = { new = function() return {} end }
+    ArrayList = { new = javaList }
+    -- Métagrille vide : point des missions par repli (Server.pickDropPoint).
+    GRID = makeGrid()
+    getWorld = function() return { getMetaGrid = function() return GRID end } end
     ONLINE = {}
     getOnlinePlayers = function() return arrayList(ONLINE) end
     FACTIONS = {}
@@ -484,6 +580,125 @@ function T.no_mission_without_players_channel_or_gain()
     assertEq(Missions.launch("control"), nil, "source désactivée")
     Missions.update()
     assertEq(STATE.missions.nextHours.control, nil, "rien de planifié")
+end
+
+-- ----------------------------------------------------------------------------
+-- Point des missions : terre ferme d'après la métagrille
+-- ----------------------------------------------------------------------------
+
+--- Carte simulée : eau à l'ouest de x = 1000 (ni bâtiment, ni route), terre à
+--- l'est, bâtiments tous les 50 cases ; un trop grand, un construit par un
+--- joueur, un souterrain, jamais visés.
+local function coastMap()
+    local buildings, centers = {}, {}
+    for bx = 1000, 1500, 50 do
+        for by = 500, 1500, 50 do
+            buildings[#buildings + 1] = { x = bx, y = by, w = 12, h = 8 }
+            centers[(bx + 6) .. "," .. (by + 4)] = true
+        end
+    end
+    buildings[#buildings + 1] = { x = 1420, y = 980, w = 60, h = 60 }
+    buildings[#buildings + 1] = { x = 1020, y = 1020, w = 6, h = 6, userDefined = true }
+    buildings[#buildings + 1] = { x = 1030, y = 1030, w = 6, h = 6, basement = true }
+    return buildings, centers
+end
+
+function T.recon_site_is_never_in_the_water()
+    seededRandom(42)
+    local buildings, centers = coastMap()
+    GRID = makeGrid(buildings)
+    makePlayer("alice", 1000, 1000)
+    for i = 1, 60 do
+        local mission = Missions.launch("recon")
+        assertTrue(mission ~= nil, "mission " .. i)
+        local key = mission.x .. "," .. mission.y
+        assertTrue(mission.x >= 1000, "jamais à l'ouest (eau) : " .. key)
+        assertTrue(centers[key], "centre d'un bâtiment visable : " .. key)
+        local d = math.sqrt((mission.x - 1000) ^ 2 + (mission.y - 1000) ^ 2)
+        assertTrue(d >= 150 - 1 and d <= 400 + 1, "dans l'anneau des largages : " .. d)
+        STATE.missions.open.recon = nil
+    end
+    assertTrue(GRID.cellCalls > 0, "cellules interrogées une à une")
+end
+
+function T.recon_site_is_reachable_on_foot()
+    -- Bâtiment de 40 × 40 au plus : son centre est à 20 cases de son bord,
+    -- la confirmation (25 cases) se fait de l'extérieur.
+    assertTrue(Missions.SITE_MAX_BUILDING / 2 < Missions.RECON_RADIUS, "centre à portée du bord")
+    seededRandom(7)
+    GRID = makeGrid({ { x = 1300, y = 1000, w = 41, h = 10 }, { x = 1200, y = 1000, w = 40, h = 40 } })
+    local found = 0
+    for _ = 1, 20 do
+        local x, y, how = Missions.pickSite("recon", 1000, 1000)
+        if how == "building" then
+            found = found + 1
+            assertEq(x .. "," .. y, "1220,1020", "seul le bâtiment de 40 cases")
+        end
+    end
+    assertTrue(found > 0, "bâtiment trouvé")
+end
+
+function T.recon_site_falls_back_to_a_road_then_to_the_drop_point()
+    seededRandom(3)
+    local roads = {}
+    for rx = 700, 1300, 100 do
+        roads[#roads + 1] = { type = "Nav", x = rx, y = 0, w = 8, h = 2000 }
+    end
+    roads[#roads + 1] = { type = "Nav", x = 0, y = 1000, w = 2000, h = 8, polyline = true }
+    roads[#roads + 1] = { type = "Forest", x = 0, y = 0, w = 4000, h = 4000 }
+    GRID = makeGrid({}, roads)
+    for _ = 1, 30 do
+        local x, y, how = Missions.pickSite("recon", 1000, 1000)
+        assertEq(how, "road", "aucun bâtiment : une route")
+        assertTrue(x % 100 < 8 and x >= 700 and x <= 1307 and y >= 0 and y < 2000,
+            "sur une route rectangulaire : " .. x .. "," .. y)
+    end
+    GRID = makeGrid({}, { { type = "Forest", x = 0, y = 0, w = 4000, h = 4000 } })
+    local x, y, how = Missions.pickSite("recon", 1000, 1000)
+    assertEq(how, "fallback", "ni bâtiment ni route : repli")
+    assertEq(x .. "," .. y, "300,400", "point tiré comme un largage")
+end
+
+function T.cleanup_zone_is_centred_among_buildings()
+    seededRandom(11)
+    -- Hameau de 3 maisons au nord-est, maison isolée au sud-est (lac autour).
+    local buildings = {
+        { x = 1200, y = 800, w = 10, h = 10 }, { x = 1220, y = 810, w = 10, h = 10 },
+        { x = 1210, y = 830, w = 10, h = 10 }, { x = 1250, y = 1150, w = 10, h = 10 },
+    }
+    GRID = makeGrid(buildings)
+    local hamlet, isolated = 0, 0
+    for _ = 1, 40 do
+        local x, y, how = Missions.pickSite("cleanup", 1000, 1000)
+        if how == "building" then
+            hamlet = hamlet + 1
+            assertTrue(x < 1240 and y < 900, "jamais la maison isolée : " .. x .. "," .. y)
+        end
+        local rx, ry, reconHow = Missions.pickSite("recon", 1000, 1000)
+        if reconHow == "building" and rx > 1240 and ry > 1100 then
+            isolated = isolated + 1
+        end
+    end
+    assertTrue(hamlet > 0, "le hameau est visé")
+    assertTrue(isolated > 0, "la reconnaissance peut viser la maison isolée")
+end
+
+function T.cleanup_announce_carries_its_map_marker_code_and_radius()
+    makePlayer("alice")
+    local marked = nil
+    MilitaryDrop.Broadcast.cleanupAnnounced = function(id, x, y, radius)
+        marked = { id = id, x = x, y = y, radius = radius }
+        return "MDCU"
+    end
+    local mission = Missions.launch("cleanup")
+    assertEq(marked.id, mission.id, "repère envoyé pour cette mission")
+    assertEq(marked.x .. "," .. marked.y, mission.x .. "," .. mission.y, "au centre annoncé")
+    assertEq(marked.radius, Missions.CLEANUP_RADIUS, "rayon de la zone")
+    local lines = AIRED[#AIRED]
+    for i = 1, #lines - 1 do
+        assertEq(lines[i][2], "MDCU", "ligne de zone " .. i .. " codée")
+    end
+    assertEq(lines[#lines][2], nil, "fin de transmission sans code")
 end
 
 -- ----------------------------------------------------------------------------

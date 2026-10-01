@@ -112,6 +112,18 @@ function T.recon_coordinates_go_to_all_with_their_code()
     assertEq(AIRED, nil, "rien diffusé : l'annonce reste à l'appelant")
 end
 
+function T.cleanup_zone_goes_to_all_with_its_own_code()
+    triggerEvent("OnLoadRadioScripts", SCRIPT_MANAGER, false)
+    local code = MilitaryDrop.Broadcast.cleanupAnnounced("M8", 1600, 2600, 40)
+    assertEq(code, "MDCU", "code de la ligne d'annonce")
+    assertTrue(code ~= MilitaryDrop.Broadcast.CODE and code ~= MilitaryDrop.Broadcast.RECON_CODE, "code distinct")
+    assertEq(SENT[1].command, "CleanupAnnounce", "zone envoyée aux clients")
+    assertEq(SENT[1].args.id, "M8", "mission")
+    assertEq(SENT[1].args.x .. "," .. SENT[1].args.y, "1600,2600", "centre")
+    assertEq(SENT[1].args.radius, 40, "rayon")
+    assertEq(AIRED, nil, "rien diffusé : l'annonce reste à l'appelant")
+end
+
 function T.taken_frequency_disables_broadcast_quietly()
     FREQUENCY_TAKEN = true
     triggerEvent("OnLoadRadioScripts", SCRIPT_MANAGER, false)

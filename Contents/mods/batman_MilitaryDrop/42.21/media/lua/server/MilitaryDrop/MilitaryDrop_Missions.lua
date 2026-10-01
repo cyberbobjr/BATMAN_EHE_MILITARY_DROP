@@ -16,10 +16,13 @@
 --     matricules » : plaques de l'inventaire du joueur, identifiant d'objet
 --     (getID) jamais transmis → +DogTagGain chacune, plaque consommée, la
 --     base cite les noms. Plafond du jour atteint : plaques gardées ;
---   * SRC-03 reconnaissance (publique) : grille tirée comme un point de
---     largage autour d'un joueur connecté ; première équipe qui confirme à
---     RECON_RADIUS cases au plus avant ReconHours → +ReconGain ;
---   * SRC-04 nettoyage (publique) : zone de rayon CLEANUP_RADIUS, quota
+--   * SRC-03 reconnaissance (publique) : grille dans l'anneau des largages
+--     autour d'un joueur connecté, sur la terre ferme (Missions.pickSite :
+--     centre d'un bâtiment, sinon route, la métagrille ne connaissant pas
+--     l'eau) ; première équipe qui confirme à RECON_RADIUS cases au plus avant
+--     ReconHours → +ReconGain ;
+--   * SRC-04 nettoyage (publique) : zone de rayon CLEANUP_RADIUS centrée sur
+--     un bâtiment entouré d'autres (Missions.pickSite), quota
 --     CleanupQuota ; zombies tués dans la zone (OnZombieDead serveur, tueur
 --     zombie:getAttackedBy() s'il est un IsoPlayer : feu et pièges non
 --     attribués), équipe du tueur figée à la mort, un zombie compté une fois ;
@@ -143,7 +146,8 @@ end
 
 --- Annonce à toutes les stations sur la chaîne militaire (repeats fois), notée
 --- au journal des postes. code : code des lignes répétées (repère de carte de
---- la reconnaissance, MilitaryDrop.Broadcast.reconAnnounced), pas de la fin.
+--- la reconnaissance ou du nettoyage, MilitaryDrop.Broadcast.reconAnnounced
+--- et cleanupAnnounced), pas de la fin.
 function Missions.announce(text, repeats, code)
     postRecord(nil, text)
     local lines = {}
@@ -398,6 +402,182 @@ local function livePlayers()
     return list
 end
 
+-- ----------------------------------------------------------------------------
+-- Point d'une mission : sur la terre ferme, d'après la métagrille
+-- ----------------------------------------------------------------------------
+-- La métagrille ne connaît pas l'eau : aucune zone de type eau n'y est
+-- enregistrée (WaterFlow et WaterZone vont à registerWaterFlow et
+-- registerWaterZone, metazoneHandler.lua:34-65, 99-102). Elle connaît en
+-- revanche, sans rien charger, les bâtiments (IsoMetaCell :
+-- getBuildingsIntersecting, IsoMetaCell.java:255-273) et les routes (zones
+-- « Nav » des rues de streets.xml, WorldMapStreet.java:973-1025, lues par
+-- getZonesIntersecting, IsoMetaGrid.java:222-235), toujours sur la terre
+-- ferme. Le point vise donc le centre d'un bâtiment, sinon une route, et
+-- seulement en dernier recours un point tiré comme un largage.
+-- IsoMetaGrid.getBuildingsIntersecting n'est pas utilisé : il parcourt les
+-- cellules jusqu'à (x + nombre de cellules de la carte) / 256 au lieu de
+-- (x + w) / 256 (IsoMetaGrid.java:408-416), donc une ou deux cellules
+-- seulement ; on interroge chaque cellule touchée.
+
+-- Points tirés dans l'anneau de distance, par méthode.
+Missions.SITE_ATTEMPTS = 20
+-- Demi-côté de la fenêtre examinée autour de chaque point tiré.
+Missions.SITE_WINDOW = 48
+-- Plus grand côté d'un bâtiment visé : son centre reste à 20 cases au plus de
+-- son bord, la confirmation (RECON_RADIUS = 25) se fait de l'extérieur.
+Missions.SITE_MAX_BUILDING = 40
+-- Nettoyage : au moins ce nombre de bâtiments (le visé compris) à
+-- CLEANUP_RADIUS cases de son centre, pour une zone habitée plutôt qu'une
+-- cabane au bord d'un lac.
+Missions.CLEANUP_MIN_BUILDINGS = 3
+Missions.ROAD_ZONE = "Nav"
+Missions.CELL_SIZE = 256
+
+--- Anneau de distance des largages (options DropMinDistance, DropMaxDistance).
+local function ring()
+    local low = math.max(0, tonumber(Config.get("DropMinDistance")) or 0)
+    local high = math.max(0, tonumber(Config.get("DropMaxDistance")) or 0)
+    if high < low then
+        low, high = high, low
+    end
+    return low, high
+end
+
+local function ringPoint(cx, cy, low, high)
+    local angle = ZombRandFloat(0, 2 * math.pi)
+    local distance = ZombRandFloat(low, high)
+    return math.floor(cx + math.cos(angle) * distance), math.floor(cy + math.sin(angle) * distance)
+end
+
+--- Bâtiments (BuildingDef) qui touchent le carré de demi-côté w autour de
+--- (px, py) : liste Java (la métagrille ne met pas deux fois le même).
+local function buildingsNear(grid, px, py, w)
+    local list = ArrayList.new()
+    local size = Missions.CELL_SIZE
+    local x0, y0 = math.max(0, px - w), math.max(0, py - w)
+    for cy = math.floor(y0 / size), math.floor((py + w) / size) do
+        for cx = math.floor(x0 / size), math.floor((px + w) / size) do
+            local cell = grid:getCellData(cx, cy)
+            if cell then
+                cell:getBuildingsIntersecting(x0, y0, px + w - x0, py + w - y0, list)
+            end
+        end
+    end
+    return list
+end
+
+--- Centre d'un bâtiment visable (ni construit par un joueur, ni seulement
+--- souterrain, assez petit), ou nil.
+local function buildingCenter(building)
+    if building:isUserDefined() or building:isBasement() then
+        return nil
+    end
+    local w, h = building:getW(), building:getH()
+    if w < 1 or h < 1 or w > Missions.SITE_MAX_BUILDING or h > Missions.SITE_MAX_BUILDING then
+        return nil
+    end
+    return building:getX() + math.floor(w / 2), building:getY() + math.floor(h / 2)
+end
+
+local function inRing(x, y, cx, cy, low, high)
+    local d2 = (x - cx) * (x - cx) + (y - cy) * (y - cy)
+    return d2 >= low * low and d2 <= high * high
+end
+
+--- Centre d'un bâtiment dans l'anneau (nettoyage : au milieu d'autres), ou nil.
+local function buildingSite(grid, kind, cx, cy, low, high)
+    local w = Missions.SITE_WINDOW
+    for _ = 1, Missions.SITE_ATTEMPTS do
+        local px, py = ringPoint(cx, cy, low, high)
+        if grid:isValidSquare(px, py) then
+            local list = buildingsNear(grid, px, py, kind == "cleanup" and (w + Missions.CLEANUP_RADIUS) or w)
+            local centers, candidates = {}, {}
+            for i = 0, list:size() - 1 do
+                local x, y = buildingCenter(list:get(i))
+                if x then
+                    centers[#centers + 1] = { x = x, y = y }
+                end
+            end
+            local r2 = Missions.CLEANUP_RADIUS * Missions.CLEANUP_RADIUS
+            for _, c in ipairs(centers) do
+                local ok = math.abs(c.x - px) <= w and math.abs(c.y - py) <= w and inRing(c.x, c.y, cx, cy, low, high)
+                if ok and kind == "cleanup" then
+                    local around = 0
+                    for _, other in ipairs(centers) do
+                        if (other.x - c.x) * (other.x - c.x) + (other.y - c.y) * (other.y - c.y) <= r2 then
+                            around = around + 1
+                        end
+                    end
+                    ok = around >= Missions.CLEANUP_MIN_BUILDINGS
+                end
+                if ok then
+                    candidates[#candidates + 1] = c
+                end
+            end
+            if #candidates > 0 then
+                local c = candidates[ZombRand(#candidates) + 1]
+                return c.x, c.y
+            end
+        end
+    end
+    return nil
+end
+
+local function clamp(value, low, high)
+    return math.max(low, math.min(high, value))
+end
+
+--- Point d'une route (zone « Nav » rectangulaire) près d'un point de l'anneau, ou nil.
+local function roadSite(grid, cx, cy, low, high)
+    local w = Missions.SITE_WINDOW
+    for _ = 1, Missions.SITE_ATTEMPTS do
+        local px, py = ringPoint(cx, cy, low, high)
+        if grid:isValidSquare(px, py) then
+            local zones = grid:getZonesIntersecting(math.max(0, px - w), math.max(0, py - w), 0, 2 * w, 2 * w)
+            local candidates = {}
+            for i = 0, zones:size() - 1 do
+                local zone = zones:get(i)
+                if zone:getType() == Missions.ROAD_ZONE and zone:isRectangle() and zone:getWidth() > 0
+                    and zone:getHeight() > 0 then
+                    -- Case de la route la plus proche du point tiré.
+                    local x = clamp(px, zone:getX(), zone:getX() + zone:getWidth() - 1)
+                    local y = clamp(py, zone:getY(), zone:getY() + zone:getHeight() - 1)
+                    if grid:isValidSquare(x, y) then
+                        candidates[#candidates + 1] = { x = x, y = y }
+                    end
+                end
+            end
+            if #candidates > 0 then
+                local c = candidates[ZombRand(#candidates) + 1]
+                return c.x, c.y
+            end
+        end
+    end
+    return nil
+end
+
+--- Point d'une reconnaissance ou d'un nettoyage autour de (cx, cy), dans
+--- l'anneau des largages : centre d'un bâtiment, sinon route, sinon point
+--- tiré comme un largage (Server.pickDropPoint, eau possible). Renvoie x, y
+--- et la méthode (« building », « road », « fallback »), ou nil.
+function Missions.pickSite(kind, cx, cy)
+    local grid = getWorld():getMetaGrid()
+    local low, high = ring()
+    local x, y = buildingSite(grid, kind, cx, cy, low, high)
+    if x then
+        return x, y, "building"
+    end
+    x, y = roadSite(grid, cx, cy, low, high)
+    if x then
+        return x, y, "road"
+    end
+    x, y = MilitaryDrop.Server.pickDropPoint(cx, cy)
+    if x then
+        return x, y, "fallback"
+    end
+    return nil
+end
+
 local function launchText(mission)
     local hours = whole(mission.deadline - mission.openedHours)
     if mission.kind == "recon" then
@@ -430,11 +610,12 @@ function Missions.launch(kind, now)
         mission.responded = {}
     else
         local around = players[ZombRand(#players) + 1]
-        local x, y = MilitaryDrop.Server.pickDropPoint(math.floor(around:getX()), math.floor(around:getY()))
+        local x, y, how = Missions.pickSite(kind, math.floor(around:getX()), math.floor(around:getY()))
         if not x then
             return nil
         end
         mission.x, mission.y = x, y
+        MilitaryDrop.log("mission site " .. x .. "," .. y .. " (" .. tostring(how) .. ")")
         if kind == "recon" then
             mission.radius = Missions.RECON_RADIUS
         else
@@ -446,11 +627,14 @@ function Missions.launch(kind, now)
     mission.text = launchText(mission)
     s.open[kind] = mission
     s.nextHours[kind] = nil
-    -- Reconnaissance : coordonnées envoyées avant l'annonce ; seuls les
-    -- clients dont une radio reçoit une ligne codée marquent leur carte.
+    -- Reconnaissance et nettoyage : coordonnées envoyées avant l'annonce ;
+    -- seuls les clients dont une radio reçoit une ligne codée marquent leur carte.
     local code = nil
-    if kind == "recon" and MilitaryDrop.Broadcast and MilitaryDrop.Broadcast.reconAnnounced then
-        code = MilitaryDrop.Broadcast.reconAnnounced(mission.id, mission.x, mission.y)
+    local Broadcast = MilitaryDrop.Broadcast
+    if kind == "recon" and Broadcast.reconAnnounced then
+        code = Broadcast.reconAnnounced(mission.id, mission.x, mission.y)
+    elseif kind == "cleanup" and Broadcast.cleanupAnnounced then
+        code = Broadcast.cleanupAnnounced(mission.id, mission.x, mission.y, mission.radius)
     end
     Missions.announce(mission.text, Missions.ANNOUNCE_REPEATS, code)
     MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") until " .. mission.deadline)

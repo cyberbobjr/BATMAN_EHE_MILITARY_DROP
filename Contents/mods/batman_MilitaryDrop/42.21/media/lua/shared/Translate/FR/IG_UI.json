@@ -325,5 +325,6 @@
     "IGUI_MilitaryDrop_RadioModule_TypeCode": "Saisir le code",
     "IGUI_MilitaryDrop_RadioModule_Back": "Retour",
     "IGUI_MilitaryDrop_ReqPage": "Page %1/%2",
-    "IGUI_MilitaryDrop_UnknownLotCase": "Ce bordereau ne correspond à aucun lot connu. Je garde la caisse fermée."
+    "IGUI_MilitaryDrop_UnknownLotCase": "Ce bordereau ne correspond à aucun lot connu. Je garde la caisse fermée.",
+    "IGUI_MilitaryDrop_ReqStampAdmin": "ADMIN"
 }
