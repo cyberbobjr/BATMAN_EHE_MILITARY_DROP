@@ -42,6 +42,21 @@
 -- anglais hors EN et FR), comme les documents militaires : setName est
 -- sauvegardé et transmis tel quel. Le libellé du lot reste lisible ; la
 -- description (Tooltip) et le nom du script sont traduits par chaque client.
+-- Un lot ajouté par l'admin (fichier des lots) n'a pas de clé de traduction :
+-- son nom de caisse prend son texte dans la langue du serveur (Lots.text).
+--
+-- Fichier des lots (MilitaryDrop_LotsFile.lua) : lu au démarrage avant le
+-- précalcul, ou au premier usage. Rechargement par l'admin sans redémarrer :
+-- MilitaryDrop.Requisition.reload() (console de débogage en solo), ou la
+-- commande ReloadLots d'un vrai admin en MP (Requisition.canReload), une fois
+-- toutes les RELOAD_INTERVAL_MS au plus pour tout le serveur ; l'admin reçoit
+-- le résumé (ReloadLotsReply, affiché dans sa console) :
+--   sendClientCommand(getPlayer(), "MilitaryDrop", "ReloadLots", {})
+-- Un lot retiré du fichier alors que des caisses existent : elles gardent
+-- son id ; la recette refuse de les ouvrir (MilitaryDrop_Recipe.lua) tant que
+-- le lot n'est pas revenu. La notice conseille enabled = false.
+-- Les autorisations en attente restent : la commande est revalidée contre la
+-- nouvelle liste.
 -- ============================================================================
 
 if isClient() then
@@ -50,6 +65,7 @@ end
 
 require "MilitaryDrop/MilitaryDrop_Core"
 require "MilitaryDrop/MilitaryDrop_Lots"
+require "MilitaryDrop/MilitaryDrop_LotsFile"
 require "MilitaryDrop/MilitaryDrop_Server"
 
 local Config = MilitaryDrop.Config
@@ -66,6 +82,8 @@ Requisition.ORDER_INTERVAL_MS = 3000
 Requisition.SECTORS = { "N", "E", "S", "W" }
 -- Garde-fou contre une commande démesurée (entrées lues dans la table du client).
 Requisition.MAX_ENTRIES = 64
+-- Cadence de la commande d'admin ReloadLots.
+Requisition.RELOAD_INTERVAL_MS = 3000
 
 Config.addDefaults({
     RequisitionForm = true,
@@ -150,8 +168,16 @@ function Requisition.offer(teamId)
         elseif not Lots.hasCandidates(lot.id) then
             reason = "empty"
         end
-        lots[#lots + 1] = { id = lot.id, group = lot.group, cost = Requisition.cost(lot.cost),
+        local entry = { id = lot.id, group = lot.group, cost = Requisition.cost(lot.cost),
             allowed = reason == nil, reason = reason, label = lot.label, desc = lot.desc }
+        -- Lot du fichier avec ses textes : affichés par le client dans sa langue.
+        if type(lot.texts) == "table" then
+            entry.texts = {}
+            for language, text in pairs(lot.texts) do
+                entry.texts[language] = { label = text.label, desc = text.desc }
+            end
+        end
+        lots[#lots + 1] = entry
     end
     return { budget = Requisition.budget(note), lots = lots, decoy = decoyOffer() }
 end
@@ -364,25 +390,57 @@ end
 
 --- Caisses de réquisition à créer pour un largage, dans l'ordre des lots :
 --- { { fullType, lot, name }, … } (une par unité commandée), ou {} sans commande.
+--- Un lot commandé puis retiré du fichier avant la livraison (rechargement
+--- pendant le vol) est livré quand même, après les autres (ordre des id) :
+--- sa caisse garde l'id et son nom ; elle ne s'ouvre pas tant que le lot
+--- manque (Recipe), et s'ouvrira s'il revient.
 function Requisition.casesFor(dropId)
     local order = Requisition.orderOf(dropId)
     local cases = {}
     if not order or not order.lots then
         return cases
     end
+    Lots.ensureLoaded()
+    local function addCases(id, label, quantity)
+        local name = getText("IGUI_MilitaryDrop_RequisitionCaseName", label)
+        for _ = 1, quantity do
+            cases[#cases + 1] = { fullType = Lots.CASE_TYPE, lot = id, name = name }
+        end
+    end
     for _, lot in ipairs(Lots.LIST) do
         local quantity = math.floor(tonumber(order.lots[lot.id]) or 0)
-        local name = getText("IGUI_MilitaryDrop_RequisitionCaseName", getText(lot.label))
-        for _ = 1, quantity do
-            cases[#cases + 1] = { fullType = Lots.CASE_TYPE, lot = lot.id, name = name }
+        local label = lot.label and getText(lot.label) or Lots.text(lot, "label", Requisition.serverLanguage())
+        addCases(lot.id, label, quantity)
+    end
+    local missing = {}
+    for id, quantity in pairs(order.lots) do
+        if type(id) == "string" and not Lots.get(id) and (tonumber(quantity) or 0) >= 1 then
+            missing[#missing + 1] = id
         end
+    end
+    table.sort(missing)
+    for _, id in ipairs(missing) do
+        MilitaryDrop.log("drop " .. tostring(dropId) .. ": lot " .. id
+            .. " is no longer in the lots file; its cases are delivered but cannot be opened until it is back", true)
+        -- Quantité validée à la commande (budget) : comme les autres lots.
+        addCases(id, id, math.floor(tonumber(order.lots[id])))
     end
     return cases
 end
 
+--- Langue du serveur (Translator.getLanguage():name(), comme ISLcdBar.lua:14),
+--- ou "EN".
+function Requisition.serverLanguage()
+    local language = Translator and Translator.getLanguage and Translator.getLanguage()
+    local name = language and language:name()
+    return name ~= nil and tostring(name) or "EN"
+end
+
 --- Calcule les candidats des lots une fois (démarrage du serveur ou de la
---- partie solo), si le formulaire est actif. Renvoie la durée en ms.
+--- partie solo), si le formulaire est actif, après lecture du fichier des
+--- lots. Renvoie la durée en ms.
 function Requisition.warmUp()
+    MilitaryDrop.LotsFile.ensureLoaded()
     if not Requisition.formEnabled() then
         return 0
     end
@@ -393,8 +451,69 @@ function Requisition.warmUp()
     return elapsed
 end
 
+--- Relit le fichier des lots (admin, sans redémarrer) et recalcule les
+--- candidats. Renvoie un résumé (console de débogage en solo) et le rapport
+--- de chargement { source, lots, problems }.
+function Requisition.reload()
+    local report = MilitaryDrop.LotsFile.reload()
+    if Requisition.formEnabled() then
+        Lots.warm()
+    end
+    return "requisition lots reloaded: " .. report.lots .. " lots from " .. report.source
+        .. ", " .. #report.problems .. " problem(s) (see the console)", report
+end
+
+-- Problèmes renvoyés au plus à l'admin (le journal du serveur les a tous).
+Requisition.MAX_REPLY_PROBLEMS = 10
+-- Dernier rechargement accepté (ms réelles) : cadence globale, tous admins
+-- confondus (relire le fichier et recalculer les lots coûte au serveur).
+local lastReloadMs = nil
+
+--- Le joueur peut recharger un réglage du serveur : vrai admin, capacité
+--- ChangeAndReloadServerOptions (/changeoption, /reloadoptions :
+--- ChangeOptionCommand.java:23, ReloadOptionsCommand.java:22). Parmi les rôles
+--- par défaut, seul admin l'a : moderator la perd (Roles.java:420), gm et
+--- observer ne l'ont pas (Server.canForce, MakeEventsAlarmGunshot, est déjà
+--- donné à gm : Roles.java:399). checkPermissions ne vérifie que sur un
+--- serveur MP (LuaManager.java:2914-2920) ; en solo, la console suffit.
+function Requisition.canReload(player)
+    return Capability ~= nil and Capability.ChangeAndReloadServerOptions ~= nil
+        and checkPermissions(player, Capability.ChangeAndReloadServerOptions) == true
+end
+
+local function replyReload(player, args)
+    Net.toPlayer(player, "ReloadLotsReply", args)
+end
+
+--- Commande ReloadLots : vrai admin seulement, cadence globale, réponse à
+--- l'appelant (résumé, nombre de lots, problèmes).
+function Requisition.handleReload(player)
+    local name = tostring(player:getUsername())
+    if not Requisition.canReload(player) then
+        MilitaryDrop.log("ReloadLots refused for " .. name .. ": not an admin", true)
+        replyReload(player, { ok = false, summary = "ReloadLots refused: admin only" })
+        return
+    end
+    local now = getTimestampMs()
+    if lastReloadMs and now >= lastReloadMs and now - lastReloadMs < Requisition.RELOAD_INTERVAL_MS then
+        replyReload(player, { ok = false, summary = "ReloadLots: reloaded less than "
+            .. math.floor(Requisition.RELOAD_INTERVAL_MS / 1000) .. " s ago, try again" })
+        return
+    end
+    lastReloadMs = now
+    local summary, report = Requisition.reload()
+    MilitaryDrop.log(summary .. ", by " .. name, true)
+    local problems = {}
+    for i = 1, math.min(#report.problems, Requisition.MAX_REPLY_PROBLEMS) do
+        problems[i] = tostring(report.problems[i])
+    end
+    replyReload(player, { ok = true, summary = summary, lots = report.lots, source = report.source,
+        problemCount = #report.problems, problems = problems })
+end
+
 Server.COMMANDS.RequisitionOrder = function(player, args) Requisition.handleOrder(player, args) end
 Server.COMMANDS.RequisitionCancel = function(player, args) Requisition.handleCancel(player, args) end
+Server.COMMANDS.ReloadLots = function(player) Requisition.handleReload(player) end
 
 -- Serveur dédié : OnServerStarted ; solo : OnGameStart (un second appel ne
 -- recalcule rien).

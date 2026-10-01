@@ -1,10 +1,15 @@
 -- ============================================================================
 -- Military Drop — interface client : appel radio et réponses de la base
 --
--- Menu contextuel « Demander un largage » sur une radio militaire (objet
--- d'inventaire en main ou sur le dos, ou appareil posé à portée). Le client ne décide rien :
--- il demande le code si l'option l'exige, fait parler le personnage, envoie
--- la demande au serveur, puis affiche la réponse par la radio.
+-- Appel de largage par une radio militaire (objet d'inventaire, ou appareil
+-- posé à portée), lancé par le bouton « Demander un largage » de la section
+-- « Logistique » de la fenêtre radio (MilitaryDrop_RadioModule.lua) ou de la
+-- console du poste de liaison (Client.onRequest, boîte de saisie du code). Le
+-- menu contextuel n'offre plus aux joueurs que « Options de l'appareil »
+-- (décision du 2026-10-01) ; seul le largage forcé de l'admin y reste
+-- (Client.addOptions). Le client ne décide rien : il demande le code si
+-- l'option l'exige, fait parler le personnage, envoie la demande au serveur,
+-- puis affiche la réponse par la radio.
 --
 -- La fréquence militaire n'est jamais vérifiée ici : griser l'option sur une
 -- mauvaise fréquence permettrait de la trouver en balayant les canaux.
@@ -31,6 +36,15 @@
 -- Result ordinaire (accepted, ou orderInvalid, expired, cooldown…). Les
 -- répliques du personnage (player:Say) restent locales en MP : le contenu de
 -- la commande n'est jamais prononcé.
+--
+-- Module « Logistique » de la fenêtre radio (MilitaryDrop_RadioModule.lua) :
+-- même appel (Client.call), avec opts.anchor = fenêtre radio pour coller la
+-- feuille de réquisition à cette fenêtre. Le code saisi est gardé en mémoire
+-- pour la session, par joueur local (Client.rememberCode), seulement dans ce
+-- fichier : ni sauvegardé, ni envoyé ailleurs qu'à l'appel ; il préremplit le
+-- champ du module et la boîte de saisie (console du poste). La dernière réplique de la
+-- base reçue par chaque joueur local (Client.radioSay) est gardée pour
+-- l'afficher dans le module (Client.lastReply).
 -- ============================================================================
 
 require "ISUI/ISTextBox"
@@ -63,6 +77,10 @@ Client.RADIO_COLOR = { r = 0.45, g = 0.85, b = 0.45 }
 
 local pending = {}
 local nextRequestId = 1
+-- Par joueur local, pour la session : code saisi, dernière réplique de la base.
+local rememberedCodes = {}
+local lastReplies = {}
+local replyCount = 0
 
 -- ----------------------------------------------------------------------------
 -- Tâches différées (abonnement à OnTick seulement quand il y en a)
@@ -110,6 +128,8 @@ end
 --- même couleur avec les deux surcharges. Une radio d'inventaire (Radio) n'a
 --- que la version 0-1.
 function Client.radioSay(request, text)
+    replyCount = replyCount + 1
+    lastReplies[request.playerNum] = { text = text, device = request.device, seq = replyCount }
     local player = getSpecificPlayer(request.playerNum)
     local device = request.device
     local data = device and device:getDeviceData()
@@ -133,6 +153,25 @@ local function playerSay(request, text)
     end
 end
 
+--- Dernière réplique de la base reçue par le joueur local : { text, device,
+--- seq (croissant à chaque réplique) }, ou nil.
+function Client.lastReply(playerNum)
+    return lastReplies[playerNum]
+end
+
+--- Code d'authentification saisi par le joueur local (session seulement).
+function Client.rememberCode(playerNum, code)
+    if type(code) == "string" and code ~= "" then
+        rememberedCodes[playerNum] = code
+    else
+        rememberedCodes[playerNum] = nil
+    end
+end
+
+function Client.rememberedCode(playerNum)
+    return rememberedCodes[playerNum] or ""
+end
+
 -- ----------------------------------------------------------------------------
 -- Demande
 -- ----------------------------------------------------------------------------
@@ -146,10 +185,12 @@ function Client.canForce(player)
     return isDebugEnabled()
 end
 
-function Client.sendRequest(player, device, code, force)
+--- opts.anchor (facultatif) : fenêtre à laquelle coller la feuille de réquisition.
+function Client.sendRequest(player, device, code, force, opts)
     local requestId = nextRequestId
     nextRequestId = nextRequestId + 1
-    local request = { playerNum = player:getPlayerNum(), device = device, force = force == true }
+    local request = { playerNum = player:getPlayerNum(), device = device, force = force == true,
+        anchor = type(opts) == "table" and opts.anchor or nil }
     pending[requestId] = request
 
     player:Say(randomText("IGUI_MilitaryDrop_Call_", Client.CALL_COUNT))
@@ -164,14 +205,19 @@ function Client.sendRequest(player, device, code, force)
 end
 
 --- Appel par la radio : prise en main du talkie si besoin (AUTH-03), puis
---- demande. Le largage admin n'exige pas la radio : envoyé aussitôt.
-function Client.call(player, device, code, force)
-    if force then
-        Client.sendRequest(player, device, code, force)
-        return
+--- demande. Le largage admin n'exige pas la radio : envoyé aussitôt. Renvoie
+--- false si la radio n'est pas utilisable (rien n'est envoyé). opts : voir
+--- Client.sendRequest.
+function Client.call(player, device, code, force, opts)
+    if code then
+        Client.rememberCode(player:getPlayerNum(), code)
     end
-    MilitaryDrop.Exchange.run(player, device, nil, function()
-        Client.sendRequest(player, device, code, false)
+    if force then
+        Client.sendRequest(player, device, code, force, opts)
+        return true
+    end
+    return MilitaryDrop.Exchange.run(player, device, nil, function()
+        Client.sendRequest(player, device, code, false, opts)
     end)
 end
 
@@ -190,7 +236,8 @@ function Client.onRequest(player, device, force)
         Client.call(player, device, nil, force)
         return
     end
-    local modal = ISTextBox:new(0, 0, 280, 180, getText("IGUI_MilitaryDrop_EnterCode"), "", nil,
+    local modal = ISTextBox:new(0, 0, 280, 180, getText("IGUI_MilitaryDrop_EnterCode"),
+        Client.rememberedCode(player:getPlayerNum()), nil,
         onCodeEntered, player:getPlayerNum(), player, device)
     modal:initialise()
     modal:addToUIManager()
@@ -232,7 +279,7 @@ local function openForm(requestId, request, args, receivedMs)
         return
     end
     request.formOpen = true
-    Window.open(player, request.device, args, receivedMs)
+    Window.open(player, request.device, args, receivedMs, request.anchor)
 end
 
 --- Radio de la demande désignable pour le serveur (appareil posé encore sur
@@ -389,7 +436,7 @@ function Client.onServerCommand(module, command, args)
             local player = getSpecificPlayer(request.playerNum)
             if player then
                 request.ordered = false
-                Window.show(player, request.device, request.form)
+                Window.show(player, request.device, request.form, request.anchor)
                 return
             end
         end
@@ -411,28 +458,60 @@ function Client.onServerCommand(module, command, args)
 end
 
 -- ----------------------------------------------------------------------------
+-- Remarques du serveur, réponse à l'admin
+-- ----------------------------------------------------------------------------
+
+--- Joueur local de ce nom (écran partagé), sinon le premier.
+local function localPlayer(username)
+    for playerNum = 0, getNumActivePlayers() - 1 do
+        local player = getSpecificPlayer(playerNum)
+        if player and (username == nil or player:getUsername() == username) then
+            return player
+        end
+    end
+    return getSpecificPlayer(0)
+end
+
+--- Notice : remarque du personnage envoyée par le serveur (clé de traduction
+--- du mod, args.key), dite dans la langue du client. Ex. caisse de
+--- réquisition rendue fermée (lot inconnu, MilitaryDrop_Recipe.lua).
+function Client.onNotice(args)
+    local key = args.key
+    if type(key) ~= "string" or key:sub(1, 18) ~= "IGUI_MilitaryDrop_" then
+        return
+    end
+    local player = localPlayer(args.username)
+    if player then
+        player:Say(getText(key))
+    end
+end
+
+--- ReloadLotsReply : résumé du rechargement des lots (commande d'admin),
+--- écrit dans la console de l'admin, comme les autres commandes de console.
+function Client.onReloadLotsReply(args)
+    print("[MilitaryDrop] " .. tostring(args.summary))
+    for _, problem in ipairs(type(args.problems) == "table" and args.problems or {}) do
+        print("[MilitaryDrop]   " .. tostring(problem))
+    end
+    local count = tonumber(args.problemCount) or 0
+    if type(args.problems) == "table" and count > #args.problems then
+        print("[MilitaryDrop]   ... " .. (count - #args.problems) .. " more in the server console")
+    end
+end
+
+Client.HANDLERS.Notice = Client.onNotice
+Client.HANDLERS.ReloadLotsReply = Client.onReloadLotsReply
+
+-- ----------------------------------------------------------------------------
 -- Menus contextuels
 -- ----------------------------------------------------------------------------
 
-local function addTooltip(option, key)
-    local tooltip = ISToolTip:new()
-    tooltip:initialise()
-    tooltip:setVisible(false)
-    tooltip.description = getText(key)
-    option.toolTip = tooltip
-end
-
+--- Menu contextuel d'une radio militaire : seulement le largage admin.
+--- Les joueurs passent par la section « Logistique » de la fenêtre radio
+--- (MilitaryDrop_RadioModule.lua, RADIO-06), ouverte par « Options de
+--- l'appareil » : elle remplace le menu « Logistique » et « Demander un
+--- largage » (décision de l'utilisateur du 2026-10-01).
 function Client.addOptions(player, context, device)
-    -- Motif affichable sans révéler la fréquence (radio hors de l'inventaire,
-    -- trop loin, éteinte), ou nil : un talkie hors des mains sera pris en main.
-    local reason = MilitaryDrop.Exchange.unavailableReason(player, device)
-    local option = context:addOption(getText("IGUI_MilitaryDrop_RequestDrop"), player, Client.onRequest, device, false)
-    if reason then
-        option.notAvailable = true
-        addTooltip(option, reason)
-    else
-        addTooltip(option, "IGUI_MilitaryDrop_RequestTooltip")
-    end
     -- Largage admin : jamais grisé, le serveur n'exige pas la radio en main.
     if Client.canForce(player) then
         context:addOption(getText("IGUI_MilitaryDrop_RequestDropAdmin"), player, Client.onRequest, device, true)

@@ -449,10 +449,10 @@ function PostWindow.monoFont()
     return UIFont.Small
 end
 
---- Retire le dernier caractère. Kahlua : un caractère Java ; Lua 5.1 (tests) :
---- un octet de tête UTF-8 et ses octets de suite, jamais un caractère coupé.
+--- Retire le dernier caractère, toujours au moins une unité (Kahlua : chaîne
+--- Java en UTF-16, pas en octets UTF-8 ; voir MilitaryDrop.dropLastChar).
 local function dropLastChar(text)
-    return (text:gsub("[^\128-\191][\128-\191]*$", ""))
+    return MilitaryDrop.dropLastChar(text)
 end
 
 --- Texte raccourci (« … » en trois points) pour tenir dans maxWidth.

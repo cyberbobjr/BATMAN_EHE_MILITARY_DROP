@@ -137,4 +137,74 @@ function MilitaryDrop.log(message, always)
     end
 end
 
+-- ----------------------------------------------------------------------------
+-- Chaînes : caractères entiers
+--
+-- Kahlua 42.21 manipule des chaînes Java : un « octet » y est une unité UTF-16
+-- (string.byte renvoie son code, StringLib.java:637-662 ; string.char accepte
+-- tout code, StringLib.java:672-678), pas un octet UTF-8 ; # compte ces
+-- unités. Le Lua 5.1 des tests (lupa), lui, voit des octets UTF-8. Les deux
+-- fonctions ci-dessous gardent des caractères entiers dans les deux cas, et
+-- dropLastChar raccourcit toujours un texte non vide (boucles de troncature).
+-- ----------------------------------------------------------------------------
+
+-- Vrai sous Kahlua (unités UTF-16), faux sous un Lua à octets.
+local WIDE_CHARS = pcall(string.char, 256)
+
+local function isContinuation(code)
+    return code ~= nil and code >= 128 and code < 192
+end
+
+--- Texte sans son dernier caractère ("" pour un texte d'un caractère ou vide).
+--- Kahlua : une paire de substitution (caractère hors du plan de base) part
+--- entière ; Lua à octets : les octets de suite UTF-8 partent avec leur octet
+--- de tête. Toujours plus court qu'un texte non vide.
+function MilitaryDrop.dropLastChar(text)
+    text = tostring(text or "")
+    local n = #text
+    if n <= 1 then
+        return ""
+    end
+    local last = text:byte(n)
+    if WIDE_CHARS then
+        local prev = text:byte(n - 1)
+        if last >= 0xDC00 and last <= 0xDFFF and prev >= 0xD800 and prev <= 0xDBFF then
+            return text:sub(1, n - 2)
+        end
+        return text:sub(1, n - 1)
+    end
+    local i = n
+    while i > 1 and isContinuation(text:byte(i)) do
+        i = i - 1
+    end
+    return text:sub(1, i - 1)
+end
+
+--- Les max premières unités du texte, sans couper un caractère (voir plus haut).
+function MilitaryDrop.cutText(text, max)
+    text = tostring(text or "")
+    if #text <= max then
+        return text
+    end
+    if max <= 0 then
+        return ""
+    end
+    if WIDE_CHARS then
+        local last = text:byte(max)
+        if last >= 0xD800 and last <= 0xDBFF then
+            return text:sub(1, max - 1)
+        end
+        return text:sub(1, max)
+    end
+    if not isContinuation(text:byte(max + 1)) then
+        return text:sub(1, max)
+    end
+    -- Coupé au milieu d'un caractère UTF-8 : il est retiré.
+    local i = max
+    while i > 1 and isContinuation(text:byte(i)) do
+        i = i - 1
+    end
+    return text:sub(1, i - 1)
+end
+
 return MilitaryDrop

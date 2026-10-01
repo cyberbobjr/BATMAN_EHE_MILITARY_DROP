@@ -1,5 +1,12 @@
 -- ============================================================================
--- Military Drop — sous-menu « Logistique » d'une radio militaire (client)
+-- Military Drop — échanges « Logistique » d'une radio militaire (client)
+--
+-- Plus inscrit au menu contextuel depuis le 2026-10-01 : la section
+-- « Logistique » de la fenêtre radio (MilitaryDrop_RadioModule.lua) le
+-- remplace et utilise ces options (Menu.OPTIONS), leurs raisons de grisé
+-- (Menu.reason), leurs infobulles (Menu.tooltipText) et leur envoi
+-- (Menu.onOption). Menu.addOptions et les fonctions onFill* restent, non
+-- inscrites.
 --
 -- Sur une radio militaire (objet de l'inventaire, ou appareil posé) :
 -- rapport de situation, transmission des plaques d'identité vanilla
@@ -80,9 +87,12 @@ function Menu.reason(player, device, option)
     return nil
 end
 
+--- Lance l'échange (aussi utilisé par le module « Logistique » de la fenêtre
+--- radio, MilitaryDrop_RadioModule.lua) ; renvoie false si la radio n'est pas
+--- utilisable.
 function Menu.onOption(player, device, option)
     local speech = getText(option.speech .. (ZombRand(option.speechCount) + 1), tostring(Menu.dogTagCount(player)))
-    Exchange.send(player, device, Exchange.COMMANDS[option.source], {}, speech)
+    return Exchange.send(player, device, Exchange.COMMANDS[option.source], {}, speech)
 end
 
 local function addTooltip(option, text)
@@ -159,7 +169,9 @@ function Menu.onFillWorldContextMenu(playerNum, context, worldObjects, test)
     end
 end
 
-Events.OnFillInventoryObjectContextMenu.Add(Menu.onFillInventoryContextMenu)
-Events.OnFillWorldObjectContextMenu.Add(Menu.onFillWorldContextMenu)
+-- Plus inscrit au menu contextuel (2026-10-01) : la section « Logistique » de
+-- la fenêtre radio (MilitaryDrop_RadioModule.lua) le remplace et réutilise
+-- Menu.reason, Menu.tooltipText et Menu.onOption. Menu.addOptions et les
+-- fonctions onFill* restent pour un éventuel retour et pour les tests.
 
 return Menu

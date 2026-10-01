@@ -314,5 +314,16 @@
     "IGUI_MilitaryDrop_ReqBlock_nothing": "Choisissez au moins un lot.",
     "IGUI_MilitaryDrop_ReqBlock_sector": "choisir un secteur",
     "IGUI_MilitaryDrop_ReqBlock_budget": "Budget dépassé.",
-    "IGUI_MilitaryDrop_ReqNoSector": "Ici Logistique. Aucun point de largage dans ce secteur. Choisissez un autre secteur, à vous."
+    "IGUI_MilitaryDrop_ReqNoSector": "Ici Logistique. Aucun point de largage dans ce secteur. Choisissez un autre secteur, à vous.",
+    "IGUI_MilitaryDrop_RadioModule_Code": "Code",
+    "IGUI_MilitaryDrop_RadioModule_CodeHint": "ex. BRAVO-KILO-42",
+    "IGUI_MilitaryDrop_RadioModule_NeedCode": "Saisissez d'abord le code d'authentification.",
+    "IGUI_MilitaryDrop_RadioModule_Sending": "Transmission en cours...",
+    "IGUI_MilitaryDrop_RadioModule_LastReply": "Dernière réponse de la base :",
+    "IGUI_MilitaryDrop_RadioModule_NoReply": "Rien reçu pour l'instant.",
+    "IGUI_MilitaryDrop_RadioModule_Select": "Choisir une action",
+    "IGUI_MilitaryDrop_RadioModule_TypeCode": "Saisir le code",
+    "IGUI_MilitaryDrop_RadioModule_Back": "Retour",
+    "IGUI_MilitaryDrop_ReqPage": "Page %1/%2",
+    "IGUI_MilitaryDrop_UnknownLotCase": "Ce bordereau ne correspond à aucun lot connu. Je garde la caisse fermée."
 }

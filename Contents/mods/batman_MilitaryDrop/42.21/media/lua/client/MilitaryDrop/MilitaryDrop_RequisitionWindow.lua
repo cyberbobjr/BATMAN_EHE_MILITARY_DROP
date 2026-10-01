@@ -19,8 +19,23 @@
 --
 -- Tout est dessiné par la fenêtre (textures du mod, polices du jeu) ; les
 -- largeurs sont mesurées selon la langue et la taille de police, et la mise
--- en page passe de deux colonnes à une, puis en version serrée, pour tenir
--- dans l'écran du joueur (écran partagé compris).
+-- en page passe de deux colonnes à une, puis en version serrée (deux, une,
+-- trois colonnes), pour tenir dans l'écran du joueur (écran partagé
+-- compris) ; une longue section continue dans la colonne suivante. Si rien
+-- ne tient (beaucoup de lots ajoutés par l'admin, petit écran), la feuille
+-- est paginée : « < Page 1/2 > » au pied (clic, molette ; à la manette, la
+-- page suit la ligne choisie). Aucune ligne n'est coupée.
+--
+-- Demande partie du module « Logistique » de la fenêtre radio
+-- (MilitaryDrop_RadioModule.lua) : la feuille s'ouvre collée à droite de cette
+-- fenêtre, ou à gauche si elle déborderait de l'écran du joueur ; sinon au
+-- centre de l'écran.
+--
+-- Lots ajoutés par l'admin : lot.texts = { EN = { label, desc }, FR = … }
+-- (textes libres, prioritaires sur les clés label/desc) ; affichés dans la
+-- langue du client, sinon sa langue de base, sinon l'anglais, sinon la
+-- première langue fournie (ordre alphabétique, comme Lots.text sur le
+-- serveur), sinon la clé.
 -- ============================================================================
 
 require "ISUI/ISPanelJoypad"
@@ -58,9 +73,20 @@ RW.MONO_LANGUAGES = {
     NO = true, FI = true, ID = true,
 }
 -- Mises en page essayées dans l'ordre : la première qui tient dans l'écran.
+-- Trois colonnes serrées : beaucoup de lots (fichier de l'admin) sur un écran
+-- large mais bas.
 RW.MODES = {
     { cols = 2, compact = false },
     { cols = 1, compact = false },
+    { cols = 2, compact = true },
+    { cols = 1, compact = true },
+    { cols = 3, compact = true },
+}
+-- Si aucune ne tient (beaucoup de lots, petit écran, écran partagé) : la
+-- feuille est paginée, avec ces mises en page (la plus serrée d'abord), le
+-- plus de lots possible par page. Aucune ligne n'est jamais coupée.
+RW.PAGED_MODES = {
+    { cols = 3, compact = true },
     { cols = 2, compact = true },
     { cols = 1, compact = true },
 }
@@ -86,6 +112,34 @@ local function toInt(value, default)
     return math.floor(n)
 end
 
+-- Textes d'un lot ajouté par l'admin (contrat « form » : lot.texts =
+-- { EN = { label = "...", desc = "..." }, FR = { ... } }) : longueur bornée.
+RW.TEXT_LIMITS = { label = 80, desc = 600 }
+
+--- Textes libres d'un lot nettoyés (langue → { label, desc } de chaînes non
+--- vides, tronquées), ou nil s'il n'y en a aucun.
+function RW.cleanTexts(texts)
+    if type(texts) ~= "table" then
+        return nil
+    end
+    local clean, any = {}, false
+    for language, entry in pairs(texts) do
+        if type(language) == "string" and type(entry) == "table" then
+            local kept = {}
+            for field, limit in pairs(RW.TEXT_LIMITS) do
+                local value = entry[field]
+                if type(value) == "string" and value ~= "" then
+                    -- Sans couper un caractère (chaîne Java sous Kahlua).
+                    kept[field] = MilitaryDrop.cutText(value, limit)
+                    any = true
+                end
+            end
+            clean[string.upper(language)] = kept
+        end
+    end
+    return any and clean or nil
+end
+
 --- Formulaire à partir du Result « form » reçu à nowMs (données du serveur
 --- nettoyées : lots sans identifiant ignorés, coûts entiers ≥ 1).
 function RW.newForm(args, nowMs)
@@ -108,6 +162,7 @@ function RW.newForm(args, nowMs)
                 allowed = lot.allowed == true,
                 label = type(lot.label) == "string" and lot.label or nil,
                 desc = type(lot.desc) == "string" and lot.desc or nil,
+                texts = RW.cleanTexts(lot.texts),
             }
             if not entry.allowed then
                 entry.reason = type(lot.reason) == "string" and lot.reason or "empty"
@@ -314,8 +369,57 @@ function RW.costText(cost)
     return getText(cost == 1 and "IGUI_MilitaryDrop_ReqPoint" or "IGUI_MilitaryDrop_ReqPoints", tostring(cost))
 end
 
+--- Langues du client pour les textes libres : la sienne, puis sa langue de
+--- base (Language.name et Language.base, zombie/core/Language.java), puis EN.
+function RW.languages()
+    local list = {}
+    local language = Translator and Translator.getLanguage and Translator.getLanguage()
+    if language then
+        list[#list + 1] = tostring(language:name())
+        if language.base then
+            local base = language:base()
+            if base ~= nil then
+                list[#list + 1] = tostring(base)
+            end
+        end
+    end
+    list[#list + 1] = "EN"
+    return list
+end
+
+--- Texte libre d'un lot (field : "label" ou "desc") dans la langue du
+--- client, sinon sa langue de base, sinon en anglais, sinon dans la première
+--- langue qui le fournit (ordre alphabétique, comme Lots.text sur le
+--- serveur), sinon nil.
+function RW.lotText(lot, field)
+    local texts = lot.texts
+    if not texts then
+        return nil
+    end
+    for _, language in ipairs(RW.languages()) do
+        local entry = texts[string.upper(language)]
+        if entry and entry[field] then
+            return entry[field]
+        end
+    end
+    local languages = {}
+    for language, entry in pairs(texts) do
+        if entry[field] then
+            languages[#languages + 1] = language
+        end
+    end
+    table.sort(languages)
+    return languages[1] and texts[languages[1]][field] or nil
+end
+
+--- Libellé d'un lot : texte libre de l'admin, sinon clé de traduction, sinon id.
 function RW.lotLabel(lot)
-    return lot.label and getText(lot.label) or lot.id
+    return RW.lotText(lot, "label") or (lot.label and getText(lot.label)) or lot.id
+end
+
+--- Description d'un lot (même ordre que le libellé), ou nil.
+function RW.lotDesc(lot)
+    return RW.lotText(lot, "desc") or (lot.desc and getText(lot.desc)) or nil
 end
 
 function RW.sectionLabel(group)
@@ -326,23 +430,26 @@ function RW.sectionLabel(group)
 end
 
 --- Sections dans l'ordre d'affichage : paliers croissants (ordre du serveur
---- dans chaque palier), puis la commande spéciale.
-function RW.sections(form)
+--- dans chaque palier), puis la commande spéciale. view (facultatif, feuille
+--- paginée) : { ids = { [id] = true }, decoy = bool } garde les lots de la page.
+function RW.sections(form, view)
     local byGroup, groups = {}, {}
     for _, lot in ipairs(form.lots) do
-        if not byGroup[lot.group] then
-            byGroup[lot.group] = {}
-            groups[#groups + 1] = lot.group
+        if not view or view.ids[lot.id] then
+            if not byGroup[lot.group] then
+                byGroup[lot.group] = {}
+                groups[#groups + 1] = lot.group
+            end
+            local list = byGroup[lot.group]
+            list[#list + 1] = lot
         end
-        local list = byGroup[lot.group]
-        list[#list + 1] = lot
     end
     table.sort(groups)
     local sections = {}
     for _, group in ipairs(groups) do
         sections[#sections + 1] = { group = group, lots = byGroup[group] }
     end
-    if form.decoy then
+    if form.decoy and (not view or view.decoy) then
         sections[#sections + 1] = { group = "special", lots = {}, decoy = true }
     end
     return sections
@@ -391,9 +498,10 @@ function RW.handFont()
     return UIFont.Handwritten or RW.typedFont()
 end
 
---- Retire le dernier caractère (Lua 5.1 : octet de tête UTF-8 et suites).
+--- Retire le dernier caractère, toujours au moins une unité (Kahlua : chaîne
+--- Java en UTF-16, pas en octets UTF-8 ; voir MilitaryDrop.dropLastChar).
 local function dropLastChar(text)
-    return (text:gsub("[^\128-\191][\128-\191]*$", ""))
+    return MilitaryDrop.dropLastChar(text)
 end
 
 --- Texte raccourci (« ... ») pour tenir dans maxWidth.
@@ -410,17 +518,92 @@ end
 
 local BUDGET_KEYS = { "IGUI_MilitaryDrop_ReqBudget", "IGUI_MilitaryDrop_ReqSpent", "IGUI_MilitaryDrop_ReqLeft" }
 
---- Hauteur d'une section (titre, lignes, bloc des secteurs pour le leurre).
-local function sectionHeight(L, section)
-    local h = L.sectionH + #section.lots * L.rowH
-    if section.decoy then
-        h = h + L.rowH + L.sectorsH
+--- Blocs (dans l'ordre, { kind = "head"|"lot"|"decoy", section, h }) rangés
+--- en colonnes de hauteur limit au plus, premier remplissage : un titre
+--- descend avec le bloc qui le suit, une colonne qui commence au milieu d'une
+--- section reçoit d'abord son titre répété (head « continued »). Renvoie les
+--- colonnes et la hauteur de la dernière.
+local function fillColumns(blocks, limit, sectionH)
+    local columns, current, height = {}, {}, 0
+    local i = 1
+    while i <= #blocks do
+        local block = blocks[i]
+        local items
+        if block.kind == "head" then
+            items = { block }
+            local following = blocks[i + 1]
+            if following and following.kind ~= "head" and following.section == block.section then
+                items[2] = following
+            end
+        elseif #current == 0 then
+            items = { { kind = "head", section = block.section, h = sectionH, continued = true }, block }
+        else
+            items = { block }
+        end
+        local need = 0
+        for _, item in ipairs(items) do
+            need = need + item.h
+        end
+        if #current > 0 and height + need > limit then
+            columns[#columns + 1] = current
+            current, height = {}, 0
+        else
+            for _, item in ipairs(items) do
+                current[#current + 1] = item
+                height = height + item.h
+                if not item.continued then
+                    i = i + 1
+                end
+            end
+        end
     end
-    return h
+    columns[#columns + 1] = current
+    return columns, height
 end
 
---- Disposition pour un mode (colonnes, serré) ; voir computeLayout.
-local function place(form, mode)
+--- Répartit les blocs en cols colonnes, pied (footerH) sous la dernière,
+--- pour que la plus haute soit la plus basse possible (recherche
+--- dichotomique de la hauteur limite). Renvoie { [1..cols] = { bloc, … } }.
+function RW.distribute(blocks, cols, footerH, sectionH)
+    local total = footerH
+    for _, block in ipairs(blocks) do
+        total = total + block.h
+    end
+    local function fits(limit)
+        local columns, lastH = fillColumns(blocks, limit, sectionH)
+        if #columns > cols then
+            return nil
+        end
+        if #columns == cols and lastH + footerH > limit then
+            return nil
+        end
+        return columns
+    end
+    local columns
+    if cols <= 1 then
+        columns = fillColumns(blocks, math.huge, sectionH)
+    else
+        local low, high = math.ceil(total / cols), total + sectionH * cols
+        columns = fits(high) or fillColumns(blocks, math.huge, sectionH)
+        while low <= high do
+            local mid = math.floor((low + high) / 2)
+            local found = fits(mid)
+            if found then
+                columns, high = found, mid - 1
+            else
+                low = mid + 1
+            end
+        end
+    end
+    for c = #columns + 1, math.max(1, cols) do
+        columns[c] = {}
+    end
+    return columns
+end
+
+--- Disposition pour un mode (colonnes, serré) ; voir computeLayout. view
+--- (facultatif) : une page de la feuille paginée, { ids, decoy, page, pages }.
+local function place(form, mode, view)
     local font, title, hand = RW.typedFont(), RW.titleFont(), RW.handFont()
     local fh, ft = fontHeight(font), fontHeight(title)
     local u = math.max(4, math.floor(fh * 0.35))
@@ -443,11 +626,22 @@ local function place(form, mode)
     local labelW = measure(getText("IGUI_MilitaryDrop_ReqColLot"), font)
     local costW = measure(getText("IGUI_MilitaryDrop_ReqColCost"), font)
     local reasonW = 0
+    -- Largeurs gardées par texte et police dans le formulaire : la feuille
+    -- paginée essaie de nombreuses dispositions des mêmes lots.
+    local widths = form.widthCache or {}
+    form.widthCache = widths
+    local function measureOnce(text)
+        local key = tostring(font) .. "|" .. text
+        if not widths[key] then
+            widths[key] = measure(text, font)
+        end
+        return widths[key]
+    end
     for _, lot in ipairs(form.lots) do
-        labelW = math.max(labelW, measure(RW.lotLabel(lot), font))
-        costW = math.max(costW, measure(RW.costText(lot.cost), font))
+        labelW = math.max(labelW, measureOnce(RW.lotLabel(lot)))
+        costW = math.max(costW, measureOnce(RW.costText(lot.cost)))
         if not lot.allowed then
-            reasonW = math.max(reasonW, measure(RW.reasonText(lot), font))
+            reasonW = math.max(reasonW, measureOnce(RW.reasonText(lot)))
         end
     end
     if form.decoy then
@@ -483,6 +677,13 @@ local function place(form, mode)
         colW = math.max(colW, transmitW, cancelW)
     end
     L.footerH = u + 3 * fh + fh + u + L.btnH + (L.stacked and (L.btnH + L.gapS) or 0)
+    -- Feuille paginée : ligne « < Page 1/2 > » en tête du pied.
+    if view then
+        L.page, L.pages = view.page, view.pages
+        L.pagerH = L.rowH + L.gapS
+        L.footerH = L.footerH + L.pagerH
+        colW = math.max(colW, 2 * L.box + 2 * u + measure(getText("IGUI_MilitaryDrop_ReqPage", 88, 88), font))
+    end
 
     -- En-tête : titre, service, demandeur et référence ; tampon à droite.
     local stampTitleW = math.max(measure(getText("IGUI_MilitaryDrop_ReqStamp"), title),
@@ -495,32 +696,27 @@ local function place(form, mode)
         + measure(getText("IGUI_MilitaryDrop_ReqRef", "MD-8888"), font))
     local headerNeed = infoW + 3 * u + L.stampW
 
-    -- Colonnes : sections réparties pour la hauteur la plus faible, pied dans
-    -- la dernière colonne.
-    local sections = RW.sections(form)
-    local heights = {}
-    for i, section in ipairs(sections) do
-        heights[i] = sectionHeight(L, section)
-    end
-    local cols = math.min(mode.cols, math.max(1, #sections))
-    local split = #sections
-    if cols == 2 then
-        local best
-        for k = 1, #sections - 1 do
-            local left, right = 0, L.footerH
-            for i, h in ipairs(heights) do
-                if i <= k then
-                    left = left + h
-                else
-                    right = right + h
-                end
-            end
-            local tallest = math.max(left, right)
-            if not best or tallest < best then
-                best, split = tallest, k
-            end
+    -- Colonnes : blocs (titre de section, ligne de lot, leurre avec sa rose
+    -- des vents) répartis pour la hauteur la plus faible, pied dans la
+    -- dernière colonne. Une longue section continue dans la colonne suivante
+    -- sous son titre répété ; un titre n'est jamais seul en bas de colonne.
+    local sections = RW.sections(form, view)
+    local blocks, lotBlocks = {}, 0
+    for _, section in ipairs(sections) do
+        blocks[#blocks + 1] = { kind = "head", section = section, h = L.sectionH }
+        for _, lot in ipairs(section.lots) do
+            blocks[#blocks + 1] = { kind = "lot", lot = lot, section = section, h = L.rowH }
+            lotBlocks = lotBlocks + 1
+        end
+        if section.decoy then
+            blocks[#blocks + 1] = { kind = "decoy", section = section, h = L.rowH + L.sectorsH }
+            lotBlocks = lotBlocks + 1
         end
     end
+    -- Page d'une feuille paginée : toujours le nombre de colonnes du mode
+    -- (même largeur d'une page à l'autre).
+    local cols = view and mode.cols or math.min(mode.cols, math.max(1, lotBlocks))
+    local columnBlocks = RW.distribute(blocks, cols, L.footerH, L.sectionH)
     L.cols = cols
     local contentW = cols * colW + (cols - 1) * L.colGap
     if headerNeed > contentW then
@@ -562,21 +758,15 @@ local function place(form, mode)
         local cx = x0 + (c - 1) * (colW + L.colGap)
         L.columns[c] = rect(cx, L.colHeadY, colW, 0)
         local cy = y
-        local first, last = 1, split
-        if c == 2 then
-            first, last = split + 1, #sections
-        elseif cols == 1 then
-            last = #sections
-        end
-        for i = first, last do
-            local section = sections[i]
-            L.sectionsAt[#L.sectionsAt + 1] = { label = RW.sectionLabel(section.group), x = cx, y = cy, w = colW }
-            cy = cy + L.sectionH
-            for _, lot in ipairs(section.lots) do
-                L.rows[lot.id] = RW.rowRects(L, cx, cy, colW)
+        for _, block in ipairs(columnBlocks[c] or {}) do
+            local section = block.section
+            if block.kind == "head" then
+                L.sectionsAt[#L.sectionsAt + 1] = { label = RW.sectionLabel(section.group), x = cx, y = cy, w = colW }
+                cy = cy + L.sectionH
+            elseif block.kind == "lot" then
+                L.rows[block.lot.id] = RW.rowRects(L, cx, cy, colW)
                 cy = cy + L.rowH
-            end
-            if section.decoy then
+            else
                 local row = RW.rowRects(L, cx, cy, colW)
                 row.check = rect(cx, cy + (L.rowH - L.box) / 2, L.box, L.box)
                 L.decoyRow = row
@@ -595,8 +785,16 @@ local function place(form, mode)
             end
         end
         if c == cols then
-            -- Pied : budget, note, boutons.
+            -- Pied : pages (feuille paginée), budget, note, boutons.
             cy = cy + u
+            if L.pagerH then
+                local by = cy + math.floor((L.rowH - L.box) / 2)
+                L.pagePrev = rect(cx, by, L.box, L.box)
+                L.pageNext = rect(cx + colW - L.box, by, L.box, L.box)
+                L.pageTextX = cx + math.floor(colW / 2)
+                L.pageTextY = cy + math.floor((L.rowH - fh) / 2)
+                cy = cy + L.pagerH
+            end
             L.budgetY = cy
             L.budget = rect(cx, cy, colW, 3 * fh)
             cy = cy + 3 * fh
@@ -641,7 +839,9 @@ end
 --- Disposition complète du formulaire dans un écran de maxWidth × maxHeight
 --- (nil : sans limite) : le premier mode de RW.MODES qui tient, sinon le
 --- moins débordant.
-function RW.computeLayout(form, maxWidth, maxHeight)
+--- Si aucun ne tient : feuille paginée (RW.paginate), page page (1 par
+--- défaut).
+function RW.computeLayout(form, maxWidth, maxHeight, page)
     local best, bestOverflow
     for _, mode in ipairs(RW.MODES) do
         local L = place(form, mode)
@@ -653,7 +853,107 @@ function RW.computeLayout(form, maxWidth, maxHeight)
             best, bestOverflow = L, overflow
         end
     end
+    local paging = RW.paginate(form, maxWidth, maxHeight)
+    if paging then
+        return RW.pageLayout(form, paging, page or 1)
+    end
     return best
+end
+
+--- Lots de la page p (sur pages), per lots par page, dans l'ordre affiché.
+local function pageView(order, per, p, pages)
+    local ids = {}
+    for i = (p - 1) * per + 1, math.min(#order, p * per) do
+        ids[order[i]] = true
+    end
+    return { ids = ids, decoy = p == pages, page = p, pages = pages }
+end
+
+--- Pagination de la feuille : le mode de RW.PAGED_MODES qui met le plus de
+--- lots par page en tenant dans maxWidth × maxHeight, toutes pages
+--- comprises (écran minuscule : le moins débordant). { mode, per, pages,
+--- order, pageOf = { [id] = page }, W, H }, ou nil si elle est inutile.
+function RW.paginate(form, maxWidth, maxHeight)
+    local order = {}
+    for _, section in ipairs(RW.sections(form)) do
+        for _, lot in ipairs(section.lots) do
+            order[#order + 1] = lot.id
+        end
+    end
+    if #order < 2 or not maxHeight then
+        return nil
+    end
+    -- Toutes les pages pour per lots par page : largeur et hauteur maximales.
+    local function measurePages(mode, per)
+        local pages = math.ceil(#order / per)
+        local W, H = 0, 0
+        for p = 1, pages do
+            local L = place(form, mode, pageView(order, per, p, pages))
+            W, H = math.max(W, L.W), math.max(H, L.H)
+        end
+        return W, H, pages
+    end
+    -- Le plus grand nombre de lots par page qui tient dans limitW × limitH
+    -- (dichotomie), ou nil.
+    local function search(mode, limitW, limitH)
+        local found
+        local low, high = 1, #order - 1
+        while low <= high do
+            local per = math.floor((low + high) / 2)
+            local W, H, pages = measurePages(mode, per)
+            if W <= (limitW or W) and H <= limitH then
+                found = { mode = mode, per = per, pages = pages, W = W, H = H }
+                low = per + 1
+            else
+                high = per - 1
+            end
+        end
+        return found
+    end
+    local best
+    for _, mode in ipairs(RW.PAGED_MODES) do
+        local found = search(mode, maxWidth, maxHeight)
+        if found and (not best or found.per > best.per) then
+            best = found
+        end
+    end
+    if not best then
+        -- Écran minuscule : même un lot par page déborde. Le mode le moins
+        -- débordant, avec le plus de lots par page à débordement égal.
+        local chosen, chosenW, chosenH, overflow
+        for _, mode in ipairs(RW.PAGED_MODES) do
+            local W, H = measurePages(mode, 1)
+            local over = math.max(0, W - (maxWidth or W)) + math.max(0, H - maxHeight)
+            if not chosen or over < overflow then
+                chosen, chosenW, chosenH, overflow = mode, W, H, over
+            end
+        end
+        best = search(chosen, math.max(chosenW, maxWidth or chosenW), math.max(chosenH, maxHeight))
+    end
+    if not best then
+        return nil
+    end
+    best.order = order
+    best.pageOf = {}
+    for i, id in ipairs(order) do
+        best.pageOf[id] = math.floor((i - 1) / best.per) + 1
+    end
+    return best
+end
+
+--- Disposition d'une page de la feuille paginée : même taille pour toutes
+--- les pages (la feuille ne bouge pas en changeant de page).
+function RW.pageLayout(form, paging, page)
+    page = math.max(1, math.min(paging.pages, page or 1))
+    local L = place(form, paging.mode, pageView(paging.order, paging.per, page, paging.pages))
+    L.paging = paging
+    L.W = math.max(L.W, paging.W)
+    L.H = math.max(L.H, paging.H)
+    L.paper.h = L.H - L.frame - L.paper.y
+    for _, column in ipairs(L.columns) do
+        column.h = L.paper.y + L.paper.h - L.pad - L.colHeadY
+    end
+    return L
 end
 
 function RW.measureSize(form, maxWidth, maxHeight)
@@ -687,12 +987,60 @@ function RW:createChildren()
 end
 
 function RW:layout()
-    local L = RW.computeLayout(self.form, self.maxWidth, self.maxHeight)
+    local L = RW.computeLayout(self.form, self.maxWidth, self.maxHeight, self.page)
+    self:applyLayout(L)
+end
+
+function RW:applyLayout(L)
     self.L = L
+    self.page = L.page
     if self.width ~= L.W or self.height ~= L.H then
         self:setWidth(L.W)
         self:setHeight(L.H)
     end
+end
+
+--- Feuille paginée : affiche la page (bornée) ; vrai si elle a changé.
+function RW:setPage(page)
+    local paging = self.L and self.L.paging
+    if not paging then
+        return false
+    end
+    page = math.max(1, math.min(paging.pages, page))
+    if page == self.page then
+        return false
+    end
+    self:applyLayout(RW.pageLayout(self.form, paging, page))
+    return true
+end
+
+--- Page où se trouve une ligne de la manette (lot, ou leurre en dernière page).
+function RW:pageOfItem(item)
+    local paging = self.L and self.L.paging
+    if not paging or not item then
+        return nil
+    end
+    if item.kind == "lot" then
+        return paging.pageOf[item.id]
+    end
+    return paging.pages
+end
+
+--- La ligne de la manette est sur la page affichée.
+function RW:showCursor()
+    local page = self:pageOfItem(self:navigation()[self.cursor])
+    if page then
+        self:setPage(page)
+    end
+end
+
+--- Molette : page suivante ou précédente.
+function RW:onMouseWheel(delta)
+    if self.L and self.L.paging then
+        self:setPage((self.page or 1) + (delta > 0 and 1 or -1))
+        return true
+    end
+    return false
 end
 
 --- La radio est toujours utilisable par le joueur : talkie en main (ou sur le
@@ -799,6 +1147,10 @@ function RW:hitTest(x, y)
         return "transmit"
     elseif inside(L.cancel, x, y) then
         return "cancel"
+    elseif inside(L.pagePrev, x, y) then
+        return "pagePrev"
+    elseif inside(L.pageNext, x, y) then
+        return "pageNext"
     end
     for _, lot in ipairs(self.form.lots) do
         local row = L.rows[lot.id]
@@ -838,6 +1190,9 @@ function RW:isEnabled(target, payload)
     local form, now = self.form, getTimestampMs()
     if target == "close" or target == "cancel" then
         return true
+    elseif target == "pagePrev" or target == "pageNext" then
+        local L = self.L
+        return L.paging ~= nil and ((target == "pagePrev" and L.page > 1) or (target == "pageNext" and L.page < L.pages))
     elseif target == "transmit" then
         return RW.canTransmit(form, now)
     elseif RW.expired(form, now) then
@@ -863,6 +1218,8 @@ function RW:activate(target, payload)
         self:cancel(true)
     elseif target == "transmit" then
         self:transmit()
+    elseif target == "pagePrev" or target == "pageNext" then
+        self:setPage((self.page or 1) + (target == "pageNext" and 1 or -1))
     elseif target == "minus" then
         RW.remove(form, payload)
     elseif target == "plus" then
@@ -874,7 +1231,8 @@ function RW:activate(target, payload)
     end
 end
 
-local CLICKABLE = { close = true, transmit = true, cancel = true, minus = true, plus = true, decoy = true, sector = true }
+local CLICKABLE = { close = true, transmit = true, cancel = true, minus = true, plus = true, decoy = true, sector = true,
+    pagePrev = true, pageNext = true }
 
 function RW:onMouseDown(x, y)
     local target, payload = self:hitTest(x, y)
@@ -922,8 +1280,9 @@ function RW:tooltipFor(target, payload)
             return nil
         end
         local parts = { " <RGB:1,1,1> " .. escape(RW.lotLabel(lot)) .. " <LINE> " }
-        if lot.desc then
-            parts[#parts + 1] = " <RGB:0.85,0.85,0.85> " .. escape(getText(lot.desc)) .. " <LINE> "
+        local desc = RW.lotDesc(lot)
+        if desc then
+            parts[#parts + 1] = " <RGB:0.85,0.85,0.85> " .. escape(desc) .. " <LINE> "
         end
         if not lot.allowed then
             parts[#parts + 1] = " <RGB:1,0.55,0.45> " .. escape(RW.reasonText(lot))
@@ -1052,6 +1411,17 @@ function RW:stepButton(r, sign, enabled, hover, pressed)
     if sign == "+" then
         self:drawRect(cx - stroke / 2, cy - arm, stroke, 2 * arm, 0.9 * alpha, INK[1], INK[2], INK[3])
     end
+end
+
+--- Bouton de page (< ou >) imprimé dans une case.
+function RW:pageButton(r, sign, enabled, hover, pressed)
+    local fill = nil
+    if enabled and (hover or pressed) then
+        fill = { INK[1], INK[2], INK[3], pressed and 0.22 or 0.1 }
+    end
+    self:printedBox(r, enabled and 0.75 or 0.22, fill)
+    local L = self.L
+    self:typeCentre(sign, r.x + r.w / 2, r.y + math.floor((r.h - L.fh) / 2), INK, enabled and 1 or 0.25)
 end
 
 --- Chiffres ou croix écrits à la main, centrés sur (cx, cy), à l'encre bleue.
@@ -1337,6 +1707,12 @@ function RW:drawFooter(hover, now)
         end
     end
     self:type(RW.fit(getText("IGUI_MilitaryDrop_ReqLost"), L.font, b.w), b.x, L.lostY, INK, 0.5)
+    if L.paging then
+        -- Pages : < Page 1/2 > (clic, molette, ou la ligne de la manette).
+        self:pageButton(L.pagePrev, "<", self:isEnabled("pagePrev"), hover == "pagePrev", self.pressed == "pagePrev")
+        self:pageButton(L.pageNext, ">", self:isEnabled("pageNext"), hover == "pageNext", self.pressed == "pageNext")
+        self:typeCentre(getText("IGUI_MilitaryDrop_ReqPage", L.page, L.pages), L.pageTextX, L.pageTextY, INK, 0.85)
+    end
     local joypad = self.drawJoypadFocus and Joypad and Joypad.Texture
     self:drawFormButton(L.cancel, getText("IGUI_MilitaryDrop_ReqCancel"), true, hover == "cancel",
         self.pressed == "cancel", false, joypad and Joypad.Texture.BButton or nil)
@@ -1447,6 +1823,7 @@ end
 function RW:onGainJoypadFocus(joypadData)
     ISPanelJoypad.onGainJoypadFocus(self, joypadData)
     self.drawJoypadFocus = true
+    self:showCursor()
 end
 
 function RW:onLoseJoypadFocus(joypadData)
@@ -1458,6 +1835,8 @@ function RW:moveCursor(delta)
     local count = #self:navigation()
     if count > 0 then
         self.cursor = math.max(1, math.min(count, self.cursor + delta))
+        -- Feuille paginée : la page suit la ligne choisie.
+        self:showCursor()
     end
 end
 
@@ -1537,23 +1916,60 @@ end
 
 --- Ouvre la feuille du joueur pour le Result « form » args (reçu à
 --- receivedMs). Une feuille déjà ouverte pour ce joueur est annulée.
-function RW.open(player, device, args, receivedMs)
-    return RW.show(player, device, RW.newForm(args, receivedMs or getTimestampMs()))
+--- anchor (facultatif) : fenêtre radio du jeu d'où vient la demande (module
+--- « Logistique ») ; la feuille s'ouvre collée à elle.
+function RW.open(player, device, args, receivedMs, anchor)
+    return RW.show(player, device, RW.newForm(args, receivedMs or getTimestampMs()), anchor)
+end
+
+--- Rectangle à l'écran de la fenêtre d'ancrage, si elle est encore affichée.
+function RW.anchorRect(anchor)
+    if type(anchor) ~= "table" or not anchor.getIsVisible or not anchor:getIsVisible() then
+        return nil
+    end
+    local x = anchor.getAbsoluteX and anchor:getAbsoluteX() or anchor:getX()
+    local y = anchor.getAbsoluteY and anchor:getAbsoluteY() or anchor:getY()
+    return { x = x, y = y, w = anchor:getWidth(), h = anchor:getHeight() }
+end
+
+--- Position d'une feuille width × height collée à la fenêtre a : à sa droite,
+--- sinon à sa gauche si la droite déborde de l'écran s du joueur, sinon le
+--- côté le moins débordant ramené dans l'écran ; hauteur alignée sur le haut
+--- de la fenêtre, ramenée dans l'écran.
+function RW.anchoredPosition(width, height, a, s)
+    local right, left = a.x + a.w, a.x - width
+    local x
+    if right + width <= s.x + s.w then
+        x = right
+    elseif left >= s.x then
+        x = left
+    else
+        local spaceRight, spaceLeft = s.x + s.w - right, a.x - s.x
+        x = spaceRight >= spaceLeft and right or left
+    end
+    x = math.max(s.x, math.min(x, s.x + s.w - width))
+    local y = math.max(s.y, math.min(a.y, s.y + s.h - height))
+    return math.floor(x), math.floor(y)
 end
 
 --- Affiche la feuille d'un formulaire (nouveau, ou rouvert après un refus
---- qui garde l'autorisation : radio éteinte, cadence).
-function RW.show(player, device, form)
+--- qui garde l'autorisation : radio éteinte, cadence). anchor : voir RW.open.
+function RW.show(player, device, form, anchor)
     local playerNum = player:getPlayerNum()
     local previous = RW.instances[playerNum]
     if previous then
         previous:close()
     end
     local screenW, screenH = getPlayerScreenWidth(playerNum), getPlayerScreenHeight(playerNum)
+    local screenX, screenY = getPlayerScreenLeft(playerNum), getPlayerScreenTop(playerNum)
     local width, height = RW.measureSize(form, screenW, screenH)
     width, height = math.min(width, screenW), math.min(height, screenH)
-    local x = getPlayerScreenLeft(playerNum) + math.floor((screenW - width) / 2)
-    local y = getPlayerScreenTop(playerNum) + math.floor((screenH - height) / 2)
+    local x = screenX + math.floor((screenW - width) / 2)
+    local y = screenY + math.floor((screenH - height) / 2)
+    local anchorBox = RW.anchorRect(anchor)
+    if anchorBox then
+        x, y = RW.anchoredPosition(width, height, anchorBox, { x = screenX, y = screenY, w = screenW, h = screenH })
+    end
     local window = RW:new(x, y, width, height, player, device, form)
     window.maxWidth, window.maxHeight = screenW, screenH
     window:initialise()

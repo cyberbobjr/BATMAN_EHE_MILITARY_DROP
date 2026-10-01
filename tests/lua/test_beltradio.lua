@@ -209,6 +209,73 @@ function T.window_calls_the_original_otherwise()
     assertEq(ORIGINAL_CALLS, 2, "fenêtre masquée : original")
 end
 
+function T.window_stays_open_while_the_radio_is_taken_in_hand()
+    -- Exchange.takeInHand : ISEquipWeaponAction décroche la radio
+    -- (detachConnect) avant de la mettre en main (complete).
+    local radio = makeRadio()
+    local equip = { Type = "ISEquipWeaponAction", character = PLAYER, item = radio }
+    local exchange = { Type = "MilitaryDrop.ExchangeAction", character = PLAYER, device = radio }
+    ISTimedActionQueue = { queues = { [PLAYER] = { queue = { equip, exchange } } } }
+    local window = makeWindow(radio)
+    assertEq(ISRadioWindow.update(window), nil, "décrochée, pas encore en main : fenêtre gardée")
+    assertEq(window.deviceData.turnedOff, nil, "radio toujours allumée (pas de radioOff)")
+    ISTimedActionQueue.queues[PLAYER].queue = { exchange }
+    ISRadioWindow.update(window)
+    assertEq(window.deviceData.turnedOff, nil, "échange en file (MP : main pas encore synchronisée)")
+    assertEq(ORIGINAL_CALLS, 0, "original jamais appelé")
+    -- Annulation : la file est vidée, comportement vanilla.
+    ISTimedActionQueue.queues[PLAYER].queue = {}
+    assertEq(ISRadioWindow.update(window), "original", "file vide : original")
+    assertEq(window.deviceData.turnedOff, true, "extinction vanilla")
+    -- Prise en main d'un autre objet, ou par un autre joueur : rien de gardé.
+    local other = makeRadio()
+    ISTimedActionQueue.queues[PLAYER].queue = { { Type = "ISEquipWeaponAction", character = PLAYER, item = other },
+        { Type = "ISEquipWeaponAction", character = {}, item = radio } }
+    ISRadioWindow.update(makeWindow(radio))
+    assertEq(ORIGINAL_CALLS, 2, "autre objet ou autre joueur : original")
+    -- Radio hors de l'inventaire du personnage (au sol, meuble) : pas concernée.
+    local away = makeRadio({ container = { name = "floor", isInCharacterInventory = function() return false end } })
+    ISTimedActionQueue.queues[PLAYER].queue = { { Type = "ISEquipWeaponAction", character = PLAYER, item = away } }
+    ISRadioWindow.update(makeWindow(away))
+    assertEq(ORIGINAL_CALLS, 3, "radio hors de l'inventaire : original")
+    -- Sac porté (transfert vanilla puis prise en main) : gardée.
+    local bagged = makeRadio({ container = { name = "bag", isInCharacterInventory = function() return true end } })
+    ISTimedActionQueue.queues[PLAYER].queue = { { Type = "ISInventoryTransferAction", character = PLAYER, item = bagged },
+        { Type = "ISEquipWeaponAction", character = PLAYER, item = bagged } }
+    ISRadioWindow.update(makeWindow(bagged))
+    assertEq(ORIGINAL_CALLS, 3, "radio dans un sac porté, en cours de prise : fenêtre gardée")
+end
+
+function T.stowed_military_radio_gets_device_options_that_take_it_in_hand()
+    -- Le menu contextuel du mod n'existe plus : « Options de l'appareil » est
+    -- le seul accès à la section « Logistique » d'un talkie rangé.
+    local military = true
+    MilitaryDrop.Radio = { isMilitary = function() return military end }
+    local taken = {}
+    MilitaryDrop.Exchange = { takeInHand = function(player, item) taken[#taken + 1] = { player, item } end }
+    local opened = {}
+    ISRadioAndTvMenu.openRadioPanel = function(player, item) opened[#opened + 1] = item end
+    local bag = { name = "bag", isInCharacterInventory = function() return true end }
+    local radio = makeRadio({ container = bag })
+    local context = makeContext()
+    MilitaryDrop.BeltRadio.onFillInventoryContextMenu(0, context, { radio })
+    assertEq(#context.options, 1, "option ajoutée")
+    local option = context.options[1]
+    assertEq(option.name, "IGUI_DeviceOptions", "même libellé que le vanilla")
+    option.fn(option.target, option.param)
+    assertTrue(taken[1] and taken[1][2] == radio, "prise en main (action vanilla)")
+    assertTrue(opened[1] == radio, "fenêtre ouverte aussitôt")
+    -- Radio non militaire, ou déjà en main : rien (vanilla).
+    military = false
+    local other = makeContext()
+    MilitaryDrop.BeltRadio.onFillInventoryContextMenu(0, other, { radio })
+    assertEq(#other.options, 0, "radio ordinaire rangée : vanilla")
+    military = true
+    PLAYER.hands = { radio }
+    MilitaryDrop.BeltRadio.onFillInventoryContextMenu(0, other, { radio })
+    assertEq(#other.options, 0, "en main : option vanilla")
+end
+
 function T.window_wrapper_is_installed_once()
     local wrapped = ISRadioWindow.update
     assertEq(MilitaryDrop.BeltRadio.installWindowWrapper(), false, "deuxième installation refusée")

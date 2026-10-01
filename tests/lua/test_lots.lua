@@ -86,6 +86,13 @@ function T.setup()
     ItemType = { CONTAINER = "Container", WEAPON = "Weapon", WEAPON_PART = "WeaponPart", CLOTHING = "Clothing" }
     Fluid = { Water = "Water", Petrol = "Petrol" }
     ItemTag = { PETROL = "Petrol", NEVER_EMPTY = "NeverEmpty" }
+    -- Registre des tags (ItemTag.get(ResourceLocation.of("base:x")), ItemTag.java:478).
+    ResourceLocation = { of = function(id)
+        return string.find(id, ":", 1, true) and string.lower(id) or ("base:" .. string.lower(id))
+    end }
+    ItemTag.get = function(location)
+        return ({ ["base:petrol"] = "Petrol", ["base:neverempty"] = "NeverEmpty" })[location]
+    end
     instanceof = function(object, class) return type(object) == "table" and object.kind == class end
     -- Objets créés, par type complet (le coût à éviter).
     INSTANCED = {}
@@ -333,9 +340,56 @@ function T.other_lots_get_no_weapon_extras()
     assertEq(openCase("melee"), "Base.Machete", "arme de mêlée seule")
 end
 
-function T.case_with_unknown_lot_gives_nothing()
-    assertEq(openCase("gold"), "", "lot inconnu (mod retiré) : rien")
-    assertEq(#OPENED, 1, "la caisse du largage compte quand même comme ouverte")
+function T.case_with_unknown_lot_is_given_back_closed()
+    local base = instanceItem
+    instanceItem = function(fullType)
+        if fullType == "MilitaryDrop.RequisitionCase" then
+            local copy = { fullType = fullType, modData = {} }
+            function copy.getModData(self) return self.modData end
+            function copy.setName(self, name) self.name = name end
+            function copy.setCustomName(self, value) self.custom = value end
+            return copy
+        end
+        return base(fullType)
+    end
+    NOTICES = {}
+    MilitaryDrop.Net = { toPlayer = function(_, command, args) NOTICES[#NOTICES + 1] = { command, args } end }
+    local types, case = openCase("gold", "D9")
+    assertEq(types, "MilitaryDrop.RequisitionCase", "lot retiré du fichier : la caisse est rendue, rien d'autre")
+    assertTrue(GIVEN[1] ~= case, "nouvel exemplaire (l'ancien est consommé par la recette)")
+    assertEq(GIVEN[1].modData.MilitaryDrop_lot, "gold", "même lot : s'ouvrira si le lot revient")
+    assertEq(GIVEN[1].modData.MilitaryDrop_dropId, "D9", "même largage")
+    assertEq(#OPENED, 0, "rien d'ouvert : la confiance n'est pas prévenue")
+    assertEq(NOTICES[1][1], "Notice", "joueur prévenu")
+    assertEq(NOTICES[1][2].key, "IGUI_MilitaryDrop_UnknownLotCase", "remarque traduite côté client")
+    assertEq(NOTICES[1][2].username, "tester", "au bon joueur")
+end
+
+function T.case_with_unknown_lot_keeps_its_name()
+    local base = instanceItem
+    instanceItem = function(fullType)
+        if fullType == "MilitaryDrop.RequisitionCase" then
+            local copy = { modData = {} }
+            function copy.getModData(self) return self.modData end
+            function copy.setName(self, name) self.name = name end
+            function copy.setCustomName(self, value) self.custom = value end
+            return copy
+        end
+        return base(fullType)
+    end
+    GIVEN = {}
+    Actions = { addOrDropItem = function(_, item) GIVEN[#GIVEN + 1] = item end }
+    MilitaryDrop.Trust = { onCaseOpened = function() error("pas d'ouverture") end }
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Recipe.lua")
+    local case = { modData = { MilitaryDrop_lot = "gold" } }
+    function case.getModData(self) return self.modData end
+    function case.getFullType() return "MilitaryDrop.RequisitionCase" end
+    function case.isCustomName() return true end
+    function case.getName() return "Caisse de réquisition : Or" end
+    MilitaryDrop.Recipe.openSupplyCase({ getAllConsumedItems = function() return list({ case }) end },
+        { getUsername = function() return "tester" end })
+    assertEq(GIVEN[1].name, "Caisse de réquisition : Or", "nom gardé")
+    assertEq(GIVEN[1].custom, true, "nom personnalisé")
 end
 
 return T

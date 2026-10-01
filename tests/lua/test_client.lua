@@ -240,4 +240,48 @@ function T.accepted_without_form_is_unchanged()
     assertTrue(not Client.sendRequisition(requestId, {}, nil, {}), "aucune commande possible")
 end
 
+function T.code_is_remembered_and_the_anchor_follows_the_request()
+    local w = requisitionWorld()
+    local Client = MilitaryDrop.Client
+    assertEq(Client.rememberedCode(0), "", "rien en mémoire")
+    MilitaryDrop.Exchange = { run = function(_, _, _, callback) callback() return true end }
+    local anchor = { name = "fenêtre radio" }
+    assertTrue(Client.call(w.player, w.device, "BRAVO-KILO-42", false, { anchor = anchor }), "appel lancé")
+    assertEq(Client.rememberedCode(0), "BRAVO-KILO-42", "code gardé pour la session")
+    assertEq(w.toServer[1].args.code, "BRAVO-KILO-42", "code envoyé")
+    local requestId = w.toServer[1].args.requestId
+    local anchors = {}
+    MilitaryDrop.RequisitionWindow.open = function(_, _, _, _, a) anchors[#anchors + 1] = a end
+    MilitaryDrop.RequisitionWindow.show = function(_, _, _, a) anchors[#anchors + 1] = a end
+    result(formResult(requestId))
+    wait(Client.REPLY_DELAY_MS)
+    assertTrue(anchors[1] == anchor, "feuille ancrée à l'ouverture")
+    Client.sendRequisition(requestId, { rations = 1 }, nil, { deadline = NOW + 100000 })
+    result({ requestId = requestId, status = "busy" })
+    assertTrue(anchors[2] == anchor, "feuille rouverte au même endroit")
+    -- Dernière réplique de la base gardée par joueur local.
+    Client.radioSay({ playerNum = 0, device = w.device }, "reçu")
+    assertEq(Client.lastReply(0).text, "reçu", "dernière réplique")
+    assertEq(Client.lastReply(1), nil, "rien pour un autre joueur")
+    Client.rememberCode(0, "")
+    assertEq(Client.rememberedCode(0), "", "code effacé")
+end
+
+function T.context_menu_keeps_only_the_admin_drop()
+    -- RADIO-06 : la section « Logistique » de la fenêtre radio remplace le menu.
+    local options = {}
+    local context = { addOption = function(_, name) options[#options + 1] = name; return {} end }
+    local Client = MilitaryDrop.Client
+    local canForce = Client.canForce
+    getText = getText or function(key) return key end
+    Client.canForce = function() return false end
+    Client.addOptions({}, context, {})
+    assertEq(#options, 0, "joueur : plus de « Demander un largage » au clic droit")
+    Client.canForce = function() return true end
+    Client.addOptions({}, context, {})
+    Client.canForce = canForce
+    assertEq(#options, 1, "admin : largage forcé seul")
+    assertEq(options[1], "IGUI_MilitaryDrop_RequestDropAdmin", "option admin")
+end
+
 return T

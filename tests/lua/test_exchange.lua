@@ -418,4 +418,16 @@ function T.logistics_menu_counts_and_names_the_dog_tags()
     assertEq(Menu.tooltipText(player, Menu.OPTIONS[1]), "IGUI_MilitaryDrop_Exchange_ReportTooltip", "autre option")
 end
 
+function T.logistics_submenu_is_no_longer_in_the_context_menu()
+    -- La section « Logistique » de la fenêtre radio remplace le sous-menu.
+    local inventory = #Events.OnFillInventoryObjectContextMenu.handlers
+    local world = #Events.OnFillWorldObjectContextMenu.handlers
+    loadMod("client/MilitaryDrop/MilitaryDrop_ExchangeMenu.lua")
+    assertEq(#Events.OnFillInventoryObjectContextMenu.handlers, inventory, "pas d'inscription au menu d'inventaire")
+    assertEq(#Events.OnFillWorldObjectContextMenu.handlers, world, "ni au menu du monde")
+    local Menu = MilitaryDrop.ExchangeMenu
+    assertTrue(type(Menu.reason) == "function" and type(Menu.onOption) == "function"
+        and type(Menu.tooltipText) == "function", "fonctions gardées pour la fenêtre radio")
+end
+
 return T

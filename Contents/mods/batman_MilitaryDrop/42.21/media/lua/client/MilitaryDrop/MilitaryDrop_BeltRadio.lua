@@ -13,9 +13,15 @@
 --
 -- Ce module, pour toute radio portative accrochée :
 --   1. ajoute « Options de l'appareil » (même action que le vanilla), sauf si
---      l'option existe déjà ;
+--      l'option existe déjà ; aussi pour une radio militaire rangée dans
+--      l'inventaire ou un sac porté (BeltRadio.isStowedMilitary) : prise en
+--      main puis fenêtre, car sa section « Logistique »
+--      (MilitaryDrop_RadioModule.lua) remplace le menu contextuel du mod ;
 --   2. enveloppe ISRadioWindow.update (une seule fois) : la fenêtre d'une radio
---      accrochée reste ouverte et la radio allumée ; sinon, l'original ;
+--      accrochée reste ouverte et la radio allumée, y compris pendant sa
+--      prise en main (demande du module « Logistique » ou du menu : la radio
+--      quitte la ceinture avant d'arriver en main, BeltRadio.isBeingTaken) ;
+--      sinon, l'original ;
 --   3. en solo seulement, fait entendre à un talkie accroché les lignes des
 --      chaînes du mod (chaîne militaire MilitaryDrop.Broadcast.channel et
 --      station de chiffres MilitaryDrop.NumbersStation.channel), au moment où
@@ -39,6 +45,7 @@
 require "ISUI/ISRadioAndTvMenu"
 require "RadioCom/ISRadioWindow"
 require "MilitaryDrop/MilitaryDrop_Core"
+require "MilitaryDrop/MilitaryDrop_Exchange"
 
 -- Table conservée si le fichier est rechargé (débogage) : l'enveloppe de la
 -- fenêtre n'est jamais posée deux fois (originalWindowUpdate).
@@ -75,6 +82,32 @@ end
 -- 1. Menu « Options de l'appareil »
 -- ----------------------------------------------------------------------------
 
+--- Radio militaire portative rangée dans l'inventaire du joueur (sacs portés
+--- compris), ni en main, ni sur le dos, ni accrochée : le vanilla n'offre pas
+--- « Options de l'appareil » (ISInventoryPaneContextMenu.lua:896), or la
+--- section « Logistique » de cette fenêtre est le seul accès joueur aux
+--- échanges du mod (le menu contextuel ne les propose plus).
+function BeltRadio.isStowedMilitary(player, item)
+    local Radio = MilitaryDrop.Radio
+    if not (Radio and Radio.isMilitary) or not BeltRadio.isPortableRadio(item) or not Radio.isMilitary(item) then
+        return false
+    end
+    if player:isAttachedItem(item) or player:getPrimaryHandItem() == item or player:getSecondaryHandItem() == item
+        or player:getClothingItem_Back() == item then
+        return false
+    end
+    local container = item:getContainer()
+    return container ~= nil and (container == player:getInventory() or container:isInCharacterInventory(player))
+end
+
+--- Radio rangée : le personnage la prend en main (action vanilla,
+--- Exchange.takeInHand) et la fenêtre s'ouvre aussitôt ; elle reste ouverte
+--- pendant la prise en main (BeltRadio.keepsWindow).
+function BeltRadio.takeAndOpen(player, item)
+    MilitaryDrop.Exchange.takeInHand(player, item)
+    ISRadioAndTvMenu.openRadioPanel(player, item)
+end
+
 function BeltRadio.onFillInventoryContextMenu(playerNum, context, items)
     -- Avant toute ouverture de la fenêtre : enveloppe reposée si
     -- ISRadioWindow.lua a été rechargé entre-temps (débogage).
@@ -88,12 +121,14 @@ function BeltRadio.onFillInventoryContextMenu(playerNum, context, items)
         if not instanceof(entry, "InventoryItem") then
             item = entry.items and entry.items[1]
         end
-        if BeltRadio.isAttachedOnly(player, item) then
+        local attached = BeltRadio.isAttachedOnly(player, item)
+        if attached or BeltRadio.isStowedMilitary(player, item) then
             local label = getText(BeltRadio.OPTIONS_KEY)
             if context:getOptionFromName(label) then
                 return
             end
-            local option = context:addOption(label, player, ISRadioAndTvMenu.openRadioPanel, item)
+            local onSelect = attached and ISRadioAndTvMenu.openRadioPanel or BeltRadio.takeAndOpen
+            local option = context:addOption(label, player, onSelect, item)
             option.itemForTexture = item
             return
         end
@@ -104,11 +139,62 @@ end
 -- 2. Fenêtre de réglage : pas d'extinction d'une radio accrochée
 -- ----------------------------------------------------------------------------
 
---- La fenêtre règle une radio accrochée à son joueur : à garder ouverte.
+-- Actions qui mènent la radio dans la main : prise en main vanilla
+-- (Exchange.takeInHand → ISInventoryPaneContextMenu.equipWeapon), puis
+-- l'échange du mod qui suit dans la file. Champ de l'action qui désigne la radio.
+BeltRadio.TAKING_ACTIONS = { ISEquipWeaponAction = "item", ["MilitaryDrop.ExchangeAction"] = "device" }
+
+local function sameItem(a, b)
+    if a == nil or b == nil then
+        return false
+    end
+    if a == b then
+        return true
+    end
+    return a.getID ~= nil and b.getID ~= nil and a:getID() == b:getID()
+end
+
+--- Une prise en main de cette radio par ce joueur est en file ou en cours.
+--- ISEquipWeaponAction décroche l'objet de la ceinture à l'événement
+--- d'animation detachConnect (ISEquipWeaponAction.lua:48-51) mais ne le met
+--- en main qu'à complete() (:182-229) : dans l'intervalle, la radio n'est ni
+--- accrochée ni en main, et l'update vanilla de la fenêtre l'éteindrait
+--- (ISRadioWindow.lua:152-158). Lu dans la file du joueur
+--- (ISTimedActionQueue.queues[joueur].queue) : vidée à l'annulation ou à la
+--- fin, sans drapeau à tenir à jour. L'échange qui suit la prise en main
+--- garde aussi la fenêtre (en MP, le passage en main peut arriver après la
+--- fin de l'action côté client).
+function BeltRadio.isBeingTaken(player, item)
+    local queues = ISTimedActionQueue and ISTimedActionQueue.queues
+    local queue = queues and queues[player]
+    if type(queue) ~= "table" or type(queue.queue) ~= "table" then
+        return false
+    end
+    for _, action in ipairs(queue.queue) do
+        local field = type(action) == "table" and BeltRadio.TAKING_ACTIONS[action.Type]
+        if field and action.character == player and sameItem(action[field], item) then
+            return true
+        end
+    end
+    return false
+end
+
+--- La fenêtre règle une radio accrochée à son joueur, ou en train d'être
+--- prise en main par lui : à garder ouverte, radio allumée.
 function BeltRadio.keepsWindow(window)
-    return window:getIsVisible() and window.deviceType == "InventoryItem"
-        and window.device ~= nil and window.player ~= nil and window.deviceData ~= nil
-        and BeltRadio.isAttachedOnly(window.player, window.device)
+    if not (window:getIsVisible() and window.deviceType == "InventoryItem"
+        and window.device ~= nil and window.player ~= nil and window.deviceData ~= nil) then
+        return false
+    end
+    local player, device = window.player, window.device
+    if BeltRadio.isAttachedOnly(player, device) then
+        return true
+    end
+    -- Inventaire principal ou sac porté (BeltRadio.takeAndOpen : transfert
+    -- vanilla puis prise en main).
+    local container = BeltRadio.isPortableRadio(device) and device:getContainer()
+    return container and (container == player:getInventory() or container:isInCharacterInventory(player)) == true
+        and BeltRadio.isBeingTaken(player, device)
 end
 
 --- Enveloppe ISRadioWindow.update une seule fois. Radio accrochée : le début

@@ -62,7 +62,8 @@ end
 local function setupLoot()
     ItemType = { CONTAINER = "Container", WEAPON = "Weapon", WEAPON_PART = "WeaponPart", CLOTHING = "Clothing" }
     Fluid = { Water = "Water", Petrol = "Petrol" }
-    ItemTag = { PETROL = "Petrol" }
+    ItemTag = { PETROL = "Petrol", get = function(location) return location == "base:petrol" and "Petrol" or nil end }
+    ResourceLocation = { of = function(id) return string.lower(id) end }
     INSTANCED = 0
     instanceItem = function(fullType)
         local data = ITEMS[fullType]
@@ -200,9 +201,18 @@ function T.setup()
             end,
         }
     end
+    -- Lecture ligne à ligne (BufferedReader.readLine : nil à la fin).
     getFileReader = function(name)
         local value = FILES[name]
-        return value and { readLine = function() return value end, close = function() end } or nil
+        if not value then
+            return nil
+        end
+        local lines = {}
+        for line in string.gmatch(value .. "\n", "([^\n]*)\n") do
+            lines[#lines + 1] = line
+        end
+        local index = 0
+        return { readLine = function() index = index + 1 return lines[index] end, close = function() end }
     end
     getFileWriter = function(name)
         return { write = function(_, text) FILES[name] = text end, close = function() end }
@@ -230,6 +240,7 @@ function T.setup()
     loadMod("server/MilitaryDrop/MilitaryDrop_Trust.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Broadcast.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Flights.lua")
+    loadMod("server/MilitaryDrop/MilitaryDrop_LotsFile.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Requisition.lua")
     -- Module leurre (agent C) simulé : contrat seulement.
     DELIVERED = {}

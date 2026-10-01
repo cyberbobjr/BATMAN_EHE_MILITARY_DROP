@@ -65,4 +65,46 @@ function T.format_channel()
     assertEq(format(151000), "151", "pas de .0")
 end
 
+-- Chaînes : caractères entiers (Kahlua : unités UTF-16 ; lupa : octets UTF-8).
+
+function T.drop_last_char_always_shortens_utf8_text()
+    local drop = MilitaryDrop.dropLastChar
+    assertEq(drop("aé"), "a", "é (deux octets) retiré entier")
+    assertEq(drop("é"), "", "un seul caractère")
+    assertEq(drop(""), "", "vide")
+    assertEq(drop("abc"), "ab", "ASCII")
+    local stray = "yyy"
+    assertTrue(#drop(stray) < #stray, "octets de suite sans tête : raccourci quand même")
+    assertEq(MilitaryDrop.cutText("éé", 3), "é", "coupe au milieu d'un caractère : retiré")
+    assertEq(MilitaryDrop.cutText("aé", 2), "a", "tête seule retirée")
+    assertEq(MilitaryDrop.cutText("abc", 5), "abc", "assez court : inchangé")
+    assertEq(MilitaryDrop.cutText("abcd", 2), "ab", "ASCII")
+end
+
+function T.kahlua_strings_drop_one_unit_or_a_surrogate_pair()
+    -- Kahlua : string.char accepte tout code (StringLib.java:674-678) et
+    -- string.byte renvoie l'unité UTF-16 (StringLib.java:637-662).
+    local realChar, realByte = string.char, string.byte
+    string.char = function() return "" end
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
+    string.char = realChar
+    -- Unités simulées : H = début de paire (0xD83D), L = fin de paire (0xDE00).
+    string.byte = function(text, i, j)
+        local code = realByte(text, i, j)
+        if code == 72 then
+            return 0xD83D
+        elseif code == 76 then
+            return 0xDE00
+        end
+        return code
+    end
+    local drop = MilitaryDrop.dropLastChar
+    assertEq(drop("aby"), "ab", "unité 128-191 («, °) : un caractère, une unité")
+    assertEq(drop("yy"), "y", "jamais plus d'un caractère")
+    assertEq(drop("abHL"), "ab", "paire de substitution retirée entière")
+    assertEq(MilitaryDrop.cutText("abHLc", 3), "ab", "pas de coupe dans une paire")
+    assertEq(MilitaryDrop.cutText("abcyd", 4), "abcy", "unité entre 128 et 191 gardée")
+    string.byte = realByte
+end
+
 return T

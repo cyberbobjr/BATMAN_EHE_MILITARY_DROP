@@ -436,4 +436,204 @@ function T.mouse_targets_and_joypad_steps()
     assertTrue(not form.decoyOn, "leurre décoché")
 end
 
+function T.admin_lots_show_free_texts_in_the_client_language()
+    local args = formArgs(1, 8)
+    args.lots[#args.lots + 1] = { id = "admin1", group = 1, cost = 2, allowed = true,
+        texts = { EN = { label = "Hunting kit", desc = "Rifle, knife and traps." },
+            fr = { label = "Lot de chasse" }, DE = { label = 5 }, IT = "x" } }
+    args.lots[#args.lots + 1] = { id = "admin2", group = 1, cost = 1, allowed = true,
+        label = "IGUI_MilitaryDrop_Lot_rations", texts = { EN = { desc = string.rep("é", 400) } } }
+    local form = RW.newForm(args, NOW)
+    local hunting = form.byId.admin1
+    -- Client en français (setup) : libellé FR, description absente en FR → anglais.
+    assertEq(RW.lotLabel(hunting), "Lot de chasse", "libellé dans la langue du client (clé en minuscules admise)")
+    assertEq(RW.lotDesc(hunting), "Rifle, knife and traps.", "description : repli sur l'anglais")
+    -- Autre langue sans texte : anglais.
+    Translator = { getLanguage = function() return { name = function() return "DE" end } end }
+    assertEq(RW.lotLabel(hunting), "Hunting kit", "allemand : repli sur l'anglais (valeur non textuelle ignorée)")
+    -- Langue de base (Language.base) : PTBR → PT.
+    hunting.texts.PT = { label = "Kit de caça" }
+    Translator = { getLanguage = function()
+        return { name = function() return "PTBR" end, base = function() return "PT" end }
+    end }
+    assertEq(RW.lotLabel(hunting), "Kit de caça", "langue de base")
+    -- Sans texte libre : clé de traduction, puis identifiant.
+    assertEq(RW.lotLabel(form.byId.admin2), "IGUI_MilitaryDrop_Lot_rations", "clé de traduction")
+    assertEq(RW.lotLabel(form.byId.rations), "IGUI_MilitaryDrop_Lot_rations", "lot ordinaire inchangé")
+    assertEq(RW.lotDesc(form.byId.rations), "IGUI_MilitaryDrop_LotDesc_rations", "description ordinaire")
+    local bare = RW.newForm({ requestId = 1, budget = 3, lots = { { id = "naked", allowed = true } } }, NOW)
+    assertEq(RW.lotLabel(bare.byId.naked), "naked", "ni texte ni clé : identifiant")
+    -- Description démesurée : bornée sans couper un caractère UTF-8.
+    local long = RW.lotDesc(form.byId.admin2)
+    assertTrue(#long <= RW.TEXT_LIMITS.desc, "description bornée")
+    assertTrue(long:find("^[\195][\169]") ~= nil and #long % 2 == 0, "caractères entiers")
+    -- Infobulle et disposition utilisent les textes libres.
+    local window = makeWindow(form)
+    Translator = { getLanguage = function() return { name = function() return "FR" end } end }
+    local tip = window:tooltipFor("lot", "admin1")
+    assertTrue(tip:find("Lot de chasse", 1, true) and tip:find("Rifle, knife and traps.", 1, true), "infobulle")
+    checkLayout(RW.computeLayout(form, 1920, 1080), form, "lots de l'admin")
+end
+
+function T.client_text_falls_back_on_the_first_language()
+    local args = formArgs(1, 8)
+    args.lots[#args.lots + 1] = { id = "admin1", group = 1, cost = 1, allowed = true,
+        texts = { IT = { label = "Cucina" }, DE = { label = "Küche", desc = "Töpfe." } } }
+    local form = RW.newForm(args, NOW)
+    -- Client en français, ni FR ni EN : première langue (ordre alphabétique), comme Lots.text.
+    assertEq(RW.lotLabel(form.byId.admin1), "Küche", "DE avant IT")
+    assertEq(RW.lotDesc(form.byId.admin1), "Töpfe.", "description : première langue qui la donne")
+end
+
+--- Formulaire de n lots ajoutés (paliers 1 à 3), libellés de longueur moyenne.
+local function manyLots(n, withDecoy)
+    local args = formArgs(3, 40, withDecoy)
+    for i = 1, n - #args.lots do
+        args.lots[#args.lots + 1] = { id = "extra" .. i, group = (i % 3) + 1, cost = 1, allowed = true,
+            texts = { EN = { label = "Extra lot " .. i } } }
+    end
+    return RW.newForm(args, NOW)
+end
+
+--- Toutes les pages : chaque lot sur exactement une page, lignes entières dans
+--- la feuille, feuille dans l'écran, taille constante.
+local function checkPages(form, maxW, maxH, label, oversize)
+    local L1 = RW.computeLayout(form, maxW, maxH)
+    assertTrue(L1.paging ~= nil, label .. " : feuille paginée")
+    local seen, pages = {}, L1.paging.pages
+    for p = 1, pages do
+        local L = RW.pageLayout(form, L1.paging, p)
+        assertTrue(oversize or (L.W <= maxW and L.H <= maxH), label .. " : page " .. p .. " dans l'écran")
+        assertEq(L.W, L1.W, label .. " : même largeur")
+        assertEq(L.H, L1.H, label .. " : même hauteur")
+        assertTrue(L.pagePrev and L.pageNext, label .. " : boutons de page")
+        local whole = { x = 0, y = 0, w = L.W, h = L.H }
+        for id, row in pairs(L.rows) do
+            assertTrue(not seen[id], label .. " : " .. id .. " sur une seule page")
+            seen[id] = p
+            assertTrue(within(row.row, L.paper) and within(row.row, whole), label .. " : ligne " .. id .. " entière")
+            assertTrue(disjoint(row.row, L.budget) and disjoint(row.row, L.transmit), label .. " : hors du pied")
+            assertTrue(disjoint(row.row, L.pagePrev) and disjoint(row.row, L.pageNext), label .. " : hors des pages")
+            assertEq(L1.paging.pageOf[id], p, label .. " : index des pages")
+        end
+        assertTrue(within(L.transmit, L.paper) and within(L.budget, L.paper), label .. " : pied sur la feuille")
+        if L.decoyRow then
+            assertEq(p, pages, label .. " : leurre en dernière page")
+            assertTrue(within(L.sectorsArea, L.paper), label .. " : rose des vents entière")
+        end
+    end
+    for _, lot in ipairs(form.lots) do
+        assertTrue(seen[lot.id] ~= nil, label .. " : lot " .. lot.id .. " présent")
+    end
+    return L1
+end
+
+function T.long_section_continues_in_the_next_column()
+    useTexts(FRENCH)
+    local args = { requestId = 3, budget = 40, tier = 3, lots = {} }
+    for i = 1, 24 do
+        args.lots[i] = { id = "l" .. i, group = 1, cost = 1, allowed = true, texts = { EN = { label = "Lot " .. i } } }
+    end
+    local form = RW.newForm(args, NOW)
+    local L = RW.computeLayout(form, 1920, 1080)
+    assertEq(L.cols, 2, "une seule section, deux colonnes")
+    assertEq(#L.sectionsAt, 2, "titre répété en tête de la seconde colonne")
+    assertEq(L.sectionsAt[1].label, L.sectionsAt[2].label, "même palier")
+    assertTrue(L.sectionsAt[2].x > L.sectionsAt[1].x, "dans la colonne de droite")
+    checkLayout(L, form, "section longue")
+end
+
+function T.many_lots_use_columns_or_pages_without_cutting_a_row()
+    useTexts(FRENCH)
+    local form = manyLots(40)
+    -- Grand écran : tout tient, sans page (trois colonnes au besoin).
+    local big = RW.computeLayout(form, 1920, 1080)
+    assertEq(big.paging, nil, "1920 x 1080 : sans page")
+    assertTrue(big.W <= 1920 and big.H <= 1080, "tient")
+    checkLayout(big, form, "40 lots")
+    assertTrue(big.cols >= 2, "plusieurs colonnes")
+    -- Écran partagé en quatre (960 x 540) et écran étroit et bas : pages.
+    checkPages(form, 960, 540, "écran partagé")
+    checkPages(form, 560, 540, "étroit et bas")
+    -- Écran partagé en quatre à 1280 x 720.
+    checkPages(form, 640, 360, "quatre joueurs en 720p")
+    -- Plus petit que le pied et l'en-tête : le moins débordant, paginé quand même.
+    local tiny = checkPages(form, 480, 200, "minuscule", true)
+    assertTrue(tiny.paging.pages >= 2, "plusieurs pages")
+end
+
+function T.paged_sheet_follows_the_cursor_and_the_wheel()
+    useTexts(FRENCH)
+    local form = manyLots(40)
+    local player = { getPlayerNum = function() return 0 end, isDead = function() return false end }
+    local window = RW:new(0, 0, 960, 540, player, nil, form)
+    window.maxWidth, window.maxHeight = 960, 540
+    window:layout()
+    assertTrue(window.L.paging ~= nil and window.page == 1, "page 1")
+    local pages = window.L.paging.pages
+    assertTrue(not window:isEnabled("pagePrev") and window:isEnabled("pageNext"), "boutons de page")
+    local L = window.L
+    window:onMouseDown(L.pageNext.x + 1, L.pageNext.y + 1)
+    window:onMouseUp(L.pageNext.x + 1, L.pageNext.y + 1)
+    assertEq(window.page, 2, "clic sur > : page suivante")
+    assertTrue(window:onMouseWheel(-1) and window.page == 1, "molette : page précédente")
+    window:onMouseWheel(-1)
+    assertEq(window.page, 1, "bornée")
+    -- Manette : la page suit la ligne choisie.
+    local nav = window:navigation()
+    window.cursor = 1
+    window:moveCursor(#nav)
+    assertEq(window.page, pages, "dernière ligne (secteurs) : dernière page")
+    assertTrue(window.L.decoyRow ~= nil, "leurre affiché")
+    window:moveCursor(-#nav)
+    assertEq(window.page, 1, "première ligne : première page")
+    -- Le lot choisi est sur la page affichée et cliquable.
+    local id = nav[1].id
+    local row = window.L.rows[id]
+    assertTrue(row ~= nil, "ligne du curseur affichée")
+    local target, payload = window:hitTest(row.plus.x + 1, row.plus.y + 1)
+    assertEq(target, "plus", "bouton + de la page")
+    assertEq(payload, id, "du bon lot")
+    window:stepCursor(1)
+    assertEq(form.qty[id], 1, "droite : +1 sur la page")
+end
+
+function T.sheet_is_anchored_to_the_radio_window()
+    local screen = { x = 0, y = 0, w = 1920, h = 1080 }
+    local x, y = RW.anchoredPosition(500, 600, { x = 100, y = 50, w = 300, h = 700 }, screen)
+    assertEq(x, 400, "collée à droite de la fenêtre radio")
+    assertEq(y, 50, "alignée sur son haut")
+    x, y = RW.anchoredPosition(500, 600, { x = 1500, y = 700, w = 300, h = 300 }, screen)
+    assertEq(x, 1000, "déborde à droite : collée à gauche")
+    assertEq(y, 480, "ramenée dans l'écran en hauteur")
+    -- Écran partagé (joueur 2 à droite, écran étroit) : ni d'un côté ni de l'autre → dans l'écran.
+    local half = { x = 960, y = 0, w = 960, h = 1080 }
+    x = RW.anchoredPosition(700, 600, { x = 1100, y = 0, w = 300, h = 500 }, half)
+    assertTrue(x >= half.x and x + 700 <= half.x + half.w, "reste dans l'écran du joueur")
+    -- Fenêtre d'ancrage : seulement si elle est encore affichée.
+    local anchor = { visible = true, getIsVisible = function(self) return self.visible end,
+        getAbsoluteX = function() return 10 end, getAbsoluteY = function() return 20 end,
+        getWidth = function() return 300 end, getHeight = function() return 400 end }
+    local r = RW.anchorRect(anchor)
+    assertEq(r.x + r.w, 310, "rectangle de la fenêtre")
+    anchor.visible = false
+    assertEq(RW.anchorRect(anchor), nil, "fenêtre fermée : pas d'ancre")
+    assertEq(RW.anchorRect(nil), nil, "pas d'ancre : centrée")
+    -- Ouverture réelle : position ancrée transmise à la fenêtre.
+    getPlayerScreenWidth = function() return 1920 end
+    getPlayerScreenHeight = function() return 1080 end
+    getPlayerScreenLeft = function() return 0 end
+    getPlayerScreenTop = function() return 0 end
+    function ISPanelJoypad:initialise() end
+    function ISPanelJoypad:instantiate() end
+    function ISPanelJoypad:addToUIManager() end
+    anchor.visible = true
+    local player = { getPlayerNum = function() return 0 end, isDead = function() return false end }
+    local window = RW.open(player, nil, formArgs(1, 8, false), NOW, anchor)
+    assertEq(window.x, 310, "feuille à droite de la fenêtre radio")
+    assertEq(window.y, 20, "même hauteur")
+    local centred = RW.open(player, nil, formArgs(1, 8, false), NOW)
+    assertEq(centred.x, math.floor((1920 - centred.width) / 2), "sans ancre : centrée")
+end
+
 return T

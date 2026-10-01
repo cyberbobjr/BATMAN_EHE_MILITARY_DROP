@@ -314,5 +314,16 @@
     "IGUI_MilitaryDrop_ReqBlock_nothing": "Choose at least one item.",
     "IGUI_MilitaryDrop_ReqBlock_sector": "choose a sector",
     "IGUI_MilitaryDrop_ReqBlock_budget": "Over budget.",
-    "IGUI_MilitaryDrop_ReqNoSector": "This is Logistics. No drop point in that sector. Pick another sector, over."
+    "IGUI_MilitaryDrop_ReqNoSector": "This is Logistics. No drop point in that sector. Pick another sector, over.",
+    "IGUI_MilitaryDrop_RadioModule_Code": "Code",
+    "IGUI_MilitaryDrop_RadioModule_CodeHint": "e.g. BRAVO-KILO-42",
+    "IGUI_MilitaryDrop_RadioModule_NeedCode": "Enter the authentication code first.",
+    "IGUI_MilitaryDrop_RadioModule_Sending": "Transmission in progress...",
+    "IGUI_MilitaryDrop_RadioModule_LastReply": "Last word from the base:",
+    "IGUI_MilitaryDrop_RadioModule_NoReply": "Nothing received yet.",
+    "IGUI_MilitaryDrop_RadioModule_Select": "Choose an action",
+    "IGUI_MilitaryDrop_RadioModule_TypeCode": "Type the code",
+    "IGUI_MilitaryDrop_RadioModule_Back": "Back",
+    "IGUI_MilitaryDrop_ReqPage": "Page %1/%2",
+    "IGUI_MilitaryDrop_UnknownLotCase": "This slip matches no lot on file. I'll keep the case shut."
 }

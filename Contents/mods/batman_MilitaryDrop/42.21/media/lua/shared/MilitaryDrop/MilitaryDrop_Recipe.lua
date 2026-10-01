@@ -14,6 +14,10 @@
 -- (MilitaryDrop.Lots.ITEM_KEY), le contenu est tiré à l'ouverture parmi les
 -- candidats du lot. Un récipient d'eau ou d'essence est rempli avant d'être
 -- remis au joueur (donc envoyé plein au client).
+-- Lot inconnu (retiré du fichier des lots après la livraison) : la caisse
+-- n'est pas ouverte, elle est rendue intacte et le joueur prévenu
+-- (Recipe.returnCase). Le contrôle ne peut pas se faire avant la recette
+-- (OnTest côté client) : un client MP ne connaît que les lots par défaut.
 -- ============================================================================
 
 require "MilitaryDrop/MilitaryDrop_Loot"
@@ -42,6 +46,17 @@ local function give(character, fullType, lot)
     end
 end
 
+--- Caisse de réquisition dont le lot n'est plus dans le fichier des lots
+--- (retiré par l'admin après la livraison), ou nil. Sur le serveur (ou en
+--- solo) seulement : c'est là que la recette s'exécute.
+local function unknownLotCase(case, caseType)
+    local Lots = MilitaryDrop.Lots
+    if not Lots or caseType ~= Lots.CASE_TYPE then
+        return false
+    end
+    return Lots.get(case:getModData()[Lots.ITEM_KEY]) == nil
+end
+
 --- Types complets tirés pour une caisse ouverte et son lot (réquisition), ou
 --- nil si ce n'est pas une caisse du mod.
 local function rollFor(case, caseType)
@@ -49,7 +64,6 @@ local function rollFor(case, caseType)
     if Lots and caseType == Lots.CASE_TYPE then
         local lot = Lots.get(case:getModData()[Lots.ITEM_KEY])
         if not lot then
-            MilitaryDrop.log("requisition case without a known lot", true)
             return {}, nil
         end
         return Lots.roll(lot.id), lot
@@ -59,6 +73,37 @@ local function rollFor(case, caseType)
     end
     return nil, nil
 end
+
+--- Ouverture refusée d'une caisse au lot inconnu : la recette l'a déjà
+--- consommée, elle est donc rendue intacte (nouvel exemplaire, mêmes ModData
+--- : lot, largage ; même nom), sans prévenir la confiance (rien n'a été
+--- ouvert), et le personnage le dit (clé de traduction, langue du client).
+--- Si l'admin remet le lot (enabled = false suffit), elle s'ouvrira.
+function Recipe.returnCase(case, caseType, character)
+    local copy = instanceItem(caseType)
+    if not copy then
+        return false
+    end
+    local data = copy:getModData()
+    for key, value in pairs(case:getModData()) do
+        data[key] = value
+    end
+    if case.isCustomName and case:isCustomName() then
+        copy:setName(case:getName())
+        copy:setCustomName(true)
+    end
+    Actions.addOrDropItem(character, copy)
+    local lotId = case:getModData()[MilitaryDrop.Lots.ITEM_KEY]
+    MilitaryDrop.log("requisition case of unknown lot " .. tostring(lotId) .. " returned unopened to "
+        .. tostring(character:getUsername()), true)
+    if MilitaryDrop.Net and character.getUsername then
+        MilitaryDrop.Net.toPlayer(character, "Notice", { key = Recipe.UNKNOWN_LOT_KEY,
+            username = character:getUsername() })
+    end
+    return true
+end
+
+Recipe.UNKNOWN_LOT_KEY = "IGUI_MilitaryDrop_UnknownLotCase"
 
 ---@param craftRecipeData CraftRecipeData
 ---@param character IsoGameCharacter
@@ -71,7 +116,9 @@ function Recipe.openSupplyCase(craftRecipeData, character)
         local case = consumed:get(i)
         local caseType = case and case:getFullType()
         local types, lot = nil, nil
-        if caseType then
+        if caseType and unknownLotCase(case, caseType) then
+            Recipe.returnCase(case, caseType, character)
+        elseif caseType then
             types, lot = rollFor(case, caseType)
         end
         if types then

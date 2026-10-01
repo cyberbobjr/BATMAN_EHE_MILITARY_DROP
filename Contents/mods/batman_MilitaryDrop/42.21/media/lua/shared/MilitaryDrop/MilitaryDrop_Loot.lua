@@ -323,8 +323,22 @@ function Loot.warmAll()
 end
 
 --- Oublie les listes calculées (mod de compatibilité qui change les sources).
-function Loot.clearCache()
-    candidateCache = {}
+--- prefix (facultatif) : seulement les caisses dont la clé commence par lui
+--- (les lots de réquisition, « lot: »), les autres restent calculées.
+function Loot.clearCache(prefix)
+    if type(prefix) ~= "string" then
+        candidateCache = {}
+        return
+    end
+    local stale = {}
+    for caseType in pairs(candidateCache) do
+        if type(caseType) == "string" and caseType:sub(1, #prefix) == prefix then
+            stale[#stale + 1] = caseType
+        end
+    end
+    for _, caseType in ipairs(stale) do
+        candidateCache[caseType] = nil
+    end
 end
 
 --- Entrées valides pour un type de caisse (première source non vide).

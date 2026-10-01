@@ -40,10 +40,12 @@ getPlayer():getInventory():AddItem("MilitaryDrop.AmmoSupplyCase")
 
 ## B. Appel radio (phase 2)
 
+Depuis le 2026-10-01 (RADIO-06), tout passe par la section « Logistique » de la fenêtre radio (clic droit → « Options de l'appareil ») : le menu contextuel « Logistique » et « Demander un largage » n'existent plus (seul le largage forcé de l'admin reste au clic droit).
+
 | # | Action | Attendu |
 |---|---|---|
-| B1 | Talkie militaire **éteint**, en main : clic droit | « Demander un largage » grisé, infobulle « La radio doit être allumée. » |
-| B2 | Talkie allumé dans l'inventaire (ni en main ni sur le dos) | Option grisée, « Il faut tenir la radio en main ou la porter sur le dos. » |
+| B1 | Talkie militaire **éteint**, en main : « Options de l'appareil », section « Logistique » | « Demander un largage » grisé, infobulle « La radio doit être allumée. » ; au clic droit, plus d'option « Demander un largage » ni de menu « Logistique » |
+| B2 | Talkie militaire dans un sac porté : clic droit → « Options de l'appareil » | Le personnage le prend en main et sa fenêtre s'ouvre aussitôt, allumée, avec la section « Logistique » |
 | B3 | Talkie allumé en main, réglé sur **150,0 MHz**, appel avec le code juste | Le personnage parle, puis après ~5 s : « …grésillements. Personne ne répond… » |
 | B4 | Régler la **fréquence militaire** (celle de la note), appel avec un **code faux** | Même réponse qu'en B3 (grésillements) : on ne peut pas distinguer fréquence et code |
 | B5 | Même chose avec le **code juste** (`print(MilitaryDrop.Server.getCode())`, en minuscules, avec espaces) | Réponse d'accord de la base après ~5 s |
@@ -116,7 +118,7 @@ getPlayer():getInventory():AddItem("Base.Hammer"); getPlayer():getInventory():Ad
 
 | # | Action | Attendu |
 |---|---|---|
-| H1 | Talkie militaire accroché à la ceinture, réglé sur la fréquence militaire et allumé : clic droit → **Logistique** → « Envoyer un rapport de situation » | Le personnage prend le talkie en main, parle, puis la base répond avec l'indicatif ; un second rapport le même jour : la base le refuse poliment |
+| H1 | Talkie militaire accroché à la ceinture, réglé sur la fréquence militaire et allumé : « Options de l'appareil » → section **Logistique** → « Envoyer un rapport de situation » | Le personnage prend le talkie en main, parle, puis la base répond avec l'indicatif ; un second rapport le même jour : la base le refuse poliment |
 | H2 | Tuer des zombies militaires | Une seule plaque par soldat, la plaque vanilla à son nom (plus de plaque du mod) ; « Transmettre les matricules » : plaques consommées, remerciement de la base ; une plaque déjà transmise ne rapporte rien |
 | H3 | `Missions.launch("control")` puis « Confirmer réception » | Annonce « toutes stations » sur la fréquence militaire ; réponse acceptée une fois |
 | H4 | `Missions.launch("recon")` en écoutant la fréquence militaire, ouvrir la carte, aller à la grille annoncée, « Confirmer la reconnaissance » | Symbole « œil » bleu au point annoncé, posé une seule fois ; refusée loin du point, acceptée à 25 cases ; annonce de clôture |
@@ -154,6 +156,19 @@ Options par défaut (formulaire actif). Confiance réglable pour les essais : `M
 | J2 | Aller à la caisse | Sirène audible en approchant, zombies attirés ; le coffre ne contient qu'une balise « DIVERSION » |
 | J3 | Clic droit sur la caisse → « Couper la sirène » | Action de quelques secondes, puis silence |
 | J4 | Nouveau leurre : attendre l'échéance (6 h de jeu), ou démonter la caisse | La sirène s'arrête ; la confiance ne change pas (`Trust.debugPrint()`) |
+
+## K. Module radio et fichier de lots (RADIO-06, REQ-09)
+
+| # | Action | Attendu |
+|---|---|---|
+| K1 | Ouvrir les options d'un talkie militaire, puis d'une radio civile | Section « Logistique » sur la radio militaire seulement ; les autres sections du jeu inchangées |
+| K2 | Code vide, puis taper le code et « Demander un largage » | Bouton grisé avec sa raison tant que le code manque ; puis la feuille s'ouvre collée à droite de la fenêtre radio (à gauche si la fenêtre est au bord droit de l'écran) |
+| K3 | Rapport, matricules, contrôle depuis la section | Mêmes échanges qu'au menu ; la dernière réponse de la base s'affiche dans la section |
+| K4 | Refermer et rouvrir la fenêtre radio, nouvel appel | Code prérempli (mémorisé pendant la session, pas sauvegardé) |
+| K5 | Manette : entrer dans la section, saisir le code au clavier à l'écran | Navigation haut et bas, A valide, B ressort |
+| K6 | Premier démarrage : dossier `Zomboid/Lua/MilitaryDrop/` | `requisition.txt` créé, notice en anglais et en français ; journal « requisition lots: 18 » |
+| K7 | Mettre `enabled = false` sur un lot, ajouter le lot d'exemple de la notice, recharger (`MilitaryDrop.Requisition.reload()` en solo) | Le lot disparaît du formulaire ; le lot ajouté apparaît avec ses textes ; ses caisses portent son nom |
+| K8 | Introduire une erreur de syntaxe, recharger | Journal avec le numéro de ligne ; les 18 lots par défaut restent |
 
 ## Plus tard : multijoueur (hébergé, puis serveur dédié `C:\pzserver`)
 
