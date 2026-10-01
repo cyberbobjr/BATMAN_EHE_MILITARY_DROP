@@ -1,0 +1,9 @@
+{
+    "Tooltip_MilitaryDrop_AmmoSupplyCase": "Vom Militär abgeworfen. Öffnen, um Munition zu erhalten.",
+    "Tooltip_MilitaryDrop_WeaponSupplyCase": "Vom Militär abgeworfen. Öffnen, um eine Waffe zu erhalten.",
+    "Tooltip_MilitaryDrop_ArmorSupplyCase": "Vom Militär abgeworfen. Öffnen, um militärische Kleidung und Ausrüstung zu erhalten.",
+    "Tooltip_MilitaryDrop_AttachmentSupplyCase": "Vom Militär abgeworfen. Öffnen, um Waffenzubehör zu erhalten.",
+    "Tooltip_MilitaryDrop_Codebook": "Militärische Codetabelle. Entschlüsselt den Wochencode, den der Zahlensender sendet.",
+    "Tooltip_MilitaryDrop_DecoyBeacon": "ABLENKUNG. Dieser Abwurf enthält keine Vorräte: Seine Sirene lockt die Toten zur Kiste.",
+    "Tooltip_MilitaryDrop_RequisitionCase": "Vom Militär auf deine Anforderung geliefert. Öffnen, um die angeforderten Vorräte zu erhalten."
+}

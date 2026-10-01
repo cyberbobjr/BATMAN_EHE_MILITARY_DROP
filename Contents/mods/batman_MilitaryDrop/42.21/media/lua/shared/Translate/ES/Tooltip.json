@@ -1,0 +1,9 @@
+{
+    "Tooltip_MilitaryDrop_AmmoSupplyCase": "Lanzado por el ejército. Ábrelo para obtener munición.",
+    "Tooltip_MilitaryDrop_WeaponSupplyCase": "Lanzado por el ejército. Ábrelo para obtener un arma.",
+    "Tooltip_MilitaryDrop_ArmorSupplyCase": "Lanzado por el ejército. Ábrelo para obtener ropa y equipo militar.",
+    "Tooltip_MilitaryDrop_AttachmentSupplyCase": "Lanzado por el ejército. Ábrelo para obtener accesorios de armas.",
+    "Tooltip_MilitaryDrop_Codebook": "Tabla de códigos militar. Descifra el código semanal que transmite la estación de números.",
+    "Tooltip_MilitaryDrop_DecoyBeacon": "SEÑUELO. Este lanzamiento no lleva suministros: su sirena atrae a los muertos hacia la caja.",
+    "Tooltip_MilitaryDrop_RequisitionCase": "Entregado por el ejército según tu requisición. Ábrelo para obtener los suministros pedidos."
+}

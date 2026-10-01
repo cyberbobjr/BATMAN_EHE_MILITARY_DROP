@@ -1,12 +1,16 @@
 [h1]Military Drop - Largages de ravitaillement par radio[/h1]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/header.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-banner.png[/img]
 
 [b]Build 42.21 · Solo et multijoueur · Autonome[/b]
+
+[i]Multijoueur : le mod est conçu pour les serveurs dédiés (le serveur décide de tout), mais il n'a été testé qu'en solo pour l'instant. Signalez tout problème en multijoueur.[/i]
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel militaire. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent… et le bruit attire les morts.
 
 [h2]Trouver la fréquence et le code[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-code.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-codebook-memo.png[/img]
 
@@ -14,11 +18,15 @@ Les zombies militaires et policiers portent des notes de service avec la fréque
 
 [h2]Appeler depuis votre radio[/h2]
 
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-radio.png[/img]
+
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/radio-logistics-en.png[/img]
 
 Clic droit sur une radio militaire, [b]Options de l'appareil[/b], section [b]Logistique[/b] : tapez le code et appuyez sur [b]Demander un largage[/b]. Talkie-walkie en main, à la ceinture ou dans un sac, ou radio posée.
 
 [h2]Remplir la réquisition[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-requisition.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/requisition-form-en.png[/img]
 
@@ -26,17 +34,23 @@ Dépensez un budget de points sur 18 lots tirés des tables de butin du jeu, mod
 
 [h2]Rejoindre la caisse[/h2]
 
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-crate.png[/img]
+
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-crate-trunk.png[/img]
 
 Entendez l'hélicoptère, voyez son ombre, puis foncez vers la grille annoncée, à 150 à 400 cases. Tous ceux qui écoutent la fréquence reçoivent le repère sur la carte, et une horde garde la caisse. La caisse vide se démonte pour son bois.
 
 [h2]Gagner la confiance de la base[/h2]
 
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-trust.png[/img]
+
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-console-missions.png[/img]
 
 Récupérez vos largages, envoyez vos rapports quotidiens, annoncez les matricules des soldats tombés et remplissez les missions publiques : reconnaissance, nettoyage d'une horde, appel de contrôle. La confiance raccourcit l'attente et augmente vos réquisitions.
 
 [h2]Tenir un poste de liaison[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-post.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/console-en.png[/img]
 

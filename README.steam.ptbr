@@ -1,0 +1,87 @@
+[h1]Military Drop - Lançamentos de Suprimentos por Rádio[/h1]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-banner.png[/img]
+
+[b]Build 42.21 · Um jogador e Multijogador · Independente[/b]
+
+[i]Multijogador: o mod foi feito para servidores dedicados (o servidor decide tudo), mas até agora só foi testado em um jogador. Relate qualquer problema no multijogador.[/i]
+
+Sintonize um rádio militar na frequência certa, informe o código da semana e requisite suprimentos militares. Um helicóptero lança um caixote bem longe e anuncia a quadrícula a todos que estiverem escutando... e o barulho atrai os mortos.
+
+[h2]Encontre a frequência e o código[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-code.png[/img]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-codebook-memo.png[/img]
+
+Zumbis militares e policiais carregam memorandos com a frequência militar, diferente a cada partida. O código muda toda segunda-feira: uma estação de números o transmite em ondas curtas, e um livro de códigos militar o decifra.
+
+[h2]Chame pelo seu rádio[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-radio.png[/img]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/radio-logistics-en.png[/img]
+
+Clique com o botão direito em um rádio militar, [b]Opções do Dispositivo[/b], seção [b]Logística[/b]: digite o código e pressione [b]Solicitar lançamento de suprimentos[/b]. Walkie-talkie na mão, no cinto ou na bolsa, ou um rádio instalado.
+
+[h2]Preencha a requisição[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-requisition.png[/img]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/requisition-form-en.png[/img]
+
+Gaste um orçamento de pontos em 18 lotes tirados das próprias tabelas de saque do jogo, mods incluídos: rações, médico, munição, armas de fogo, combustível... Ou peça uma isca com sirene que arrasta as hordas para um setor escolhido por você.
+
+[h2]Chegue ao caixote[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-crate.png[/img]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-crate-trunk.png[/img]
+
+Ouça o helicóptero, veja sua sombra e corra até a quadrícula anunciada, a 150 a 400 quadrados de distância. Todos na frequência recebem a marcação no mapa, e uma horda guarda o caixote. Caixotes vazios podem ser desmontados para obter madeira.
+
+[h2]Ganhe a confiança da base[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-trust.png[/img]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-console-missions.png[/img]
+
+Recupere seus lançamentos, envie relatórios diários, anuncie as plaquetas de identificação de soldados mortos e atenda às missões públicas: reconhecimento, limpeza de hordas, testes de rádio. A confiança encurta a espera e libera requisições maiores.
+
+[h2]Mantenha um posto de ligação[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-post.png[/img]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/console-en.png[/img]
+
+Transforme um rádio amador militar instalado no console da sua estação: registro de transmissões, ordens, plaquetas, confiança e solicitações de lançamento. No multijogador, cada facção é uma estação com seu próprio indicativo.
+
+[h2]Para administradores de servidor[/h2]
+
+[list]
+[*]44 opções de sandbox: espera entre lançamentos (uma semana por padrão, para todo o servidor), distância, horda, modo de código, confiança, missões, requisição, isca.
+[*]Os lotes de requisição podem ser editados, desativados ou adicionados em Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]Multijogador com autoridade do servidor. Os admins podem forçar um lançamento e lançar missões a partir de um rádio militar.
+[/list]
+
+[h2]Compatibilidade[/h2]
+
+[list]
+[*]Nenhum outro mod necessário.
+[*]Feito para coexistir com o [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
+[*]Com o [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], uma fumaça verde marca o caixote.
+[*]Os itens dos seus mods de armas e de itens aparecem nos caixotes.
+[/list]
+
+[h2]Guia[/h2]
+
+Tudo em detalhes, com capturas de tela: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/en/README.md]guia completo (inglês)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/fr/README.md]guide complet (français)[/url].
+
+[h2]Apoie o projeto[/h2]
+
+Gostou do mod? Um café ajuda a financiar novos recursos e traduções.
+[url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
+
+[h2]Créditos[/h2]
+
+Reescrita para a Build 42 de [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url] (Build 41). Código-fonte (MIT) no [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url].

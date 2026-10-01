@@ -1,0 +1,9 @@
+{
+    "Tooltip_MilitaryDrop_AmmoSupplyCase": "Lançada pelos militares. Abra para obter munição.",
+    "Tooltip_MilitaryDrop_WeaponSupplyCase": "Lançada pelos militares. Abra para obter uma arma.",
+    "Tooltip_MilitaryDrop_ArmorSupplyCase": "Lançada pelos militares. Abra para obter roupas e equipamento militar.",
+    "Tooltip_MilitaryDrop_AttachmentSupplyCase": "Lançada pelos militares. Abra para obter acessórios de armas.",
+    "Tooltip_MilitaryDrop_Codebook": "Tabela de códigos militar. Decifra o código semanal transmitido pela estação de números.",
+    "Tooltip_MilitaryDrop_DecoyBeacon": "DESVIO. Este lançamento não traz suprimentos: sua sirene atrai os mortos para o caixote.",
+    "Tooltip_MilitaryDrop_RequisitionCase": "Entregue pelos militares conforme sua requisição. Abra para obter os suprimentos pedidos."
+}

@@ -1,0 +1,10 @@
+{
+    "MilitaryDrop.AmmoSupplyCase": "Военный кейс снабжения (боеприпасы)",
+    "MilitaryDrop.WeaponSupplyCase": "Военный кейс снабжения (оружие)",
+    "MilitaryDrop.ArmorSupplyCase": "Военный кейс снабжения (снаряжение)",
+    "MilitaryDrop.AttachmentSupplyCase": "Военный кейс снабжения (обвес)",
+    "MilitaryDrop.MilitaryMemo": "Военная служебная записка",
+    "MilitaryDrop.Codebook": "Военная кодовая книга",
+    "MilitaryDrop.DecoyBeacon": "Маяк-сирена - ПРИМАНКА",
+    "MilitaryDrop.RequisitionCase": "Военный кейс по заявке"
+}
