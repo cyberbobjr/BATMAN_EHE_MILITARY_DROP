@@ -326,5 +326,12 @@
     "IGUI_MilitaryDrop_RadioModule_Back": "Back",
     "IGUI_MilitaryDrop_ReqPage": "Page %1/%2",
     "IGUI_MilitaryDrop_UnknownLotCase": "This slip matches no lot on file. I'll keep the case shut.",
-    "IGUI_MilitaryDrop_ReqStampAdmin": "ADMIN"
+    "IGUI_MilitaryDrop_ReqStampAdmin": "ADMIN",
+    "IGUI_MilitaryDrop_AdminMissions": "Missions (admin)",
+    "IGUI_MilitaryDrop_AdminMission_recon": "Launch a reconnaissance",
+    "IGUI_MilitaryDrop_AdminMission_cleanup": "Launch a cleanup",
+    "IGUI_MilitaryDrop_AdminMission_control": "Launch a radio check",
+    "IGUI_MilitaryDrop_AdminMission_Launched": "Mission launched: Logistics is announcing it to all stations.",
+    "IGUI_MilitaryDrop_AdminMission_Open": "A mission of this kind is already in progress.",
+    "IGUI_MilitaryDrop_AdminMission_Failed": "The mission could not be launched (no military channel, gain set to 0, or no site found)."
 }

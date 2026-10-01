@@ -326,5 +326,12 @@
     "IGUI_MilitaryDrop_RadioModule_Back": "Retour",
     "IGUI_MilitaryDrop_ReqPage": "Page %1/%2",
     "IGUI_MilitaryDrop_UnknownLotCase": "Ce bordereau ne correspond à aucun lot connu. Je garde la caisse fermée.",
-    "IGUI_MilitaryDrop_ReqStampAdmin": "ADMIN"
+    "IGUI_MilitaryDrop_ReqStampAdmin": "ADMIN",
+    "IGUI_MilitaryDrop_AdminMissions": "Missions (admin)",
+    "IGUI_MilitaryDrop_AdminMission_recon": "Lancer une reconnaissance",
+    "IGUI_MilitaryDrop_AdminMission_cleanup": "Lancer un nettoyage",
+    "IGUI_MilitaryDrop_AdminMission_control": "Lancer un appel de contrôle",
+    "IGUI_MilitaryDrop_AdminMission_Launched": "Mission lancée : la Logistique l'annonce à toutes les stations.",
+    "IGUI_MilitaryDrop_AdminMission_Open": "Une mission de ce type est déjà en cours.",
+    "IGUI_MilitaryDrop_AdminMission_Failed": "Impossible de lancer la mission (pas de chaîne militaire, gain à 0 ou aucun lieu trouvé)."
 }

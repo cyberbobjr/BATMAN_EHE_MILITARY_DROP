@@ -522,7 +522,21 @@ function Client.addOptions(player, context, device)
     -- Largage admin : jamais grisé, le serveur n'exige pas la radio en main.
     if Client.canForce(player) then
         context:addOption(getText("IGUI_MilitaryDrop_RequestDropAdmin"), player, Client.onRequest, device, true)
+        -- Missions à la demande (admin) : le serveur revérifie le droit.
+        local parent = context:addOption(getText("IGUI_MilitaryDrop_AdminMissions"))
+        local sub = ISContextMenu:getNew(context)
+        context:addSubMenu(parent, sub)
+        for _, kind in ipairs(Client.ADMIN_MISSIONS) do
+            sub:addOption(getText("IGUI_MilitaryDrop_AdminMission_" .. kind), player, Client.onAdminMission, kind)
+        end
     end
+end
+
+-- Missions qu'un admin peut lancer (MilitaryDrop.Missions.KINDS côté serveur).
+Client.ADMIN_MISSIONS = { "recon", "cleanup", "control" }
+
+function Client.onAdminMission(player, kind)
+    Net.toServer(player, "AdminMission", { kind = kind })
 end
 
 function Client.onFillInventoryContextMenu(playerNum, context, items)

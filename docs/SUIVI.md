@@ -129,6 +129,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | SRC-03 | Reconnaissance publique, 48 h de jeu : +3 à la première faction | PLAN-V2 §5, décision 7 | testé solo | test_missions, H4 (validé par l'utilisateur (test solo du 2026-10-01, second passage)) | Point corrigé (centre d'un bâtiment, sinon route, jamais l'eau) : H4 à rejouer ; MP |
 | SRC-04 | Nettoyage public, 72 h de jeu : +5 à la première faction au quota | PLAN-V13, SRC-04 | testé hors jeu | test_missions | Repère de carte ajouté (crâne rouge au centre d'un hameau) : H5 à rejouer ; MP |
 | SRC-05 | Appel de contrôle, 4 h de jeu : +1 à toutes les factions qui répondent | PLAN-V13, SRC-05 | testé solo | test_missions, H3 (test solo du 2026-10-01, 3e passage) | MP |
+| SRC-09 | Missions à la demande pour un admin : clic droit d'une radio militaire → « Missions (admin) » → reconnaissance, nettoyage ou appel de contrôle ; même mission que la planification (annonce, repère, quota, échéance), droit revérifié par le serveur | Demande de l'utilisateur du 2026-10-01 | testé hors jeu | test_missions, test_client | H15 ; MP (refus d'un non-admin) |
 | SRC-06 | Renseignement : documents militaires transmis, +1 à +3 | PLAN-V2 §5 | décidé | — | Reporté après la v1.3 (2026-09-30) : attend de nouveaux documents (idée 8) |
 | SRC-07 | Largage perdu ou cache retrouvé au détecteur : +5 | PLAN-V2 §5 | décidé | — | Avec l'idée 3 |
 | SRC-08 | Enregistreur de vol récupéré dans l'épave : +10 | PLAN-V2 §5 | décidé | — | Avec l'idée 8 |
@@ -178,6 +179,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 ## Journal
 
+- **2026-10-01** — SRC-09 : missions lancées à la demande par un admin (sous-menu « Missions (admin) »), commit `5b72d23` pour les corrections précédentes.
 - **2026-10-01** — Quatrième test solo : I8, J1-J4, K6 réussis ; K7 et K8 non joués (confiance dans les tests hors jeu). Notice de `requisition.txt` en anglais seulement, à la demande de l'utilisateur.
 - **2026-10-01** — Corrections après le 3e test solo : missions sur un bâtiment ou une route (jamais dans l'eau), repère de carte du nettoyage, formulaire au largage forcé de l'admin (tous les lots, 20 points, délai non consommé), palier II à 60. 510 tests `lupa`.
 - **2026-10-01** — Troisième test solo de l'utilisateur : B1, B2, H1-H3, H6-H14, I1-I7, K1-K4 réussis ; K5 non joué (pas de manette). Échecs ou manques : H4 (reconnaissance tirée dans l'eau), H5 (pas de repère pour le nettoyage) ; le largage forcé de l'admin n'ouvre pas le formulaire, ce qui a empêché I8, J et K6-K8 (délai entre largages). Corrections confiées à un sous-agent.

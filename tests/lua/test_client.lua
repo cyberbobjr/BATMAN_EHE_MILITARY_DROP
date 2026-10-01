@@ -297,21 +297,33 @@ function T.code_is_remembered_and_the_anchor_follows_the_request()
     assertEq(Client.rememberedCode(0), "", "code effacé")
 end
 
-function T.context_menu_keeps_only_the_admin_drop()
-    -- RADIO-06 : la section « Logistique » de la fenêtre radio remplace le menu.
-    local options = {}
-    local context = { addOption = function(_, name) options[#options + 1] = name; return {} end }
-    local Client = MilitaryDrop.Client
-    local canForce = Client.canForce
+function T.context_menu_keeps_only_the_admin_entries()
+    -- RADIO-06 : la section « Logistique » de la fenêtre radio remplace le menu ;
+    -- un admin garde le largage forcé et les missions à la demande.
     getText = getText or function(key) return key end
+    local options, subOptions, sent = {}, {}, {}
+    local context = { addOption = function(_, name) options[#options + 1] = name; return {} end,
+        addSubMenu = function() end }
+    ISContextMenu = { getNew = function()
+        return { addOption = function(_, name, target, fn, arg)
+            subOptions[#subOptions + 1] = { name = name, fn = fn, target = target, arg = arg }
+        end }
+    end }
+    local Client = MilitaryDrop.Client
+    local canForce, toServer = Client.canForce, MilitaryDrop.Net.toServer
+    MilitaryDrop.Net.toServer = function(player, command, args) sent[#sent + 1] = { command, args.kind } end
     Client.canForce = function() return false end
     Client.addOptions({}, context, {})
     assertEq(#options, 0, "joueur : plus de « Demander un largage » au clic droit")
     Client.canForce = function() return true end
     Client.addOptions({}, context, {})
-    Client.canForce = canForce
-    assertEq(#options, 1, "admin : largage forcé seul")
-    assertEq(options[1], "IGUI_MilitaryDrop_RequestDropAdmin", "option admin")
+    assertEq(options[1], "IGUI_MilitaryDrop_RequestDropAdmin", "admin : largage forcé")
+    assertEq(options[2], "IGUI_MilitaryDrop_AdminMissions", "admin : sous-menu des missions")
+    assertEq(#subOptions, 3, "reconnaissance, nettoyage, appel de contrôle")
+    assertEq(subOptions[2].name, "IGUI_MilitaryDrop_AdminMission_cleanup", "libellé du nettoyage")
+    subOptions[2].fn(subOptions[2].target, subOptions[2].arg)
+    assertEq(sent[1][1] .. ":" .. sent[1][2], "AdminMission:cleanup", "commande envoyée au serveur")
+    Client.canForce, MilitaryDrop.Net.toServer = canForce, toServer
 end
 
 return T

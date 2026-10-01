@@ -849,4 +849,25 @@ function T.list_for_team_gives_open_missions_and_progress()
     assertEq(Missions.listForTeam("P:bob")[2].progress, 0, "autre équipe : rien")
 end
 
+function T.admin_launches_a_mission_on_demand()
+    local alice = makePlayer("alice")
+    local notices = {}
+    local toPlayer, canForce = MilitaryDrop.Net.toPlayer, MilitaryDrop.Server.canForce
+    MilitaryDrop.Net.toPlayer = function(player, command, args)
+        if command == "Notice" then notices[#notices + 1] = args.key end
+        return toPlayer(player, command, args)
+    end
+    MilitaryDrop.Server.canForce = function() return false end
+    assertEq(Missions.adminLaunch(alice, { kind = "cleanup" }), "denied", "non-admin refusé")
+    assertEq(STATE.missions and STATE.missions.open.cleanup, nil, "rien de lancé")
+    MilitaryDrop.Server.canForce = function() return true end
+    assertEq(Missions.adminLaunch(alice, { kind = "boom" }), "invalid", "type inconnu")
+    assertEq(Missions.adminLaunch(alice, { kind = "cleanup" }), "launched", "admin : lancée")
+    assertTrue(STATE.missions.open.cleanup ~= nil, "mission ouverte comme une mission planifiée")
+    assertEq(notices[#notices], "IGUI_MilitaryDrop_AdminMission_Launched", "réponse privée")
+    assertEq(Missions.adminLaunch(alice, { kind = "cleanup" }) == "launched", false, "pas deux à la fois")
+    MilitaryDrop.Net.toPlayer = toPlayer
+    MilitaryDrop.Server.canForce = canForce
+end
+
 return T

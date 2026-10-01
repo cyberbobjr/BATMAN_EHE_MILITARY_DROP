@@ -781,7 +781,46 @@ function Missions.onZombieDead(zombie)
     Missions.countKill(zombie)
 end
 
+-- ----------------------------------------------------------------------------
+-- Mission lancée par un admin (menu contextuel d'une radio militaire)
+-- ----------------------------------------------------------------------------
+
+-- Une commande d'admin par seconde réelle au plus ; réponse privée (Notice).
+Missions.ADMIN_INTERVAL_MS = 1000
+Missions.ADMIN_RESULTS = {
+    launched = "IGUI_MilitaryDrop_AdminMission_Launched",
+    open = "IGUI_MilitaryDrop_AdminMission_Open",
+    failed = "IGUI_MilitaryDrop_AdminMission_Failed",
+}
+
+--- Même mission que la planification (Missions.launch : annonce à toutes les
+--- stations, repère, quota, échéance) ; seul le moment change. Droit revérifié
+--- ici (Server.canForce, comme le largage forcé). Renvoie le statut.
+function Missions.adminLaunch(player, args)
+    if not MilitaryDrop.Server.canForce(player) then
+        return "denied"
+    end
+    local kind = type(args) == "table" and args.kind
+    if type(kind) ~= "string" or not HOURS_OPTIONS[kind] then
+        return "invalid"
+    end
+    if MilitaryDrop.Guard.throttled(player, "AdminMission", Missions.ADMIN_INTERVAL_MS) then
+        return "busy"
+    end
+    local status
+    if Missions.openMission(kind) then
+        status = "open"
+    else
+        status = Missions.launch(kind) and "launched" or "failed"
+    end
+    MilitaryDrop.log("admin " .. tostring(player:getUsername()) .. " mission " .. kind .. ": " .. status, true)
+    MilitaryDrop.Net.toPlayer(player, "Notice", { key = Missions.ADMIN_RESULTS[status],
+        username = tostring(player:getUsername()) })
+    return status
+end
+
 local COMMANDS = MilitaryDrop.Server.COMMANDS
+COMMANDS.AdminMission = function(player, args) Missions.adminLaunch(player, args) end
 COMMANDS[Exchange.COMMANDS.report] = function(player, args) Missions.report(player, args) end
 COMMANDS[Exchange.COMMANDS.dogtag] = function(player, args) Missions.transmitDogTags(player, args) end
 COMMANDS[Exchange.COMMANDS.recon] = function(player, args) Missions.confirmRecon(player, args) end
