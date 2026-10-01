@@ -866,6 +866,16 @@ function T.admin_launches_a_mission_on_demand()
     assertTrue(STATE.missions.open.cleanup ~= nil, "mission ouverte comme une mission planifiée")
     assertEq(notices[#notices], "IGUI_MilitaryDrop_AdminMission_Launched", "réponse privée")
     assertEq(Missions.adminLaunch(alice, { kind = "cleanup" }) == "launched", false, "pas deux à la fois")
+    assertEq(Missions.adminLaunch(alice, { kind = "cleanup" }), "busy", "cadence d'une seconde")
+    NOW_MS = NOW_MS + 5000
+    local aired = #AIRED
+    assertEq(Missions.adminLaunch(alice, { kind = "cleanup", action = "close" }), "closed", "clôture admin")
+    assertEq(STATE.missions.open.cleanup, nil, "plus de nettoyage en cours")
+    assertEq(STATE.missions.last.cleanup.outcome, "cancelled", "issue notée")
+    assertTrue(#AIRED > aired and string.find(AIRED[#AIRED][1][1], "IGUI_MilitaryDrop_Broadcast_CleanupExpired", 1, true) == 1,
+        "annonce d'annulation")
+    NOW_MS = NOW_MS + 5000
+    assertEq(Missions.adminLaunch(alice, { kind = "cleanup", action = "close" }), "none", "rien à clore")
     MilitaryDrop.Net.toPlayer = toPlayer
     MilitaryDrop.Server.canForce = canForce
 end

@@ -305,13 +305,13 @@ function T.context_menu_keeps_only_the_admin_entries()
     local context = { addOption = function(_, name) options[#options + 1] = name; return {} end,
         addSubMenu = function() end }
     ISContextMenu = { getNew = function()
-        return { addOption = function(_, name, target, fn, arg)
-            subOptions[#subOptions + 1] = { name = name, fn = fn, target = target, arg = arg }
+        return { addOption = function(_, name, target, fn, arg, arg2)
+            subOptions[#subOptions + 1] = { name = name, fn = fn, target = target, arg = arg, arg2 = arg2 }
         end }
     end }
     local Client = MilitaryDrop.Client
     local canForce, toServer = Client.canForce, MilitaryDrop.Net.toServer
-    MilitaryDrop.Net.toServer = function(player, command, args) sent[#sent + 1] = { command, args.kind } end
+    MilitaryDrop.Net.toServer = function(player, command, args) sent[#sent + 1] = { command, args.kind, args.action } end
     Client.canForce = function() return false end
     Client.addOptions({}, context, {})
     assertEq(#options, 0, "joueur : plus de « Demander un largage » au clic droit")
@@ -319,10 +319,15 @@ function T.context_menu_keeps_only_the_admin_entries()
     Client.addOptions({}, context, {})
     assertEq(options[1], "IGUI_MilitaryDrop_RequestDropAdmin", "admin : largage forcé")
     assertEq(options[2], "IGUI_MilitaryDrop_AdminMissions", "admin : sous-menu des missions")
-    assertEq(#subOptions, 3, "reconnaissance, nettoyage, appel de contrôle")
+    assertEq(#subOptions, 6, "lancer puis clore : reconnaissance, nettoyage, appel de contrôle")
+    assertEq(subOptions[5].name, "IGUI_MilitaryDrop_AdminMissionClose_cleanup", "clore le nettoyage")
+    subOptions[5].fn(subOptions[5].target, subOptions[5].arg, subOptions[5].arg2)
     assertEq(subOptions[2].name, "IGUI_MilitaryDrop_AdminMission_cleanup", "libellé du nettoyage")
     subOptions[2].fn(subOptions[2].target, subOptions[2].arg)
     assertEq(sent[1][1] .. ":" .. sent[1][2], "AdminMission:cleanup", "commande envoyée au serveur")
+    assertEq(sent[1][3], "close", "action de clôture")
+    subOptions[2].fn(subOptions[2].target, subOptions[2].arg, subOptions[2].arg2)
+    assertEq(sent[2][3], nil, "lancement sans action")
     Client.canForce, MilitaryDrop.Net.toServer = canForce, toServer
 end
 

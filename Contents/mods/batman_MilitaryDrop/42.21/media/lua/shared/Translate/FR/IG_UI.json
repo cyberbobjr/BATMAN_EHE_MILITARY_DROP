@@ -333,5 +333,11 @@
     "IGUI_MilitaryDrop_AdminMission_control": "Lancer un appel de contrôle",
     "IGUI_MilitaryDrop_AdminMission_Launched": "Mission lancée : la Logistique l'annonce à toutes les stations.",
     "IGUI_MilitaryDrop_AdminMission_Open": "Une mission de ce type est déjà en cours.",
-    "IGUI_MilitaryDrop_AdminMission_Failed": "Impossible de lancer la mission (pas de chaîne militaire, gain à 0 ou aucun lieu trouvé)."
+    "IGUI_MilitaryDrop_AdminMission_Failed": "Impossible de lancer la mission (pas de chaîne militaire, gain à 0 ou aucun lieu trouvé).",
+    "IGUI_MilitaryDrop_AdminMissionClose_recon": "Clore la reconnaissance en cours",
+    "IGUI_MilitaryDrop_AdminMissionClose_cleanup": "Clore le nettoyage en cours",
+    "IGUI_MilitaryDrop_AdminMissionClose_control": "Clore l'appel de contrôle en cours",
+    "IGUI_MilitaryDrop_AdminMission_Closed": "Mission close : la Logistique annonce son annulation.",
+    "IGUI_MilitaryDrop_AdminMission_None": "Aucune mission de ce type en cours.",
+    "IGUI_MilitaryDrop_Broadcast_ControlCancelled": "À toutes les stations, ici Logistique. Appel de contrôle annulé."
 }

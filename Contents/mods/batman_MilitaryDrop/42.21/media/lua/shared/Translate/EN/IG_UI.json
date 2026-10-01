@@ -333,5 +333,11 @@
     "IGUI_MilitaryDrop_AdminMission_control": "Launch a radio check",
     "IGUI_MilitaryDrop_AdminMission_Launched": "Mission launched: Logistics is announcing it to all stations.",
     "IGUI_MilitaryDrop_AdminMission_Open": "A mission of this kind is already in progress.",
-    "IGUI_MilitaryDrop_AdminMission_Failed": "The mission could not be launched (no military channel, gain set to 0, or no site found)."
+    "IGUI_MilitaryDrop_AdminMission_Failed": "The mission could not be launched (no military channel, gain set to 0, or no site found).",
+    "IGUI_MilitaryDrop_AdminMissionClose_recon": "Close the current reconnaissance",
+    "IGUI_MilitaryDrop_AdminMissionClose_cleanup": "Close the current cleanup",
+    "IGUI_MilitaryDrop_AdminMissionClose_control": "Close the current radio check",
+    "IGUI_MilitaryDrop_AdminMission_Closed": "Mission closed: Logistics is announcing it is cancelled.",
+    "IGUI_MilitaryDrop_AdminMission_None": "No mission of this kind is in progress.",
+    "IGUI_MilitaryDrop_Broadcast_ControlCancelled": "All stations, Logistics. Radio check cancelled."
 }

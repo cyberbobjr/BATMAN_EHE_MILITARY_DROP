@@ -529,14 +529,18 @@ function Client.addOptions(player, context, device)
         for _, kind in ipairs(Client.ADMIN_MISSIONS) do
             sub:addOption(getText("IGUI_MilitaryDrop_AdminMission_" .. kind), player, Client.onAdminMission, kind)
         end
+        for _, kind in ipairs(Client.ADMIN_MISSIONS) do
+            sub:addOption(getText("IGUI_MilitaryDrop_AdminMissionClose_" .. kind), player, Client.onAdminMission, kind,
+                "close")
+        end
     end
 end
 
 -- Missions qu'un admin peut lancer (MilitaryDrop.Missions.KINDS côté serveur).
 Client.ADMIN_MISSIONS = { "recon", "cleanup", "control" }
 
-function Client.onAdminMission(player, kind)
-    Net.toServer(player, "AdminMission", { kind = kind })
+function Client.onAdminMission(player, kind, action)
+    Net.toServer(player, "AdminMission", { kind = kind, action = action })
 end
 
 function Client.onFillInventoryContextMenu(playerNum, context, items)

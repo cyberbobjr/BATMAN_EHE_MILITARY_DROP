@@ -791,11 +791,16 @@ Missions.ADMIN_RESULTS = {
     launched = "IGUI_MilitaryDrop_AdminMission_Launched",
     open = "IGUI_MilitaryDrop_AdminMission_Open",
     failed = "IGUI_MilitaryDrop_AdminMission_Failed",
+    closed = "IGUI_MilitaryDrop_AdminMission_Closed",
+    none = "IGUI_MilitaryDrop_AdminMission_None",
 }
 
 --- Même mission que la planification (Missions.launch : annonce à toutes les
---- stations, repère, quota, échéance) ; seul le moment change. Droit revérifié
---- ici (Server.canForce, comme le largage forcé). Renvoie le statut.
+--- stations, repère, quota, échéance) ; seul le moment change. Avec
+--- args.action == "close" : clôt la mission de ce type en cours, sans
+--- récompense, avec l'annonce d'annulation (la suivante est planifiée comme
+--- après une échéance). Droit revérifié ici (Server.canForce, comme le
+--- largage forcé). Renvoie le statut.
 function Missions.adminLaunch(player, args)
     if not MilitaryDrop.Server.canForce(player) then
         return "denied"
@@ -808,7 +813,23 @@ function Missions.adminLaunch(player, args)
         return "busy"
     end
     local status
-    if Missions.openMission(kind) then
+    local mission = Missions.openMission(kind)
+    if args.action == "close" then
+        if mission then
+            local text
+            if kind == "control" then
+                text = getText("IGUI_MilitaryDrop_Broadcast_ControlCancelled")
+            else
+                local key = kind == "recon" and "IGUI_MilitaryDrop_Broadcast_ReconExpired"
+                    or "IGUI_MilitaryDrop_Broadcast_CleanupExpired"
+                text = getText(key, tostring(mission.x), tostring(mission.y))
+            end
+            close(kind, hoursNow(), "cancelled", nil, text)
+            status = "closed"
+        else
+            status = "none"
+        end
+    elseif mission then
         status = "open"
     else
         status = Missions.launch(kind) and "launched" or "failed"
