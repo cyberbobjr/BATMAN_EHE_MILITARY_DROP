@@ -28,7 +28,7 @@
 -- La fréquence militaire n'est connue du client MP que si l'option Frequency
 -- la fixe ; par défaut, elle est tirée par le serveur et lue sur les notes.
 --
--- Réquisition (v1.4, docs/PLAN-V14.md) : un appel accepté peut recevoir
+-- Réquisition (v1.4, dev/PLAN-V14.md) : un appel accepté peut recevoir
 -- Result « form » au lieu de « accepted ». La base le dit à la radio, puis le
 -- formulaire s'ouvre (MilitaryDrop.RequisitionWindow) ; la demande reste en
 -- attente jusqu'à la commande (RequisitionOrder, même requestId et même
@@ -42,12 +42,21 @@
 --
 -- Module « Logistique » de la fenêtre radio (MilitaryDrop_RadioModule.lua) :
 -- même appel (Client.call), avec opts.anchor = fenêtre radio pour coller la
--- feuille de réquisition à cette fenêtre. Le code saisi est gardé en mémoire
--- pour la session, par joueur local (Client.rememberCode), seulement dans ce
--- fichier : ni sauvegardé, ni envoyé ailleurs qu'à l'appel ; il préremplit le
--- champ du module et la boîte de saisie (console du poste). La dernière réplique de la
--- base reçue par chaque joueur local (Client.radioSay) est gardée pour
--- l'afficher dans le module (Client.lastReply).
+-- feuille de réquisition à cette fenêtre. Le code saisi (Client.rememberCode)
+-- préremplit le champ du module et la saisie de la console du poste ; il
+-- survit au rechargement, par personnage, dans un fichier du client
+-- (Client.codeFile : Zomboid/Lua/MilitaryDrop/code_<partie>_<personnage>.txt,
+-- getFileWriter), jamais envoyé ailleurs qu'à l'appel. Pas dans la ModData
+-- du joueur : en MP, seule celle de l'IsoPlayer du serveur est sauvegardée
+-- (ServerPlayerDB.java:122, 346-359 : player.save côté serveur), et la
+-- transmettre (transmitModData → ObjectModDataPacket) la relaie aux clients
+-- proches (ObjectModDataPacket.processServer → sendToRelativeClients,
+-- INetworkPacket.java:118-124) : le code serait lu par les voisins. Partie :
+-- getWorld():getWorld() (Core.gameSaveWorld : nom de la sauvegarde en solo,
+-- « ip_port_hash du compte » sur un client MP, GameClient.java:1723).
+-- La dernière réplique de la base reçue par chaque joueur local
+-- (Client.radioSay) est gardée pour l'afficher dans le module
+-- (Client.lastReply).
 -- ============================================================================
 
 require "ISUI/ISTextBox"
@@ -80,7 +89,7 @@ Client.RADIO_COLOR = { r = 0.45, g = 0.85, b = 0.45 }
 
 local pending = {}
 local nextRequestId = 1
--- Par joueur local, pour la session : code saisi, dernière réplique de la base.
+-- Joueur local → { file, code } : code gardé (voir Client.rememberCode).
 local rememberedCodes = {}
 local lastReplies = {}
 local replyCount = 0
@@ -162,17 +171,82 @@ function Client.lastReply(playerNum)
     return lastReplies[playerNum]
 end
 
---- Code d'authentification saisi par le joueur local (session seulement).
-function Client.rememberCode(playerNum, code)
-    if type(code) == "string" and code ~= "" then
-        rememberedCodes[playerNum] = code
-    else
-        rememberedCodes[playerNum] = nil
+-- Code gardé : dossier sous Zomboid/Lua, longueur des parties du nom.
+Client.CODE_DIR = "MilitaryDrop"
+Client.CODE_NAME_MAX = 60
+
+--- Partie de nom de fichier sûre : lettres, chiffres, tirets ; le reste en « _ ».
+local function fileSafe(text)
+    local safe = string.gsub(tostring(text or ""), "[^%w%-]", "_")
+    if #safe > Client.CODE_NAME_MAX then
+        safe = string.sub(safe, 1, Client.CODE_NAME_MAX)
+    end
+    return safe
+end
+
+--- Fichier du code d'un personnage (chemin relatif à Zomboid/Lua), ou nil :
+--- partie (mode, sauvegarde ou serveur) et personnage (compte, prénom, nom).
+function Client.codeFile(player)
+    if not player or not getWorld or not getWorld() then
+        return nil
+    end
+    local world = getWorld():getWorld()
+    if type(world) ~= "string" or world == "" then
+        return nil
+    end
+    local desc = player:getDescriptor()
+    local character = desc and (tostring(desc:getForename()) .. "_" .. tostring(desc:getSurname())) or ""
+    local mode = isClient() and "mp" or "sp"
+    return Client.CODE_DIR .. "/code_" .. mode .. "_" .. fileSafe(world) .. "_"
+        .. fileSafe(tostring(player:getUsername()) .. "_" .. character) .. ".txt"
+end
+
+local function readCodeFile(file)
+    local reader = getFileReader(file, false)
+    if not reader then
+        return ""
+    end
+    local line = reader:readLine()
+    reader:close()
+    return type(line) == "string" and line or ""
+end
+
+local function writeCodeFile(file, code)
+    local writer = getFileWriter(file, true, false)
+    if writer then
+        writer:write(code)
+        writer:close()
     end
 end
 
+--- Code d'authentification saisi par le joueur local : gardé en mémoire et
+--- dans le fichier de son personnage (Client.codeFile), réécrit seulement
+--- s'il change. Vide : effacé.
+function Client.rememberCode(playerNum, code)
+    if type(code) ~= "string" then
+        code = ""
+    end
+    local file = Client.codeFile(getSpecificPlayer(playerNum))
+    local known = rememberedCodes[playerNum]
+    if known and known.file == file and known.code == code then
+        return
+    end
+    rememberedCodes[playerNum] = { file = file, code = code }
+    if file then
+        writeCodeFile(file, code)
+    end
+end
+
+--- Code gardé du joueur local (lu une fois dans le fichier de son
+--- personnage, puis en mémoire), ou "".
 function Client.rememberedCode(playerNum)
-    return rememberedCodes[playerNum] or ""
+    local file = Client.codeFile(getSpecificPlayer(playerNum))
+    local known = rememberedCodes[playerNum]
+    if not known or known.file ~= file then
+        known = { file = file, code = file and readCodeFile(file) or "" }
+        rememberedCodes[playerNum] = known
+    end
+    return known.code
 end
 
 -- ----------------------------------------------------------------------------

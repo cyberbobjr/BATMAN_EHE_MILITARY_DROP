@@ -7,9 +7,9 @@ Rédigé le 2026-09-30, après le test solo de la v1. État d'avancement de chaq
 - 9 : largage leurre.
 
 Les idées 3, 8 et 10 ont leur propre analyse d'impact :
-- idée 3, balises, détecteur et chasses au trésor : `docs/analyses/idee-03-balises.md` (9 à 11 jours) ;
-- idée 8, hélicoptère abattu et carcasse démontable : `docs/analyses/idee-08-mayday.md` (11 à 15 jours) ;
-- idée 10, extraction compatible avec Opération Artemis : `docs/analyses/idee-10-extraction.md`.
+- idée 3, balises, détecteur et chasses au trésor : `dev/analyses/idee-03-balises.md` (9 à 11 jours) ;
+- idée 8, hélicoptère abattu et carcasse démontable : `dev/analyses/idee-08-mayday.md` (11 à 15 jours) ;
+- idée 10, extraction compatible avec Opération Artemis : `dev/analyses/idee-10-extraction.md`.
 
 ## Règles communes (priorité 1 : le multijoueur)
 
@@ -149,7 +149,7 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 | I | Outils | `Tool`, `ToolWeapon` | 2 |
 | I | Matériaux | `Material` | 1 |
 | I | Bivouac | `Camping`, `FireSource`, `Fishing`, `Trapping` | 2 |
-| II (confiance ≥ 60, révisé le 2026-10-01) | Munitions | `Ammo`, chargeurs et boîtes des armes à feu connues | 2 |
+| II (confiance ≥ 50 ; départ à 25 depuis le 2026-10-01) | Munitions | `Ammo`, chargeurs et boîtes des armes à feu connues | 2 |
 | II | Armes de mêlée | `Weapon` sans tir, dégâts > 0 (hors `WeaponCrafted`, `*Weapon` improvisées) | 3 |
 | II | Protection | `ProtectiveGear`, vêtements avec `getBulletDefense() > 0` | 3 |
 | II | Mécanique | `VehicleMaintenance` | 2 |
@@ -189,7 +189,7 @@ Les idées 3, 8 et 10 ont leur propre analyse d'impact :
 - **Cause du bruit** : la sirène elle-même. Un joueur peut l'arrêter (menu contextuel, action chronométrée validée par le serveur). Elle s'arrête aussi seule quand ses piles s'épuisent, après une durée réglable en option.
 - **Indiscernable d'un vrai largage** (décision du 2026-09-30) : même annonce radio (« caisse livrée en grille… »), même hélicoptère, même repère de carte, même aspect de loin. Les équipes adverses ne peuvent pas savoir qu'elles vont vers un leurre.
   - Côté réseau : le type n'apparaît dans **aucun** message envoyé à tous (`FlightStart`, `DropAnnounce`), pour qu'un client modifié ne puisse pas le lire. Seul le demandeur reçoit en privé la confirmation de sa commande.
-  - Côté stockage : la ModData globale est lisible par tout client (`ModData.request`). Le type d'un largage (leurre ou non) n'y est donc **jamais écrit en clair**. Il va dans le fichier du serveur, ou dans la ModData masquée par la clé du serveur (mécanisme proposé par l'analyse de l'idée 3, `docs/analyses/idee-03-balises.md`).
+  - Côté stockage : la ModData globale est lisible par tout client (`ModData.request`). Le type d'un largage (leurre ou non) n'y est donc **jamais écrit en clair**. Il va dans le fichier du serveur, ou dans la ModData masquée par la clé du serveur (mécanisme proposé par l'analyse de l'idée 3, `dev/analyses/idee-03-balises.md`).
   - La caisse leurre garde **la même texture** que la vraie. Le marquage « DIVERSION » n'est visible que dans son coffre ou en l'examinant de près.
   - La sirène ne se déclenche **qu'une fois la caisse posée**, c'est-à-dire quand un joueur est dans la zone. Rien ne la trahit à distance avant l'arrivée.
 
@@ -254,3 +254,4 @@ Chaque lot se termine par les tests `lupa`, un test en solo, puis un test sur se
 
 23. Après la relecture de la v1.3 (2026-10-01) : la **fréquence militaire est tirée au hasard par défaut** (option à 0), par choix de jeu : les notes gardent leur intérêt d'une partie à l'autre ; un admin peut fixer une valeur. L'état de la v1.3 (équipes, confiance, largages, missions, postes) est rangé dans une table de ModData privée. La triche n'est pas un enjeu (jeu entre amis, mode debug réservé aux admins, Lua des clients vérifié par le serveur) : pas de silence contre le balayage des canaux ; seuls restent la cadence anti-rafale et le silence après 3 codes faux par jour.
 24. v1.4 et v1.5 (2026-10-01) : livrées d'un bloc par sous-agents, spécification [PLAN-V14.md](PLAN-V14.md). REQ-07 : les points de réquisition non dépensés sont **perdus**. LEURRE-04 : un leurre n'a **aucun effet sur la confiance**.
+25. Confiance (2026-10-01) : une équipe démarre à **25** (palier I seulement) ; paliers de réquisition à 50 et 75 ; le délai entre largages vaut ×1 à 50, donc ×1,25 au départ.

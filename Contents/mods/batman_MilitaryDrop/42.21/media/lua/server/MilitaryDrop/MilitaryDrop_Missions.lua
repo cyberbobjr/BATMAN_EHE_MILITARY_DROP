@@ -21,12 +21,21 @@
 --     centre d'un bâtiment, sinon route, la métagrille ne connaissant pas
 --     l'eau) ; première équipe qui confirme à RECON_RADIUS cases au plus avant
 --     ReconHours → +ReconGain ;
---   * SRC-04 nettoyage (publique) : zone de rayon CLEANUP_RADIUS centrée sur
---     un bâtiment entouré d'autres (Missions.pickSite), quota
---     CleanupQuota ; zombies tués dans la zone (OnZombieDead serveur, tueur
---     zombie:getAttackedBy() s'il est un IsoPlayer : feu et pièges non
---     attribués), équipe du tueur figée à la mort, un zombie compté une fois ;
---     première équipe au quota avant CleanupHours → +CleanupGain ;
+--   * SRC-04 nettoyage (publique) : horde signalée dans un rayon de
+--     CLEANUP_RADIUS cases autour d'un bâtiment entouré d'autres
+--     (Missions.pickSite). Quand la case du centre est chargée (premier joueur
+--     qui approche : LoadChunk, lancement, toutes les 10 minutes), le serveur
+--     fait apparaître UNE fois CleanupQuota zombies répartis dans la zone, sur
+--     des cases extérieures libres, loin des joueurs (Missions.spawnHorde).
+--     Chaque zombie est suivi par sa tenue persistante (voir plus bas) : seuls
+--     ceux-là comptent, où qu'ils meurent. Mort d'un zombie de la horde
+--     (OnZombieDead serveur), toute cause : compté pour le « reste » ; tueur
+--     zombie:getAttackedBy() IsoPlayer dont la ligne n'est pas coupée : compté
+--     aussi pour son équipe (figée à la mort). À HORDE_SHARE (90 %) de la
+--     horde morte, arrondi au supérieur, l'ordre se clôt : l'équipe qui en a
+--     abattu le plus gagne +CleanupGain (égalité : la première à ce compte) ;
+--     aucune : clôture sans récompense. Sinon, échéance CleanupHours.
+--     « Faire le point » (Missions.cleanupStatus) : réponse privée, sans gain ;
 --   * SRC-05 appel de contrôle : chaque équipe qui confirme la réception avant
 --     ControlHours gagne +ControlGain, une fois.
 -- Planification : une mission de chaque type au plus ; la suivante est tirée
@@ -43,8 +52,25 @@
 --     (v1.3 en essai : les anciens champs a, b, issued, used des plaques
 --     numérotées du mod sont effacés au chargement.)
 --   mission = { id, kind, openedHours, deadline, text, x, y, radius, quota,
---     counts = { teamId = morts }, responded = { teamId = true } }
--- ModData de zombie : mission de nettoyage déjà comptée.
+--     counts = { teamId = zombies de la horde abattus }, reached = { teamId =
+--     rang du dernier abattu (égalités) }, seq, horde = { ids = { clé de
+--     tenue = zombies vivants }, size, dead, hours } (nettoyage, horde
+--     apparue), responded = { teamId = true } (appel de contrôle) }
+--     Ancien format (nettoyage v1.3 sans horde) : la horde apparaît à la
+--     prochaine arrivée, les anciens comptes sont remis à zéro.
+-- ModData de zombie : mission de nettoyage déjà comptée (double OnZombieDead
+-- d'un zombie brûlé).
+--
+-- Suivi d'un zombie de la horde : ses ModData sont vidées quand il devient
+-- virtuel puis réel à nouveau (IsoZombie.resetForReuse) et persistentId n'a
+-- pas de getter. Seule getPersistentOutfitID() est conservée à la
+-- virtualisation et au rechargement (ZombiePopulationManager.java:395-427,
+-- relue par createRealZombieAlways, :611, VirtualZombieManager.java:189-191) :
+-- bit femme (signe) + tenue × 65 536 + bit « chapeau tombé » (0x8000, posé
+-- en jeu par setFallenHat, donc retiré de la clé) + variante 1-500
+-- (PersistentOutfits.java:142-186, 293-300). Clé non unique : registre par
+-- clé avec un nombre de zombies vivants ; un autre zombie de même tenue et
+-- même variante tué ailleurs peut prendre une place (rare, accepté).
 -- ============================================================================
 
 if isClient() then
@@ -68,6 +94,15 @@ MilitaryDrop.Missions = Missions
 Missions.KINDS = { "recon", "cleanup", "control" }
 Missions.RECON_RADIUS = 25
 Missions.CLEANUP_RADIUS = 40
+-- Part de la horde à abattre pour clore le nettoyage (en dixièmes : arrondi
+-- au supérieur sans erreur de flottant).
+Missions.HORDE_SHARE_TENTHS = 9
+-- Cases d'apparition : tirées dans le disque de la zone, extérieures et
+-- libres ; d'abord à HORDE_FAR cases au moins de tout joueur (hors de vue en
+-- pratique), sinon à HORDE_NEAR ; aucune plus près.
+Missions.HORDE_FAR = 30
+Missions.HORDE_NEAR = 15
+Missions.HORDE_ATTEMPTS = 400
 -- Un échange par joueur toutes les 3 s réelles au plus (anti-rafale, commun aux
 -- quatre échanges) ; un échange refusé reçoit le statut « busy ».
 Missions.EXCHANGE_INTERVAL_MS = 3000
@@ -375,6 +410,9 @@ local function close(kind, now, outcome, teamId, text)
     s.last[kind] = { id = mission.id, outcome = outcome, team = teamId, hours = now }
     s.nextHours[kind] = now + interval(kind)
     MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") " .. outcome .. " " .. tostring(teamId))
+    if kind == "cleanup" then
+        Missions.sendCleanupState()
+    end
     if text then
         Missions.announce(text, 1)
     end
@@ -638,6 +676,13 @@ function Missions.launch(kind, now)
     end
     Missions.announce(mission.text, Missions.ANNOUNCE_REPEATS, code)
     MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") until " .. mission.deadline)
+    if kind == "cleanup" then
+        mission.reached, mission.seq = {}, 0
+        Missions.sendCleanupState()
+        -- Centre déjà chargé (lancement près d'un joueur) : LoadChunk ne
+        -- reviendra pas pour ses chunks.
+        Missions.trySpawnHorde(now)
+    end
     return mission
 end
 
@@ -669,6 +714,9 @@ function Missions.update(now)
             end
         end
     end
+    -- Horde pas encore apparue alors que le centre est chargé (chunk chargé
+    -- avant l'ouverture, ou aucune case libre au premier essai).
+    Missions.trySpawnHorde(now)
 end
 
 -- SRC-03 : reconnaissance
@@ -697,38 +745,266 @@ function Missions.confirmRecon(player, args)
 end
 
 -- SRC-04 : nettoyage
---- Zombie tué : compté pour l'équipe du tueur s'il est dans la zone.
+
+--- Clé de suivi d'un zombie : sexe (bit de signe : « F », sinon « M ») et 31
+--- bits bas de la tenue persistante, sans le bit « chapeau tombé » (0x8000,
+--- posé en jeu). Chaîne courte, entiers sous 2^31 (string.format %d sûr).
+--- nil : aucune tenue persistante.
+function Missions.hordeKey(outfitId)
+    local value = tonumber(outfitId)
+    if not value or value == 0 or value ~= math.floor(value) then
+        return nil
+    end
+    local sex = "M"
+    if value < 0 then
+        sex = "F"
+        value = value + 2147483648
+    end
+    value = value - (math.floor(value / 32768) % 2) * 32768
+    return sex .. string.format("%d", value)
+end
+
+--- Zombies de la horde à abattre pour clore l'ordre : HORDE_SHARE_TENTHS
+--- dixièmes de la horde, arrondi au supérieur (au moins 1).
+function Missions.hordeTarget(horde)
+    local size = math.max(0, math.floor(tonumber(horde and horde.size) or 0))
+    return math.max(1, math.floor((size * Missions.HORDE_SHARE_TENTHS + 9) / 10))
+end
+
+--- Zombies de la horde encore à abattre avant la clôture (jamais négatif).
+function Missions.hordeLeft(horde)
+    return math.max(0, Missions.hordeTarget(horde) - (tonumber(horde and horde.dead) or 0))
+end
+
+--- Clients : un nettoyage est-il en cours (grisé de « Faire le point ») ? À
+--- un joueur (arrivée en jeu, Sync) ou à tous (ouverture, clôture). Rien de
+--- la horde : l'annonce publique dit déjà qu'un ordre est ouvert.
+function Missions.sendCleanupState(player)
+    local args = { open = Missions.openMission("cleanup") ~= nil }
+    if player then
+        MilitaryDrop.Net.toPlayer(player, "CleanupState", args)
+    else
+        MilitaryDrop.Net.toAll("CleanupState", args)
+    end
+end
+
+--- Arrivée d'un joueur (commande Sync du client).
+function Missions.sync(player)
+    Missions.sendCleanupState(player)
+end
+
+--- Cases d'apparition de la horde : tirées dans le disque de la zone, chargées,
+--- extérieures et libres (Server.isFreeSquare), distinctes ; celles à
+--- HORDE_FAR cases au moins de tout joueur d'abord, puis celles à HORDE_NEAR.
+--- Au plus count cases de chaque sorte.
+function Missions.hordeSquares(mission, count)
+    local cell = getCell()
+    local players = livePlayers()
+    local far2, near2 = Missions.HORDE_FAR * Missions.HORDE_FAR, Missions.HORDE_NEAR * Missions.HORDE_NEAR
+    local far, near, seen = {}, {}, {}
+    local radius = tonumber(mission.radius) or Missions.CLEANUP_RADIUS
+    for _ = 1, Missions.HORDE_ATTEMPTS do
+        if #far >= count then
+            break
+        end
+        -- Tirage uniforme dans le disque (racine du rayon).
+        local angle = ZombRandFloat(0, 2 * math.pi)
+        local distance = radius * math.sqrt(ZombRandFloat(0, 1))
+        local x = math.floor(mission.x + 0.5 + math.cos(angle) * distance)
+        local y = math.floor(mission.y + 0.5 + math.sin(angle) * distance)
+        local key = x .. "," .. y
+        if not seen[key] then
+            seen[key] = true
+            local square = cell:getGridSquare(x, y, 0)
+            if square and MilitaryDrop.Server.isFreeSquare(square) then
+                local closest = nil
+                for _, player in ipairs(players) do
+                    local dx, dy = player:getX() - (x + 0.5), player:getY() - (y + 0.5)
+                    local d2 = dx * dx + dy * dy
+                    if not closest or d2 < closest then
+                        closest = d2
+                    end
+                end
+                if not closest or closest >= far2 then
+                    far[#far + 1] = square
+                elseif closest >= near2 and #near < count then
+                    near[#near + 1] = square
+                end
+            end
+        end
+    end
+    for _, square in ipairs(near) do
+        far[#far + 1] = square
+    end
+    return far
+end
+
+--- Un zombie sur la case : apparition vanilla (spawnHorde sur une seule case :
+--- Rand.Next(min, min) rend min, RandAbstract.java:69-72 ; tenue tirée de la
+--- zone, santé selon les options, comme la horde d'un largage), puis le
+--- zombie créé, dernier ajouté à la liste des zombies de la cellule
+--- (VirtualZombieManager.createRealZombieAlways, VirtualZombieManager.java:
+--- 208-211, après OnZombieCreate). spawnHorde ne rend rien ; protégé par
+--- pcall : création de zombies désactivée → zombie nul → erreur Java.
+local function spawnOne(cell, square)
+    local x, y = square:getX(), square:getY()
+    local list = cell:getZombieList()
+    local before = list:size()
+    if not pcall(spawnHorde, x + 0.5, y + 0.5, x + 0.5, y + 0.5, 0, 1) then
+        return nil
+    end
+    local after = list:size()
+    if after <= before then
+        return nil
+    end
+    local zombie = list:get(after - 1)
+    if zombie and instanceof(zombie, "IsoZombie") and math.floor(zombie:getX()) == x
+        and math.floor(zombie:getY()) == y then
+        return zombie
+    end
+    return nil
+end
+
+--- Fait apparaître la horde du nettoyage ouvert, une seule fois, si la case de
+--- son centre est chargée (serveur MP : cellule de 64 × 64 cases déjà lisible
+--- dans LoadChunk ; solo : zone du joueur). Renvoie le nombre de zombies
+--- suivis, ou nil (rien à faire, ou à retenter : aucune case libre, aucun
+--- zombie créé).
+function Missions.trySpawnHorde(now)
+    local mission = Missions.openMission("cleanup", now)
+    if not mission or type(mission.horde) == "table" or not mission.x then
+        return nil
+    end
+    local cell = getCell()
+    if not cell or not cell:getGridSquare(mission.x, mission.y, 0) then
+        return nil
+    end
+    local count = math.max(1, math.floor(tonumber(mission.quota) or optionNumber("CleanupQuota", 1)))
+    local squares = Missions.hordeSquares(mission, count)
+    if #squares == 0 then
+        return nil
+    end
+    -- Registre écrit avant les apparitions (un LoadChunk pendant l'une d'elles
+    -- ne relance rien) ; comptes remis à zéro (ancien format : morts de
+    -- n'importe quel zombie).
+    local horde = { ids = {}, size = 0, dead = 0, hours = now or hoursNow() }
+    mission.horde = horde
+    mission.counts, mission.reached, mission.seq = {}, {}, 0
+    for i = 1, count do
+        local zombie = spawnOne(cell, squares[(i - 1) % #squares + 1])
+        local key = zombie and Missions.hordeKey(zombie:getPersistentOutfitID())
+        if key then
+            horde.ids[key] = (tonumber(horde.ids[key]) or 0) + 1
+            horde.size = horde.size + 1
+        end
+    end
+    if horde.size == 0 then
+        -- Aucun zombie suivi : pas d'apparition, nouvel essai plus tard.
+        mission.horde = nil
+        MilitaryDrop.log("cleanup " .. mission.id .. ": no horde zombie could spawn", true)
+        return nil
+    end
+    MilitaryDrop.log(string.format("cleanup %s: horde of %d (%d tracked) around %d,%d on %d squares",
+        mission.id, count, horde.size, mission.x, mission.y, #squares))
+    return horde.size
+end
+
+--- Fin du chargement d'un chunk : la horde attend que le centre soit chargé
+--- (la case visée, pas un chunk voisin).
+function Missions.onLoadChunk()
+    local mission = state().open.cleanup
+    if mission and type(mission.horde) ~= "table" then
+        Missions.trySpawnHorde()
+    end
+end
+
+--- Équipe qui a abattu le plus de zombies de la horde (égalité : la première
+--- à ce compte), ou nil.
+function Missions.cleanupWinner(mission)
+    local best, bestCount, bestRank = nil, 0, nil
+    for teamId, value in pairs(mission.counts or {}) do
+        local count = tonumber(value) or 0
+        local rank = tonumber(mission.reached and mission.reached[teamId]) or math.huge
+        if count > bestCount or (count == bestCount and count > 0 and rank < bestRank) then
+            best, bestCount, bestRank = teamId, count, rank
+        end
+    end
+    return best
+end
+
+--- HORDE_SHARE atteinte : récompense de la meilleure équipe, clôture annoncée.
+local function finishCleanup(mission, now)
+    local winner = Missions.cleanupWinner(mission)
+    local x, y = tostring(mission.x), tostring(mission.y)
+    if winner then
+        MilitaryDrop.Trust.add(winner, Exchange.gain("cleanup"), "cleanup")
+        close("cleanup", now, "done", winner, getText("IGUI_MilitaryDrop_Broadcast_CleanupDone", x, y,
+            MilitaryDrop.Teams.callsign(winner) or ""))
+    else
+        close("cleanup", now, "destroyed", nil, getText("IGUI_MilitaryDrop_Broadcast_CleanupNoWinner", x, y))
+    end
+end
+
+--- Zombie mort (OnZombieDead, serveur) : seul un zombie de la horde compte,
+--- où qu'il meure et quelle que soit la cause ; pour l'équipe de son tueur
+--- joueur si sa ligne n'est pas coupée.
 function Missions.countKill(zombie)
     local now = hoursNow()
     local mission = Missions.openMission("cleanup", now)
-    if not mission then
+    if not mission or type(mission.horde) ~= "table" then
         return
     end
+    local horde = mission.horde
     local modData = zombie:getModData()
     if modData[KILL_KEY] == mission.id then
         return
     end
-    local dx = zombie:getX() - (mission.x + 0.5)
-    local dy = zombie:getY() - (mission.y + 0.5)
-    if dx * dx + dy * dy > mission.radius * mission.radius then
-        return
-    end
-    local killer = zombie:getAttackedBy()
-    if not killer or not instanceof(killer, "IsoPlayer") then
-        return
-    end
-    local teamId = MilitaryDrop.Teams.idFor(killer)
-    if not teamId or MilitaryDrop.Trust.isLineCut(teamId) then
+    local key = Missions.hordeKey(zombie:getPersistentOutfitID())
+    local alive = key and tonumber(horde.ids[key]) or 0
+    if alive <= 0 then
         return
     end
     modData[KILL_KEY] = mission.id
-    local count = (tonumber(mission.counts[teamId]) or 0) + 1
-    mission.counts[teamId] = count
-    if count >= mission.quota then
-        MilitaryDrop.Trust.add(teamId, Exchange.gain("cleanup"), "cleanup")
-        close("cleanup", now, "done", teamId, getText("IGUI_MilitaryDrop_Broadcast_CleanupDone", tostring(mission.x),
-            tostring(mission.y), MilitaryDrop.Teams.callsign(teamId) or ""))
+    horde.ids[key] = alive > 1 and alive - 1 or nil
+    horde.dead = (tonumber(horde.dead) or 0) + 1
+    local killer = zombie:getAttackedBy()
+    if killer and instanceof(killer, "IsoPlayer") then
+        local teamId = MilitaryDrop.Teams.idFor(killer)
+        if teamId and not MilitaryDrop.Trust.isLineCut(teamId) then
+            mission.counts = mission.counts or {}
+            mission.reached = mission.reached or {}
+            mission.seq = (tonumber(mission.seq) or 0) + 1
+            mission.counts[teamId] = (tonumber(mission.counts[teamId]) or 0) + 1
+            mission.reached[teamId] = mission.seq
+        end
     end
+    if horde.dead >= Missions.hordeTarget(horde) then
+        finishCleanup(mission, now)
+    end
+end
+
+--- « Faire le point » : avant l'apparition, la grille à rejoindre ; après, les
+--- zombies de la horde abattus par l'équipe et ceux qui restent à abattre
+--- avant la clôture (pas les survivants : l'ordre se clôt avant le dernier).
+--- Aucun gain.
+function Missions.cleanupStatus(player, args)
+    local ctx = begin(player, args, "cleanup")
+    if not ctx then
+        return
+    end
+    local mission = Missions.openMission("cleanup")
+    if not mission then
+        reply(ctx, "noMission", { getText("IGUI_MilitaryDrop_Reply_NoCleanup", ctx.callsign) })
+        return
+    end
+    if type(mission.horde) ~= "table" then
+        reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_CleanupPending", ctx.callsign, tostring(mission.x),
+            tostring(mission.y), tostring(mission.radius)) })
+        return
+    end
+    local mine = tonumber(mission.counts and mission.counts[ctx.teamId]) or 0
+    reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_CleanupStatus", ctx.callsign, tostring(mine),
+        tostring(Missions.hordeLeft(mission.horde))) })
 end
 
 -- SRC-05 : appel de contrôle
@@ -753,7 +1029,9 @@ end
 
 --- Missions ouvertes et progression de l'équipe (console du poste de liaison) :
 --- liste de { kind, title, text, deadlineHours (heures restantes), deadline
---- (heure absolue), x, y, radius, progress, quota }.
+--- (heure absolue), x, y, radius, progress, quota } ; nettoyage : progress
+--- (zombies de la horde abattus par l'équipe), spotted (horde apparue), left
+--- (reste à abattre avant la clôture), down (morts), target (objectif).
 function Missions.listForTeam(teamId)
     local now = hoursNow()
     local list = {}
@@ -765,8 +1043,16 @@ function Missions.listForTeam(teamId)
                 hours = mission.deadline - mission.openedHours,
                 x = mission.x, y = mission.y, radius = mission.radius }
             if kind == "cleanup" then
-                entry.progress = tonumber(mission.counts[teamId]) or 0
-                entry.quota = mission.quota
+                -- Horde apparue : abattus par l'équipe, reste à abattre avant
+                -- la clôture, morts et objectif (barre) ; sinon pas encore repérée.
+                local horde = type(mission.horde) == "table" and mission.horde or nil
+                entry.spotted = horde ~= nil
+                entry.progress = horde and (tonumber(mission.counts and mission.counts[teamId]) or 0) or 0
+                if horde then
+                    entry.left = Missions.hordeLeft(horde)
+                    entry.down = tonumber(horde.dead) or 0
+                    entry.target = Missions.hordeTarget(horde)
+                end
             elseif kind == "control" then
                 entry.progress = mission.responded[teamId] and 1 or 0
                 entry.quota = 1
@@ -846,8 +1132,10 @@ COMMANDS[Exchange.COMMANDS.report] = function(player, args) Missions.report(play
 COMMANDS[Exchange.COMMANDS.dogtag] = function(player, args) Missions.transmitDogTags(player, args) end
 COMMANDS[Exchange.COMMANDS.recon] = function(player, args) Missions.confirmRecon(player, args) end
 COMMANDS[Exchange.COMMANDS.control] = function(player, args) Missions.confirmControl(player, args) end
+COMMANDS[Exchange.COMMANDS.cleanupStatus] = function(player, args) Missions.cleanupStatus(player, args) end
 
 Events.EveryTenMinutes.Add(function() Missions.update() end)
 Events.OnZombieDead.Add(Missions.onZombieDead)
+Events.LoadChunk.Add(Missions.onLoadChunk)
 
 return Missions

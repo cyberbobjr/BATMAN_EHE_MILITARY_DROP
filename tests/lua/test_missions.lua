@@ -236,7 +236,39 @@ function T.setup()
     end
     SENT = {}
     sendServerCommand = function(player, module, command, args)
+        if type(player) == "string" then
+            -- Forme « à tous » : (module, commande, args).
+            SENT[#SENT + 1] = { all = true, module = player, command = module, args = command }
+            return
+        end
         SENT[#SENT + 1] = { player = player, module = module, command = command, args = args }
+    end
+    -- Monde simulé : cases chargées (LOADED(x, y)), cases bloquées (BLOCKED),
+    -- zombies de la cellule (ZLIST), tenues persistantes tirées par
+    -- NEXT_OUTFIT ; spawnHorde sur une case crée un zombie (SPAWN_ZOMBIE).
+    LOADED = function() return false end
+    BLOCKED = {}
+    ZLIST = javaList()
+    HORDE_SPAWNED = {}
+    OUTFIT_SEQ = 0
+    NEXT_OUTFIT = function()
+        OUTFIT_SEQ = OUTFIT_SEQ + 1
+        return (OUTFIT_SEQ % 40 + 1) * 65536 + OUTFIT_SEQ
+    end
+    getCell = function()
+        return {
+            getGridSquare = function(_, x, y, z)
+                if z ~= 0 or not LOADED(x, y) then
+                    return nil
+                end
+                return { key = x .. "," .. y, getX = function() return x end, getY = function() return y end }
+            end,
+            getZombieList = function() return ZLIST end,
+        }
+    end
+    spawnHorde = function(x1, y1, x2, y2, z, count)
+        assertEq(x1 .. "," .. y1 .. "," .. z .. "," .. count, x2 .. "," .. y2 .. ",0,1", "une case, un zombie")
+        SPAWN_ZOMBIE(math.floor(x1), math.floor(y1))
     end
     REMOVED = {}
     sendRemoveItemFromContainer = function(_, item) REMOVED[#REMOVED + 1] = item end
@@ -264,6 +296,7 @@ function T.setup()
         getState = function() return PUBLIC end,
         clock = function() return CLOCK end,
         pickDropPoint = function() return PICK[1], PICK[2] end,
+        isFreeSquare = function(square) return square ~= nil and not BLOCKED[square.key] end,
         COMMANDS = {},
         onClientCommand = function(command, player, args)
             MilitaryDrop.Server.COMMANDS[command](player, args)
@@ -298,7 +331,8 @@ end
 -- ----------------------------------------------------------------------------
 
 function T.commands_are_registered_in_the_server_table()
-    for _, name in ipairs({ "MissionReport", "MissionDogTags", "MissionRecon", "MissionControl" }) do
+    for _, name in ipairs({ "MissionReport", "MissionDogTags", "MissionRecon", "MissionControl",
+        "MissionCleanupStatus" }) do
         assertEq(type(MilitaryDrop.Server.COMMANDS[name]), "function", name)
     end
 end
@@ -306,17 +340,17 @@ end
 function T.report_gives_1_once_per_calendar_day()
     local alice = makePlayer("alice")
     call("MissionReport", alice)
-    assertEq(Trust.get("P:alice"), 51, "premier rapport : +1")
+    assertEq(Trust.get("P:alice"), 26, "premier rapport : +1")
     assertEq(lastReply(alice).status, "ok", "réponse")
     assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_Report_1|" .. Teams.callsign("P:alice"),
         "ligne de la base, avec l'indicatif")
     wait(10)
     call("MissionReport", alice)
-    assertEq(Trust.get("P:alice"), 51, "même jour calendaire : rien")
+    assertEq(Trust.get("P:alice"), 26, "même jour calendaire : rien")
     assertEq(lastReply(alice).status, "already", "déjà reçu")
     wait(14)
     call("MissionReport", alice)
-    assertEq(Trust.get("P:alice"), 52, "jour suivant : +1")
+    assertEq(Trust.get("P:alice"), 27, "jour suivant : +1")
 end
 
 function T.report_counts_per_team_not_per_player()
@@ -325,7 +359,7 @@ function T.report_counts_per_team_not_per_player()
     local team = Teams.idFor(alice)
     call("MissionReport", alice)
     call("MissionReport", bob)
-    assertEq(Trust.get(team), 51, "un rapport par équipe et par jour")
+    assertEq(Trust.get(team), 26, "un rapport par équipe et par jour")
     assertEq(lastReply(bob).status, "already", "le second membre est prévenu")
 end
 
@@ -334,7 +368,7 @@ function T.radio_on_the_wrong_frequency_gets_no_answer()
     call("MissionReport", alice)
     assertEq(lastReply(alice).status, "noAnswer", "mauvaise fréquence : pas de réponse")
     assertEq(#lastReply(alice).lines, 0, "aucune ligne de la base")
-    assertEq(Trust.get("P:alice"), 50, "aucun gain")
+    assertEq(Trust.get("P:alice"), 25, "aucun gain")
 end
 
 function T.radio_turned_off_or_not_in_hand_is_refused()
@@ -346,7 +380,7 @@ function T.radio_turned_off_or_not_in_hand_is_refused()
     assertEq(lastReply(bob).status, "noRadio", "radio absente des mains")
     call("MissionReport", bob, { radio = "forged" })
     assertEq(lastReply(bob).status, "noRadio", "référence invalide")
-    assertEq(Trust.get("P:bob"), 50, "aucun gain")
+    assertEq(Trust.get("P:bob"), 25, "aucun gain")
 end
 
 function T.exchanges_are_rate_limited_per_player()
@@ -374,7 +408,7 @@ function T.disabled_source_is_refused()
     local alice = makePlayer("alice")
     call("MissionReport", alice)
     assertEq(lastReply(alice).status, "disabled", "source désactivée")
-    assertEq(Trust.get("P:alice"), 50, "aucun gain")
+    assertEq(Trust.get("P:alice"), 25, "aucun gain")
 end
 
 function T.exchange_from_the_team_post_gets_the_bonus_and_is_logged()
@@ -385,7 +419,7 @@ function T.exchange_from_the_team_post_gets_the_bonus_and_is_logged()
     }
     local alice = makePlayer("alice")
     call("MissionReport", alice)
-    assertEq(Trust.get("P:alice"), 52, "+1 depuis le poste : +50 %, arrondi à 2")
+    assertEq(Trust.get("P:alice"), 27, "+1 depuis le poste : +50 %, arrondi à 2")
     assertEq(records[1][1], "P:alice", "réponse notée au journal de l'équipe")
 end
 
@@ -397,7 +431,7 @@ function T.transmitted_dog_tag_gives_2_is_consumed_and_named_by_the_base()
     local alice = makePlayer("alice")
     local tag = giveTag(alice, 123456789, "John Doe")
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 52, "+2")
+    assertEq(Trust.get("P:alice"), 27, "+2")
     assertEq(#alice.tags, 0, "plaque consommée")
     assertEq(REMOVED[1], tag, "retrait transmis aux clients")
     assertEq(STATE.missions.dogtags.ids["123456789"], "P:alice", "identifiant enregistré")
@@ -417,7 +451,7 @@ function T.blank_own_and_worn_dog_tags_are_not_transmitted()
     call("MissionDogTags", alice)
     assertEq(lastReply(alice).status, "noTags", "plaque vierge, la sienne, portée, d'animal : rien")
     assertEq(#alice.tags, 4, "tout est gardé")
-    assertEq(Trust.get("P:alice"), 50, "aucun gain")
+    assertEq(Trust.get("P:alice"), 25, "aucun gain")
 end
 
 function T.a_dog_tag_is_credited_only_once()
@@ -425,7 +459,7 @@ function T.a_dog_tag_is_credited_only_once()
     giveTag(alice, 77, "John Doe")
     giveTag(alice, 77, "John Doe")
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 52, "doublon : un seul gain")
+    assertEq(Trust.get("P:alice"), 27, "doublon : un seul gain")
     assertEq(#alice.tags, 0, "le doublon est remis aussi")
     local lines = lastReply(alice).lines
     assertTrue(string.find(lines[2], "IGUI_MilitaryDrop_Reply_DogTagsKnown", 1, true) == 1, "déjà transmise")
@@ -439,7 +473,7 @@ function T.dog_tag_of_another_player_is_not_counted()
     call("MissionDogTags", alice)
     assertEq(lastReply(alice).status, "noTags", "seul l'inventaire du joueur compte")
     assertEq(#bob.tags, 1, "plaque de l'autre joueur intacte")
-    assertEq(Trust.get("P:alice"), 50, "aucun gain")
+    assertEq(Trust.get("P:alice"), 25, "aucun gain")
 end
 
 function T.dog_tags_are_kept_when_trust_is_already_at_maximum()
@@ -459,7 +493,7 @@ function T.daily_cap_keeps_the_remaining_dog_tags()
         giveTag(alice, 1000 + i, "Soldier " .. i)
     end
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 58, "plafond de 8 par jour")
+    assertEq(Trust.get("P:alice"), 33, "plafond de 8 par jour")
     assertEq(#alice.tags, 2, "plaques au-delà du plafond gardées")
     local lines = lastReply(alice).lines
     assertTrue(string.find(lines[1], "IGUI_MilitaryDrop_NamesMoreOne|Soldier 1, Soldier 2, Soldier 3", 1, true) ~= nil,
@@ -467,7 +501,7 @@ function T.daily_cap_keeps_the_remaining_dog_tags()
     assertTrue(string.find(lines[#lines], "IGUI_MilitaryDrop_Reply_DogTagsCap", 1, true) ~= nil, "la base le dit")
     wait(24)
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 62, "lendemain : le reste est crédité")
+    assertEq(Trust.get("P:alice"), 37, "lendemain : le reste est crédité")
     assertEq(#alice.tags, 0, "plus rien")
 end
 
@@ -484,7 +518,7 @@ function T.trial_state_of_numbered_tags_does_not_break_loading()
     local alice = makePlayer("alice")
     giveTag(alice, 12345678, "John Doe")
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 52, "ancien numéro sans effet sur le nouvel identifiant")
+    assertEq(Trust.get("P:alice"), 27, "ancien numéro sans effet sur le nouvel identifiant")
     local tags = STATE.missions.dogtags
     assertEq(tags.used, nil, "ancien registre effacé")
     assertEq(tags.a, nil, "anciens paramètres effacés")
@@ -492,10 +526,12 @@ function T.trial_state_of_numbered_tags_does_not_break_loading()
     assertEq(Missions.isDogTagUsed(1), false, "état illisible : repris à vide")
 end
 
---- Zombie simulé : tenue, position, tueur, inventaire.
-local function makeZombie(outfit, x, y, killer)
-    local zombie = { modData = {}, items = {}, outfit = outfit, x = x or 0, y = y or 0, killer = killer }
+--- Zombie simulé : tenue, position, tueur, inventaire, tenue persistante.
+local function makeZombie(outfit, x, y, killer, outfitId)
+    local zombie = { kind = "IsoZombie", modData = {}, items = {}, outfit = outfit, x = x or 0, y = y or 0,
+        killer = killer, outfitId = outfitId or 0 }
     function zombie.getModData(self) return self.modData end
+    function zombie.getPersistentOutfitID(self) return self.outfitId end
     function zombie.getOutfitName(self) return self.outfit end
     function zombie.getX(self) return self.x end
     function zombie.getY(self) return self.y end
@@ -711,16 +747,16 @@ function T.first_team_on_site_confirms_the_recon()
     Missions.launch("recon")
     call("MissionRecon", alice)
     assertEq(lastReply(alice).status, "tooFar", "loin de la grille")
-    assertEq(Trust.get("P:alice"), 50, "aucun gain")
+    assertEq(Trust.get("P:alice"), 25, "aucun gain")
     alice.x, alice.y = 300.5 + 18, 400.5 + 18
     call("MissionRecon", alice)
     assertEq(lastReply(alice).status, "tooFar", "à 25,46 cases : hors du rayon de 25")
     alice.x, alice.y = 300.5 + 15, 400.5 + 20
     call("MissionRecon", alice)
-    assertEq(Trust.get("P:alice"), 53, "première équipe à 25 cases : +3")
+    assertEq(Trust.get("P:alice"), 28, "première équipe à 25 cases : +3")
     call("MissionRecon", bob)
     assertEq(lastReply(bob).status, "noMission", "mission close pour les autres")
-    assertEq(Trust.get("P:bob"), 50, "le second ne gagne rien")
+    assertEq(Trust.get("P:bob"), 25, "le second ne gagne rien")
     local closing = AIRED[#AIRED][1][1]
     assertTrue(string.find(closing, "IGUI_MilitaryDrop_Broadcast_ReconDone|300|400|", 1, true) == 1,
         "clôture annoncée : " .. closing)
@@ -741,64 +777,325 @@ function T.recon_expires_after_48_hours()
 end
 
 -- ----------------------------------------------------------------------------
--- SRC-04 nettoyage
+-- SRC-04 nettoyage : horde signalée et suivie
 -- ----------------------------------------------------------------------------
 
-function T.cleanup_counts_player_kills_in_the_zone_once()
+--- Zombie créé par spawnHorde (simulé) sur la case (x, y) : tenue persistante
+--- tirée par NEXT_OUTFIT, ajouté à la liste des zombies de la cellule.
+function SPAWN_ZOMBIE(x, y)
+    local zombie = makeZombie("Horde", x + 0.3, y + 0.6, nil, NEXT_OUTFIT())
+    ZLIST:add(zombie)
+    HORDE_SPAWNED[#HORDE_SPAWNED + 1] = zombie
+    return zombie
+end
+
+--- Zone chargée : carré de demi-côté r autour de (cx, cy).
+local function loadArea(cx, cy, r)
+    LOADED = function(x, y) return math.abs(x - cx) <= r and math.abs(y - cy) <= r end
+end
+
+--- Le joueur approche : la zone de la mission (300, 400) se charge.
+local function spawnNow()
+    loadArea(300, 400, 60)
+    triggerEvent("LoadChunk", {})
+    return HORDE_SPAWNED
+end
+
+local function hordeZombie(zombie, killer)
+    zombie.killer = killer
+    return zombie
+end
+
+local function cleanup()
+    return STATE.missions.open.cleanup
+end
+
+local function lastBroadcast()
+    return AIRED[#AIRED][1][1]
+end
+
+function T.horde_appears_once_when_the_centre_is_loaded()
+    SandboxVars.MilitaryDrop.CleanupQuota = 12
+    seededRandom(5)
+    makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    assertEq(cleanup().horde, nil, "zone pas chargée : rien")
+    loadArea(300 + 100, 400, 50)
+    triggerEvent("LoadChunk", {})
+    assertEq(cleanup().horde, nil, "chunk voisin chargé, pas le centre : rien")
+    local spawned = spawnNow()
+    local horde = cleanup().horde
+    assertEq(#spawned, 12, "douze zombies")
+    assertEq(horde.size, 12, "douze suivis")
+    assertEq(horde.dead, 0, "aucun mort")
+    local squares = {}
+    for _, zombie in ipairs(spawned) do
+        local dx, dy = zombie.x - 300.5, zombie.y - 400.5
+        assertTrue(dx * dx + dy * dy <= 41 * 41, "dans le rayon de la zone")
+        squares[math.floor(zombie.x) .. "," .. math.floor(zombie.y)] = true
+    end
+    local distinct = 0
+    for _ in pairs(squares) do
+        distinct = distinct + 1
+    end
+    assertEq(distinct, 12, "répartis : une case chacun")
+    triggerEvent("LoadChunk", {})
+    Missions.update()
+    wait(1)
+    Missions.update()
+    assertEq(#HORDE_SPAWNED, 12, "une seule apparition par mission")
+    -- Rien de la horde n'est envoyé aux clients.
+    for _, sent in ipairs(SENT) do
+        assertTrue(sent.command ~= "CleanupState" or sent.args.x == nil, "aucune position transmise")
+    end
+end
+
+function T.horde_never_appears_among_players()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    seededRandom(9)
+    local alice = makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    alice.x, alice.y = 300.5, 400.5
+    loadArea(300, 400, 10)
+    Missions.update()
+    assertEq(cleanup().horde, nil, "seules des cases proches du joueur : rien, nouvel essai plus tard")
+    loadArea(300, 400, 60)
+    triggerEvent("LoadChunk", {})
+    assertEq(cleanup().horde.size, 10, "apparue quand des cases éloignées sont chargées")
+    for _, zombie in ipairs(HORDE_SPAWNED) do
+        local dx, dy = zombie.x - alice.x, zombie.y - alice.y
+        assertTrue(dx * dx + dy * dy >= (Missions.HORDE_NEAR - 1) ^ 2, "jamais au milieu des joueurs")
+    end
+end
+
+function T.horde_waits_when_no_square_is_free()
+    makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    loadArea(300, 400, 60)
+    BLOCKED = setmetatable({}, { __index = function() return true end })
+    triggerEvent("LoadChunk", {})
+    assertEq(cleanup().horde, nil, "eau ou obstacles partout : rien")
+    BLOCKED = {}
+    Missions.update()
+    assertTrue(cleanup().horde ~= nil, "essai suivant (toutes les 10 minutes)")
+end
+
+function T.horde_identifiers_survive_virtualization()
+    assertEq(Missions.hordeKey(3 * 65536 + 7), "M196615", "tenue de la clé")
+    local female = -2147483648 + 3 * 65536 + 7
+    assertEq(Missions.hordeKey(female), "F196615", "femme : bit de signe (identifiant négatif)")
+    assertEq(Missions.hordeKey(3 * 65536 + 7 + 32768), "M196615", "chapeau tombé : bit retiré")
+    assertEq(Missions.hordeKey(female + 32768), Missions.hordeKey(female), "chapeau tombé : même clé")
+    assertEq(Missions.hordeKey(0), nil, "sans tenue persistante : non suivi")
+    SandboxVars.MilitaryDrop.CleanupQuota = 4
+    local ids = { 5 * 65536 + 9, 5 * 65536 + 9, female, 0 }
+    NEXT_OUTFIT = function() return table.remove(ids, 1) end
+    makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    spawnNow()
+    local horde = cleanup().horde
+    assertEq(horde.size, 3, "le zombie sans tenue persistante n'est pas suivi")
+    assertEq(horde.ids[Missions.hordeKey(5 * 65536 + 9)], 2, "même tenue, même variante : deux vivants")
+    assertEq(horde.ids[Missions.hordeKey(female)], 1, "femme")
+    -- Après virtualisation, ModData vidées : seule la tenue reste.
+    local back = makeZombie("Horde", 900, 900, makePlayer("bob"), female + 32768)
+    Missions.countKill(back)
+    assertEq(horde.dead, 1, "reconnu à sa tenue, chapeau tombé, loin de la zone")
+    assertEq(horde.ids[Missions.hordeKey(female)], nil, "plus aucun vivant de cette clé")
+    Missions.countKill(makeZombie("Horde", 900, 900, makePlayer("carol"), female))
+    assertEq(horde.dead, 1, "un autre zombie de même tenue ne compte plus")
+end
+
+function T.only_horde_zombies_count()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    local alice = makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    Missions.countKill(makeZombie("Tourist", 300, 400, alice, 77 * 65536 + 1))
+    local horde = spawnNow()
+    Missions.countKill(makeZombie("Tourist", 300, 400, alice, 77 * 65536 + 1))
+    assertEq(cleanup().horde.dead, 0, "zombie de la zone hors horde : rien")
+    assertEq(cleanup().counts["P:alice"], nil, "rien pour l'équipe")
+    local zombie = hordeZombie(horde[1], alice)
+    zombie.x, zombie.y = 2000, 2000
+    Missions.countKill(zombie)
+    Missions.countKill(zombie)
+    assertEq(cleanup().horde.dead, 1, "zombie de la horde sorti de la zone : compté, une fois")
+    assertEq(cleanup().counts["P:alice"], 1, "pour l'équipe du tueur")
+end
+
+function T.horde_deaths_without_a_player_count_only_for_the_rest()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    local alice = makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    local horde = spawnNow()
+    Missions.countKill(hordeZombie(horde[1], nil))
+    Missions.countKill(hordeZombie(horde[2], { kind = "IsoZombie" }))
+    STATE.trust = { ["P:alice"] = { value = 10, lockedUntil = WORLD_HOURS + 72 } }
+    Missions.countKill(hordeZombie(horde[3], alice))
+    assertEq(cleanup().horde.dead, 3, "feu, autre tueur, ligne coupée : comptés pour le reste")
+    assertEq(cleanup().counts["P:alice"], nil, "ligne coupée : rien pour l'équipe")
+end
+
+function T.ninety_percent_closes_and_the_best_team_wins()
+    assertEq(Missions.hordeTarget({ size = 30 }), 27, "30 : 27")
+    assertEq(Missions.hordeTarget({ size = 31 }), 28, "31 : 28 (arrondi au supérieur)")
+    assertEq(Missions.hordeTarget({ size = 10 }), 9, "10 : 9")
+    assertEq(Missions.hordeTarget({ size = 1 }), 1, "1 : 1")
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    local alice, bob = makePlayer("alice", 0, 0), makePlayer("bob", 0, 0)
+    Missions.launch("cleanup")
+    local horde = spawnNow()
+    -- alice atteint 4 avant bob ; une mort par le feu complète les 9.
+    local order = { alice, alice, bob, bob, bob, alice, alice, bob }
+    for i, killer in ipairs(order) do
+        Missions.countKill(hordeZombie(horde[i], killer))
+    end
+    assertTrue(cleanup() ~= nil, "8 sur 9 : encore ouvert")
+    Missions.countKill(hordeZombie(horde[9], nil))
+    assertEq(cleanup(), nil, "90 % de la horde morte : clos")
+    assertEq(STATE.missions.last.cleanup.outcome, "done", "rempli")
+    assertEq(STATE.missions.last.cleanup.team, "P:alice", "égalité 4-4 : la première à 4")
+    assertEq(Trust.get("P:alice"), 30, "+5")
+    assertEq(Trust.get("P:bob"), 25, "rien pour l'autre")
+    assertTrue(string.find(lastBroadcast(), "IGUI_MilitaryDrop_Broadcast_CleanupDone|300|400|"
+        .. Teams.callsign("P:alice"), 1, true) == 1, "clôture annoncée : " .. lastBroadcast())
+    Missions.countKill(hordeZombie(horde[10], bob))
+    assertEq(Trust.get("P:bob"), 25, "après la clôture : rien")
+end
+
+function T.the_team_with_the_most_kills_wins()
     SandboxVars.MilitaryDrop.CleanupQuota = 3
-    local alice = makePlayer("alice")
+    local alice, bob = makePlayer("alice", 0, 0), makePlayer("bob", 0, 0)
     Missions.launch("cleanup")
-    local zombie = makeZombie("Tourist", 300 + 30, 400, alice)
-    Missions.countKill(zombie)
-    Missions.countKill(zombie)
-    assertEq(STATE.missions.open.cleanup.counts["P:alice"], 1, "un zombie compté une fois")
-    Missions.countKill(makeZombie("Tourist", 300 + 41, 400, alice))
-    Missions.countKill(makeZombie("Tourist", 300, 400, nil))
-    Missions.countKill(makeZombie("Tourist", 300, 400, { kind = "IsoZombie" }))
-    assertEq(STATE.missions.open.cleanup.counts["P:alice"], 1, "hors zone, feu, tueur non joueur : rien")
+    local horde = spawnNow()
+    Missions.countKill(hordeZombie(horde[1], alice))
+    Missions.countKill(hordeZombie(horde[2], bob))
+    Missions.countKill(hordeZombie(horde[3], bob))
+    assertEq(STATE.missions.last.cleanup.team, "P:bob", "deux contre un")
+    assertEq(Trust.get("P:bob"), 30, "+5")
 end
 
-function T.first_team_to_reach_the_quota_wins_the_cleanup()
-    SandboxVars.MilitaryDrop.CleanupQuota = 2
-    local alice, bob = makePlayer("alice"), makePlayer("bob")
+function T.horde_destroyed_without_any_player_kill_closes_without_reward()
+    SandboxVars.MilitaryDrop.CleanupQuota = 3
+    makePlayer("alice", 0, 0)
     Missions.launch("cleanup")
-    Missions.countKill(makeZombie("Army", 300, 400, alice))
-    Missions.countKill(makeZombie("Army", 300, 400, bob))
-    assertEq(Trust.get("P:alice"), 50, "quota non atteint")
-    Missions.countKill(makeZombie("Army", 310, 390, bob))
-    assertEq(Trust.get("P:bob"), 55, "première équipe au quota : +5")
-    assertEq(Trust.get("P:alice"), 50, "l'autre équipe : rien")
-    assertEq(STATE.missions.open.cleanup, nil, "close")
-    Missions.countKill(makeZombie("Army", 300, 400, alice))
-    assertEq(Trust.get("P:alice"), 50, "après la clôture : rien")
-    assertTrue(string.find(AIRED[#AIRED][1][1], "IGUI_MilitaryDrop_Broadcast_CleanupDone", 1, true) == 1,
-        "clôture annoncée")
+    local horde = spawnNow()
+    for i = 1, 3 do
+        Missions.countKill(hordeZombie(horde[i], nil))
+    end
+    assertEq(cleanup(), nil, "clos")
+    assertEq(STATE.missions.last.cleanup.outcome, "destroyed", "sans vainqueur")
+    assertEq(Trust.get("P:alice"), 25, "aucune récompense")
+    assertEq(lastBroadcast(), "IGUI_MilitaryDrop_Broadcast_CleanupNoWinner|300|400", "annonce sans vainqueur")
 end
 
-function T.cleanup_team_is_frozen_at_the_kill()
-    SandboxVars.MilitaryDrop.CleanupQuota = 2
+function T.team_is_frozen_at_the_kill()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
     local faction = makeFaction("Rangers", "alice", { "bob" })
-    local alice, bob = makePlayer("alice"), makePlayer("bob")
+    local alice, bob = makePlayer("alice", 0, 0), makePlayer("bob", 0, 0)
     local team = Teams.idFor(alice)
     Missions.launch("cleanup")
-    Missions.countKill(makeZombie("Army", 300, 400, bob))
+    local horde = spawnNow()
+    Missions.countKill(hordeZombie(horde[1], bob))
     faction.players = {}
     NOW_MS = NOW_MS + 5000
-    Missions.countKill(makeZombie("Army", 300, 400, bob))
-    assertEq(STATE.missions.open.cleanup.counts[team], 1, "mort d'avant le départ : pour la faction")
-    assertEq(STATE.missions.open.cleanup.counts["P:bob"], 1, "mort d'après : pour son équipe individuelle")
-    Missions.countKill(makeZombie("Army", 300, 400, alice))
-    assertEq(Trust.get(team), 55, "la faction atteint le quota")
+    Missions.countKill(hordeZombie(horde[2], bob))
+    assertEq(cleanup().counts[team], 1, "mort d'avant le départ : pour la faction")
+    assertEq(cleanup().counts["P:bob"], 1, "mort d'après : pour son équipe individuelle")
 end
 
 function T.cleanup_expires_after_72_hours()
-    local alice = makePlayer("alice")
+    SandboxVars.MilitaryDrop.ReconGain = 0
+    SandboxVars.MilitaryDrop.ControlGain = 0
+    local alice = makePlayer("alice", 0, 0)
     Missions.launch("cleanup")
+    local horde = spawnNow()
     wait(72)
-    Missions.countKill(makeZombie("Army", 300, 400, alice))
+    Missions.countKill(hordeZombie(horde[1], alice))
     Missions.update()
     assertEq(STATE.missions.last.cleanup.outcome, "expired", "expirée")
-    assertEq(Trust.get("P:alice"), 50, "aucun gain")
+    assertEq(Trust.get("P:alice"), 25, "aucun gain")
+    -- Sans apparition (zone jamais visitée) : expire aussi.
+    STATE.missions.nextHours.cleanup = WORLD_HOURS
+    LOADED = function() return false end
+    Missions.update()
+    assertTrue(cleanup() ~= nil and cleanup().horde == nil, "nouveau nettoyage, horde pas apparue")
+    wait(72)
+    Missions.update()
+    assertEq(STATE.missions.last.cleanup.outcome, "expired", "expirée sans apparition")
+    assertEq(string.find(lastBroadcast(), "IGUI_MilitaryDrop_Broadcast_CleanupExpired", 1, true), 1, "annoncée")
+end
+
+function T.old_cleanup_format_stays_readable()
+    local alice = makePlayer("alice", 0, 0)
+    STATE.missions = { open = { cleanup = { id = "M7", kind = "cleanup", openedHours = WORLD_HOURS,
+        deadline = WORLD_HOURS + 72, text = "ancienne annonce", x = 300, y = 400, radius = 40, quota = 3,
+        counts = { ["P:alice"] = 2 } } } }
+    Missions.countKill(makeZombie("Army", 300, 400, alice, 65537))
+    assertEq(cleanup().counts["P:alice"], 2, "ancien format : rien de compté, pas d'erreur")
+    local list = Missions.listForTeam("P:alice")
+    assertEq(list[1].spotted, false, "horde pas encore repérée")
+    assertEq(list[1].progress, 0, "anciens comptes ignorés")
+    call("MissionCleanupStatus", alice)
+    assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_CleanupPending|" .. Teams.callsign("P:alice")
+        .. "|300|400|40", "rendez-vous à la grille")
+    local horde = spawnNow()
+    assertEq(#horde, 3, "la horde apparaît à la prochaine arrivée")
+    assertEq(cleanup().counts["P:alice"], nil, "comptes remis à zéro")
+    Missions.countKill(hordeZombie(horde[1], alice))
+    assertEq(cleanup().counts["P:alice"], 1, "seule la horde compte désormais")
+end
+
+function T.status_report_before_and_after_the_horde_appears()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    local alice, bob = makePlayer("alice", 0, 0), makePlayer("bob", 0, 0)
+    call("MissionCleanupStatus", alice)
+    local callsign = Teams.callsign("P:alice")
+    assertEq(lastReply(alice).status, "noMission", "aucun nettoyage")
+    assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_NoCleanup|" .. callsign, "la base le dit")
+    Missions.launch("cleanup")
+    call("MissionCleanupStatus", alice)
+    assertEq(lastReply(alice).status, "ok", "réponse")
+    assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_CleanupPending|" .. callsign .. "|300|400|40",
+        "avant l'apparition : grille et rayon")
+    local horde = spawnNow()
+    Missions.countKill(hordeZombie(horde[1], alice))
+    Missions.countKill(hordeZombie(horde[2], alice))
+    Missions.countKill(hordeZombie(horde[3], bob))
+    Missions.countKill(hordeZombie(horde[4], nil))
+    call("MissionCleanupStatus", alice)
+    assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_CleanupStatus|" .. callsign .. "|2|5",
+        "deux abattus par la station ; reste 9 - 4 = 5 avant la clôture")
+    assertEq(Trust.get("P:alice"), 25, "aucun gain pour faire le point")
+    SandboxVars.MilitaryDrop.CleanupGain = 0
+    call("MissionCleanupStatus", alice)
+    assertEq(lastReply(alice).status, "disabled", "nettoyages désactivés")
+end
+
+function T.clients_learn_whether_a_cleanup_is_open()
+    local alice = makePlayer("alice", 0, 0)
+    local function lastState()
+        for i = #SENT, 1, -1 do
+            if SENT[i].command == "CleanupState" then
+                return SENT[i]
+            end
+        end
+        return nil
+    end
+    Missions.launch("cleanup")
+    assertTrue(lastState().all and lastState().args.open == true, "ouverture annoncée à tous")
+    Missions.sync(alice)
+    assertTrue(lastState().player == alice and lastState().args.open == true, "à l'arrivée d'un joueur")
+    wait(72)
+    Missions.update()
+    assertTrue(lastState().all and lastState().args.open == false, "clôture annoncée à tous")
+end
+
+function T.announce_speaks_of_a_horde_around_the_grid()
+    SandboxVars.MilitaryDrop.CleanupQuota = 25
+    makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    assertEq(AIRED[1][1][1], "IGUI_MilitaryDrop_Broadcast_Cleanup|300|400|40|25|72", "grille, rayon, taille, délai")
 end
 
 -- ----------------------------------------------------------------------------
@@ -810,11 +1107,11 @@ function T.every_team_that_answers_the_radio_check_gains_once()
     Missions.launch("control")
     call("MissionControl", alice)
     call("MissionControl", bob)
-    assertEq(Trust.get("P:alice"), 51, "première équipe : +1")
-    assertEq(Trust.get("P:bob"), 51, "seconde équipe : +1 aussi")
+    assertEq(Trust.get("P:alice"), 26, "première équipe : +1")
+    assertEq(Trust.get("P:bob"), 26, "seconde équipe : +1 aussi")
     call("MissionControl", alice)
     assertEq(lastReply(alice).status, "already", "une fois par équipe")
-    assertEq(Trust.get("P:alice"), 51, "pas de second gain")
+    assertEq(Trust.get("P:alice"), 26, "pas de second gain")
 end
 
 function T.radio_check_closes_after_4_hours()
@@ -824,7 +1121,7 @@ function T.radio_check_closes_after_4_hours()
     wait(4)
     call("MissionControl", bob)
     assertEq(lastReply(bob).status, "noMission", "trop tard")
-    assertEq(Trust.get("P:bob"), 50, "aucun gain")
+    assertEq(Trust.get("P:bob"), 25, "aucun gain")
     Missions.update()
     assertEq(AIRED[#AIRED][1][1], "IGUI_MilitaryDrop_Broadcast_ControlClosed|1", "clôture : une station a répondu")
 end
@@ -834,18 +1131,28 @@ function T.list_for_team_gives_open_missions_and_progress()
     local alice = makePlayer("alice")
     Missions.launch("cleanup")
     Missions.launch("control")
-    Missions.countKill(makeZombie("Army", 300, 400, alice))
     call("MissionControl", alice)
     wait(1)
     local list = Missions.listForTeam("P:alice")
     assertEq(#list, 2, "deux missions ouvertes")
     assertEq(list[1].kind, "cleanup", "ordre fixe")
-    assertEq(list[1].progress, 1, "progression de l'équipe")
-    assertEq(list[1].quota, 5, "quota")
+    assertEq(list[1].spotted, false, "horde pas encore repérée")
+    assertEq(list[1].progress, 0, "rien d'abattu")
+    assertEq(list[1].left, nil, "pas de reste avant l'apparition")
+    assertEq(list[1].quota, nil, "plus de quota par équipe")
     assertEq(list[1].deadlineHours, 71, "heures restantes")
     assertEq(list[2].kind, "control", "appel de contrôle")
     assertEq(list[2].progress, 1, "déjà confirmé")
+    local horde = spawnNow()
+    Missions.countKill(hordeZombie(horde[1], alice))
+    list = Missions.listForTeam("P:alice")
+    assertEq(list[1].spotted, true, "horde repérée")
+    assertEq(list[1].progress, 1, "abattus par l'équipe")
+    assertEq(list[1].left, 4, "reste à abattre : 5 sur 5 (90 %, arrondi au supérieur) moins 1")
+    assertEq(list[1].down, 1, "morts de la horde")
+    assertEq(list[1].target, 5, "objectif")
     assertEq(#Missions.listForTeam("P:bob")[1].title > 0, true, "titre")
+    assertEq(Missions.listForTeam("P:bob")[1].progress, 0, "autre équipe : rien")
     assertEq(Missions.listForTeam("P:bob")[2].progress, 0, "autre équipe : rien")
 end
 

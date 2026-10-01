@@ -297,6 +297,76 @@ function T.code_is_remembered_and_the_anchor_follows_the_request()
     assertEq(Client.rememberedCode(0), "", "code effacé")
 end
 
+--- Fichiers simulés sous Zomboid/Lua (getFileWriter / getFileReader).
+local function fakeFiles()
+    local files = {}
+    getFileWriter = function(name, create, append)
+        assertEq(create, true, "créé au besoin")
+        assertEq(append, false, "écrasé")
+        local buffer = {}
+        return {
+            write = function(_, text) buffer[#buffer + 1] = text end,
+            close = function() files[name] = table.concat(buffer) end,
+        }
+    end
+    getFileReader = function(name)
+        local content = files[name]
+        if not content then
+            return nil
+        end
+        return { readLine = function() return content ~= "" and content or nil end, close = function() end }
+    end
+    return files
+end
+
+local function character(username, forename, surname)
+    return {
+        getPlayerNum = function() return 0 end,
+        getUsername = function() return username end,
+        getDescriptor = function()
+            return { getForename = function() return forename end, getSurname = function() return surname end }
+        end,
+        Say = function() end,
+    }
+end
+
+function T.code_survives_a_reload_per_character()
+    local files = fakeFiles()
+    local world = "Muldraugh, KY 2026"
+    getWorld = function() return { getWorld = function() return world end } end
+    local player = character("Kate Smith", "Kate", "Smith")
+    getSpecificPlayer = function() return player end
+    local Client = MilitaryDrop.Client
+    assertEq(Client.rememberedCode(0), "", "rien au départ")
+    Client.rememberCode(0, "BRAVO-KILO-42")
+    local file = "MilitaryDrop/code_sp_Muldraugh__KY_2026_Kate_Smith_Kate_Smith.txt"
+    assertEq(Client.codeFile(player), file, "fichier propre à la partie et au personnage")
+    assertEq(files[file], "BRAVO-KILO-42", "écrit dans le fichier du client")
+    -- Rechargement de la partie : mémoire du module vide, fichier relu.
+    loadMod("client/MilitaryDrop/MilitaryDrop_Client.lua")
+    Client = MilitaryDrop.Client
+    assertEq(Client.rememberedCode(0), "BRAVO-KILO-42", "prérempli après rechargement")
+    -- Autre personnage (mort, nouveau personnage), autre partie : rien.
+    player = character("Bob Jones", "Bob", "Jones")
+    assertEq(Client.rememberedCode(0), "", "autre personnage : rien")
+    player = character("Kate Smith", "Kate", "Smith")
+    world = "Riverside"
+    assertEq(Client.rememberedCode(0), "", "autre partie : rien")
+    -- Client MP : sauvegarde du client (ip_port_compte), compte et personnage.
+    isClient = function() return true end
+    world = "203.0.113.5_16261_ab12"
+    player = character("kate42", "Kate", "Smith")
+    assertEq(Client.codeFile(player), "MilitaryDrop/code_mp_203_0_113_5_16261_ab12_kate42_Kate_Smith.txt",
+        "fichier propre au serveur et au personnage")
+    Client.rememberCode(0, "X")
+    Client.rememberCode(0, "")
+    assertEq(files[Client.codeFile(player)], "", "code effacé")
+    local writes = 0
+    getFileWriter = function() writes = writes + 1 return { write = function() end, close = function() end } end
+    Client.rememberCode(0, "")
+    assertEq(writes, 0, "inchangé : pas de réécriture")
+end
+
 function T.context_menu_keeps_only_the_admin_entries()
     -- RADIO-06 : la section « Logistique » de la fenêtre radio remplace le menu ;
     -- un admin garde le largage forcé et les missions à la demande.

@@ -270,6 +270,21 @@ for i = 1, case.tags or 0 do
     tags[i] = { getDisplayName = function() return "Tag " .. i end }
 end
 MilitaryDrop.ExchangeMenu.dogTags = function() return tags end
+-- Radio fixe pouvant servir de poste de liaison : bouton « Poste de liaison »
+-- seul (état « post » du cas : own, elsewhere, otherTeam, none).
+MilitaryDrop.PostWindow = case.post and {
+    isEligible = function() return true end,
+    queryStatus = function() end,
+    useReason = function()
+        return case.post == "otherTeam" and "IGUI_MilitaryDrop_PostResult_otherTeam" or nil
+    end,
+    useTooltip = function()
+        return case.post == "own" and "IGUI_MilitaryDrop_PostOpenTooltip"
+            or case.post == "elsewhere" and "IGUI_MilitaryDrop_PostTransferTooltip"
+            or "IGUI_MilitaryDrop_PostInstallTooltip"
+    end,
+    useRadio = function() end,
+} or nil
 PLAYER = {
     getPlayerNum = function() return 0 end,
     Say = function() end,
@@ -319,6 +334,8 @@ CASES = [
     ("FR", "1x", 350, "off", {"on": False, "tags": 1}),
     ("FR", "1x", 350, "nocode", {"codeMode": 1, "tags": 0}),
     ("FR", "1x", 350, "joypad", {"code": "BRAVO-KILO-42", "tags": 0, "focus": 4, "reply": True}),
+    ("FR", "1x", 350, "post", {"post": "own", "title": "Radio HAM militaire"}),
+    ("FR", "1x", 350, "postother", {"post": "otherTeam", "title": "Radio HAM militaire"}),
 ]
 
 
@@ -356,7 +373,7 @@ def render(language, size_dir, width, case, extra):
     g.VANILLA_MODULES = lua.table_from(TEXTS[language]["vanilla"])
     lua.execute(SETUP)
     data = dict(case)
-    data["title"] = TEXTS[language]["title"]
+    data["title"] = case.get("title") or TEXTS[language]["title"]
     data["reply"] = TEXTS[language]["reply"] if case.get("reply") else None
     w, h = lua.execute(RENDER, width, base.to_lua(lua, data))
     pad = 16

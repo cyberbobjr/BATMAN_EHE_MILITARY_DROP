@@ -97,7 +97,7 @@ Config.addDefaults({
     RequisitionForm = true,
     RequisitionBudget = 100,
     RequisitionCostMultiplier = 100,
-    RequisitionTier2 = 60,
+    RequisitionTier2 = 50,
     RequisitionTier3 = 75,
 })
 
@@ -144,7 +144,7 @@ function Requisition.maxGroup(note)
     if value >= (tonumber(Config.get("RequisitionTier3")) or 75) then
         return 3
     end
-    if value >= (tonumber(Config.get("RequisitionTier2")) or 60) then
+    if value >= (tonumber(Config.get("RequisitionTier2")) or 50) then
         return 2
     end
     return 1
@@ -160,7 +160,7 @@ local function decoyOffer()
 end
 
 --- Offre d'une équipe : budget, palier de lots, lots (ordre d'affichage) et
---- leurre. Contrat de la réponse « form » (docs/PLAN-V14.md). forced :
+--- leurre. Contrat de la réponse « form » (dev/PLAN-V14.md). forced :
 --- largage admin, tous les paliers et le budget d'une note maximale.
 function Requisition.offer(teamId, forced)
     -- Repli paresseux : un seul passage sur les tables pour les 18 lots.

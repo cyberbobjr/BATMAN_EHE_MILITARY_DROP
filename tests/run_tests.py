@@ -7,7 +7,7 @@
 3. scripts du jeu : accolades équilibrées ; traductions : JSON valides, mêmes clés et mêmes paramètres que EN, pas de % seul ;
 4. descriptions Steam (README.steam*) : 8 000 octets UTF-8 au plus, BBCode équilibré,
    mêmes liens et images que l'anglais, description de workshop.txt identique à README.steam ;
-5. suivi de l'implémentation (docs/SUIVI.md) : identifiants uniques, états connus,
+5. suivi de l'implémentation (dev/SUIVI.md) : identifiants uniques, états connus,
    preuve exigée pour un état « testé », commits cités présents dans git ;
 6. tests Lua (tests/lua/test_*.lua) sous lupa, avec l'API du jeu simulée.
 
@@ -279,7 +279,7 @@ def check_lua_tests(report):
                 report.ok(label)
 
 
-TRACKING = REPO / "docs" / "SUIVI.md"
+TRACKING = REPO / "dev" / "SUIVI.md"
 TRACKING_STATES = {
     "à décider", "décidé", "conçu", "codé", "testé hors jeu", "testé solo", "testé MP",
     "publié", "bloqué", "abandonné",
@@ -321,9 +321,9 @@ def shallow_clone():
 
 
 def check_tracking(report):
-    report.section("Suivi de l'implémentation (docs/SUIVI.md)")
+    report.section("Suivi de l'implémentation (dev/SUIVI.md)")
     if not TRACKING.exists():
-        report.fail("docs/SUIVI.md absent")
+        report.fail("dev/SUIVI.md absent")
         return
     seen = {}
     rows = 0

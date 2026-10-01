@@ -1,22 +1,72 @@
 [h1]Military Drop - Radio Supply Airdrops[/h1]
 
-[b]Build 42.21 · Singleplayer & Multiplayer · Work in progress[/b]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/header.png[/img]
 
-Tune a military radio to the right frequency, give the authentication code, and request an airdrop of military surplus. A helicopter flies in and drops a supply crate... and the noise draws the dead.
+[b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]
 
-[h2]Planned features[/h2]
+Tune a military radio to the right frequency, give this week's code and requisition military supplies. A helicopter drops a crate far away and announces the grid to everyone listening... and the noise draws the dead.
+
+[h2]Find the frequency and the code[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-codebook-memo.png[/img]
+
+Military and police zombies carry memos with the military frequency, different in every game. The code changes every Monday: a numbers station broadcasts it on shortwave, and a military codebook deciphers it.
+
+[h2]Call from your radio[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/radio-logistics-en.png[/img]
+
+Right-click a military radio, [b]Device Options[/b], [b]Logistics[/b] section: type the code and press [b]Request a supply drop[/b]. Walkie-talkie in hand, on the belt or in a bag, or a placed radio.
+
+[h2]Fill the requisition[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/requisition-form-en.png[/img]
+
+Spend a point budget on 18 lots drawn from the game's own loot tables, mods included: rations, medical, ammunition, firearms, fuel... Or order a siren decoy that drags the hordes to a sector you choose.
+
+[h2]Reach the crate[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/crate-model.png[/img]
+
+Hear the helicopter, see its shadow, then race to the announced grid, 150 to 400 tiles away. Everyone on the frequency gets the map marker, and a horde guards the crate. Empty crates can be dismantled for wood.
+
+[h2]Earn the base's trust[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-console-missions.png[/img]
+
+Recover your drops, send daily reports, announce fallen soldiers' dog tags and answer public missions: recon, horde clearance, radio checks. Trust shortens the wait and unlocks bigger requisitions.
+
+[h2]Hold a liaison post[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/console-en.png[/img]
+
+Turn a fixed military ham radio into your station's console: transmission log, orders, dog tags, standing and drop requests. In multiplayer, each faction is a station with its own call sign.
+
+[h2]For server admins[/h2]
 
 [list]
-[*]Call a supply drop with a military walkie-talkie or HAM radio.
-[*]The frequency is found on notes carried by military and police zombies. The authentication code changes every in-game week: a numbers station sends it encrypted, and military codebooks decipher it (or, in the sandbox options, a fixed or weekly code written in clear on the notes).
-[*]A helicopter you can hear and see approach: moving sound, rotor shadow on the ground, direction marker.
-[*]Crate loot comes from the game's army distribution tables, so it works with weapon mods.
-[*]Anyone listening on the frequency hears the drop coordinates, and the spot is marked on their map.
-[*]Requisition form: spend points earned with trust on 18 supply lots, or order a decoy siren drop.
-[*]Earn the base's trust as a faction: daily reports, soldiers' dog tags, public missions and a command post radio.
-[*]Server-authoritative multiplayer, with one server-wide cooldown set in the sandbox options.
-[*]Standalone: no other mod required. Compatible with HEF - Helicopter Event Framework. With Signal Smoke, green smoke marks the crate.
+[*]44 sandbox options: wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy.
+[*]Requisition lots can be edited, disabled or added in Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]Server-authoritative multiplayer. Admins can force a drop and launch missions from a military radio.
 [/list]
+
+[h2]Compatibility[/h2]
+
+[list]
+[*]No other mod required.
+[*]Designed to coexist with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
+[*]With [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], green smoke marks the crate.
+[*]Items from your weapon and item mods appear in the crates.
+[/list]
+
+[h2]Guide[/h2]
+
+Everything in detail, with screenshots: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/en/README.md]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/fr/README.md]guide complet (français)[/url].
+
+[h2]Support the project[/h2]
+
+Enjoying the mod? A coffee helps fund new features and translations.
+[url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
 
 [h2]Credits[/h2]
 

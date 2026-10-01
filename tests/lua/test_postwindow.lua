@@ -141,6 +141,21 @@ function T.mission_orders_show_deadline_grid_and_bar()
         "texte de la base échappé dans l'infobulle")
 end
 
+function T.cleanup_order_shows_team_kills_and_what_is_left()
+    local pending = W.missionView({ kind = "cleanup", remaining = 60, hours = 72, x = 300, y = 400,
+        progress = 0, spotted = false })
+    assertEq(pending.sub, "IGUI_MilitaryDrop_PostGrid|300|400 - IGUI_MilitaryDrop_PostCleanupPending|nil|nil",
+        "grille, horde pas encore repérée")
+    assertEq(pending.bar.kind, "time", "barre du temps")
+    assertTrue(not pending.done, "pas fait")
+    local spotted = W.missionView({ kind = "cleanup", remaining = 40, hours = 72, x = 300, y = 400,
+        progress = 4, spotted = true, left = 14, down = 13, target = 27 })
+    assertEq(spotted.bar.kind, "progress", "barre de la horde")
+    assertTrue(math.abs(spotted.bar.fraction - 13 / 27) < 1e-6, "morts de la horde vers l'objectif")
+    assertEq(spotted.bar.label, "IGUI_MilitaryDrop_PostCleanupProgress|4|14", "abattus par la station, reste")
+    assertTrue(not spotted.done, "pas de tampon « fait »")
+end
+
 function T.standing_is_plain_words_never_a_number()
     assertEq(W.trustText({ tier = 3 }), "IGUI_MilitaryDrop_PostTrust3|nil|nil", "phrase du commandement")
     assertEq(W.effectText({ tier = 3 }), "IGUI_MilitaryDrop_PostEffect3|nil|nil", "effet sur les largages")
@@ -230,10 +245,11 @@ function T.request_button_calls_the_base_like_the_radio_menu()
     assertTrue(disjoint(L.request, L.standText), "sous le texte de confiance")
     assertTrue(measure(getText("IGUI_MilitaryDrop_RequestDrop")) <= L.request.w - 2 * L.u, "libellé entier")
     assertTrue(L.standText.h >= 4 * FONT_H, "place pour la phrase et l'effet")
-    -- Même appel que le menu de la radio, par la radio du poste ; la console se ferme.
+    -- Même appel que la fenêtre radio, par la radio du poste, avec le code du champ.
     local calls = {}
-    MilitaryDrop.Client.onRequest = function(player, device, force)
-        calls[#calls + 1] = { player = player, device = device, force = force }
+    MilitaryDrop.Client.call = function(player, device, code, force, opts)
+        calls[#calls + 1] = { player = player, device = device, code = code, force = force,
+            anchor = type(opts) == "table" and opts.anchor or nil }
     end
     local player = { getPlayerNum = function() return 0 end, isDead = function() return false end,
         getX = function() return 10.5 end, getY = function() return 10.5 end, getZ = function() return 0 end }
@@ -241,20 +257,79 @@ function T.request_button_calls_the_base_like_the_radio_menu()
         getSquare = function() return { getX = function() return 10 end, getY = function() return 10 end,
             getZ = function() return 0 end } end }
     local closed = false
-    local window = setmetatable({ player = player, object = object, data = sampleData(), L = L,
+    local typed = ""
+    local window = setmetatable({ player = player, playerNum = 0, object = object, data = sampleData(), L = L,
+        codeEntry = { getText = function() return typed end },
         close = function() closed = true end }, { __index = W })
-    assertTrue(window:canRequest(), "poste allumé et alimenté")
+    assertEq(window:requestReason(), "IGUI_MilitaryDrop_RadioModule_NeedCode", "code exigé : grisé sans code")
+    assertTrue(window:tooltipFor("request"):find("NeedCode", 1, true) ~= nil, "raison dans l'infobulle")
+    typed = "  bravo-kilo-42 "
+    assertTrue(window:canRequest(), "poste allumé et alimenté, code saisi")
     assertEq(window:hitTest(L.request.x + 1, L.request.y + 1), "request", "cible du clic")
     window:onRequest()
     assertEq(#calls, 1, "un appel")
     assertEq(calls[1].device, object, "radio du poste")
+    assertEq(calls[1].code, "bravo-kilo-42", "code du champ, sans espaces")
     assertEq(calls[1].force, false, "jamais un largage admin")
-    assertTrue(closed, "console fermée")
+    assertTrue(not closed, "console gardée ouverte")
+    assertEq(calls[1].anchor, window, "feuille collée à la console")
     window.data = sampleData()
     window.data.power = "none"
     assertTrue(not window:canRequest(), "sans courant : grisé")
     window:onRequest()
     assertEq(#calls, 1, "aucun appel sans courant")
+    -- Sans code exigé : appel sans code.
+    SandboxVars.MilitaryDrop.AuthCode = MilitaryDrop.Codes.MODE_NONE
+    window.data = sampleData()
+    typed = ""
+    window:onRequest()
+    assertEq(calls[2].code, nil, "aucun code envoyé")
+end
+
+function T.code_field_sits_above_the_request_button()
+    getText = function(k, a)
+        if k == "IGUI_MilitaryDrop_RadioModule_Code" then
+            return "Code d'authentification"
+        end
+        return k .. "|" .. tostring(a)
+    end
+    local L = W.computeLayout(sampleData())
+    assertTrue(L.codeShown, "code exigé par défaut")
+    assertTrue(within(L.code, L.standing), "champ dans la colonne de confiance")
+    assertTrue(disjoint(L.code, L.request) and L.code.y + L.code.h <= L.request.y, "au-dessus du bouton")
+    assertTrue(disjoint(L.code, L.standText), "sous le texte de confiance")
+    assertTrue(L.code.w >= measure("888888"), "assez large pour un code")
+    assertTrue(L.codeLabelPos.x + L.codeLabelW <= L.code.x, "libellé à gauche du champ")
+    assertTrue(L.standText.h >= 4 * FONT_H, "place pour la phrase et l'effet")
+    SandboxVars.MilitaryDrop.AuthCode = MilitaryDrop.Codes.MODE_NONE
+    local plain = W.computeLayout(sampleData())
+    assertTrue(not plain.codeShown and plain.code == nil, "sans code exigé : pas de champ")
+end
+
+function T.console_code_is_kept_and_typed_with_the_joypad()
+    local kept = {}
+    MilitaryDrop.Client.rememberCode = function(playerNum, code) kept[#kept + 1] = playerNum .. ":" .. code end
+    local typed = " x-1 "
+    local window = setmetatable({ playerNum = 1, data = sampleData(), L = W.computeLayout(sampleData()),
+        codeEntry = { getText = function() return typed end } }, { __index = W })
+    window:onCodeChange()
+    assertEq(kept[1], "1:x-1", "gardé pour le joueur local (écran partagé)")
+    typed = ""
+    window:onCodeChange()
+    assertEq(kept[2], "1:", "effacé")
+    -- Manette : Y ouvre le clavier à l'écran tant que le code manque.
+    Joypad = { AButton = 0, BButton = 1, XButton = 2, YButton = 3, RBumper = 5 }
+    local shown
+    OnScreenKeyboard = { IsVisible = function() return false end,
+        Show = function(playerNum, entry) shown = { playerNum = playerNum, entry = entry } return {} end }
+    JoypadState = { players = { {}, { focus = window } } }
+    getText = function(k) return k end
+    assertEq(window:getYPrompt(), "IGUI_MilitaryDrop_RadioModule_TypeCode", "Y : saisir le code")
+    window:onJoypadDown(Joypad.YButton)
+    assertTrue(shown and shown.entry == window.codeEntry and shown.playerNum == 1, "clavier à l'écran vanilla")
+    assertTrue(JoypadState.players[2].focus.prevFocus == window, "retour à la console après la saisie")
+    typed = "x-1"
+    assertEq(window:getYPrompt(), "IGUI_MilitaryDrop_RequestDrop", "code saisi : Y appelle")
 end
 
 return T

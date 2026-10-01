@@ -195,7 +195,7 @@ function T.refusal_order_hides_the_code_and_cooldown()
         "mauvais code : même réponse qu'un mauvais canal, délai non révélé")
     local status, hours = evaluate(makeRadio(true, CHANNEL), request(CODE))
     assertEq(status, "cooldown", "délai global")
-    assertEq(hours, 168, "heures restantes")
+    assertEq(hours, 210, "heures restantes : 168 × 1,25 à la note de départ 25")
 end
 
 function T.radio_must_be_in_hand_or_on_the_back()
@@ -360,7 +360,8 @@ end
 
 function T.cooldown_expires()
     local state = MilitaryDrop.Server.getState()
-    state.lastDropHours = WORLD_HOURS - 168
+    -- Équipe neuve (note 25) : délai de 168 × 1,25 = 210 h.
+    state.lastDropHours = WORLD_HOURS - 210
     assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "délai écoulé")
 end
 
@@ -534,7 +535,7 @@ function T.accepted_request_carries_tier_callsign_and_a_drop_id()
     MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
     local result = SENT[1].args
     assertEq(result.status, "accepted", "acceptée")
-    assertEq(result.tier, 3, "palier d'une note de 50")
+    assertEq(result.tier, 2, "palier de la note de départ 25")
     assertEq(result.callsign, MilitaryDrop.Teams.callsign(MilitaryDrop.Teams.SOLO_ID), "indicatif de l'équipe")
     local flight = MilitaryDrop.Server.getState().flights[1]
     local drop = MilitaryDrop.Secrets.privateState().drops[flight.dropId]
@@ -567,7 +568,7 @@ function T.cooldown_is_scaled_by_the_caller_team_trust()
     local state = MilitaryDrop.Server.getState()
     state.lastDropHours = WORLD_HOURS
     local team = MilitaryDrop.Teams.idFor(PLAYER)
-    MilitaryDrop.Trust.add(team, 50, "drop")
+    MilitaryDrop.Trust.add(team, MilitaryDrop.Trust.MAX - MilitaryDrop.Trust.get(team), "drop")
     local private = MilitaryDrop.Secrets.privateState()
     local status, hours = evaluate(makeRadio(true, CHANNEL), request(CODE))
     assertEq(status, "cooldown", "délai")
@@ -586,9 +587,9 @@ function T.repeated_wrong_codes_cost_trust_at_the_next_hour()
         evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i))
     end
     local team = MilitaryDrop.Teams.idFor(PLAYER)
-    assertEq(MilitaryDrop.Trust.get(team), 50, "rien de visible sur-le-champ")
+    assertEq(MilitaryDrop.Trust.get(team), 25, "rien de visible sur-le-champ")
     triggerEvent("EveryHours")
-    assertEq(MilitaryDrop.Trust.get(team), 48, "−2 au changement d'heure")
+    assertEq(MilitaryDrop.Trust.get(team), 23, "−2 au changement d'heure")
 end
 
 function T.repeated_unanswered_calls_cost_trust_whatever_the_cause()
@@ -598,7 +599,7 @@ function T.repeated_unanswered_calls_cost_trust_whatever_the_cause()
         evaluate(makeRadio(true, 107400), request("ALPHA-ALPHA-01"))
     end
     triggerEvent("EveryHours")
-    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Teams.idFor(PLAYER)), 48, "mauvais canal : compté comme un code faux")
+    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Teams.idFor(PLAYER)), 23, "mauvais canal : compté comme un code faux")
 end
 
 function T.silenced_caller_still_counts_for_trust()

@@ -1,18 +1,34 @@
 -- ============================================================================
 -- Military Drop — console du poste de liaison (client)
 --
--- Menu contextuel d'une radio posée pouvant servir de poste (non portable,
--- haut de gamme, émettrice : propriétés DeviceData, aucun nom d'objet) :
---   * « Installer le poste de liaison » : le serveur l'enregistre pour
---     l'équipe du joueur (un poste par équipe ; installer ailleurs déplace) ;
+-- Radio posée pouvant servir de poste (non portable, haut de gamme,
+-- émettrice : propriétés DeviceData, aucun nom d'objet). Depuis le
+-- 2026-10-01, plus de menu contextuel (PostWindow.addOptions et
+-- onFillWorldContextMenu restent, non inscrites) : la section « Logistique »
+-- de la fenêtre radio (« Options de l'appareil », MilitaryDrop_RadioModule.lua)
+-- n'offre sur cette radio qu'un bouton « Poste de liaison »
+-- (PostWindow.useRadio) : pas de poste → installation puis console ; poste de
+-- l'équipe → console ; poste ailleurs → confirmation (ISModalDialog) puis
+-- transfert et console ; poste d'une autre équipe → bouton grisé. L'état de
+-- la radio vient du serveur (PostQuery → PostStatus), deviné en attendant
+-- d'après la position du poste de l'équipe (PostInfo) :
+--   * installation : le serveur l'enregistre pour l'équipe du joueur (un
+--     poste par équipe ; installer ailleurs déplace) ;
 --   * « Poste de liaison » sur le poste de l'équipe : console « poste radio
 --     militaire » : façade de tôle olive vissée, voyants (marche, réception,
 --     alimentation), indicatif sur ruban, fréquence sur afficheur, journal sur
 --     écran à phosphore vert façon téléimprimeur, ordres de mission (échéance,
---     barre de progression), casier des plaques d'identité (bouton
+--     barre de progression ; nettoyage : zombies de la horde abattus par la
+--     station et reste à abattre, ou « horde non repérée »), casier des plaques d'identité (bouton
 --     « Transmettre »), confiance en galons (paliers en mots, jamais de chiffre),
---     bouton « Demander un largage » (v1.4) : même appel que le menu de la
---     radio (code, puis formulaire de réquisition), par la radio du poste.
+--     bouton « Demander un largage » (v1.4) : même appel que la section
+--     « Logistique » de la fenêtre radio (MilitaryDrop.Client.call, puis
+--     formulaire de réquisition), par la radio du poste, avec le code du
+--     champ « Code » de la colonne de confiance (si l'option AuthCode
+--     l'exige) : prérempli et gardé comme celui du module, par personnage,
+--     après un rechargement aussi (MilitaryDrop.Client.rememberCode). Manette :
+--     Y saisit le code (clavier à l'écran) tant qu'il manque, puis appelle ;
+--     RB rouvre la saisie.
 -- Tout est dessiné par la fenêtre (textures du mod, polices du jeu) ; les
 -- largeurs sont mesurées selon la langue et la taille de police.
 --
@@ -30,6 +46,8 @@
 -- ============================================================================
 
 require "ISUI/ISPanelJoypad"
+require "ISUI/ISModalDialog"
+require "ISUI/ISTextEntryBox"
 require "ISUI/ISRichTextPanel"
 require "ISUI/ISToolTip"
 require "MilitaryDrop/MilitaryDrop_Net"
@@ -99,7 +117,9 @@ PostWindow.RESULTS = {
 
 -- Statuts qui ferment la console du joueur : poste qui n'est plus le sien
 -- (sorti de la faction, poste déplacé) ou hors de portée.
-PostWindow.CLOSING = { notPost = true, otherTeam = true, tooFar = true }
+-- « tooFar » n'en fait pas partie : la console se ferme d'elle-même quand le
+-- joueur s'éloigne (PostWindow:objectValid, même distance que le serveur).
+PostWindow.CLOSING = { notPost = true, otherTeam = true }
 
 -- Position du poste de l'équipe ({ x, y, z }), envoyée par le serveur.
 PostWindow.myPost = nil
@@ -135,6 +155,116 @@ end
 
 function PostWindow.requestInstall(player, object)
     sendToServer(player, "PostInstall", object)
+end
+
+-- Installation suivie de l'ouverture de la console (bouton de la fenêtre
+-- radio) : joueur local → radio.
+local pendingInstallOpen = {}
+-- État des radios reçu du serveur (PostStatus) : "x,y,z" → statut.
+PostWindow.radioStates = {}
+
+local function radioKey(x, y, z)
+    return tostring(x) .. "," .. tostring(y) .. "," .. tostring(z)
+end
+
+local function objectKey(object)
+    local square = object and object:getSquare()
+    return square and radioKey(square:getX(), square:getY(), square:getZ()) or nil
+end
+
+--- Installe le poste sur la radio puis ouvre la console (au résultat
+--- installed, moved ou already).
+function PostWindow.installThenOpen(player, object)
+    pendingInstallOpen[player:getPlayerNum()] = object
+    PostWindow.requestInstall(player, object)
+end
+
+--- Demande au serveur l'état de la radio (bouton de la fenêtre radio).
+function PostWindow.queryStatus(player, object)
+    sendToServer(player, "PostQuery", object)
+end
+
+--- État de la radio pour le bouton : celui du serveur s'il est connu, sinon
+--- deviné d'après la position du poste de l'équipe ("own", "elsewhere",
+--- "none" ; « autre équipe » n'est connu que du serveur).
+function PostWindow.radioStatus(object)
+    local key = objectKey(object)
+    local known = key and PostWindow.radioStates[key]
+    if known then
+        return known
+    end
+    if PostWindow.isOwnPost(object) then
+        return "own"
+    elseif PostWindow.myPost then
+        return "elsewhere"
+    end
+    return "none"
+end
+
+--- Raison de grisé du bouton « Poste de liaison » (clé de traduction), ou nil.
+function PostWindow.useReason(player, object)
+    if not Radio.isNear(player, object) then
+        return "IGUI_MilitaryDrop_TooFar"
+    end
+    local status = PostWindow.radioStatus(object)
+    if status == "otherTeam" or status == "notEligible" then
+        return "IGUI_MilitaryDrop_PostResult_" .. status
+    end
+    return nil
+end
+
+--- Infobulle du bouton selon l'état de la radio.
+function PostWindow.useTooltip(object)
+    local status = PostWindow.radioStatus(object)
+    if status == "own" then
+        return "IGUI_MilitaryDrop_PostOpenTooltip"
+    elseif status == "elsewhere" then
+        return "IGUI_MilitaryDrop_PostTransferTooltip"
+    end
+    return "IGUI_MilitaryDrop_PostInstallTooltip"
+end
+
+--- Réponse à la confirmation du transfert (ISModalDialog).
+function PostWindow.onTransferConfirm(_, button, playerNum, object)
+    local player = getSpecificPlayer(playerNum)
+    if button.internal == "YES" and player and object then
+        PostWindow.installThenOpen(player, object)
+    end
+end
+
+--- Confirmation vanilla oui/non du transfert ; focus manette pris, rendu à
+--- la fermeture (ISModalDialog:destroy rend prevFocus).
+function PostWindow.confirmTransfer(player, object)
+    local playerNum = player:getPlayerNum()
+    local modal = ISModalDialog:new(0, 0, 300, 150, getText("IGUI_MilitaryDrop_PostTransferConfirm"), true, nil,
+        PostWindow.onTransferConfirm, playerNum, playerNum, object)
+    modal:initialise()
+    modal:addToUIManager()
+    local joypad = JoypadState and JoypadState.players[playerNum + 1]
+    if joypad then
+        modal.prevFocus = joypad.focus
+        setJoypadFocus(playerNum, modal)
+    end
+    return modal
+end
+
+--- Bouton « Poste de liaison » de la fenêtre radio. Renvoie l'action
+--- choisie ("open", "install", "confirm"), ou nil (grisé). Le serveur
+--- revérifie tout (PostInstall, PostOpen).
+function PostWindow.useRadio(player, object)
+    if PostWindow.useReason(player, object) then
+        return nil
+    end
+    local status = PostWindow.radioStatus(object)
+    if status == "own" then
+        PostWindow.requestOpen(player, object)
+        return "open"
+    elseif status == "elsewhere" then
+        PostWindow.confirmTransfer(player, object)
+        return "confirm"
+    end
+    PostWindow.installThenOpen(player, object)
+    return "install"
 end
 
 function PostWindow.requestOpen(player, object)
@@ -392,7 +522,22 @@ function PostWindow.missionView(mission)
     end
     view.done = progress ~= nil and quota ~= nil and quota > 0 and progress >= quota
     local hours = missionHours(mission)
-    if progress and quota and quota > 1 then
+    local left, target = tonumber(mission.left), tonumber(mission.target)
+    if mission.kind == "cleanup" and mission.spotted == true and left and target and target > 0 then
+        -- Horde apparue : barre des morts de la horde vers l'objectif ;
+        -- étiquette « abattus par la station, reste à abattre ».
+        local down = tonumber(mission.down) or math.max(0, target - left)
+        view.bar = { kind = "progress", fraction = math.max(0, math.min(1, down / target)),
+            label = getText("IGUI_MilitaryDrop_PostCleanupProgress", tostring(math.floor(progress or 0)),
+                tostring(math.floor(left))) }
+    elseif mission.kind == "cleanup" and mission.spotted == false then
+        -- Horde pas encore repérée : barre de temps, avec la mention.
+        view.sub = view.sub ~= "" and (view.sub .. " - " .. getText("IGUI_MilitaryDrop_PostCleanupPending"))
+            or getText("IGUI_MilitaryDrop_PostCleanupPending")
+        if remaining and hours then
+            view.bar = { kind = "time", fraction = math.max(0, math.min(1, remaining / hours)), label = "" }
+        end
+    elseif progress and quota and quota > 1 then
         view.bar = { kind = "progress", fraction = math.max(0, math.min(1, progress / quota)),
             label = string.format("%d / %d", math.floor(progress), math.floor(quota)) }
     elseif remaining and hours then
@@ -544,8 +689,13 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     local rackW = math.max(2 * L.tagW + 3 * u, btnW + 2 * u, rackHeader)
     -- Confiance en toutes lettres : phrase du commandement, puis effet sur
     -- les largages, renvoyés à la ligne dans une colonne de largeur bornée.
+    -- Champ du code (option AuthCode) : libellé peint, champ d'au moins 6 « 8 ».
+    L.codeShown = PostWindow.codeRequired()
+    L.entryH = fh + 6
+    L.codeLabel = getText("IGUI_MilitaryDrop_RadioModule_Code")
+    local codeRowW = measure(L.codeLabel) + u + measure("88888888") + 3 * u
     local standW = math.max(fh * 9, measure(getText("IGUI_MilitaryDrop_PostStanding")) + 2 * u,
-        measure(getText("IGUI_MilitaryDrop_RequestDrop")) + 3 * u + fh)
+        measure(getText("IGUI_MilitaryDrop_RequestDrop")) + 3 * u + fh, L.codeShown and codeRowW or 0)
     local ordersMin = math.max(fh * 14, measure(getText("IGUI_MilitaryDrop_PostOrders")) + 2 * u)
     local columnsW = ordersMin + rackW + standW + 2 * L.gap
 
@@ -562,7 +712,8 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     local ordersH = 3 * L.cardH + 2 * L.cardGap
     local rackH = 3 * (L.tagH + math.floor(u / 2)) + 2 * L.btnH + 2 * u
     -- Confiance : texte, puis le bouton « Demander un largage » en bas.
-    local standH = PostWindow.STANDING_LINES * fh + u + L.btnH + u
+    L.codeRowH = L.codeShown and (L.entryH + math.floor(u / 2)) or 0
+    local standH = PostWindow.STANDING_LINES * fh + u + L.codeRowH + L.btnH + u
     L.contentH = math.max(ordersH, rackH, standH)
     L.labelH = fh + math.floor(u / 2)
     L.bezel = u
@@ -627,8 +778,18 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     end
     -- Confiance : bouton d'appel en bas, texte au-dessus.
     L.request = rect(standX + u, L.standing.y + L.standing.h - u - L.btnH, standW - 2 * u, L.btnH)
+    local textBottom = L.request.y
+    if L.codeShown then
+        -- Libellé à gauche (40 % au plus), champ à droite, juste au-dessus du bouton.
+        local rowY = L.request.y - L.codeRowH
+        L.codeLabelW = math.min(measure(L.codeLabel), math.floor((standW - 2 * u) * 0.4))
+        L.codeLabelPos = { x = standX + u, y = rowY + math.floor((L.entryH - fh) / 2) }
+        local entryX = standX + u + L.codeLabelW + u
+        L.code = rect(entryX, rowY, standX + standW - u - entryX, L.entryH)
+        textBottom = rowY
+    end
     L.standText = rect(standX + u, contentY + math.floor(u / 2), standW - 2 * u,
-        L.request.y - u - contentY - math.floor(u / 2))
+        textBottom - u - contentY - math.floor(u / 2))
     return L
 end
 
@@ -678,7 +839,72 @@ function PostWindow:createChildren()
     end
     self:addChild(journal)
     self.journal = journal
+    -- Champ du code : prérempli avec le code gardé du personnage.
+    local Client = MilitaryDrop.Client
+    local remembered = Client and type(Client.rememberedCode) == "function" and Client.rememberedCode(self.playerNum)
+        or ""
+    local entry = ISTextEntryBox:new(remembered, 0, 0, 100, 20)
+    entry.font = UIFont.Small
+    entry:initialise()
+    entry:instantiate()
+    entry:setMaxTextLength(Codes.MAX_INPUT_LENGTH)
+    entry:setPlaceholderText(getText("IGUI_MilitaryDrop_RadioModule_CodeHint"))
+    entry:setTooltip(getText("IGUI_MilitaryDrop_EnterCode"))
+    -- Afficheur sombre au verre vert, cadre de laiton : style de la façade.
+    entry.backgroundColor = { r = 0.03, g = 0.06, b = 0.02, a = 1 }
+    entry.borderColor = { r = 0.62, g = 0.55, b = 0.32, a = 1 }
+    entry.target = self
+    entry.onTextChangeFunction = PostWindow.onCodeChange
+    local window = self
+    -- Entrée au clavier : même effet que le bouton « Demander un largage ».
+    entry.onCommandEntered = function()
+        if window:canRequest() then
+            window:onRequest()
+        end
+    end
+    self:addChild(entry)
+    self.codeEntry = entry
     self:layout()
+end
+
+--- Le serveur exige un code pour les largages (option AuthCode).
+function PostWindow.codeRequired()
+    return Config.codeMode() ~= Codes.MODE_NONE
+end
+
+--- Code saisi sans espaces autour, ou nil.
+function PostWindow.cleanCode(text)
+    local code = type(text) == "string" and string.match(text, "^[ \t]*(.-)[ \t]*$") or ""
+    if code == "" then
+        return nil
+    end
+    return code
+end
+
+--- Code du champ de la console, ou nil.
+function PostWindow:currentCode()
+    return self.codeEntry and PostWindow.cleanCode(self.codeEntry:getText()) or nil
+end
+
+--- Saisie du code : gardé pour le personnage (MilitaryDrop.Client.rememberCode).
+function PostWindow:onCodeChange()
+    local Client = MilitaryDrop.Client
+    if Client and type(Client.rememberCode) == "function" then
+        Client.rememberCode(self.playerNum, self:currentCode() or "")
+    end
+end
+
+--- Clavier à l'écran vanilla pour le champ du code (manette).
+function PostWindow:openKeyboard()
+    local joypadData = JoypadState and JoypadState.players[self.playerNum + 1]
+    if not self.codeEntry or not self.L or not self.L.codeShown or not joypadData or not OnScreenKeyboard
+        or OnScreenKeyboard.IsVisible() then
+        return false
+    end
+    local keyboard = OnScreenKeyboard.Show(self.playerNum, self.codeEntry, joypadData)
+    keyboard.prevFocus = joypadData.focus
+    joypadData.focus = keyboard
+    return true
 end
 
 --- Défile le journal de dy pixels (positif : vers le haut), borné au texte.
@@ -708,6 +934,16 @@ function PostWindow:layout()
     journal:setWidth(L.journal.w)
     journal:setHeight(L.journal.h)
     journal.textDirty = true
+    local entry = self.codeEntry
+    if entry then
+        entry:setVisible(L.codeShown == true)
+        if L.codeShown then
+            entry:setX(L.code.x)
+            entry:setY(L.code.y)
+            entry:setWidth(L.code.w)
+            entry:setHeight(L.code.h)
+        end
+    end
 end
 
 --- Données reçues du serveur (PostData) : tout est remplacé.
@@ -782,23 +1018,34 @@ function PostWindow:onTransmit()
     sendToServer(self.player, "PostTransmit", self.object)
 end
 
---- Appel de la base possible : poste allumé et alimenté (état envoyé par le
---- serveur ; il revérifie tout à l'appel).
-function PostWindow:canRequest()
-    return self.data ~= nil and PostWindow.lamps(self.data).on
+--- Raison de grisé de « Demander un largage » (clé de traduction), ou nil :
+--- poste éteint ou sans courant (état envoyé par le serveur), code manquant.
+function PostWindow:requestReason()
+    if self.data == nil or not PostWindow.lamps(self.data).on then
+        return "IGUI_MilitaryDrop_TurnOn"
+    end
+    if PostWindow.codeRequired() and not self:currentCode() then
+        return "IGUI_MilitaryDrop_RadioModule_NeedCode"
+    end
+    return nil
 end
 
---- « Demander un largage » : même parcours que le menu de la radio (code si
---- l'option l'exige, puis appel par la radio du poste). La console se ferme
---- pour laisser la place à la saisie du code et au formulaire.
+--- Appel de la base possible (le serveur revérifie tout à l'appel).
+function PostWindow:canRequest()
+    return self:requestReason() == nil
+end
+
+--- « Demander un largage » : même appel que la section « Logistique » de la
+--- fenêtre radio (MilitaryDrop.Client.call, code du champ s'il est exigé),
+--- par la radio du poste. La console reste ouverte ; la feuille de
+--- réquisition s'ouvre collée à elle (opts.anchor).
 function PostWindow:onRequest()
     local Client = MilitaryDrop.Client
-    if not self:canRequest() or not self:objectValid() or not Client or type(Client.onRequest) ~= "function" then
+    if not self:canRequest() or not self:objectValid() or not Client or type(Client.call) ~= "function" then
         return
     end
-    local player, object = self.player, self.object
-    self:close()
-    Client.onRequest(player, object, false)
+    local code = PostWindow.codeRequired() and self:currentCode() or nil
+    Client.call(self.player, self.object, code, false, { anchor = self })
 end
 
 --- La radio est toujours là et le joueur à côté (même étage).
@@ -885,7 +1132,7 @@ end
 function PostWindow:activate(target)
     getSoundManager():playUISound("UIActivateButton")
     if target == "close" then
-        self:close()
+        self:close("close button")
     elseif target == "deposit" then
         self:onDeposit()
     elseif target == "transmit" then
@@ -957,7 +1204,7 @@ function PostWindow:tooltipFor(target, payload)
         end
         return table.concat(names, " <LINE> ")
     elseif target == "request" then
-        return escape(getText(self:canRequest() and "IGUI_MilitaryDrop_RequestTooltip" or "IGUI_MilitaryDrop_TurnOn"))
+        return escape(getText(self:requestReason() or "IGUI_MilitaryDrop_RequestTooltip"))
     elseif target == "close" then
         return escape(getText("IGUI_MilitaryDrop_PostClose"))
     end
@@ -991,7 +1238,7 @@ function PostWindow:update()
         return
     end
     if not self:objectValid() then
-        self:close()
+        self:close("radio gone or player too far")
         return
     end
     local now = getTimestampMs()
@@ -1412,10 +1659,14 @@ end
 --- coupée), puis effet sur les largages, plus discret.
 function PostWindow:drawStanding(hover)
     local L, data = self.L, self.data
-    self:drawCompartment(L.standing, getText("IGUI_MilitaryDrop_PostStanding"))
+    -- Compartiment dessiné dans prerender : le champ du code (enfant) passe
+    -- entre prerender et render, render le recouvrirait.
     local joypad = self.drawJoypadFocus and Joypad and Joypad.Texture
     self:drawButton(L.request, getText("IGUI_MilitaryDrop_RequestDrop"), self:canRequest(), hover == "request",
         self.pressed == "request", false, joypad and Joypad.Texture.YButton or nil)
+    if L.codeShown then
+        self:drawPaint(PostWindow.fit(L.codeLabel, UIFont.Small, L.codeLabelW), L.codeLabelPos.x, L.codeLabelPos.y)
+    end
     local box = L.standText
     local alpha = hover == "standing" and 1 or 0.92
     local y = box.y
@@ -1444,6 +1695,8 @@ function PostWindow:prerender()
     end
     self:drawFace()
     self:drawScreen()
+    -- Sous le champ du code (enfant dessiné après prerender, avant render).
+    self:drawCompartment(self.L.standing, getText("IGUI_MilitaryDrop_PostStanding"))
 end
 
 function PostWindow:render()
@@ -1462,7 +1715,9 @@ function PostWindow:render()
     end
 end
 
-function PostWindow:close()
+--- reason : cause de la fermeture, notée au journal (option DebugLog).
+function PostWindow:close(reason)
+    MilitaryDrop.log("post console closed: " .. tostring(reason or "?"))
     self:showTooltip(nil)
     self:setVisible(false)
     if JoypadState.players[self.playerNum + 1] and getFocusForPlayer(self.playerNum) == self then
@@ -1481,11 +1736,12 @@ end
 
 function PostWindow:onKeyRelease(key)
     if key == Keyboard.KEY_ESCAPE and self:isReallyVisible() then
-        self:close()
+        self:close("escape")
     end
 end
 
--- Manette : A transmet, X dépose, Y demande un largage, B ferme ; haut et bas
+-- Manette : A transmet, X dépose, Y demande un largage (ou ouvre le clavier à
+-- l'écran tant que le code manque), RB saisit le code, B ferme ; haut et bas
 -- font défiler le journal.
 function PostWindow:onGainJoypadFocus(joypadData)
     ISPanelJoypad.onGainJoypadFocus(self, joypadData)
@@ -1507,9 +1763,15 @@ function PostWindow:onJoypadDown(button)
             self:onDeposit()
         end
     elseif button == Joypad.YButton then
-        self:onRequest()
+        if self:requestReason() == "IGUI_MilitaryDrop_RadioModule_NeedCode" then
+            self:openKeyboard()
+        else
+            self:onRequest()
+        end
+    elseif button == Joypad.RBumper then
+        self:openKeyboard()
     elseif button == Joypad.BButton then
-        self:close()
+        self:close("joypad B")
     end
 end
 
@@ -1530,6 +1792,9 @@ function PostWindow:getXPrompt()
 end
 
 function PostWindow:getYPrompt()
+    if self:requestReason() == "IGUI_MilitaryDrop_RadioModule_NeedCode" then
+        return getText("IGUI_MilitaryDrop_RadioModule_TypeCode")
+    end
     return getText("IGUI_MilitaryDrop_RequestDrop")
 end
 
@@ -1619,6 +1884,20 @@ local function onPostResult(args)
         pendingOpen = nil
     end
     local player = PostWindow.playerFor(args.username)
+    -- Installation demandée par le bouton de la fenêtre radio : la console
+    -- s'ouvre ensuite (poste installé, déplacé, ou déjà là).
+    local waiting = false
+    for _ in pairs(pendingInstallOpen) do
+        waiting = true
+    end
+    local playerNum = waiting and player and player:getPlayerNum() or nil
+    local installed = playerNum ~= nil and pendingInstallOpen[playerNum]
+    if installed and status ~= "busy" then
+        pendingInstallOpen[playerNum] = nil
+        if status == "installed" or status == "moved" or status == "already" then
+            PostWindow.requestOpen(player, installed)
+        end
+    end
     if PostWindow.RESULTS[status] and player then
         player:Say(getText("IGUI_MilitaryDrop_PostResult_" .. status, tostring(args.count or 0)))
     end
@@ -1636,7 +1915,7 @@ local function onPostResult(args)
             end
         end
         for _, window in ipairs(closing) do
-            window:close()
+            window:close("server: " .. status)
         end
     end
 end
@@ -1652,6 +1931,13 @@ function PostWindow.handleCommand(module, command, args)
         else
             PostWindow.myPost = nil
         end
+        -- Poste installé, déplacé ou perdu : états des radios à redemander.
+        PostWindow.radioStates = {}
+        return true
+    elseif command == "PostStatus" then
+        if type(args.x) == "number" and type(args.status) == "string" then
+            PostWindow.radioStates[radioKey(args.x, args.y, args.z)] = args.status
+        end
         return true
     elseif command == "PostData" then
         onPostData(args)
@@ -1664,7 +1950,7 @@ function PostWindow.handleCommand(module, command, args)
 end
 
 -- Commandes du poste, reçues par MilitaryDrop.Client (solo et MP).
-for _, command in ipairs({ "PostInfo", "PostData", "PostResult" }) do
+for _, command in ipairs({ "PostInfo", "PostData", "PostResult", "PostStatus" }) do
     MilitaryDrop.Client.HANDLERS[command] = function(args)
         PostWindow.handleCommand(Net.MODULE, command, args)
     end
@@ -1679,6 +1965,7 @@ function PostWindow.onGameStart()
 end
 
 Events.OnGameStart.Add(PostWindow.onGameStart)
-Events.OnFillWorldObjectContextMenu.Add(PostWindow.onFillWorldContextMenu)
+-- Plus de menu contextuel (2026-10-01) : bouton « Poste de liaison » de la
+-- fenêtre radio (MilitaryDrop_RadioModule.lua, PostWindow.useRadio).
 
 return PostWindow

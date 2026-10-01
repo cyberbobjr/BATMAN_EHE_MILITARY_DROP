@@ -582,7 +582,7 @@ function T.console_data_has_labels_but_no_trust_number()
         assertEq(teamId, "SOLO", "missions de l'équipe")
         -- Format du module des missions : deadline absolue, deadlineHours restantes.
         return { { kind = "cleanup", title = "Nettoyage", text = "Zone", deadline = 1030, deadlineHours = 30,
-            progress = 12, quota = 30, hours = 72, x = 300.5, y = 400 },
+            progress = 12, hours = 72, x = 300.5, y = 400, spotted = true, left = 9, down = 18, target = 27 },
             { kind = "control", title = "Contrôle", deadlineHours = 2 } }
     end }
     install(ALICE, RADIO)
@@ -591,11 +591,15 @@ function T.console_data_has_labels_but_no_trust_number()
     assertEq(data.callsign, Teams.callsign("SOLO"), "indicatif")
     assertEq(data.channel, CHANNEL, "fréquence du poste")
     assertEq(data.power, "grid", "alimentation")
-    assertEq(data.tier, 3, "palier (libellé côté client)")
+    assertEq(data.tier, 2, "palier d'une équipe neuve à 25 (libellé côté client)")
     assertEq(data.value, nil, "aucune note chiffrée")
     assertEq(data.receiving, nil, "rien ne dit si le canal est le bon")
     assertEq(data.missions[1].remaining, 30, "échéance restante")
-    assertEq(data.missions[1].progress, 12, "progression")
+    assertEq(data.missions[1].progress, 12, "abattus par l'équipe")
+    assertEq(data.missions[1].spotted, true, "horde repérée")
+    assertEq(data.missions[1].left .. "/" .. data.missions[1].down .. "/" .. data.missions[1].target, "9/18/27",
+        "reste, morts et objectif de la horde")
+    assertEq(data.missions[2].spotted, nil, "rien de la horde pour l'appel de contrôle")
     assertEq(data.missions[2].remaining, 2, "sans échéance absolue : heures restantes")
     assertEq(data.missions[1].hours, 72, "durée totale (barre de temps)")
     assertEq(data.missions[1].x .. "," .. data.missions[1].y, "300,400", "grille annoncée, en cases entières")
@@ -906,6 +910,109 @@ function T.console_data_sends_the_battery_charge_of_a_battery_post()
     local data = lastSent("PostData")
     assertEq(data.power, "battery", "poste sur pile")
     assertEq(data.battery, 0.4, "charge pour la jauge")
+end
+
+-- ----------------------------------------------------------------------------
+-- Bouton « Poste de liaison » de la fenêtre radio
+-- ----------------------------------------------------------------------------
+
+local function queryStatus(player, radio)
+    command("PostQuery", player, { radio = ref(radio) })
+    return lastSent("PostStatus", player)
+end
+
+function T.radio_status_answers_the_radio_window_button()
+    multiplayer()
+    local status = queryStatus(ALICE, RADIO)
+    assertEq(status.status, "none", "pas de poste")
+    assertEq(status.x .. "," .. status.y .. "," .. status.z, "100,100,0", "radio désignée renvoyée")
+    install(ALICE, RADIO)
+    assertEq(queryStatus(ALICE, RADIO).status, "own", "poste de l'équipe")
+    local other = makeRadio(makeSquare(102, 100, 0))
+    assertEq(queryStatus(ALICE, other).status, "elsewhere", "poste sur une autre radio")
+    local mallory = makePlayer("mallory", 101, 101, 0)
+    assertEq(queryStatus(mallory, RADIO).status, "otherTeam", "poste d'une autre équipe")
+    assertEq(queryStatus(mallory, other).status, "none", "radio libre pour mallory")
+    local talkie = makeRadio(makeSquare(100, 101, 0), { portable = true })
+    assertEq(queryStatus(ALICE, talkie).status, "notEligible", "talkie posé")
+    ALICE.x = 120
+    assertEq(queryStatus(ALICE, RADIO).status, "tooFar", "trop loin")
+end
+
+--- Console client avec envois et confirmation simulés.
+local function windowWorld()
+    local PostWindow = loadWindow()
+    local w = { toServer = {}, modals = {}, said = {} }
+    MilitaryDrop.Net.toServer = function(_, commandName, args)
+        w.toServer[#w.toServer + 1] = { command = commandName, args = args }
+    end
+    ALICE.getPlayerNum = function() return 0 end
+    ALICE.Say = function(_, text) w.said[#w.said + 1] = text end
+    getSpecificPlayer = function() return ALICE end
+    JoypadState = { players = {} }
+    ISModalDialog = { new = function(_, x, y, width, height, text, yesno, target, onclick, player, p1, p2)
+        local modal = { text = text, yesno = yesno, onclick = onclick, player = player, p1 = p1, p2 = p2 }
+        function modal.initialise() end
+        function modal.addToUIManager() end
+        w.modals[#w.modals + 1] = modal
+        return modal
+    end }
+    return PostWindow, w
+end
+
+local function lastCommand(w)
+    return w.toServer[#w.toServer] and w.toServer[#w.toServer].command
+end
+
+function T.post_button_installs_then_opens_the_console()
+    local PostWindow, w = windowWorld()
+    assertEq(listenerCount("OnFillWorldObjectContextMenu"), 0, "plus de menu contextuel du poste")
+    assertEq(PostWindow.radioStatus(RADIO), "none", "aucun poste connu")
+    assertEq(PostWindow.useTooltip(RADIO), "IGUI_MilitaryDrop_PostInstallTooltip", "infobulle : installation")
+    assertEq(PostWindow.useRadio(ALICE, RADIO), "install", "installation")
+    assertEq(lastCommand(w), "PostInstall", "demandée au serveur")
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "PostResult", { status = "installed", username = "alice" })
+    assertEq(lastCommand(w), "PostOpen", "puis la console")
+    assertEq(w.said[1], "IGUI_MilitaryDrop_PostResult_installed|0|nil", "le personnage le dit")
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "PostResult", { status = "installed", username = "alice" })
+    assertEq(#w.toServer, 2, "une seule ouverture")
+end
+
+function T.post_button_opens_the_own_post_and_confirms_a_transfer()
+    local PostWindow, w = windowWorld()
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "PostInfo", { x = 100, y = 100, z = 0 })
+    assertEq(PostWindow.radioStatus(RADIO), "own", "deviné : poste de l'équipe")
+    assertEq(PostWindow.useRadio(ALICE, RADIO), "open", "console")
+    assertEq(lastCommand(w), "PostOpen", "ouverture")
+    local other = makeRadio(makeSquare(101, 101, 0))
+    assertEq(PostWindow.radioStatus(other), "elsewhere", "poste ailleurs")
+    assertEq(PostWindow.useTooltip(other), "IGUI_MilitaryDrop_PostTransferTooltip", "infobulle : transfert")
+    local sent = #w.toServer
+    assertEq(PostWindow.useRadio(ALICE, other), "confirm", "confirmation d'abord")
+    assertEq(#w.toServer, sent, "rien d'envoyé avant la réponse")
+    local modal = w.modals[1]
+    assertEq(modal.text, "IGUI_MilitaryDrop_PostTransferConfirm|nil|nil", "« Transférer le poste de liaison ici ? »")
+    assertTrue(modal.yesno, "oui / non")
+    modal.onclick(nil, { internal = "NO" }, modal.p1, modal.p2)
+    assertEq(#w.toServer, sent, "non : rien")
+    modal.onclick(nil, { internal = "YES" }, modal.p1, modal.p2)
+    assertEq(lastCommand(w), "PostInstall", "oui : transfert")
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "PostResult", { status = "moved", username = "alice" })
+    assertEq(lastCommand(w), "PostOpen", "puis la console")
+end
+
+function T.post_button_is_greyed_on_another_team_post()
+    local PostWindow, w = windowWorld()
+    PostWindow.queryStatus(ALICE, RADIO)
+    assertEq(lastCommand(w), "PostQuery", "état demandé au serveur")
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "PostStatus", { status = "otherTeam", x = 100, y = 100, z = 0 })
+    assertEq(PostWindow.useReason(ALICE, RADIO), "IGUI_MilitaryDrop_PostResult_otherTeam", "grisé avec la raison")
+    assertEq(PostWindow.useRadio(ALICE, RADIO), nil, "rien")
+    ALICE.x = 110
+    assertEq(PostWindow.useReason(ALICE, RADIO), "IGUI_MilitaryDrop_TooFar", "trop loin")
+    -- Poste installé ou déplacé : états oubliés, redemandés.
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "PostInfo", { none = true })
+    assertEq(PostWindow.radioStatus(RADIO), "none", "état redeviné")
 end
 
 return T

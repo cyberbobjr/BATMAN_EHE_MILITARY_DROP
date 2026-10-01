@@ -39,8 +39,9 @@
 -- reçoit la même réponse qu'un appel sans réponse.
 --
 -- Cadence par commande et par joueur (MilitaryDrop_Guard.lua) : 0,3 s pour
--- l'installation, la console et le dépôt, 3 s pour la transmission ; une
--- commande refusée reçoit PostResult « busy ».
+-- l'installation, la console, le dépôt et l'état d'une radio (PostQuery :
+-- bouton « Poste de liaison » de la fenêtre radio), 3 s pour la
+-- transmission ; une commande refusée reçoit PostResult « busy ».
 --
 -- État privé (MilitaryDrop.Secrets.privateState, jamais transmis ; la console
 -- n'en reçoit que ce qui concerne l'équipe du joueur) :
@@ -546,6 +547,12 @@ function Post.missions(teamId)
                 remaining = remaining and math.max(0, remaining) or nil,
                 progress = tonumber(mission.progress),
                 quota = tonumber(mission.quota),
+                -- Nettoyage : horde apparue, reste à abattre avant la
+                -- clôture, morts de la horde et objectif (barre).
+                spotted = type(mission.spotted) == "boolean" and mission.spotted or nil,
+                left = tonumber(mission.left),
+                down = tonumber(mission.down),
+                target = tonumber(mission.target),
                 -- Durée totale (barre de temps) et grille annoncée à toutes les
                 -- stations (déjà publique) : seulement pour la console.
                 hours = tonumber(mission.hours),
@@ -815,6 +822,39 @@ function Post.transmit(player, args)
     Post.sendConsole(player, teamId, object)
 end
 
+--- État d'une radio pour le bouton « Poste de liaison » de la fenêtre radio
+--- (client) : "own" (poste de l'équipe), "otherTeam" (poste d'une autre
+--- équipe), "elsewhere" (l'équipe a son poste sur une autre radio), "none"
+--- (pas de poste), "notEligible", "tooFar". Rien d'autre n'est révélé :
+--- l'installation répondrait de même (PostInstall).
+function Post.radioStatus(player, object)
+    if not object then
+        return "tooFar"
+    end
+    if not Post.isEligible(object) then
+        return "notEligible"
+    end
+    local teamId = Teams.idFor(player)
+    local owner = Post.ownerOf(object)
+    if owner ~= nil and owner == teamId then
+        return "own"
+    elseif owner then
+        return "otherTeam"
+    elseif teamId and state().posts[teamId] then
+        return "elsewhere"
+    end
+    return "none"
+end
+
+--- « PostQuery » : état de la radio désignée, renvoyé au joueur (PostStatus,
+--- avec la référence reçue pour que le client le range).
+function Post.query(player, args)
+    local status = Post.radioStatus(player, Radio.resolve(player, args.radio))
+    local radio = type(args.radio) == "table" and args.radio or nil
+    Net.toPlayer(player, "PostStatus", { status = status, username = tostring(player:getUsername()),
+        x = radio and tonumber(radio.x), y = radio and tonumber(radio.y), z = radio and tonumber(radio.z) })
+end
+
 --- Position du poste de l'équipe du joueur (arrivée en jeu).
 function Post.sync(player)
     Net.toPlayer(player, "PostInfo", Post.infoFor(Teams.idFor(player)))
@@ -836,6 +876,7 @@ COMMANDS.PostOpen = guarded("PostOpen", Post.open, Post.COMMAND_INTERVAL_MS)
 COMMANDS.PostDeposit = guarded("PostDeposit", Post.deposit, Post.COMMAND_INTERVAL_MS)
 COMMANDS.PostTransmit = guarded("PostTransmit", Post.transmit, Post.TRANSMIT_INTERVAL_MS)
 COMMANDS.PostSync = Post.sync
+COMMANDS.PostQuery = guarded("PostQuery", Post.query, Post.COMMAND_INTERVAL_MS)
 
 Events.EveryOneMinute.Add(Post.refreshAll)
 Events.LoadChunk.Add(Post.onLoadChunk)

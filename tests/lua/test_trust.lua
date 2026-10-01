@@ -72,9 +72,16 @@ local function setNote(teamId, value)
     Trust.add(teamId, value - Trust.get(teamId), "drop")
 end
 
-function T.new_team_starts_at_50()
-    assertEq(Trust.get("P:alice"), 50, "départ à 50")
+function T.new_team_starts_at_25()
+    assertEq(Trust.get("P:alice"), 25, "départ à 25")
     assertEq(Trust.isLineCut("P:alice"), false, "ligne ouverte")
+end
+
+function T.new_team_delay_factor_is_1_25_and_1_at_50()
+    assertEq(Trust.get("P:alice"), 25, "équipe neuve à 25")
+    assertTrue(math.abs(Trust.factor("P:alice") - 1.25) < 1e-9, "délai ×1,25 au départ : " .. Trust.factor("P:alice"))
+    setNote("P:alice", 50)
+    assertTrue(math.abs(Trust.factor("P:alice") - 1) < 1e-9, "délai ×1 à 50 : " .. Trust.factor("P:alice"))
 end
 
 function T.tiers_follow_the_note()
@@ -95,7 +102,7 @@ function T.delay_factor_is_linear_from_1_5_to_0_6()
 end
 
 function T.note_is_bounded_0_to_100()
-    assertEq(Trust.add("P:alice", 80, "drop"), 50, "gain tronqué à 100")
+    assertEq(Trust.add("P:alice", 80, "drop"), 75, "gain tronqué à 100")
     assertEq(Trust.get("P:alice"), 100, "maximum")
     assertEq(Trust.add("P:alice", -150, "drop"), -100, "perte tronquée à 0")
     assertEq(Trust.get("P:alice"), 0, "minimum")
@@ -105,7 +112,7 @@ function T.daily_cap_limits_other_sources_to_8()
     assertEq(Trust.add("P:alice", 5, "report"), 5, "premier gain")
     assertEq(Trust.add("P:alice", 5, "dogtag"), 3, "plafond commun : 8 par jour")
     assertEq(Trust.add("P:alice", 1, "control"), 0, "plafond atteint")
-    assertEq(Trust.get("P:alice"), 58, "note")
+    assertEq(Trust.get("P:alice"), 33, "note")
     wait(24)
     assertEq(Trust.add("P:alice", 2, "report"), 2, "lendemain : plafond remis à zéro")
 end
@@ -113,7 +120,7 @@ end
 function T.drops_are_outside_the_cap()
     Trust.add("P:alice", 8, "report")
     assertEq(Trust.add("P:alice", 10, "drop"), 10, "largage : hors plafond")
-    assertEq(Trust.get("P:alice"), 68, "note")
+    assertEq(Trust.get("P:alice"), 43, "note")
 end
 
 function T.cap_is_an_option()
@@ -168,10 +175,10 @@ function T.recovered_drop_gives_10_once()
     local team = Teams.idFor("alice")
     local dropId = deliveredDrop(team, "alice")
     Trust.onCaseOpened(makeCase(dropId), makePlayer("bob"))
-    assertEq(Trust.get(team), 60, "ouverte par un membre de l'équipe du demandeur : +10")
+    assertEq(Trust.get(team), 35, "ouverte par un membre de l'équipe du demandeur : +10")
     assertEq(STATE.drops[dropId].outcome, "recovered", "largage clos")
     Trust.onCaseOpened(makeCase(dropId), makePlayer("alice"))
-    assertEq(Trust.get(team), 60, "une seule fois par largage")
+    assertEq(Trust.get(team), 35, "une seule fois par largage")
 end
 
 function T.drop_taken_by_another_team_costs_5()
@@ -179,10 +186,10 @@ function T.drop_taken_by_another_team_costs_5()
     local team = Teams.idFor("alice")
     local dropId = deliveredDrop(team, "alice")
     Trust.onCaseOpened(makeCase(dropId), makePlayer("mallory"))
-    assertEq(Trust.get(team), 45, "prise par une autre équipe : −5 au demandeur")
-    assertEq(Trust.get(Teams.idFor("mallory")), 50, "le preneur ne gagne rien")
+    assertEq(Trust.get(team), 20, "prise par une autre équipe : −5 au demandeur")
+    assertEq(Trust.get(Teams.idFor("mallory")), 25, "le preneur ne gagne rien")
     Trust.onCaseOpened(makeCase(dropId), makePlayer("alice"))
-    assertEq(Trust.get(team), 45, "largage déjà clos")
+    assertEq(Trust.get(team), 20, "largage déjà clos")
 end
 
 function T.requester_who_left_still_recovers_for_the_calling_team()
@@ -192,29 +199,29 @@ function T.requester_who_left_still_recovers_for_the_calling_team()
     faction.players = {}
     wait(1)
     Trust.onCaseOpened(makeCase(dropId), makePlayer("bob"))
-    assertEq(Trust.get(team), 60, "le demandeur compte pour l'équipe de l'appel")
+    assertEq(Trust.get(team), 35, "le demandeur compte pour l'équipe de l'appel")
 end
 
 function T.unopened_drop_is_lost_after_48_hours()
     local dropId = deliveredDrop("P:alice", "alice")
     wait(47.9)
     triggerEvent("EveryHours")
-    assertEq(Trust.get("P:alice"), 50, "avant l'échéance")
+    assertEq(Trust.get("P:alice"), 25, "avant l'échéance")
     wait(0.1)
     triggerEvent("EveryHours")
-    assertEq(Trust.get("P:alice"), 40, "rien d'ouvert à l'échéance : −10")
+    assertEq(Trust.get("P:alice"), 15, "rien d'ouvert à l'échéance : −10")
     assertEq(STATE.drops[dropId].outcome, "lost", "largage perdu")
     triggerEvent("EveryHours")
-    assertEq(Trust.get("P:alice"), 40, "compté une fois")
+    assertEq(Trust.get("P:alice"), 15, "compté une fois")
     Trust.onCaseOpened(makeCase(dropId), makePlayer("alice"))
-    assertEq(Trust.get("P:alice"), 40, "ouverture tardive : rien")
+    assertEq(Trust.get("P:alice"), 15, "ouverture tardive : rien")
 end
 
 function T.undelivered_drop_has_no_deadline()
     Trust.registerDrop("P:alice", "alice")
     wait(500)
     Trust.checkDrops()
-    assertEq(Trust.get("P:alice"), 50, "échéance comptée depuis la pose")
+    assertEq(Trust.get("P:alice"), 25, "échéance comptée depuis la pose")
 end
 
 function T.closed_drops_are_forgotten_after_a_week()
@@ -229,12 +236,12 @@ function T.forced_drop_has_no_effect_on_trust()
     local dropId = Trust.registerDrop("P:alice", "alice", true)
     Trust.onDropDelivered(dropId)
     Trust.onCaseOpened(makeCase(dropId), makePlayer("mallory"))
-    assertEq(Trust.get("P:alice"), 50, "largage admin ouvert par un autre : rien")
+    assertEq(Trust.get("P:alice"), 25, "largage admin ouvert par un autre : rien")
     local other = Trust.registerDrop("P:alice", "alice", true)
     Trust.onDropDelivered(other)
     wait(100)
     Trust.checkDrops()
-    assertEq(Trust.get("P:alice"), 50, "largage admin perdu : rien")
+    assertEq(Trust.get("P:alice"), 25, "largage admin perdu : rien")
 end
 
 function T.decoy_drop_is_untracked()
@@ -244,7 +251,7 @@ function T.decoy_drop_is_untracked()
     assertEq(STATE.drops[dropId].decoy.sector, "N", "type gardé dans l'état privé")
     Trust.onDropDelivered(dropId)
     Trust.onCaseOpened(makeCase(dropId), makePlayer("alice"))
-    assertEq(Trust.get("P:alice"), 50, "ouvert par le demandeur : rien")
+    assertEq(Trust.get("P:alice"), 25, "ouvert par le demandeur : rien")
     local other = Trust.registerDrop("P:alice", "alice", false, { untracked = true })
     Trust.onDropDelivered(other)
     Trust.onCaseOpened(makeCase(other), makePlayer("mallory"))
@@ -252,7 +259,7 @@ function T.decoy_drop_is_untracked()
     Trust.onDropDelivered(lost)
     wait(100)
     Trust.checkDrops()
-    assertEq(Trust.get("P:alice"), 50, "pris par un autre ou perdu : rien")
+    assertEq(Trust.get("P:alice"), 25, "pris par un autre ou perdu : rien")
 end
 
 function T.requisition_order_is_kept_with_the_drop()
@@ -268,7 +275,7 @@ function T.case_without_drop_id_is_ignored()
     Trust.onCaseOpened(item, makePlayer("alice"))
     item.modData[Trust.ITEM_KEY] = "D999"
     Trust.onCaseOpened(item, makePlayer("alice"))
-    assertEq(Trust.get(Teams.idFor("alice")), 50, "caisse hors largage ou inconnue")
+    assertEq(Trust.get(Teams.idFor("alice")), 25, "caisse hors largage ou inconnue")
 end
 
 function T.three_wrong_codes_in_an_hour_cost_2_at_the_next_hour()
@@ -276,22 +283,22 @@ function T.three_wrong_codes_in_an_hour_cost_2_at_the_next_hour()
     Trust.onFailedCode("alice")
     Trust.onFailedCode("alice")
     triggerEvent("EveryHours")
-    assertEq(Trust.get(team), 50, "deux codes faux : rien")
+    assertEq(Trust.get(team), 25, "deux codes faux : rien")
     Trust.onFailedCode("alice")
-    assertEq(Trust.get(team), 50, "pas sur-le-champ : la ModData trahirait le canal")
+    assertEq(Trust.get(team), 25, "pas sur-le-champ : la ModData trahirait le canal")
     triggerEvent("EveryHours")
-    assertEq(Trust.get(team), 48, "−2 au changement d'heure")
+    assertEq(Trust.get(team), 23, "−2 au changement d'heure")
     for _ = 1, 3 do
         Trust.onFailedCode("alice")
     end
     triggerEvent("EveryHours")
-    assertEq(Trust.get(team), 48, "une fois par heure")
+    assertEq(Trust.get(team), 23, "une fois par heure")
     wait(1)
     for _ = 1, 3 do
         Trust.onFailedCode("alice")
     end
     triggerEvent("EveryHours")
-    assertEq(Trust.get(team), 46, "heure suivante : de nouveau")
+    assertEq(Trust.get(team), 21, "heure suivante : de nouveau")
 end
 
 function T.wrong_codes_spread_over_more_than_an_hour_are_not_penalized()
@@ -302,7 +309,7 @@ function T.wrong_codes_spread_over_more_than_an_hour_are_not_penalized()
     wait(0.6)
     Trust.onFailedCode("alice")
     triggerEvent("EveryHours")
-    assertEq(Trust.get(team), 50, "trois codes faux sur 1 h 12")
+    assertEq(Trust.get(team), 25, "trois codes faux sur 1 h 12")
 end
 
 function T.wrong_codes_count_for_the_whole_team()
@@ -312,7 +319,7 @@ function T.wrong_codes_count_for_the_whole_team()
     Trust.onFailedCode("bob")
     Trust.onFailedCode("carol")
     triggerEvent("EveryHours")
-    assertEq(Trust.get(team), 48, "codes faux de l'équipe")
+    assertEq(Trust.get(team), 23, "codes faux de l'équipe")
 end
 
 function T.erosion_is_off_by_default()
@@ -322,17 +329,17 @@ function T.erosion_is_off_by_default()
     assertEq(Trust.get("P:alice"), 70, "aucune érosion par défaut")
 end
 
-function T.erosion_moves_one_point_a_day_toward_50_without_exchange()
+function T.erosion_moves_one_point_a_day_toward_25_without_exchange()
     SandboxVars.MilitaryDrop.TrustErosion = true
     setNote("P:alice", 70)
-    setNote("P:bob", 30)
+    setNote("P:bob", 20)
     Trust.touch("P:carol")
     setNote("P:carol", 70)
     wait(30)
     Trust.touch("P:carol")
     triggerEvent("EveryHours")
-    assertEq(Trust.get("P:alice"), 69, "vers 50 par le haut")
-    assertEq(Trust.get("P:bob"), 31, "vers 50 par le bas")
+    assertEq(Trust.get("P:alice"), 69, "vers 25 par le haut")
+    assertEq(Trust.get("P:bob"), 21, "vers 25 par le bas")
     assertEq(Trust.get("P:carol"), 70, "échange récent : pas d'érosion")
     wait(1)
     triggerEvent("EveryHours")
@@ -347,7 +354,7 @@ function T.solo_drop_opened_by_a_new_character_is_recovered()
     local team = Teams.idFor(makePlayer("JohnDoe"))
     local dropId = deliveredDrop(team, "JohnDoe")
     Trust.onCaseOpened(makeCase(dropId), makePlayer("JaneRoe"))
-    assertEq(Trust.get(team), 60, "solo : une seule équipe, +10")
+    assertEq(Trust.get(team), 35, "solo : une seule équipe, +10")
 end
 
 function T.debug_print_lists_teams_and_open_drops()
@@ -374,7 +381,7 @@ function T.opening_recipe_notifies_trust()
     case.getFullType = function() return "MilitaryDrop.AmmoSupplyCase" end
     local recipeData = { getAllConsumedItems = function() return arrayList({ case }) end }
     MilitaryDrop.Recipe.openSupplyCase(recipeData, makePlayer("alice"))
-    assertEq(Trust.get(Teams.idFor("alice")), 60, "caisse ouverte : largage récupéré")
+    assertEq(Trust.get(Teams.idFor("alice")), 35, "caisse ouverte : largage récupéré")
 end
 
 return T

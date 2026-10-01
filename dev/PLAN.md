@@ -1,7 +1,7 @@
 # Portage B42.21 — plan de travail
 
 Décisions prises le 2026-09-30. L'analyse complète (prérequis EHE, API, HEF) est dans
-`docs/third-party-helicopter-mods.md` ; l'hélicoptère vanilla dans
+`dev/third-party-helicopter-mods.md` ; l'hélicoptère vanilla dans
 `.claude/pz-knowledge/staging-effects.md` du dossier `Zomboid\Workshop`.
 
 ## Décisions
@@ -60,7 +60,7 @@ Aucune migration de sauvegarde : les parties B41 ne se chargent pas en B42. Les 
     - zone d'accès au coffre portée à 2,5 × 2,5 m ; requêtes terminées retirées côté client.
   - **Compromis accepté** : les coordonnées d'un largage (`DropAnnounce`) partent vers tous les clients, qui ne marquent leur carte que s'ils entendent l'annonce. Un client modifié peut donc les connaître sans écouter la radio. Les réserver aux auditeurs demanderait au serveur de connaître l'état de toutes les radios de chaque joueur.
 - [ ] **7. Tests** : solo, hébergé, serveur dédié (`C:\pzserver`) avec 2 clients, reconnexion, commande forgée, partie avec HEF.
-  - **Solo, 2026-09-30** (protocole `docs/TEST-PROTOCOL.md`, console surveillée) : options sandbox, recette, B1 à B7, C1 à C4, D1, D2, E1 à E3 **réussis**. Aucune erreur du mod dans la console. La chaîne est créée sur 151,4 MHz, le code est écrit dans son fichier, la caisse 3D est bien posée et son coffre contient 6 caisses.
+  - **Solo, 2026-09-30** (protocole `dev/TEST-PROTOCOL.md`, console surveillée) : options sandbox, recette, B1 à B7, C1 à C4, D1, D2, E1 à E3 **réussis**. Aucune erreur du mod dans la console. La chaîne est créée sur 151,4 MHz, le code est écrit dans son fichier, la caisse 3D est bien posée et son coffre contient 6 caisses.
   - Défauts trouvés, corrigés le même jour, à retester :
     - caisses de ravitaillement posées au sol affichées en damier : les modèles vanilla n'ont pas de texture sans `ClothingItem` → modèles propres (`MilitaryDrop_models.txt`) ;
     - note ajoutée par la console vide (« rien d'intéressant ») → remplie par l'`OnCreate` de l'objet ;

@@ -122,8 +122,8 @@ getPlayer():getInventory():AddItem("Base.Hammer"); getPlayer():getInventory():Ad
 | H2 | Tuer des zombies militaires | Une seule plaque par soldat, la plaque vanilla à son nom (plus de plaque du mod) ; « Annoncer les matricules » : plaques consommées, la base cite les noms et remercie ; une plaque déjà annoncée ne rapporte rien |
 | H3 | `Missions.launch("control")` puis « Confirmer réception » | Annonce « toutes stations » sur la fréquence militaire ; réponse acceptée une fois |
 | H4 | `Missions.launch("recon")` (plusieurs fois, dont près d'un lac ; journal « mission site … (building) ») en écoutant la fréquence militaire, ouvrir la carte, aller à la grille annoncée, « Confirmer la reconnaissance » | Symbole « œil » bleu au point annoncé, posé une seule fois ; refusée loin du point, acceptée à 25 cases ; annonce de clôture |
-| H5 | `Missions.launch("cleanup")` en écoutant la fréquence militaire, tuer des zombies dans la zone annoncée | Crâne rouge sur la carte au centre de la zone (un hameau), une seule fois ; la progression avance (console du poste) ; au quota, annonce de clôture ; les zombies brûlés ne comptent pas |
-| H6 | Radio HAM militaire posée (non portable) : clic droit → « Installer le poste de liaison », puis « Poste de liaison » | Console : journal (annonces reçues), missions en cours avec échéance, plaques à annoncer, barre d'état avec l'indicatif et un palier de confiance en mots |
+| H5 | « Missions (admin) » → « Lancer un nettoyage » en écoutant la fréquence ; « Faire le point » ; aller à la grille ; abattre la horde ; « Faire le point » de nouveau | Annonce « horde dans un rayon de 40 cases » et crâne rouge ; avant l'arrivée : « rendez-vous en grille… » ; la horde apparaît hors de vue, une seule fois (même après sauvegarde et rechargement) ; « N abattus, encore R » ; à 90 % : clôture et +5 au meilleur tireur |
+| H6 | Radio HAM militaire posée : « Options de l'appareil » → bouton « Poste de liaison » ; puis la même chose sur une autre radio HAM | Première fois : poste installé et console ouverte ; ensuite : ouverture ; autre radio : « Transférer le poste de liaison ici ? », oui → transfert et console ; plus d'entrée « poste » au clic droit |
 | H7 | « Déposer mes plaques », puis « Annoncer les matricules » | Plaques retirées de l'inventaire et listées au poste ; le personnage annonce les matricules, la base cite les noms et remercie |
 | H8 | Éteindre le poste, faire diffuser une annonce (largage ou mission), rallumer | Le journal marque « aucune réception » pour le trou |
 | H9 | Largage : ouvrir une caisse | Réplique de la base plus chaleureuse au largage suivant (palier) ; `Trust.debugPrint()` montre +10 |
@@ -148,7 +148,7 @@ Options par défaut (formulaire actif). Confiance réglable pour les essais : `M
 | I6 | Option « Formulaire de réquisition » désactivée, nouvel appel | Largage direct avec les caisses aléatoires de la v1 |
 | I7 | Console du poste : « Demander un largage » | Saisie du code, puis la feuille |
 | I9 | Clic droit sur une radio militaire → « Largage forcé (admin) » | Feuille tamponnée ADMIN : tous les lots et le leurre, 20 points ; elle reste ouverte loin de la radio ; après commande, coordonnées en privé et un appel normal juste après n'est pas bloqué par le délai |
-| I10 | Nouvelle partie, premier appel | Seul le palier I est permis ; le palier II affiche « confiance 60+ » |
+| I10 | Nouvelle partie, premier appel ; `MilitaryDrop.Trust.debugPrint()` | Confiance 25 : seul le palier I est permis (8 points) ; le palier II affiche « confiance 50+ », le III « confiance 75+ » |
 | I8 | Console au démarrage : chercher `requisition lots ready in` ; puis leurre vers un secteur hors de la carte (bord de carte) | Durée de préparation des lots notée au journal ; pour le leurre, la base dit qu'aucun point n'existe dans ce secteur et la feuille se rouvre |
 
 ## J. Largage leurre (v1.5)
@@ -167,6 +167,8 @@ Options par défaut (formulaire actif). Confiance réglable pour les essais : `M
 | K1 | Ouvrir les options d'un talkie militaire, puis d'une radio civile | Section « Logistique » sur la radio militaire seulement ; les autres sections du jeu inchangées |
 | K2 | Code vide, puis taper le code et « Demander un largage » | Bouton grisé avec sa raison tant que le code manque ; puis la feuille s'ouvre collée à droite de la fenêtre radio (à gauche si la fenêtre est au bord droit de l'écran) |
 | K3 | Rapport, matricules, contrôle depuis la section | Mêmes échanges qu'au menu ; la dernière réponse de la base s'affiche dans la section |
+| K9 | Saisir le code, quitter la partie, la recharger | Code prérempli dans la section Logistique et dans la console du poste |
+| K10 | Console du poste : champ « Code », puis « Demander un largage » ; puis « Déposer mes plaques » et « Annoncer les matricules » | Champ prérempli ; bouton grisé tant que le code manque ; appel sans boîte de saisie ; la console **reste ouverte** pour tous les boutons, la feuille de réquisition s'ouvre à côté. Si elle se ferme quand même : chercher `post console closed:` dans `console.txt` (option Journal de débogage) |
 | K4 | Refermer et rouvrir la fenêtre radio, nouvel appel | Code prérempli (mémorisé pendant la session, pas sauvegardé) |
 | K5 | Manette : entrer dans la section, saisir le code au clavier à l'écran | Navigation haut et bas, A valide, B ressort |
 | K6 | Premier démarrage : dossier `Zomboid/Lua/MilitaryDrop/` | `requisition.txt` créé, notice en anglais ; journal « requisition lots: 18 » |

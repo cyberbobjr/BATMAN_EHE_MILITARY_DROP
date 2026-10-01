@@ -1,0 +1,118 @@
+# Appeler un largage
+
+[English](../en/02-calling-a-drop.md) · [Sommaire du guide](README.md) · Précédent : [Démarrer](01-getting-started.md) · Suivant : [Formulaire de réquisition](03-requisition-form.md)
+
+## 1. Trouver la fréquence militaire
+
+Les zombies militaires et policiers portent parfois une **Note de service militaire** (environ 1 sur 50 par défaut). Clic droit, **Inspecter**.
+
+![Note de service militaire](../images/memo-fr.png)
+
+*Rendu hors jeu. Dans votre partie, les fréquences sont différentes.*
+
+- La fréquence **entourée au stylo** est la fréquence militaire. Le serveur la tire au hasard pour chaque partie, entre 120 et 170 MHz.
+- L'annotation manuscrite dit comment obtenir le code. Avec les réglages par défaut : la fréquence de la **station de chiffres** et « + carnet ».
+
+## 2. Obtenir le code de la semaine
+
+Un code se compose de deux mots de l'alphabet militaire et de deux chiffres, par exemple `BRAVO-KILO-42`. Majuscules, espaces et tirets n'ont pas d'importance.
+
+Le code change **chaque lundi à 00:00** (calendrier du jeu). Le précédent reste accepté pendant 24 heures.
+
+### La station de chiffres
+
+Toutes les 30 minutes de jeu, une station de chiffres émet en ondes courtes (entre 10 et 25 MHz) :
+
+> Attention. Attention. Message.
+> Groupe : 17-04-58. (trois fois)
+> Fin du message. Fin du message.
+
+Elle s'écoute avec une radio militaire, une radio de radioamateur ou le meilleur talkie-walkie civil.
+
+### Le carnet de codes
+
+Les zombies militaires portent parfois un **Carnet de codes militaire**, qu'on trouve aussi dans les réserves de l'armée. Il n'y a qu'une table par partie : tous les carnets trouvés sont identiques.
+
+![Carnet de codes militaire](../images/codebook-fr.png)
+
+*Rendu hors jeu.*
+
+Cherchez les deux premiers groupes dans la table pour obtenir les deux mots. Les deux derniers chiffres passent en clair. Avec la table ci-dessus, `20-71-58` donne `WHISKEY-ALPHA-58`.
+
+![Carnet, note et station de chiffres en jeu](../images/ingame-codebook-memo.png)
+
+*En jeu : le carnet, la note et la station de chiffres entendue au talkie-walkie.*
+
+> Le serveur peut choisir un mode plus simple : aucun code, un code fixe écrit sur les notes, ou le code de la semaine écrit en clair sur les notes. Voir [Administration](06-server-admin.md).
+
+## 3. Appeler la base
+
+1. Allumez votre radio militaire et réglez-la sur la fréquence militaire (section **Chaîne** du jeu).
+2. Clic droit sur la radio, **Options de l'appareil**.
+3. Ouvrez la section **Logistique**, en bas de la fenêtre radio.
+4. Tapez le code dans le champ **Code**. Il est retenu pour ce personnage, même après un rechargement.
+5. Appuyez sur **Demander un largage**.
+
+![La section Logistique de la fenêtre radio](../images/radio-logistics-fr.png)
+
+*Rendu hors jeu.*
+
+Un bouton grisé donne sa raison dans son infobulle (radio éteinte, code manquant…). Votre personnage parle, et la base répond après quelques secondes.
+
+Où peut être la radio :
+
+- **en main** ;
+- **à la ceinture** : le mod ajoute **Options de l'appareil** au talkie accroché. Il reste allumé, et votre personnage le prend en main pour parler ;
+- **dans un sac** : **Options de l'appareil** le prend en main et ouvre sa fenêtre ;
+- **sur le dos** : en solo. En multijoueur, votre personnage la prend en main ;
+- **posée au sol**, à 2 cases au plus.
+
+Un **Radioamateur de l'Armée américaine** posé n'affiche qu'un bouton **Poste de liaison** : les largages se demandent alors depuis la [console du poste](05-liaison-post.md).
+
+### Les réponses de la base
+
+- **« …grésillements. Personne ne répond sur cette fréquence. »** Mauvaise fréquence **ou** mauvais code : impossible de savoir lequel.
+- Après **3 codes faux dans la journée**, la base vous ignore jusqu'au lendemain, même avec le bon code.
+- **« Je ne peux pas les joindre pour l'instant. Je devrais réessayer dans N heures. »** L'attente entre deux largages n'est pas finie. Par défaut : un largage par semaine de jeu pour tout le serveur, plus ou moins selon votre [confiance](04-trust-and-missions.md).
+- **« …L'autorisation de votre station est suspendue… »** Votre confiance est trop basse : la ligne est coupée pour quelques jours.
+- **« …Transmettez votre réquisition, à vous. »** Accepté : remplissez le [formulaire de réquisition](03-requisition-form.md). Si le serveur a désactivé le formulaire, le largage part aussitôt avec des caisses de ravitaillement aléatoires.
+
+## 4. L'hélicoptère
+
+Sur la fréquence militaire, la base annonce : *« À toutes les stations, ici Logistique. Hélicoptère de ravitaillement en route vers une zone de largage demandée, arrivée dans une minute. »*
+
+Le point de largage est à **150 à 400 cases** de l'appelant, hors des bâtiments. On entend l'hélicoptère passer, on voit son **ombre** au sol et une **flèche de direction** tant qu'il est à moins de 400 cases. Il reste quelques secondes au-dessus du point, puis repart.
+
+![Ombre de l'hélicoptère et flèche de direction](../images/ingame-helicopter.png)
+
+L'hélicoptère s'arrête quand le jeu est en pause, et reprend son vol après une sauvegarde et un rechargement.
+
+## 5. Annonce et repère sur la carte
+
+Au largage : *« Caisse de ravitaillement livrée en grille X / Y. Je répète, grille X / Y. »* puis *« Ici Logistique, terminé. »*
+
+Toute radio **allumée et réglée** sur la fréquence militaire à ce moment l'entend, et son propriétaire reçoit un symbole **cible** vert sur sa carte. Radio éteinte ou sur une autre chaîne : pas de repère. En multijoueur, les autres joueurs l'entendent aussi.
+
+![Repère du largage sur la carte](../images/ingame-map-drop-marker.png)
+
+## 6. La caisse
+
+Rendez-vous à la grille. La caisse apparaît quand quelqu'un arrive et que la zone est chargée, à 30 cases au plus du point annoncé. Une horde l'attend (3 à 30 zombies par défaut).
+
+![La caisse au sol, avec la fumée verte](../images/ingame-crate-smoke.png)
+
+![Le modèle de la caisse de largage](../images/crate-model.png)
+
+*Rendu hors jeu de la caisse.*
+
+- Ouvrez le coffre de la caisse comme celui d'un véhicule : **Caisse de largage militaire**.
+- Sortez les caisses et faites un clic droit sur chacune : **Ouvrir la caisse de ravitaillement**. Le contenu est tiré des tables de butin du jeu (et de vos mods). Une arme arrive avec 2 chargeurs et 1 boîte de munitions.
+- Avec **Signal Smoke**, une fumée verte signale la caisse pendant 60 minutes de jeu.
+
+Faites vite : la première caisse ouverte par votre station rapporte **+10 de confiance**. Si rien n'est ouvert dans les 48 heures de jeu, le largage est perdu (**-10**). Si une autre station l'ouvre avant vous, vous perdez 5.
+
+### Démonter la caisse vide
+
+Videz la caisse, munissez-vous d'un **marteau** et d'une **scie**, clic droit : **Démonter la caisse**. Vous récupérez des planches (ou du bois inutilisable) et de l'expérience en Menuiserie, comme pour un meuble en bois. L'option est grisée avec sa raison si la caisse n'est pas vide ou s'il manque un outil.
+
+![Démonter la caisse](../images/ingame-dismantle.png)

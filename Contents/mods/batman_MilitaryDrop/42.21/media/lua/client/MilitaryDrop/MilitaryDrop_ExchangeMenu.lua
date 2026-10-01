@@ -13,14 +13,21 @@
 -- renommées d'après leur porteur (MilitaryDrop.Exchange.isDogTag : pas celle
 -- du personnage ; l'infobulle cite les noms),
 -- confirmation de la reconnaissance, confirmation de réception (appel de
--- contrôle). Le client ne décide rien : il grise une option avec la raison
--- visible (radio hors de l'inventaire ou trop loin, éteinte, source désactivée
--- sur le serveur, aucune plaque), puis passe par MilitaryDrop.Exchange : prise
--- en main du talkie si besoin (AUTH-03), parole du personnage, commande au
--- serveur, réponse de la base par la radio.
+-- contrôle), « Faire le point » sur le nettoyage (horde abattue par la
+-- station, reste ; sans gain). Le client ne décide rien : il grise une option
+-- avec la raison visible (radio hors de l'inventaire ou trop loin, éteinte,
+-- source désactivée sur le serveur, aucune plaque, aucun nettoyage en cours),
+-- puis passe par MilitaryDrop.Exchange : prise en main du talkie si besoin
+-- (AUTH-03), parole du personnage, commande au serveur, réponse de la base
+-- par la radio.
 --
 -- Comme pour l'appel de largage, la fréquence n'est jamais vérifiée ici, ni
--- l'existence d'une mission : le serveur répond.
+-- l'existence d'une reconnaissance ou d'un appel de contrôle : le serveur
+-- répond. Seul « Faire le point » est grisé sans nettoyage en cours : le
+-- serveur l'annonce à tous (CleanupState { open }, à l'ouverture, à la
+-- clôture et à l'arrivée d'un client MP par Sync) ; en solo, l'état du
+-- serveur est lu directement (MilitaryDrop.Missions.openMission). Rien de la
+-- horde n'est envoyé.
 -- ============================================================================
 
 require "MilitaryDrop/MilitaryDrop_Radio"
@@ -44,7 +51,30 @@ Menu.OPTIONS = {
         tooltip = "IGUI_MilitaryDrop_Exchange_ReconTooltip", speech = "IGUI_MilitaryDrop_Say_Recon_", speechCount = 2 },
     { source = "control", label = "IGUI_MilitaryDrop_Exchange_Control",
         tooltip = "IGUI_MilitaryDrop_Exchange_ControlTooltip", speech = "IGUI_MilitaryDrop_Say_Control_", speechCount = 2 },
+    -- « Faire le point » : source « cleanup » (désactivée avec les nettoyages),
+    -- commande propre, grisé sans nettoyage en cours.
+    { source = "cleanup", command = "cleanupStatus", needsCleanup = true,
+        label = "IGUI_MilitaryDrop_Exchange_CleanupStatus", tooltip = "IGUI_MilitaryDrop_Exchange_CleanupStatusTooltip",
+        speech = "IGUI_MilitaryDrop_Say_CleanupStatus_", speechCount = 2 },
 }
+
+-- Nettoyage en cours d'après le serveur (CleanupState) : client MP.
+Menu.cleanupState = { open = false }
+
+--- CleanupState du serveur : { open }.
+function Menu.onCleanupState(args)
+    Menu.cleanupState.open = type(args) == "table" and args.open == true
+end
+
+--- Un nettoyage est en cours : solo, état du serveur lu directement ; client
+--- MP, dernier CleanupState reçu.
+function Menu.cleanupOpen()
+    local Missions = MilitaryDrop.Missions
+    if not isClient() and type(Missions) == "table" and type(Missions.openMission) == "function" then
+        return Missions.openMission("cleanup") ~= nil
+    end
+    return Menu.cleanupState.open == true
+end
 
 --- Plaques transmissibles en un échange (sacs portés compris, hors objets
 --- portés ou en main), comme le serveur les choisira.
@@ -77,6 +107,9 @@ function Menu.reason(player, device, option)
     if not Exchange.isEnabled(option.source) then
         return "IGUI_MilitaryDrop_SourceDisabled"
     end
+    if option.needsCleanup and not Menu.cleanupOpen() then
+        return "IGUI_MilitaryDrop_NoCleanup"
+    end
     local reason = Exchange.unavailableReason(player, device)
     if reason then
         return reason
@@ -92,7 +125,7 @@ end
 --- utilisable.
 function Menu.onOption(player, device, option)
     local speech = getText(option.speech .. (ZombRand(option.speechCount) + 1), tostring(Menu.dogTagCount(player)))
-    return Exchange.send(player, device, Exchange.COMMANDS[option.source], {}, speech)
+    return Exchange.send(player, device, Exchange.COMMANDS[option.command or option.source], {}, speech)
 end
 
 local function addTooltip(option, text)
@@ -167,6 +200,10 @@ function Menu.onFillWorldContextMenu(playerNum, context, worldObjects, test)
             end
         end
     end
+end
+
+if MilitaryDrop.Client and MilitaryDrop.Client.HANDLERS then
+    MilitaryDrop.Client.HANDLERS.CleanupState = Menu.onCleanupState
 end
 
 -- Plus inscrit au menu contextuel (2026-10-01) : la section « Logistique » de

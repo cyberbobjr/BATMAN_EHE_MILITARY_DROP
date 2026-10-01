@@ -324,6 +324,29 @@ function T.code_is_remembered_and_sent_with_the_request()
     assertEq(W.toServer[#W.toServer].args.code, nil, "aucun code envoyé")
 end
 
+function T.code_field_is_prefilled_after_a_reload()
+    local files = {}
+    getFileWriter = function(name)
+        return { write = function(_, text) files[name] = text end, close = function() end }
+    end
+    getFileReader = function(name)
+        local content = files[name]
+        return content and { readLine = function() return content end, close = function() end } or nil
+    end
+    getWorld = function() return { getWorld = function() return "Partie" end } end
+    PLAYER.getUsername = function() return "Kate Smith" end
+    PLAYER.getDescriptor = function()
+        return { getForename = function() return "Kate" end, getSurname = function() return "Smith" end }
+    end
+    local panel = openOn(RADIO)
+    panel.codeEntry:type("bravo-kilo-42")
+    assertEq(files[MilitaryDrop.Client.codeFile(PLAYER)], "bravo-kilo-42", "gardé dans le fichier du personnage")
+    -- Partie rechargée : module client relu, nouvelle fenêtre radio.
+    loadMod("client/MilitaryDrop/MilitaryDrop_Client.lua")
+    local reopened = openOn(RADIO)
+    assertEq(reopened.codeEntry:getText(), "bravo-kilo-42", "champ prérempli après rechargement")
+end
+
 function T.menu_request_has_no_anchor()
     -- Le menu contextuel garde la feuille centrée (pas d'ancre).
     MilitaryDrop.Client.sendRequest(PLAYER, RADIO, "x", false)
@@ -382,6 +405,73 @@ function T.option_buttons_send_the_menu_exchanges()
     panel:refresh()
     panel.optionButtons[4]:forceClick()
     assertEq(W.exchanges[2].command, "MissionControl", "confirmation de réception")
+end
+
+function T.status_button_needs_an_open_cleanup()
+    local panel = openOn(RADIO)
+    local status = panel.optionButtons[#panel.optionButtons]
+    assertEq(status.option.command, "cleanupStatus", "« Faire le point » en dernier")
+    panel:refresh()
+    assertTrue(not status.enable, "aucun nettoyage : grisé")
+    assertEq(status.reason, "IGUI_MilitaryDrop_NoCleanup", "avec sa raison")
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "CleanupState", { open = true })
+    panel:refresh()
+    assertTrue(status.enable, "nettoyage annoncé : permis")
+    status:forceClick()
+    assertEq(W.exchanges[1].command, "MissionCleanupStatus", "échange envoyé au serveur")
+    assertEq(W.exchanges[1].speech, "IGUI_MilitaryDrop_Say_CleanupStatus_1|0", "réplique du personnage")
+    SandboxVars.MilitaryDrop.CleanupGain = 0
+    wait(RM.LOCK_MS)
+    panel:refresh()
+    assertEq(status.reason, "IGUI_MilitaryDrop_SourceDisabled", "nettoyages désactivés")
+    -- Solo : l'état du serveur est lu directement.
+    SandboxVars.MilitaryDrop.CleanupGain = 5
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "CleanupState", { open = false })
+    MilitaryDrop.Missions = { openMission = function(kind) return kind == "cleanup" and {} or nil end }
+    panel:refresh()
+    assertTrue(status.enable, "solo : mission ouverte lue sur le serveur")
+end
+
+function T.post_radio_shows_only_the_liaison_post_button()
+    local calls = { queried = 0, used = 0 }
+    local status = "none"
+    MilitaryDrop.PostWindow = {
+        isEligible = function(device) return device.kind == "IsoWaveSignal" and not device:getDeviceData():getIsPortable() end,
+        queryStatus = function() calls.queried = calls.queried + 1 end,
+        useReason = function() return status == "otherTeam" and "IGUI_MilitaryDrop_PostResult_otherTeam" or nil end,
+        useTooltip = function() return "IGUI_MilitaryDrop_PostInstallTooltip" end,
+        useRadio = function() calls.used = calls.used + 1 return "install" end,
+    }
+    local ham = makeRadio("IsoWaveSignal", { portable = false })
+    local panel = openOn(ham)
+    assertTrue(panel.postMode, "radio fixe éligible : mode poste")
+    assertEq(calls.queried, 1, "état de la radio demandé au serveur")
+    local items = panel:items()
+    assertEq(#items, 1, "un seul élément")
+    assertTrue(items[1] == panel.postButton and panel.postButton.visible, "bouton « Poste de liaison »")
+    assertEq(panel.postButton.fullTitle, "IGUI_MilitaryDrop_PostOpen", "libellé")
+    assertTrue(not panel.requestButton.visible and not panel.codeEntry.visible, "ni largage ni code")
+    for _, button in ipairs(panel.optionButtons) do
+        assertTrue(not button.visible, "aucun échange")
+    end
+    assertEq(panel.height, RM.BORDER * 2 + panel.buttonH, "module réduit au bouton")
+    assertEq(panel.postButton.tooltip, "IGUI_MilitaryDrop_PostInstallTooltip", "infobulle")
+    panel.postButton:forceClick()
+    assertEq(calls.used, 1, "action du poste")
+    assertTrue(not panel.postButton.enable, "bloqué pendant l'envoi")
+    wait(RM.LOCK_MS)
+    status = "otherTeam"
+    panel:refresh()
+    assertEq(panel.postButton.reason, "IGUI_MilitaryDrop_PostResult_otherTeam", "poste d'une autre équipe : grisé")
+    -- Manette : A sur le module choisit le bouton.
+    panel:onJoypadDown(Joypad.AButton)
+    assertTrue(panel:focusedItem() == panel.postButton, "manette : le bouton")
+    -- Même fenêtre, talkie posé : module complet.
+    local window = panel.parent.radioParent
+    window:readFromObject(PLAYER, makeRadio("IsoWaveSignal", { portable = true }))
+    assertTrue(not panel.postMode, "talkie posé : module complet")
+    assertTrue(panel.requestButton.visible and not panel.postButton.visible, "largage de retour")
+    assertEq(panel:focusedItem(), nil, "curseur relâché au changement de mode")
 end
 
 function T.last_reply_of_the_base_is_shown()
@@ -447,7 +537,11 @@ function T.joypad_navigates_inside_the_module()
     assertTrue(panel:focusedItem() == panel.requestButton and panel.requestButton.joypadFocused, "bas : largage")
     element:onJoypadDirUp()
     element:onJoypadDirUp()
-    assertTrue(panel:focusedItem() == panel.optionButtons[4], "haut : boucle sur le dernier")
+    local last = panel.optionButtons[#panel.optionButtons]
+    assertTrue(panel:focusedItem() == last, "haut : boucle sur le dernier")
+    panel:onJoypadDown(Joypad.AButton)
+    assertEq(#W.exchanges, 0, "« Faire le point » grisé sans nettoyage : rien")
+    element:onJoypadDirUp()
     panel:onJoypadDown(Joypad.AButton)
     assertEq(W.exchanges[1].command, "MissionControl", "A : bouton activé")
     local consumedLB = panel:onJoypadDown(Joypad.LBumper)

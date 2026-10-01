@@ -56,6 +56,8 @@ Exchange.COMMANDS = {
     dogtag = "MissionDogTags",
     recon = "MissionRecon",
     control = "MissionControl",
+    -- « Faire le point » sur le nettoyage (source « cleanup », sans gain).
+    cleanupStatus = "MissionCleanupStatus",
 }
 -- Plaques traitées par transmission radio (MilitaryDrop_Missions.lua).
 Exchange.DOGTAGS_PER_CALL = 10

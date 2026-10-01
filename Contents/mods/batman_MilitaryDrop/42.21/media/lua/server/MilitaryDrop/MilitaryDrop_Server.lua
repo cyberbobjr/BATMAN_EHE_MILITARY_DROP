@@ -549,7 +549,14 @@ end
 --- les siennes (Server.COMMANDS.X = …) dans son propre fichier.
 Server.COMMANDS = {
     Request = function(player, args) Server.handleRequest(player, args) end,
-    Sync = function(player) MilitaryDrop.Flights.sendActive(player) end,
+    -- Arrivée d'un client MP : vols en cours, nettoyage ouvert ou non
+    -- (MilitaryDrop_Missions.lua, grisé de « Faire le point »).
+    Sync = function(player)
+        MilitaryDrop.Flights.sendActive(player)
+        if MilitaryDrop.Missions and MilitaryDrop.Missions.sync then
+            MilitaryDrop.Missions.sync(player)
+        end
+    end,
 }
 
 function Server.onClientCommand(module, command, player, args)

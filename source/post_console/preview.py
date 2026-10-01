@@ -269,7 +269,7 @@ function ISUIElement:setStencilRect(x, y, w, h) op("clip", ax(self, x), self:get
 function ISUIElement:clearStencilRect() op("unclip") end
 function ISUIElement:renderTree()
     if self.prerender then self:prerender() end
-    for _, child in ipairs(self.children) do child:renderTree() end
+    for _, child in ipairs(self.children) do if child.visible then child:renderTree() end end
     if self.render then self:render() end
 end
 
@@ -340,6 +340,35 @@ function ISRichTextPanel:render()
     self:clearStencilRect()
 end
 
+-- Champ de saisie (code) : fond et cadre de ses couleurs, texte ou texte
+-- indicatif grisé, comme UITextBox2.
+ISTextEntryBox = ISUIElement:derive("ISTextEntryBox")
+function ISTextEntryBox:new(text, x, y, w, h)
+    local o = ISUIElement.new(self, x, y, w, h)
+    o.text = text or ""
+    o.backgroundColor = { r = 0, g = 0, b = 0, a = 0.5 }
+    o.borderColor = { r = 0.4, g = 0.4, b = 0.4, a = 1 }
+    return o
+end
+function ISTextEntryBox:setMaxTextLength() end
+function ISTextEntryBox:setPlaceholderText(t) self.placeholder = t end
+function ISTextEntryBox:setTooltip() end
+function ISTextEntryBox:getText() return self.text end
+function ISTextEntryBox:setText(t) self.text = t end
+function ISTextEntryBox:render()
+    if not self.visible then return end
+    local bg, bd = self.backgroundColor, self.borderColor
+    self:drawRect(0, 0, self.width, self.height, bg.a, bg.r, bg.g, bg.b)
+    self:drawRectBorder(0, 0, self.width, self.height, bd.a, bd.r, bd.g, bd.b)
+    local font = self.font or UIFont.Small
+    local y = (self.height - fontHeight(font)) / 2
+    if self.text ~= "" then
+        self:drawText(self.text, 3, y, 1, 1, 1, 1, font)
+    elseif self.placeholder then
+        self:drawText(self.placeholder, 3, y, 0.5, 0.5, 0.5, 1, font)
+    end
+end
+
 ISToolTip = ISUIElement:derive("ISToolTip")
 function ISToolTip:new() return ISUIElement.new(self, 0, 0, 10, 10) end
 function ISToolTip:setOwner() end
@@ -351,7 +380,8 @@ loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
 loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
 loadMod("shared/MilitaryDrop/MilitaryDrop_Codes.lua")
 pcall(loadMod, "shared/MilitaryDrop/MilitaryDrop_Exchange.lua")
-MilitaryDrop.Client = { HANDLERS = {} }
+MilitaryDrop.Client = { HANDLERS = {}, rememberedCode = function() return CODE or "" end,
+    rememberCode = function() end }
 loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow.lua")
 
 ArrayList = { new = function() return {} end }
@@ -436,8 +466,8 @@ def sample_data(lua, language, variant):
               "EN": ("Reconnaissance", "Cleanup", "Radio check")}[language]
     missions = [
         {"kind": "recon", "title": titles[0], "text": lines[2]["t"], "remaining": 31.2, "x": 10874, "y": 9512},
-        {"kind": "cleanup", "title": titles[1], "text": "...", "remaining": 52, "progress": 12, "quota": 30,
-         "x": 11210, "y": 6930},
+        {"kind": "cleanup", "title": titles[1], "text": "...", "remaining": 52, "hours": 72, "progress": 12,
+         "spotted": True, "left": 9, "down": 18, "target": 27, "x": 11210, "y": 6930},
         {"kind": "control", "title": titles[2], "text": lines[-1]["t"], "remaining": 2.4, "progress": 0, "quota": 1},
     ]
     mail = [{"id": 1, "name": "J. Miller", "by": "alice"}, {"id": 2, "name": "R. Ortega", "by": "bob"},
@@ -457,7 +487,9 @@ def sample_data(lua, language, variant):
         # Groupe électrogène, dossier mitigé, reconnaissance presque échue,
         # nettoyage presque au quota.
         data.update(power="generator", battery=None, tier=2, mail=mail[:1])
-        data["missions"] = [dict(missions[0], remaining=0.6), dict(missions[1], remaining=20, progress=28)]
+        data["missions"] = [dict(missions[0], remaining=0.6),
+                            dict(missions[1], remaining=20, progress=0, spotted=False, left=None, down=None,
+                                 target=None)]
     if variant == "lowbat":
         # Pile presque vide, méfiance, dernière annonce manquée (voyant RX éteint).
         data.update(battery=0.08, tier=1, mail=[], missions=missions[2:])
@@ -508,6 +540,7 @@ def render(language, size_dir, variant, extra, screen=(1920, 1080), mouse=None):
     g.textureExists = lambda p: (COMMON_MEDIA / text_of(p)).is_file()
     lua.execute(SETUP)
     data = sample_data(lua, language, variant)
+    g.CODE = "" if variant == "first" else "BRAVO-KILO-42"
     if mouse:
         g.MOUSE_X, g.MOUSE_Y = mouse
     width, height = lua.execute(RENDER, data, screen[0], screen[1])

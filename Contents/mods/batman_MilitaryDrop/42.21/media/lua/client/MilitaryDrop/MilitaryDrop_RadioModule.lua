@@ -26,16 +26,25 @@
 --
 -- Contenu :
 --   * champ « Code » (si l'option AuthCode l'exige), prérempli avec le code
---     gardé pour la session (MilitaryDrop.Client.rememberCode, jamais
---     sauvegardé ni envoyé ailleurs qu'à l'appel) ;
+--     gardé par personnage, y compris après un rechargement
+--     (MilitaryDrop.Client.rememberCode : fichier du client, jamais envoyé
+--     ailleurs qu'à l'appel) ;
 --   * « Demander un largage » : MilitaryDrop.Client.call (prise en main du
 --     talkie, AUTH-03), sans boîte de saisie ;
 --     la feuille de réquisition s'ouvre collée à la fenêtre radio ;
 --   * rapport, matricules (avec le nombre de plaques), reconnaissance,
---     confirmation de réception : envois et raisons de grisé de
+--     confirmation de réception, « Faire le point » sur le nettoyage (grisé
+--     sans nettoyage en cours) : envois et raisons de grisé de
 --     MilitaryDrop.ExchangeMenu (Menu.onOption, Menu.reason, Menu.tooltipText) ;
 --   * dernière réplique de la base reçue par ce joueur
 --     (MilitaryDrop.Client.lastReply).
+-- Radio posée pouvant servir de poste de liaison (non portable, haut de
+-- gamme, émettrice : MilitaryDrop.PostWindow.isEligible, même règle que le
+-- serveur) : à la place, un seul bouton « Poste de liaison »
+-- (MilitaryDrop.PostWindow.useRadio : installation puis console, console,
+-- ou confirmation du transfert ; grisé si la radio est le poste d'une autre
+-- équipe, état demandé au serveur à l'ouverture : PostQuery). Les autres
+-- radios militaires posées (talkie posé) gardent le module complet.
 -- Le client ne décide rien : le serveur revérifie tout. La fréquence n'est
 -- jamais vérifiée ici : griser sur un mauvais canal la révélerait.
 --
@@ -55,6 +64,7 @@ require "MilitaryDrop/MilitaryDrop_Exchange"
 require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Client"
 require "MilitaryDrop/MilitaryDrop_ExchangeMenu"
+require "MilitaryDrop/MilitaryDrop_PostWindow"
 
 local Config = MilitaryDrop.Config
 local Radio = MilitaryDrop.Radio
@@ -82,6 +92,14 @@ RM.REPLY_COLOR = { r = 0.45, g = 0.85, b = 0.45 }
 --- Le module s'affiche pour cet appareil.
 function RM.shows(device)
     return Radio.isMilitary(device)
+end
+
+--- Radio posée pouvant servir de poste de liaison : bouton « Poste de
+--- liaison » seul (MilitaryDrop.PostWindow, s'il est chargé).
+function RM.isPostRadio(device)
+    local PostWindow = MilitaryDrop.PostWindow
+    return type(PostWindow) == "table" and type(PostWindow.isEligible) == "function"
+        and PostWindow.isEligible(device) == true
 end
 
 --- Le serveur exige un code pour les largages.
@@ -239,6 +257,12 @@ function Panel:createChildren()
     self.requestButton.fullTitle = getText("IGUI_MilitaryDrop_RequestDrop")
     self:addChild(self.requestButton)
 
+    self.postButton = ISButton:new(b, b, w, self.buttonH, "", self, Panel.onPost)
+    self.postButton:initialise()
+    styleButton(self.postButton)
+    self.postButton.fullTitle = getText("IGUI_MilitaryDrop_PostOpen")
+    self:addChild(self.postButton)
+
     self.optionButtons = {}
     for _, option in ipairs(MilitaryDrop.ExchangeMenu.OPTIONS) do
         local button = ISButton:new(b, b, w, self.buttonH, "", self, Panel.onOption)
@@ -252,8 +276,12 @@ function Panel:createChildren()
     self:layout()
 end
 
---- Éléments dans l'ordre de navigation (champ de code s'il est affiché).
+--- Éléments dans l'ordre de navigation (champ de code s'il est affiché ;
+--- radio du poste : le seul bouton « Poste de liaison »).
 function Panel:items()
+    if self.postMode then
+        return { self.postButton }
+    end
     local items = {}
     if self.codeShown then
         items[#items + 1] = self.codeEntry
@@ -274,11 +302,40 @@ local function setButtonTitle(panel, button, title)
     end
 end
 
---- Positions et hauteur (champ de code, boutons, dernière réplique).
+--- Hauteur du panneau ; l'en-tête du module est recalculé si elle change.
+local function setContentHeight(panel, height)
+    panel.contentH = height
+    if panel.height ~= height then
+        panel:setHeight(height)
+        if panel.parent and panel.parent.calculateHeights then
+            panel.parent:calculateHeights()
+        end
+    end
+end
+
+--- Positions et hauteur (champ de code, boutons, dernière réplique ; radio
+--- du poste : le bouton « Poste de liaison » seul).
 function Panel:layout()
     local b, gap = RM.BORDER, self.gap
     local w = self.width - 2 * b
     local y = b
+    local postMode = self.postMode == true
+    self.postButton:setVisible(postMode)
+    self.requestButton:setVisible(not postMode)
+    for _, button in ipairs(self.optionButtons) do
+        button:setVisible(not postMode)
+    end
+    if postMode then
+        self.codeShown = false
+        self.codeEntry:setVisible(false)
+        self.postButton:setX(b)
+        self.postButton:setY(y)
+        self.postButton:setWidth(w)
+        self.postButton:setHeight(self.buttonH)
+        setButtonTitle(self, self.postButton, self.postButton.fullTitle)
+        setContentHeight(self, y + self.buttonH + b)
+        return
+    end
     self.codeShown = RM.codeRequired()
     self.codeEntry:setVisible(self.codeShown)
     if self.codeShown then
@@ -313,13 +370,7 @@ function Panel:layout()
     y = y + self.fh
     self.replyY = y
     y = y + math.max(1, #self.replyLines) * self.fh
-    self.contentH = y + b
-    if self.height ~= self.contentH then
-        self:setHeight(self.contentH)
-        if self.parent and self.parent.calculateHeights then
-            self.parent:calculateHeights()
-        end
-    end
+    setContentHeight(self, y + b)
 end
 
 function Panel:clear()
@@ -335,6 +386,17 @@ function Panel:readFromObject(player, device, deviceData, deviceType)
     self.playerNum = player:getPlayerNum()
     self.codeEntry:setText(MilitaryDrop.Client.rememberedCode(self.playerNum))
     self.lockedUntil = 0
+    -- Fenêtre réutilisée d'une radio à l'autre : mode à revoir à chaque fois.
+    local postMode = RM.isPostRadio(device)
+    if postMode ~= (self.postMode == true) then
+        self:clearJoypadFocus()
+        self.postMode = postMode
+        self:layout()
+    end
+    if postMode then
+        -- État de la radio (poste de l'équipe, d'une autre, ailleurs) : serveur.
+        MilitaryDrop.PostWindow.queryStatus(player, device)
+    end
     self:refresh()
     return true
 end
@@ -365,10 +427,16 @@ function Panel:refresh()
     end
     local now = getTimestampMs()
     self.nextRefresh = now + RM.REFRESH_MS
+    local locked = now < self.lockedUntil and "IGUI_MilitaryDrop_RadioModule_Sending" or nil
+    if self.postMode then
+        local PostWindow = MilitaryDrop.PostWindow
+        setState(self.postButton, locked or PostWindow.useReason(self.player, self.device),
+            getText(PostWindow.useTooltip(self.device)))
+        return
+    end
     if self.codeShown ~= RM.codeRequired() then
         self:layout()
     end
-    local locked = now < self.lockedUntil and "IGUI_MilitaryDrop_RadioModule_Sending" or nil
     local Menu = MilitaryDrop.ExchangeMenu
     setState(self.requestButton, locked or RM.requestReason(self.player, self.device, self.codeEntry:getText()),
         getText("IGUI_MilitaryDrop_RequestTooltip"))
@@ -413,6 +481,10 @@ end
 function Panel:render()
     RWMPanel.render(self)
     local b = RM.BORDER
+    if self.postMode then
+        self:renderFocus()
+        return
+    end
     if self.codeShown then
         self:drawText(RM.fit(self.codeLabel, self.font, self.codeLabelW), b,
             self.codeY + (self.buttonH - self.fh) / 2, 1, 1, 1, 1, self.font)
@@ -429,6 +501,11 @@ function Panel:render()
     for i, line in ipairs(self.replyLines) do
         self:drawText(line, b, self.replyY + (i - 1) * self.fh, c.r, c.g, c.b, 1, self.font)
     end
+    self:renderFocus()
+end
+
+--- Cadre de l'élément choisi à la manette.
+function Panel:renderFocus()
     local focused = self:focusedItem()
     if focused then
         local x, y, fw, fh = focused:getX(), focused:getY(), focused:getWidth(), focused:getHeight()
@@ -460,6 +537,20 @@ function Panel:onRequest()
     local code = RM.codeRequired() and RM.cleanCode(self.codeEntry:getText()) or nil
     self:lock()
     return MilitaryDrop.Client.call(self.player, self.device, code, false, { anchor = self.radioWindow }) ~= false
+end
+
+--- « Poste de liaison » (radio du poste) : MilitaryDrop.PostWindow.useRadio
+--- (installation puis console, console, ou confirmation du transfert).
+function Panel:onPost()
+    if not self.player or not self.device or not self.postMode then
+        return false
+    end
+    self:refresh()
+    if not self.postButton.enable then
+        return false
+    end
+    self:lock()
+    return MilitaryDrop.PostWindow.useRadio(self.player, self.device) ~= nil
 end
 
 --- Rapport, matricules, reconnaissance, réception : MilitaryDrop.ExchangeMenu.onOption.

@@ -320,8 +320,8 @@ function T.costs_and_tiers_follow_options()
     assertEq(R.cost(5), 8, "5 × 1,5 arrondi")
     SandboxVars.MilitaryDrop.RequisitionCostMultiplier = 10
     assertEq(R.cost(2), 1, "au moins 1 point")
-    assertEq(R.maxGroup(59), 1, "sous 60 : groupe 1")
-    assertEq(R.maxGroup(60), 2, "dès 60 : groupe 2")
+    assertEq(R.maxGroup(49), 1, "sous 50 : groupe 1")
+    assertEq(R.maxGroup(50), 2, "dès 50 : groupe 2")
     assertEq(R.maxGroup(75), 3, "dès 75 : groupe 3")
     SandboxVars.MilitaryDrop.RequisitionTier2 = 20
     assertEq(R.maxGroup(20), 2, "option RequisitionTier2")
@@ -335,8 +335,8 @@ function T.accepted_call_opens_the_form_without_launching()
     local reply = call()
     assertEq(reply.status, "form", "formulaire")
     assertEq(reply.requestId, 1, "même requestId")
-    assertEq(reply.budget, 12, "budget à la note 50")
-    assertEq(reply.tier, 3, "palier des répliques")
+    assertEq(reply.budget, 8, "budget à la note de départ 25")
+    assertEq(reply.tier, 2, "palier des répliques")
     assertEq(reply.callsign, MilitaryDrop.Teams.callsign(MilitaryDrop.Teams.idFor(PLAYER)), "indicatif")
     assertEq(reply.expiresMs, 300000, "5 minutes réelles")
     assertEq(#reply.lots, 18, "18 lots")
@@ -346,7 +346,7 @@ function T.accepted_call_opens_the_form_without_launching()
     assertEq(reply.lots[1].allowed, true, "palier I permis")
     for _, lot in ipairs(reply.lots) do
         if lot.group == 3 then
-            assertEq(lot.allowed, false, lot.id .. " refusé à 50")
+            assertEq(lot.allowed, false, lot.id .. " refusé à 25")
             assertEq(lot.reason, "tier", "motif palier")
         end
     end
@@ -359,20 +359,22 @@ end
 
 function T.new_team_has_only_tier_one()
     assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Teams.idFor(PLAYER)), MilitaryDrop.Trust.START, "équipe neuve")
-    assertEq(MilitaryDrop.Trust.START, 50, "confiance de départ inchangée")
+    assertEq(MilitaryDrop.Trust.START, 25, "confiance de départ : 25")
     for _, lot in ipairs(call().lots) do
         if lot.group == 1 then
             assertEq(lot.allowed, true, lot.id .. " : palier I permis")
         else
-            assertEq(lot.allowed, false, lot.id .. " : palier " .. lot.group .. " fermé à 50")
+            assertEq(lot.allowed, false, lot.id .. " : palier " .. lot.group .. " fermé à 25")
             assertEq(lot.reason, "tier", lot.id .. " : motif palier")
         end
     end
-    setNote(60)
+    setNote(50)
     NOW_MS = NOW_MS + 5000
     for _, lot in ipairs(call().lots) do
         if lot.group == 2 then
-            assertEq(lot.allowed, true, lot.id .. " : palier II ouvert à 60")
+            assertEq(lot.allowed, true, lot.id .. " : palier II ouvert à 50")
+        elseif lot.group == 3 then
+            assertEq(lot.allowed, false, lot.id .. " : palier III encore fermé à 50")
         end
     end
 end
@@ -502,7 +504,7 @@ function T.non_admin_gets_no_admin_form()
     local args = { requestId = 1, radio = { kind = "item", id = 7 }, order = { firearms = 1 }, force = true }
     NOW_MS = NOW_MS + 5000
     MilitaryDrop.Server.onClientCommand("MilitaryDrop", "RequisitionOrder", PLAYER, args)
-    assertEq(SENT[#SENT].args.status, "orderInvalid", "palier III refusé à la note 50")
+    assertEq(SENT[#SENT].args.status, "orderInvalid", "palier III refusé à la note de départ 25")
     assertEq(#flights(), 0, "aucun vol")
 end
 
@@ -521,7 +523,7 @@ function T.valid_order_launches_and_delivers_requisition_cases()
     local reply = order({ rations = 2, medical = 1, tools = 0 })
     assertEq(reply.status, "accepted", "commande acceptée")
     assertEq(reply.requestId, 1, "requestId de l'appel")
-    assertEq(reply.tier, 3, "même réponse qu'un appel accepté")
+    assertEq(reply.tier, 2, "même réponse qu'un appel accepté")
     assertEq(MilitaryDrop.Server.getState().lastDropHours, WORLD_HOURS, "délai consommé")
     assertEq(#flights(), 1, "un vol")
     local dropId = flights()[1].dropId
@@ -566,7 +568,7 @@ end
 
 function T.unspent_points_are_lost()
     call()
-    assertEq(order({ rations = 1 }).status, "accepted", "1 point sur 12")
+    assertEq(order({ rations = 1 }).status, "accepted", "1 point sur 8")
     assertEq(MilitaryDrop.Requisition.pendingFor("tester"), nil, "rien de reporté")
 end
 
@@ -575,6 +577,7 @@ end
 -- ----------------------------------------------------------------------------
 
 function T.invalid_orders_are_refused()
+    setNote(50)
     call()
     local cases = {
         { { rations = 13 }, "dépassement du budget" },
@@ -628,7 +631,7 @@ function T.cooldown_consumed_meanwhile_refuses_the_order()
     MilitaryDrop.Server.getState().lastDropHours = WORLD_HOURS
     local reply = order({ rations = 1 })
     assertEq(reply.status, "cooldown", "délai déjà consommé")
-    assertEq(reply.hours, 168, "heures restantes")
+    assertEq(reply.hours, 210, "heures restantes : 168 × 1,25 à la note de départ 25")
     assertEq(#flights(), 0, "aucun vol")
 end
 

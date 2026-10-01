@@ -2,7 +2,7 @@
 -- Military Drop — formulaire de réquisition (client, v1.4)
 --
 -- Ouvert quand le serveur accepte un appel et répond « form » (contrat de
--- docs/PLAN-V14.md) : feuille dactylographiée pincée sur une planchette de
+-- dev/PLAN-V14.md) : feuille dactylographiée pincée sur une planchette de
 -- tôle olive. Lots groupés par palier (I, II, III) puis « Commande spéciale »
 -- (le leurre, v1.5) ; chaque ligne : libellé, coût, boutons − et +, quantité
 -- écrite à la main. Lots non permis grisés avec leur raison. Budget, points
@@ -63,7 +63,7 @@ RW.SAFETY_MS = 2000
 RW.MAX_QTY = 99
 -- Seuils de confiance affichés pour un lot réservé à un palier (options
 -- sandbox, lues par nom composé ; valeurs par défaut du PLAN-V14).
-RW.TIER_OPTIONS = { [2] = { "RequisitionTier2", 60 }, [3] = { "RequisitionTier3", 75 } }
+RW.TIER_OPTIONS = { [2] = { "RequisitionTier2", 50 }, [3] = { "RequisitionTier3", 75 } }
 RW.GROUP_COUNT = 3
 -- Fermeture quand le joueur s'éloigne de la radio posée (même portée que le serveur).
 RW.CLOSE_DISTANCE = Radio.MAX_WORLD_DISTANCE + 0.5

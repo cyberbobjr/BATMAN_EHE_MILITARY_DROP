@@ -278,13 +278,14 @@ end
 
 function T.new_faction_starts_from_its_founders_lowest_note()
     poll()
-    setNote(Teams.idFor("alice"), 40)
+    -- newcomer, inconnu, compte pour la note de départ (25).
+    setNote(Teams.idFor("alice"), 20)
     setNote(Teams.idFor("bob"), 70)
     makeFaction("Rangers", "bob", { "alice", "newcomer" })
     poll()
     local team = Teams.idFor("bob")
     assertEq(Teams.idFor("alice"), team, "fondateurs réunis")
-    assertEq(Trust.get(team), 40, "plus basse note des fondateurs")
+    assertEq(Trust.get(team), 20, "plus basse note des fondateurs")
 end
 
 function T.founder_leaving_a_faction_brings_only_the_capped_note()
@@ -298,10 +299,10 @@ function T.founder_leaving_a_faction_brings_only_the_capped_note()
     assertEq(Trust.get(Teams.idFor("bob")), 50, "note de l'ancienne faction plafonnée à 50")
 end
 
-function T.unknown_founders_count_as_50()
+function T.unknown_founders_count_as_25()
     makeFaction("Rangers", "alice", {})
     poll()
-    assertEq(Trust.get(Teams.idFor("alice")), 50, "départ à 50")
+    assertEq(Trust.get(Teams.idFor("alice")), 25, "départ à 25")
 end
 
 function T.no_refresh_more_than_once_per_second()

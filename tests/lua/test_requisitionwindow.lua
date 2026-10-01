@@ -290,7 +290,7 @@ function T.greyed_lots_show_their_reason()
     args.lots[17].reason = "disabled"
     args.lots[18].reason = "weird"
     local form = RW.newForm(args, NOW)
-    assertEq(RW.reasonText(form.byId.ammo), "IGUI_MilitaryDrop_ReqReasonTier|60", "palier II : seuil par défaut")
+    assertEq(RW.reasonText(form.byId.ammo), "IGUI_MilitaryDrop_ReqReasonTier|50", "palier II : seuil par défaut")
     SandboxVars.MilitaryDrop.RequisitionTier2 = 55
     assertEq(RW.reasonText(form.byId.ammo), "IGUI_MilitaryDrop_ReqReasonTier|55", "palier II : seuil de l'option")
     assertEq(RW.reasonText(form.byId.firearms), "IGUI_MilitaryDrop_ReqReasonTier|75", "palier III")

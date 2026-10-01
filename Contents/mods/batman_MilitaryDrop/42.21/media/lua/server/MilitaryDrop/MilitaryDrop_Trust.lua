@@ -1,7 +1,8 @@
 -- ============================================================================
 -- Military Drop — confiance de la base, par équipe (serveur MP ou solo)
 --
--- Note de 0 à 100 (départ 50) par équipe (MilitaryDrop_Teams.lua). Rien n'est
+-- Note de 0 à 100 (départ 25, décision de l'utilisateur du 2026-10-01 : palier I
+-- seulement au départ) par équipe (MilitaryDrop_Teams.lua). Rien n'est
 -- affiché en chiffres au joueur : la base répond par palier (Trust.tier), un
 -- admin lit les notes par MilitaryDrop.Trust.debugPrint() en console.
 --
@@ -16,7 +17,8 @@
 --     fois par heure. La perte est appliquée au changement d'heure suivant, pas
 --     sur-le-champ : même privée, la note ne doit pas permettre de dater un
 --     appel compté (principe, comme le silence des codes faux).
---   * érosion (TrustErosion, désactivée par défaut) : un point par jour vers 50
+--   * érosion (TrustErosion, désactivée par défaut) : un point par jour vers la
+--     note de départ (25)
 --     sans échange depuis 24 h.
 -- Une perte qui laisse la note sous 15 coupe la ligne TrustLineCutDays jours de
 -- jeu (Server.evaluate répond « lineCut » après un canal et un code justes).
@@ -48,7 +50,9 @@ local Teams = MilitaryDrop.Teams
 local Trust = {}
 MilitaryDrop.Trust = Trust
 
-Trust.START = 50
+Trust.START = 25
+-- Note « neutre » du délai entre largages (×1) : le départ, plus bas, l'allonge.
+Trust.NEUTRAL = 50
 Trust.MIN = 0
 Trust.MAX = 100
 Trust.LINE_CUT_BELOW = 15
@@ -63,7 +67,7 @@ Trust.FAILED_CODE_WINDOW_HOURS = 1
 -- Paliers des réponses : <25, <50, <75, ≥75.
 Trust.TIER_BOUNDS = { 25, 50, 75 }
 Trust.FACTOR_AT_MIN = 1.5
-Trust.FACTOR_AT_START = 1
+Trust.FACTOR_AT_NEUTRAL = 1
 Trust.FACTOR_AT_MAX = 0.6
 Trust.EROSION_IDLE_HOURS = 24
 -- Largages clos gardés pour la console, puis oubliés.
@@ -131,7 +135,7 @@ end
 -- Lecture
 -- ----------------------------------------------------------------------------
 
---- Note de l'équipe, 0 à 100 (50 pour une équipe inconnue).
+--- Note de l'équipe, 0 à 100 (note de départ (Trust.START) pour une équipe inconnue).
 function Trust.get(teamId)
     local e = teamId and state().trust[teamId]
     return e and tonumber(e.value) or Trust.START
@@ -155,12 +159,12 @@ end
 --- Facteur du délai global entre deux largages pour l'équipe qui appelle.
 function Trust.factor(teamId)
     local value = Trust.get(teamId)
-    local span = Trust.START - Trust.MIN
-    if value <= Trust.START then
-        return Trust.FACTOR_AT_MIN + (Trust.FACTOR_AT_START - Trust.FACTOR_AT_MIN) * (value - Trust.MIN) / span
+    local span = Trust.NEUTRAL - Trust.MIN
+    if value <= Trust.NEUTRAL then
+        return Trust.FACTOR_AT_MIN + (Trust.FACTOR_AT_NEUTRAL - Trust.FACTOR_AT_MIN) * (value - Trust.MIN) / span
     end
-    span = Trust.MAX - Trust.START
-    return Trust.FACTOR_AT_START + (Trust.FACTOR_AT_MAX - Trust.FACTOR_AT_START) * (value - Trust.START) / span
+    span = Trust.MAX - Trust.NEUTRAL
+    return Trust.FACTOR_AT_NEUTRAL + (Trust.FACTOR_AT_MAX - Trust.FACTOR_AT_NEUTRAL) * (value - Trust.NEUTRAL) / span
 end
 
 -- ----------------------------------------------------------------------------
@@ -404,7 +408,7 @@ end
 -- Érosion et tâche horaire
 -- ----------------------------------------------------------------------------
 
---- Un point par jour vers 50 pour les équipes sans échange depuis 24 h.
+--- Un point par jour vers la note de départ pour les équipes sans échange depuis 24 h.
 function Trust.erode(hours)
     if not Config.get("TrustErosion") then
         return

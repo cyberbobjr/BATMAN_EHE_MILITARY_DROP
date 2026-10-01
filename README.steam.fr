@@ -1,0 +1,73 @@
+[h1]Military Drop - Largages de ravitaillement par radio[/h1]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/header.png[/img]
+
+[b]Build 42.21 · Solo et multijoueur · Autonome[/b]
+
+Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel militaire. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent… et le bruit attire les morts.
+
+[h2]Trouver la fréquence et le code[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-codebook-memo.png[/img]
+
+Les zombies militaires et policiers portent des notes de service avec la fréquence militaire, différente à chaque partie. Le code change chaque lundi : une station de chiffres le diffuse en ondes courtes, et un carnet de codes militaire le déchiffre.
+
+[h2]Appeler depuis votre radio[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/radio-logistics-en.png[/img]
+
+Clic droit sur une radio militaire, [b]Options de l'appareil[/b], section [b]Logistique[/b] : tapez le code et appuyez sur [b]Demander un largage[/b]. Talkie-walkie en main, à la ceinture ou dans un sac, ou radio posée.
+
+[h2]Remplir la réquisition[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/requisition-form-en.png[/img]
+
+Dépensez un budget de points sur 18 lots tirés des tables de butin du jeu, mods compris : rations, soins, munitions, armes à feu, carburant… Ou commandez un leurre à sirène qui entraîne les hordes vers le secteur de votre choix.
+
+[h2]Rejoindre la caisse[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/crate-model.png[/img]
+
+Entendez l'hélicoptère, voyez son ombre, puis foncez vers la grille annoncée, à 150 à 400 cases. Tous ceux qui écoutent la fréquence reçoivent le repère sur la carte, et une horde garde la caisse. La caisse vide se démonte pour son bois.
+
+[h2]Gagner la confiance de la base[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-console-missions.png[/img]
+
+Récupérez vos largages, envoyez vos rapports quotidiens, annoncez les matricules des soldats tombés et remplissez les missions publiques : reconnaissance, nettoyage d'une horde, appel de contrôle. La confiance raccourcit l'attente et augmente vos réquisitions.
+
+[h2]Tenir un poste de liaison[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/console-en.png[/img]
+
+Faites d'un radioamateur militaire fixe la console de votre station : journal des transmissions, ordres, plaques, confiance et demandes de largage. En multijoueur, chaque faction est une station avec son propre indicatif.
+
+[h2]Pour les admins[/h2]
+
+[list]
+[*]44 options du bac à sable : attente entre deux largages (une semaine par défaut, pour tout le serveur), distance, horde, mode du code, confiance, missions, réquisition, leurre.
+[*]Lots de réquisition modifiables, désactivables ou à ajouter dans Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]Multijoueur où le serveur décide de tout. Les admins peuvent forcer un largage et lancer des missions depuis une radio militaire.
+[/list]
+
+[h2]Compatibilité[/h2]
+
+[list]
+[*]Aucun autre mod requis.
+[*]Conçu pour cohabiter avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
+[*]Avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], une fumée verte signale la caisse.
+[*]Les objets de vos mods d'armes et d'objets apparaissent dans les caisses.
+[/list]
+
+[h2]Guide[/h2]
+
+Tout le détail, avec captures : [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/en/README.md]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/fr/README.md]guide complet (français)[/url].
+
+[h2]Soutenir le projet[/h2]
+
+Le mod vous plaît ? Un café aide à financer la suite.
+[url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
+
+[h2]Crédits[/h2]
+
+Réécriture pour la Build 42 de [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url] (Build 41). Code source (MIT) sur [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url].
