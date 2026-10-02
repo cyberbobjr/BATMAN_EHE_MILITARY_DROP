@@ -8,7 +8,7 @@
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel militaire. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent… et le bruit attire les morts.
 
-[b]BREAKING CHANGE — 0.1.2 :[/b] Réputation par personnage, indépendante du compte et de la faction. Les anciennes notes collectives ne sont pas transférées : les personnages existants commencent à 25. Les anciens largages ne modifient pas ces nouvelles notes. Progression des missions et plafonds deviennent personnels. Postes et indicatifs restent partagés.
+[b]BREAKING CHANGE — 0.1.2 :[/b] Réputation par personnage, indépendante du compte et de la faction. Les anciennes notes collectives ne sont pas transférées : les personnages existants commencent à 25. Les anciens largages ne modifient pas ces nouvelles notes.
 
 [h2]Trouver la fréquence et le code[/h2]
 

@@ -7,7 +7,7 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 
 ### Breaking changes
 
-- Existing collective reputation is not transferred: existing characters start at 25. Previous shared suspensions and mission progress do not carry over. Earlier drops cannot change the new personal scores. Faction posts and call signs remain shared.
+- Existing collective reputation is not transferred: existing characters start at 25. Previous shared suspensions do not carry over. Earlier drops cannot change the new personal scores.
 
 ### Changes
 

@@ -4,7 +4,7 @@
 
 ## Breaking change en 0.1.2
 
-**BREAKING CHANGE — 0.1.2 :** Réputation par personnage, indépendante du compte et de la faction. Les anciennes notes collectives ne sont pas transférées : les personnages existants commencent à 25. Les anciens largages ne modifient pas ces nouvelles notes. Progression des missions et plafonds deviennent personnels. Postes et indicatifs restent partagés.
+**BREAKING CHANGE — 0.1.2 :** Réputation par personnage, indépendante du compte et de la faction. Les anciennes notes collectives ne sont pas transférées : les personnages existants commencent à 25. Les anciens largages ne modifient pas ces nouvelles notes.
 
 ## Votre station
 

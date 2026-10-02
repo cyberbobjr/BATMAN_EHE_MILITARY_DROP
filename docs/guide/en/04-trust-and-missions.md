@@ -4,7 +4,7 @@
 
 ## Breaking change in 0.1.2
 
-**BREAKING CHANGE — 0.1.2:** Reputation belongs to each character, not the account or faction. Existing collective scores are not transferred: existing characters start at 25. Earlier drops do not affect the new scores. Mission progress and daily limits become personal. Shared posts and call signs remain.
+**BREAKING CHANGE — 0.1.2:** Reputation belongs to each character, not the account or faction. Existing collective scores are not transferred: existing characters start at 25. Earlier drops do not affect the new scores.
 
 ## Your station
 

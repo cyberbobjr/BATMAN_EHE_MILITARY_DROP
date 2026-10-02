@@ -8,7 +8,7 @@
 
 Stell ein Militärfunkgerät auf die richtige Frequenz ein, nenne den Code dieser Woche und fordere militärischen Nachschub an. Ein Hubschrauber wirft weit entfernt eine Kiste ab und gibt das Planquadrat an alle durch, die mithören... und der Lärm lockt die Toten an.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Ruf gehört dem Charakter, nicht Konto oder Fraktion. Alte Gruppenwerte werden nicht übertragen: bestehende Charaktere starten bei 25. Frühere Abwürfe ändern die neuen Werte nicht. Einsatzfortschritt und Tageslimits sind persönlich. Posten und Rufzeichen bleiben gemeinsam.
+[b]BREAKING CHANGE — 0.1.2:[/b] Ruf gehört dem Charakter, nicht Konto oder Fraktion. Alte Gruppenwerte werden nicht übertragen: bestehende Charaktere starten bei 25. Frühere Abwürfe ändern die neuen Werte nicht.
 
 [h2]Frequenz und Code finden[/h2]
 

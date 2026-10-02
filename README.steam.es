@@ -8,7 +8,7 @@
 
 Sintoniza una radio militar en la frecuencia correcta, da el código de la semana y pide suministros militares. Un helicóptero lanza una caja lejos y anuncia la cuadrícula a todos los que escuchan... y el ruido atrae a los muertos.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Reputación por personaje, independiente de cuenta y facción. Las notas colectivas no se transfieren: los personajes existentes empiezan en 25. Los lanzamientos anteriores no afectan las nuevas notas. Progreso y límites diarios personales. Puestos e indicativos siguen compartidos.
+[b]BREAKING CHANGE — 0.1.2:[/b] Reputación por personaje, independiente de cuenta y facción. Las notas colectivas no se transfieren: los personajes existentes empiezan en 25. Los lanzamientos anteriores no afectan las nuevas notas.
 
 [h2]Encuentra la frecuencia y el código[/h2]
 
