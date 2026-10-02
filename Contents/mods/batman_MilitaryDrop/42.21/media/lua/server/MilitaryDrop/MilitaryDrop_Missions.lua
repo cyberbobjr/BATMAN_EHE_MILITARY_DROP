@@ -6,10 +6,10 @@
 -- liaison (MilitaryDrop_Exchange.lua). Le serveur revérifie tout : radio,
 -- équipe (MilitaryDrop.Teams, au moment de l'échange), ligne coupée,
 -- échéance, objets possédés, cadence. Chaque gain passe par
--- MilitaryDrop.Trust.add (plafond quotidien commun, bonus du poste).
+-- MilitaryDrop.Trust.add (plafond quotidien personnel, bonus du poste).
 --
 --   * SRC-01 rapport de situation : +ReportGain, une fois par jour calendaire
---     et par équipe ;
+--     et par personnage ;
 --   * SRC-02 plaques d'identité vanilla (tag base:dogtag) renommées d'après
 --     leur porteur par le jeu (MilitaryDrop.Exchange.isDogTag : pas la plaque
 --     du joueur, pas une plaque vierge du butin). « Transmettre les
@@ -19,7 +19,7 @@
 --   * SRC-03 reconnaissance (publique) : grille dans l'anneau des largages
 --     autour d'un joueur connecté, sur la terre ferme (Missions.pickSite :
 --     centre d'un bâtiment, sinon route, la métagrille ne connaissant pas
---     l'eau) ; première équipe qui confirme à RECON_RADIUS cases au plus avant
+--     l'eau) ; premier personnage qui confirme à RECON_RADIUS cases au plus avant
 --     ReconHours → +ReconGain ;
 --   * SRC-04 nettoyage (publique) : horde signalée dans un rayon de
 --     CLEANUP_RADIUS cases autour d'un bâtiment entouré d'autres
@@ -31,12 +31,12 @@
 --     ceux-là comptent, où qu'ils meurent. Mort d'un zombie de la horde
 --     (OnZombieDead serveur), toute cause : compté pour le « reste » ; tueur
 --     zombie:getAttackedBy() IsoPlayer dont la ligne n'est pas coupée : compté
---     aussi pour son équipe (figée à la mort). À HORDE_SHARE (90 %) de la
---     horde morte, arrondi au supérieur, l'ordre se clôt : l'équipe qui en a
+--     aussi pour son personnage (figée à la mort). À HORDE_SHARE (90 %) de la
+--     horde morte, arrondi au supérieur, l'ordre se clôt : le personnage qui en a
 --     abattu le plus gagne +CleanupGain (égalité : la première à ce compte) ;
 --     aucune : clôture sans récompense. Sinon, échéance CleanupHours.
 --     « Faire le point » (Missions.cleanupStatus) : réponse privée, sans gain ;
---   * SRC-05 appel de contrôle : chaque équipe qui confirme la réception avant
+--   * SRC-05 appel de contrôle : chaque personnage qui confirme la réception avant
 --     ControlHours gagne +ControlGain, une fois.
 -- Planification : une mission de chaque type au plus ; la suivante est tirée
 -- <type>IntervalHours (±25 %) après la clôture de la précédente, si la chaîne
@@ -45,17 +45,17 @@
 -- désactivée.
 --
 -- État privé (MilitaryDrop.Secrets.privateState, jamais transmis aux clients) :
---   missions = { reports = { teamId = jour }, open = { recon|cleanup|control
+--   missions = { reports = { characterId = jour }, open = { recon|cleanup|control
 --     = mission }, nextHours = { type = heures }, last = { type = { id,
---     outcome, team, hours } }, nextId, dogtags = { ids = { identifiant
---     d'objet (chaîne) = teamId } } }
+--     outcome, character, hours } }, nextId, dogtags = { ids = { identifiant
+--     d'objet (chaîne) = characterId } } }
 --     (v1.3 en essai : les anciens champs a, b, issued, used des plaques
 --     numérotées du mod sont effacés au chargement.)
 --   mission = { id, kind, openedHours, deadline, text, x, y, radius, quota,
---     counts = { teamId = zombies de la horde abattus }, reached = { teamId =
+--     counts = { characterId = zombies de la horde abattus }, reached = { characterId =
 --     rang du dernier abattu (égalités) }, seq, horde = { ids = { clé de
 --     tenue = zombies vivants }, size, dead, hours } (nettoyage, horde
---     apparue), responded = { teamId = true } (appel de contrôle) }
+--     apparue), responded = { characterId = true } (appel de contrôle) }
 --     Ancien format (nettoyage v1.3 sans horde) : la horde apparaît à la
 --     prochaine arrivée, les anciens comptes sont remis à zéro.
 -- ModData de zombie : mission de nettoyage déjà comptée (double OnZombieDead
@@ -134,6 +134,17 @@ local function state()
         s.missions = {}
     end
     local m = s.missions
+    if m.characterSchema ~= 1 then
+        -- Preserve collective progress, without assigning it to living characters.
+        m.legacyTeamProgress = { reports = m.reports, open = {} }
+        for kind, mission in pairs(m.open or {}) do
+            m.legacyTeamProgress.open[kind] = { counts = mission.counts,
+                reached = mission.reached, responded = mission.responded }
+            mission.counts, mission.reached, mission.responded = {}, {}, {}
+        end
+        m.reports = {}
+        m.characterSchema = 1
+    end
     m.reports = m.reports or {}
     m.open = m.open or {}
     m.nextHours = m.nextHours or {}
@@ -219,12 +230,13 @@ local function begin(player, args, source)
     end
     ctx.radio = radio
     ctx.teamId = MilitaryDrop.Teams.idFor(player)
+    ctx.characterId = MilitaryDrop.Trust.idFor(player)
     ctx.callsign = MilitaryDrop.Teams.callsign(ctx.teamId) or ""
-    if MilitaryDrop.Trust.isLineCut(ctx.teamId) then
+    if MilitaryDrop.Trust.isLineCut(ctx.characterId) then
         reply(ctx, "lineCut", { getText("IGUI_MilitaryDrop_LineCut", ctx.callsign) })
         return nil
     end
-    MilitaryDrop.Trust.touch(ctx.teamId)
+    MilitaryDrop.Trust.touch(ctx.characterId)
     if not Exchange.isEnabled(source) then
         reply(ctx, "disabled", { getText("IGUI_MilitaryDrop_Reply_Disabled", ctx.callsign) })
         return nil
@@ -244,12 +256,12 @@ function Missions.report(player, args)
     end
     local reports = state().reports
     local day = currentDay()
-    if reports[ctx.teamId] == day then
+    if reports[ctx.characterId] == day then
         reply(ctx, "already", { getText("IGUI_MilitaryDrop_Reply_ReportAlready", ctx.callsign) })
         return
     end
-    reports[ctx.teamId] = day
-    MilitaryDrop.Trust.add(ctx.teamId, Exchange.gain("report"), "report", ctx.opts)
+    reports[ctx.characterId] = day
+    MilitaryDrop.Trust.add(ctx.characterId, Exchange.gain("report"), "report", ctx.opts)
     reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_Report_" .. (ZombRand(Missions.REPORT_REPLIES) + 1),
         ctx.callsign) })
 end
@@ -258,11 +270,11 @@ end
 -- SRC-02 : plaques d'identité vanilla (MilitaryDrop.Exchange.isDogTag)
 -- ----------------------------------------------------------------------------
 
---- Plafond quotidien de l'équipe atteint (état privé trust, MilitaryDrop_Trust.lua) :
+--- Plafond quotidien du personnage atteint (état privé, MilitaryDrop_Trust.lua) :
 --- une plaque transmise ne rapporterait rien, elle reste au joueur.
-local function capReached(teamId)
-    local trust = MilitaryDrop.Secrets.privateState().trust
-    local entry = type(trust) == "table" and trust[teamId]
+local function capReached(characterId)
+    local trust = MilitaryDrop.Secrets.privateState().characterTrust
+    local entry = type(trust) == "table" and trust[characterId]
     if not entry or entry.day ~= currentDay() then
         return false
     end
@@ -285,16 +297,17 @@ function Missions.isDogTagUsed(id)
     return key ~= nil and state().dogtags.ids[key] ~= nil
 end
 
---- Crédite une plaque à l'équipe (transmission radio ou boîte à courrier du
+--- Crédite une plaque au personnage (transmission radio ou boîte à courrier du
 --- poste, opts.fromPost) ; tag = { id = identifiant de l'objet, name = nom du
 --- soldat }. Renvoie le gain appliqué, ou nil et le motif : "disabled",
 --- "lineCut", "unknown" (identifiant mal formé), "used" (déjà transmise),
 --- "dailyCap" (non enregistrée : la plaque peut attendre demain).
 function Missions.creditDogTag(player, teamId, tag, opts)
-    if not teamId or not Exchange.isEnabled("dogtag") then
+    local characterId = MilitaryDrop.Trust.idFor(player)
+    if not characterId or not Exchange.isEnabled("dogtag") then
         return nil, "disabled"
     end
-    if MilitaryDrop.Trust.isLineCut(teamId) then
+    if MilitaryDrop.Trust.isLineCut(characterId) then
         return nil, "lineCut"
     end
     local key = normalizeId(type(tag) == "table" and tag.id)
@@ -305,18 +318,18 @@ function Missions.creditDogTag(player, teamId, tag, opts)
     if ids[key] then
         return nil, "used"
     end
-    if capReached(teamId) then
+    if capReached(characterId) then
         return nil, "dailyCap"
     end
     -- Confiance déjà au maximum : la plaque ne rapporterait rien, elle est
     -- gardée pour plus tard (la note peut redescendre).
-    if MilitaryDrop.Trust.get(teamId) >= MilitaryDrop.Trust.MAX then
+    if MilitaryDrop.Trust.get(characterId) >= MilitaryDrop.Trust.MAX then
         return nil, "full"
     end
-    ids[key] = teamId
-    MilitaryDrop.log("dog tag " .. key .. " (" .. tostring(tag.name) .. ") credited to " .. tostring(teamId)
+    ids[key] = characterId
+    MilitaryDrop.log("dog tag " .. key .. " (" .. tostring(tag.name) .. ") credited to " .. tostring(characterId)
         .. " by " .. tostring(player and player:getUsername()))
-    return MilitaryDrop.Trust.add(teamId, Exchange.gain("dogtag"), "dogtag", opts)
+    return MilitaryDrop.Trust.add(characterId, Exchange.gain("dogtag"), "dogtag", opts)
 end
 
 --- Lignes de la base après une transmission : noms crédités, noms déjà
@@ -400,16 +413,16 @@ local function interval(kind)
 end
 
 --- Clôt la mission ouverte d'un type ; la suivante est tirée après l'intervalle.
-local function close(kind, now, outcome, teamId, text)
+local function close(kind, now, outcome, characterId, text)
     local s = state()
     local mission = s.open[kind]
     if not mission then
         return
     end
     s.open[kind] = nil
-    s.last[kind] = { id = mission.id, outcome = outcome, team = teamId, hours = now }
+    s.last[kind] = { id = mission.id, outcome = outcome, character = characterId, hours = now }
     s.nextHours[kind] = now + interval(kind)
-    MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") " .. outcome .. " " .. tostring(teamId))
+    MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") " .. outcome .. " " .. tostring(characterId))
     if kind == "cleanup" then
         Missions.sendCleanupState()
     end
@@ -738,10 +751,10 @@ function Missions.confirmRecon(player, args)
             tostring(mission.y)) })
         return
     end
-    MilitaryDrop.Trust.add(ctx.teamId, Exchange.gain("recon"), "recon", ctx.opts)
+    MilitaryDrop.Trust.add(ctx.characterId, Exchange.gain("recon"), "recon", ctx.opts)
     reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_ReconDone", ctx.callsign) })
-    close("recon", now, "done", ctx.teamId, getText("IGUI_MilitaryDrop_Broadcast_ReconDone", tostring(mission.x),
-        tostring(mission.y), ctx.callsign))
+    close("recon", now, "done", ctx.characterId, getText("IGUI_MilitaryDrop_Broadcast_ReconDone", tostring(mission.x),
+        tostring(mission.y), MilitaryDrop.Trust.name(ctx.characterId)))
 end
 
 -- SRC-04 : nettoyage
@@ -918,36 +931,36 @@ function Missions.onLoadChunk()
     end
 end
 
---- Équipe qui a abattu le plus de zombies de la horde (égalité : la première
+--- Personnage qui a abattu le plus de zombies de la horde (égalité : le premier
 --- à ce compte), ou nil.
 function Missions.cleanupWinner(mission)
     local best, bestCount, bestRank = nil, 0, nil
-    for teamId, value in pairs(mission.counts or {}) do
+    for characterId, value in pairs(mission.counts or {}) do
         local count = tonumber(value) or 0
-        local rank = tonumber(mission.reached and mission.reached[teamId]) or math.huge
+        local rank = tonumber(mission.reached and mission.reached[characterId]) or math.huge
         if count > bestCount or (count == bestCount and count > 0 and rank < bestRank) then
-            best, bestCount, bestRank = teamId, count, rank
+            best, bestCount, bestRank = characterId, count, rank
         end
     end
     return best
 end
 
---- HORDE_SHARE atteinte : récompense de la meilleure équipe, clôture annoncée.
+--- HORDE_SHARE atteinte : récompense du meilleur personnage, clôture annoncée.
 local function finishCleanup(mission, now)
     local winner = Missions.cleanupWinner(mission)
     local x, y = tostring(mission.x), tostring(mission.y)
     if winner then
         MilitaryDrop.Trust.add(winner, Exchange.gain("cleanup"), "cleanup")
         close("cleanup", now, "done", winner, getText("IGUI_MilitaryDrop_Broadcast_CleanupDone", x, y,
-            MilitaryDrop.Teams.callsign(winner) or ""))
+            MilitaryDrop.Trust.name(winner)))
     else
         close("cleanup", now, "destroyed", nil, getText("IGUI_MilitaryDrop_Broadcast_CleanupNoWinner", x, y))
     end
 end
 
 --- Zombie mort (OnZombieDead, serveur) : seul un zombie de la horde compte,
---- où qu'il meure et quelle que soit la cause ; pour l'équipe de son tueur
---- joueur si sa ligne n'est pas coupée.
+--- où qu'il meure et quelle que soit la cause ; pour le personnage tueur
+--- joueur si sa ligne personnelle n'est pas coupée.
 function Missions.countKill(zombie)
     local now = hoursNow()
     local mission = Missions.openMission("cleanup", now)
@@ -969,13 +982,13 @@ function Missions.countKill(zombie)
     horde.dead = (tonumber(horde.dead) or 0) + 1
     local killer = zombie:getAttackedBy()
     if killer and instanceof(killer, "IsoPlayer") then
-        local teamId = MilitaryDrop.Teams.idFor(killer)
-        if teamId and not MilitaryDrop.Trust.isLineCut(teamId) then
+        local characterId = MilitaryDrop.Trust.idFor(killer)
+        if characterId and not MilitaryDrop.Trust.isLineCut(characterId) then
             mission.counts = mission.counts or {}
             mission.reached = mission.reached or {}
             mission.seq = (tonumber(mission.seq) or 0) + 1
-            mission.counts[teamId] = (tonumber(mission.counts[teamId]) or 0) + 1
-            mission.reached[teamId] = mission.seq
+            mission.counts[characterId] = (tonumber(mission.counts[characterId]) or 0) + 1
+            mission.reached[characterId] = mission.seq
         end
     end
     if horde.dead >= Missions.hordeTarget(horde) then
@@ -1002,7 +1015,7 @@ function Missions.cleanupStatus(player, args)
             tostring(mission.y), tostring(mission.radius)) })
         return
     end
-    local mine = tonumber(mission.counts and mission.counts[ctx.teamId]) or 0
+    local mine = tonumber(mission.counts and mission.counts[ctx.characterId]) or 0
     reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_CleanupStatus", ctx.callsign, tostring(mine),
         tostring(Missions.hordeLeft(mission.horde))) })
 end
@@ -1018,21 +1031,21 @@ function Missions.confirmControl(player, args)
         reply(ctx, "noMission", { getText("IGUI_MilitaryDrop_Reply_NoControl", ctx.callsign) })
         return
     end
-    if mission.responded[ctx.teamId] then
+    if mission.responded[ctx.characterId] then
         reply(ctx, "already", { getText("IGUI_MilitaryDrop_Reply_ControlAlready", ctx.callsign) })
         return
     end
-    mission.responded[ctx.teamId] = true
-    MilitaryDrop.Trust.add(ctx.teamId, Exchange.gain("control"), "control", ctx.opts)
+    mission.responded[ctx.characterId] = true
+    MilitaryDrop.Trust.add(ctx.characterId, Exchange.gain("control"), "control", ctx.opts)
     reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_ControlDone", ctx.callsign) })
 end
 
---- Missions ouvertes et progression de l'équipe (console du poste de liaison) :
+--- Missions ouvertes et progression du personnage (console du poste de liaison) :
 --- liste de { kind, title, text, deadlineHours (heures restantes), deadline
 --- (heure absolue), x, y, radius, progress, quota } ; nettoyage : progress
---- (zombies de la horde abattus par l'équipe), spotted (horde apparue), left
+--- (zombies de la horde abattus par le personnage), spotted (horde apparue), left
 --- (reste à abattre avant la clôture), down (morts), target (objectif).
-function Missions.listForTeam(teamId)
+function Missions.listForCharacter(characterId)
     local now = hoursNow()
     local list = {}
     for _, kind in ipairs(Missions.KINDS) do
@@ -1047,14 +1060,14 @@ function Missions.listForTeam(teamId)
                 -- la clôture, morts et objectif (barre) ; sinon pas encore repérée.
                 local horde = type(mission.horde) == "table" and mission.horde or nil
                 entry.spotted = horde ~= nil
-                entry.progress = horde and (tonumber(mission.counts and mission.counts[teamId]) or 0) or 0
+                entry.progress = horde and (tonumber(mission.counts and mission.counts[characterId]) or 0) or 0
                 if horde then
                     entry.left = Missions.hordeLeft(horde)
                     entry.down = tonumber(horde.dead) or 0
                     entry.target = Missions.hordeTarget(horde)
                 end
             elseif kind == "control" then
-                entry.progress = mission.responded[teamId] and 1 or 0
+                entry.progress = mission.responded[characterId] and 1 or 0
                 entry.quota = 1
             end
             list[#list + 1] = entry

@@ -74,7 +74,7 @@ A placed **US Army Ham Radio** shows a single **Liaison post** button instead: d
 - **"...static. Nobody answers on this frequency."** Wrong frequency **or** wrong code: you cannot tell which.
 - After **3 wrong codes in one day**, the base ignores you until the next day, even with the right code.
 - **"I can't reach them right now. I should try again in N hours."** The wait between drops is not over. By default: one drop per week of game time for the whole server, shorter or longer depending on your [trust](04-trust-and-missions.md).
-- **"...Your station's authorization is suspended..."** Your trust fell too low: the line is cut for a few days.
+- **"...Your personal authorization is suspended..."** Your trust fell too low: the line is cut for a few days.
 - **"...Send your requisition, over."** Accepted: fill the [requisition form](03-requisition-form.md). If the server disabled the form, the drop leaves at once with random supply cases.
 
 ## 4. The helicopter
@@ -127,9 +127,8 @@ Go to the grid. The crate appears when someone arrives and the area is loaded, a
 - Take the cases out, right-click each one: **Open Supply Case**. Contents are drawn from the game's loot tables (and your mods). A weapon comes with 2 magazines and 1 box of ammunition.
 - With **Signal Smoke**, green smoke marks the crate for 60 minutes of game time.
 
-Be quick: the first case opened by your station gives **+10 trust**. If nothing is opened within 48 hours of game time, the drop is lost (**-10**). If another station opens it first, you lose 5.
+Be quick: the first case opened by the requesting character gives **+10 trust**. If nothing is opened within 48 hours of game time, the drop is lost (**-10**). If another member of the calling faction opens it first, your character earns 5; if an outsider opens it, your character loses 5. The opener earns nothing.
 
 ### Dismantle the empty crate
 
 Empty the crate, carry a **hammer** and a **saw**, right-click it: **Dismantle the crate**. You get planks (or unusable wood) and Carpentry experience, like dismantling wooden furniture. The option is greyed with the reason if the crate is not empty or a tool is missing.
-

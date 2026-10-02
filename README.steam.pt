@@ -8,13 +8,15 @@
 
 Sintoniza um rádio militar na frequência certa, indica o código da semana e requisita abastecimentos militares. Um helicóptero larga um caixote ao longe e anuncia a quadrícula a todos os que estão à escuta... e o barulho atrai os mortos.
 
+[b]BREAKING CHANGE — 0.1.2:[/b] Reputação por personagem, independente da conta e fação. Notas coletivas não são transferidas: personagens existentes começam com 25. Lançamentos anteriores não afetam as novas notas. Progresso e limites diários pessoais. Postos e indicativos continuam partilhados.
+
 [h2]Encontrar a frequência e o código[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
 
-Os zombies militares e polícias levam memorandos com a frequência militar, diferente em cada partida. O código muda todas as segundas-feiras: uma estação de números transmite-o em ondas curtas e um livro de códigos militar decifra-o.
+Memorandos militares e policiais revelam a frequência. À segunda-feira, o livro de códigos decifra a emissão numérica em ondas curtas.
 
 [h2]Chamar a partir do teu rádio[/h2]
 
@@ -30,7 +32,7 @@ Clica com o botão direito num rádio militar, [b]Opções do Dispositivo[/b], s
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
 
-Gasta um orçamento de pontos em 18 lotes tirados das próprias tabelas de saque do jogo, mods incluídos: rações, material médico, munições, armas de fogo, combustível... Ou pede um isco com sirene que arrasta as hordas para um setor à tua escolha.
+Distribui pontos por 18 lotes de saque, incluindo mods. Ou pede um isco com sirene para desviar hordas.
 
 [h2]Chegar ao caixote[/h2]
 
@@ -38,9 +40,9 @@ Gasta um orçamento de pontos em 18 lotes tirados das próprias tabelas de saque
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
 
-Ouve o helicóptero, vê a sua sombra e corre até à quadrícula anunciada, a 150 a 400 quadrados de distância. Todos os que estão na frequência recebem o marcador no mapa, e uma horda guarda o caixote. Os caixotes vazios podem ser desmantelados para obter madeira.
+Chega ao caixote a 150–400 quadrados; uma horda guarda-o. Caixotes vazios dão madeira.
 
-[b]Mantém um rádio ligado e sintonizado na frequência militar.[/b] A quadrícula é anunciada quando o caixote aterra e repetida a cada 6 horas (definição do servidor) até alguém abrir uma caixa de abastecimento: um rádio desligado ou noutro canal não ouve nada, e não aparece nenhum marcador no teu mapa. Dica: guarda a frequência com [b]Adicionar predefinição[/b].
+[b]Mantém um rádio ligado na frequência militar.[/b] Quadrícula e marcador na aterragem e a cada 6 h até abrir. Desligado ou noutro canal: sem anúncio nem marcador. Guarda com [b]Adicionar predefinição[/b].
 
 [h2]Ganhar a confiança da base[/h2]
 
@@ -48,7 +50,28 @@ Ouve o helicóptero, vê a sua sombra e corre até à quadrícula anunciada, a 1
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
-Recupera os teus lançamentos, envia relatórios diários, anuncia as placas de identificação dos soldados caídos e responde às missões públicas: reconhecimento, limpeza de hordas, verificações de rádio. A confiança encurta a espera e desbloqueia requisições maiores.
+Confiança pessoal reduz a espera e aumenta requisições. Uma nova personagem começa com 25; guardar, reconectar ou mudar de fação mantém a nota.
+
+[h3]Reputação: ganhos e perdas[/h3]
+
+Os lançamentos afetam apenas a personagem requerente; outra que abra recebe 0. As restantes recompensas vão para quem age. Tempo de jogo e valores predefinidos.
+
+[table]
+[tr][td][b]Causa[/b][/td][td][b]Variação[/b][/td][/tr]
+[tr][td]Requerente abre a primeira caixa[/td][td]+10[/td][/tr]
+[tr][td]Outro membro da fação da chamada abre primeiro[/td][td]+5[/td][/tr]
+[tr][td]Alguém de fora abre primeiro[/td][td]−5[/td][/tr]
+[tr][td]Nenhuma caixa aberta em 48 h após entrega[/td][td]−10[/td][/tr]
+[tr][td]Primeiro relatório diário[/td][td]+1[/td][/tr]
+[tr][td]Cada placa com nome válida e inédita[/td][td]+2[/td][/tr]
+[tr][td]Primeiro reconhecimento: 25 quadrados / 48 h[/td][td]+3[/td][/tr]
+[tr][td]Mais mortes da horda, 90% morta[/td][td]+5[/td][/tr]
+[tr][td]Verificação de rádio em 4 h, uma vez por personagem[/td][td]+1[/td][/tr]
+[tr][td]3 códigos errados / chamadas na frequência errada em 1 h[/td][td]−2[/td][/tr]
+[tr][td]Erosão opcional após 24 h sem contacto[/td][td]−1 / +1[/td][/tr]
+[/table]
+
+Limite: +8/dia/personagem exceto lançamentos. Posto: relatório +2, placa +3, reconhecimento +5, rádio +2; limpeza +5. Nota: 0–100; perda abaixo de 15 corta a linha 3 dias. Missões expiradas, lançamentos admin e iscos: 0. Erosão desligada, regressa a 25.
 
 [h2]Manter um posto de ligação[/h2]
 
@@ -56,7 +79,7 @@ Recupera os teus lançamentos, envia relatórios diários, anuncia as placas de 
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Transforma um radioamador militar fixo na consola da tua estação: registo de transmissões, ordens, placas de identificação, confiança e pedidos de lançamento. Em multijogador, cada facção é uma estação com o seu próprio indicativo.
+Um rádio militar fixo torna-se consola partilhada: registo, ordens, placas e lançamentos. Cada fação tem indicativo; a confiança é pessoal.
 
 [h2]Para administradores de servidores[/h2]
 
@@ -77,7 +100,7 @@ Transforma um radioamador militar fixo na consola da tua estação: registo de t
 
 [h2]Guia[/h2]
 
-Tudo em pormenor, com capturas de ecrã: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/en/README.md]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/fr/README.md]guide complet (français)[/url].
+Tudo em pormenor, com capturas de ecrã: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
 
 [h2]Apoiar o projeto[/h2]
 

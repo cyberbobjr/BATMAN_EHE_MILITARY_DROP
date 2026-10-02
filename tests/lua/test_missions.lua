@@ -60,6 +60,10 @@ local function makePlayer(name, x, y, radio)
         }
     end
     ONLINE[#ONLINE + 1] = player
+    function player.getModData(self)
+        self.characterData = self.characterData or { MilitaryDrop_characterId = "C:" .. self:getUsername() }
+        return self.characterData
+    end
     return player
 end
 
@@ -340,27 +344,28 @@ end
 function T.report_gives_1_once_per_calendar_day()
     local alice = makePlayer("alice")
     call("MissionReport", alice)
-    assertEq(Trust.get("P:alice"), 26, "premier rapport : +1")
+    assertEq(Trust.get("C:alice"), 26, "premier rapport : +1")
     assertEq(lastReply(alice).status, "ok", "réponse")
     assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_Report_1|" .. Teams.callsign("P:alice"),
         "ligne de la base, avec l'indicatif")
     wait(10)
     call("MissionReport", alice)
-    assertEq(Trust.get("P:alice"), 26, "même jour calendaire : rien")
+    assertEq(Trust.get("C:alice"), 26, "même jour calendaire : rien")
     assertEq(lastReply(alice).status, "already", "déjà reçu")
     wait(14)
     call("MissionReport", alice)
-    assertEq(Trust.get("P:alice"), 27, "jour suivant : +1")
+    assertEq(Trust.get("C:alice"), 27, "jour suivant : +1")
 end
 
-function T.report_counts_per_team_not_per_player()
+function T.reports_are_personal_even_in_a_faction()
     makeFaction("Rangers", "alice", { "bob" })
     local alice, bob = makePlayer("alice"), makePlayer("bob")
-    local team = Teams.idFor(alice)
+    local team = Trust.idFor(alice)
     call("MissionReport", alice)
     call("MissionReport", bob)
-    assertEq(Trust.get(team), 26, "un rapport par équipe et par jour")
-    assertEq(lastReply(bob).status, "already", "le second membre est prévenu")
+    assertEq(Trust.get(team), 26, "rapport personnel Alice")
+    assertEq(Trust.get(Trust.idFor(bob)), 26, "rapport personnel Bob")
+    assertEq(lastReply(bob).status, "ok", "chaque personnage peut envoyer son rapport")
 end
 
 function T.radio_on_the_wrong_frequency_gets_no_answer()
@@ -368,7 +373,7 @@ function T.radio_on_the_wrong_frequency_gets_no_answer()
     call("MissionReport", alice)
     assertEq(lastReply(alice).status, "noAnswer", "mauvaise fréquence : pas de réponse")
     assertEq(#lastReply(alice).lines, 0, "aucune ligne de la base")
-    assertEq(Trust.get("P:alice"), 25, "aucun gain")
+    assertEq(Trust.get("C:alice"), 25, "aucun gain")
 end
 
 function T.radio_turned_off_or_not_in_hand_is_refused()
@@ -380,27 +385,27 @@ function T.radio_turned_off_or_not_in_hand_is_refused()
     assertEq(lastReply(bob).status, "noRadio", "radio absente des mains")
     call("MissionReport", bob, { radio = "forged" })
     assertEq(lastReply(bob).status, "noRadio", "référence invalide")
-    assertEq(Trust.get("P:bob"), 25, "aucun gain")
+    assertEq(Trust.get("C:bob"), 25, "aucun gain")
 end
 
 function T.exchanges_are_rate_limited_per_player()
     local alice = makePlayer("alice")
     call("MissionReport", alice)
-    local gain = Trust.get("P:alice")
+    local gain = Trust.get("C:alice")
     MilitaryDrop.Server.onClientCommand("MissionControl", alice, { radio = radioRef(alice), exchangeId = 2 })
     local reply = lastReply(alice)
     assertEq(reply.status, "busy", "second échange dans les 3 s : refusé, avec une réponse")
     assertEq(reply.exchangeId, 2, "l'échange refusé est libéré côté client")
     assertEq(#reply.lines, 0, "aucune ligne de la base (rien sur le canal)")
-    assertEq(Trust.get("P:alice"), gain, "rien de compté")
+    assertEq(Trust.get("C:alice"), gain, "rien de compté")
 end
 
 function T.cut_line_gets_the_line_cut_answer_and_no_gain()
     local alice = makePlayer("alice")
-    STATE.trust = { ["P:alice"] = { value = 10, lockedUntil = WORLD_HOURS + 72 } }
+    STATE.characterTrust = { ["C:alice"] = { value = 10, lockedUntil = WORLD_HOURS + 72 } }
     call("MissionReport", alice)
     assertEq(lastReply(alice).status, "lineCut", "ligne coupée")
-    assertEq(Trust.get("P:alice"), 10, "aucun gain")
+    assertEq(Trust.get("C:alice"), 10, "aucun gain")
 end
 
 function T.disabled_source_is_refused()
@@ -408,7 +413,7 @@ function T.disabled_source_is_refused()
     local alice = makePlayer("alice")
     call("MissionReport", alice)
     assertEq(lastReply(alice).status, "disabled", "source désactivée")
-    assertEq(Trust.get("P:alice"), 25, "aucun gain")
+    assertEq(Trust.get("C:alice"), 25, "aucun gain")
 end
 
 function T.exchange_from_the_team_post_gets_the_bonus_and_is_logged()
@@ -419,7 +424,7 @@ function T.exchange_from_the_team_post_gets_the_bonus_and_is_logged()
     }
     local alice = makePlayer("alice")
     call("MissionReport", alice)
-    assertEq(Trust.get("P:alice"), 27, "+1 depuis le poste : +50 %, arrondi à 2")
+    assertEq(Trust.get("C:alice"), 27, "+1 depuis le poste : +50 %, arrondi à 2")
     assertEq(records[1][1], "P:alice", "réponse notée au journal de l'équipe")
 end
 
@@ -431,10 +436,10 @@ function T.transmitted_dog_tag_gives_2_is_consumed_and_named_by_the_base()
     local alice = makePlayer("alice")
     local tag = giveTag(alice, 123456789, "John Doe")
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 27, "+2")
+    assertEq(Trust.get("C:alice"), 27, "+2")
     assertEq(#alice.tags, 0, "plaque consommée")
     assertEq(REMOVED[1], tag, "retrait transmis aux clients")
-    assertEq(STATE.missions.dogtags.ids["123456789"], "P:alice", "identifiant enregistré")
+    assertEq(STATE.missions.dogtags.ids["123456789"], "C:alice", "identifiant enregistré")
     assertEq(lastReply(alice).status, "ok", "réponse")
     assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_DogTags|" .. Teams.callsign("P:alice") .. "|John Doe",
         "la base cite le nom")
@@ -451,7 +456,7 @@ function T.blank_own_and_worn_dog_tags_are_not_transmitted()
     call("MissionDogTags", alice)
     assertEq(lastReply(alice).status, "noTags", "plaque vierge, la sienne, portée, d'animal : rien")
     assertEq(#alice.tags, 4, "tout est gardé")
-    assertEq(Trust.get("P:alice"), 25, "aucun gain")
+    assertEq(Trust.get("C:alice"), 25, "aucun gain")
 end
 
 function T.a_dog_tag_is_credited_only_once()
@@ -459,11 +464,11 @@ function T.a_dog_tag_is_credited_only_once()
     giveTag(alice, 77, "John Doe")
     giveTag(alice, 77, "John Doe")
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 27, "doublon : un seul gain")
+    assertEq(Trust.get("C:alice"), 27, "doublon : un seul gain")
     assertEq(#alice.tags, 0, "le doublon est remis aussi")
     local lines = lastReply(alice).lines
     assertTrue(string.find(lines[2], "IGUI_MilitaryDrop_Reply_DogTagsKnown", 1, true) == 1, "déjà transmise")
-    assertEq(select(2, Missions.creditDogTag(alice, "P:alice", { id = "77" })), "used", "API : déjà transmise")
+    assertEq(select(2, Missions.creditDogTag(alice, "C:alice", { id = "77" })), "used", "API : déjà transmise")
     assertEq(Missions.isDogTagUsed(77), true, "registre")
 end
 
@@ -473,12 +478,12 @@ function T.dog_tag_of_another_player_is_not_counted()
     call("MissionDogTags", alice)
     assertEq(lastReply(alice).status, "noTags", "seul l'inventaire du joueur compte")
     assertEq(#bob.tags, 1, "plaque de l'autre joueur intacte")
-    assertEq(Trust.get("P:alice"), 25, "aucun gain")
+    assertEq(Trust.get("C:alice"), 25, "aucun gain")
 end
 
 function T.dog_tags_are_kept_when_trust_is_already_at_maximum()
     local alice = makePlayer("alice")
-    STATE.trust = { ["P:alice"] = { value = 100 } }
+    STATE.characterTrust = { ["C:alice"] = { value = 100 } }
     giveTag(alice, 2001, "John Doe")
     call("MissionDogTags", alice)
     assertEq(#alice.tags, 1, "plaque gardée pour plus tard")
@@ -493,7 +498,7 @@ function T.daily_cap_keeps_the_remaining_dog_tags()
         giveTag(alice, 1000 + i, "Soldier " .. i)
     end
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 33, "plafond de 8 par jour")
+    assertEq(Trust.get("C:alice"), 33, "plafond de 8 par jour")
     assertEq(#alice.tags, 2, "plaques au-delà du plafond gardées")
     local lines = lastReply(alice).lines
     assertTrue(string.find(lines[1], "IGUI_MilitaryDrop_NamesMoreOne|Soldier 1, Soldier 2, Soldier 3", 1, true) ~= nil,
@@ -501,24 +506,24 @@ function T.daily_cap_keeps_the_remaining_dog_tags()
     assertTrue(string.find(lines[#lines], "IGUI_MilitaryDrop_Reply_DogTagsCap", 1, true) ~= nil, "la base le dit")
     wait(24)
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 37, "lendemain : le reste est crédité")
+    assertEq(Trust.get("C:alice"), 37, "lendemain : le reste est crédité")
     assertEq(#alice.tags, 0, "plus rien")
 end
 
 function T.credit_dog_tag_api_for_the_post_mailbox()
-    assertEq(Missions.creditDogTag(nil, "P:alice", { id = "42", name = "John Doe" }, { fromPost = true }), 3,
+    assertEq(Missions.creditDogTag(makePlayer("alice"), "C:alice", { id = "42", name = "John Doe" }, { fromPost = true }), 3,
         "+2 depuis le poste : 3")
-    assertEq(Missions.creditDogTag(nil, "P:alice", { id = "42" }), nil, "jamais deux fois")
-    assertEq(select(2, Missions.creditDogTag(nil, "P:alice", { id = "x" })), "unknown", "identifiant mal formé")
-    assertEq(select(2, Missions.creditDogTag(nil, "P:alice", nil)), "unknown", "rien")
+    assertEq(Missions.creditDogTag(makePlayer("alice"), "C:alice", { id = "42" }), nil, "jamais deux fois")
+    assertEq(select(2, Missions.creditDogTag(makePlayer("alice"), "C:alice", { id = "x" })), "unknown", "identifiant mal formé")
+    assertEq(select(2, Missions.creditDogTag(makePlayer("alice"), "C:alice", nil)), "unknown", "rien")
 end
 
 function T.trial_state_of_numbered_tags_does_not_break_loading()
-    STATE.missions = { dogtags = { a = 5, b = 7, issued = 3, used = { ["12345678"] = "P:alice" } } }
+    STATE.missions = { dogtags = { a = 5, b = 7, issued = 3, used = { ["12345678"] = "C:alice" } } }
     local alice = makePlayer("alice")
     giveTag(alice, 12345678, "John Doe")
     call("MissionDogTags", alice)
-    assertEq(Trust.get("P:alice"), 27, "ancien numéro sans effet sur le nouvel identifiant")
+    assertEq(Trust.get("C:alice"), 27, "ancien numéro sans effet sur le nouvel identifiant")
     local tags = STATE.missions.dogtags
     assertEq(tags.used, nil, "ancien registre effacé")
     assertEq(tags.a, nil, "anciens paramètres effacés")
@@ -747,16 +752,16 @@ function T.first_team_on_site_confirms_the_recon()
     Missions.launch("recon")
     call("MissionRecon", alice)
     assertEq(lastReply(alice).status, "tooFar", "loin de la grille")
-    assertEq(Trust.get("P:alice"), 25, "aucun gain")
+    assertEq(Trust.get("C:alice"), 25, "aucun gain")
     alice.x, alice.y = 300.5 + 18, 400.5 + 18
     call("MissionRecon", alice)
     assertEq(lastReply(alice).status, "tooFar", "à 25,46 cases : hors du rayon de 25")
     alice.x, alice.y = 300.5 + 15, 400.5 + 20
     call("MissionRecon", alice)
-    assertEq(Trust.get("P:alice"), 28, "première équipe à 25 cases : +3")
+    assertEq(Trust.get("C:alice"), 28, "première équipe à 25 cases : +3")
     call("MissionRecon", bob)
     assertEq(lastReply(bob).status, "noMission", "mission close pour les autres")
-    assertEq(Trust.get("P:bob"), 25, "le second ne gagne rien")
+    assertEq(Trust.get("C:bob"), 25, "le second ne gagne rien")
     local closing = AIRED[#AIRED][1][1]
     assertTrue(string.find(closing, "IGUI_MilitaryDrop_Broadcast_ReconDone|300|400|", 1, true) == 1,
         "clôture annoncée : " .. closing)
@@ -914,13 +919,13 @@ function T.only_horde_zombies_count()
     local horde = spawnNow()
     Missions.countKill(makeZombie("Tourist", 300, 400, alice, 77 * 65536 + 1))
     assertEq(cleanup().horde.dead, 0, "zombie de la zone hors horde : rien")
-    assertEq(cleanup().counts["P:alice"], nil, "rien pour l'équipe")
+    assertEq(cleanup().counts["C:alice"], nil, "rien pour l'équipe")
     local zombie = hordeZombie(horde[1], alice)
     zombie.x, zombie.y = 2000, 2000
     Missions.countKill(zombie)
     Missions.countKill(zombie)
     assertEq(cleanup().horde.dead, 1, "zombie de la horde sorti de la zone : compté, une fois")
-    assertEq(cleanup().counts["P:alice"], 1, "pour l'équipe du tueur")
+    assertEq(cleanup().counts["C:alice"], 1, "pour l'équipe du tueur")
 end
 
 function T.horde_deaths_without_a_player_count_only_for_the_rest()
@@ -930,10 +935,10 @@ function T.horde_deaths_without_a_player_count_only_for_the_rest()
     local horde = spawnNow()
     Missions.countKill(hordeZombie(horde[1], nil))
     Missions.countKill(hordeZombie(horde[2], { kind = "IsoZombie" }))
-    STATE.trust = { ["P:alice"] = { value = 10, lockedUntil = WORLD_HOURS + 72 } }
+    STATE.characterTrust = { ["C:alice"] = { value = 10, lockedUntil = WORLD_HOURS + 72 } }
     Missions.countKill(hordeZombie(horde[3], alice))
     assertEq(cleanup().horde.dead, 3, "feu, autre tueur, ligne coupée : comptés pour le reste")
-    assertEq(cleanup().counts["P:alice"], nil, "ligne coupée : rien pour l'équipe")
+    assertEq(cleanup().counts["C:alice"], nil, "ligne coupée : rien pour l'équipe")
 end
 
 function T.ninety_percent_closes_and_the_best_team_wins()
@@ -954,25 +959,27 @@ function T.ninety_percent_closes_and_the_best_team_wins()
     Missions.countKill(hordeZombie(horde[9], nil))
     assertEq(cleanup(), nil, "90 % de la horde morte : clos")
     assertEq(STATE.missions.last.cleanup.outcome, "done", "rempli")
-    assertEq(STATE.missions.last.cleanup.team, "P:alice", "égalité 4-4 : la première à 4")
-    assertEq(Trust.get("P:alice"), 30, "+5")
-    assertEq(Trust.get("P:bob"), 25, "rien pour l'autre")
+    assertEq(STATE.missions.last.cleanup.character, "C:alice", "égalité 4-4 : la première à 4")
+    assertEq(Trust.get("C:alice"), 30, "+5")
+    assertEq(Trust.get("C:bob"), 25, "rien pour l'autre")
     assertTrue(string.find(lastBroadcast(), "IGUI_MilitaryDrop_Broadcast_CleanupDone|300|400|"
-        .. Teams.callsign("P:alice"), 1, true) == 1, "clôture annoncée : " .. lastBroadcast())
+        .. Trust.name("C:alice"), 1, true) == 1, "clôture annoncée : " .. lastBroadcast())
     Missions.countKill(hordeZombie(horde[10], bob))
-    assertEq(Trust.get("P:bob"), 25, "après la clôture : rien")
+    assertEq(Trust.get("C:bob"), 25, "après la clôture : rien")
 end
 
-function T.the_team_with_the_most_kills_wins()
+function T.the_character_with_the_most_kills_wins_even_in_the_same_faction()
     SandboxVars.MilitaryDrop.CleanupQuota = 3
+    makeFaction("Rangers", "alice", { "bob" })
     local alice, bob = makePlayer("alice", 0, 0), makePlayer("bob", 0, 0)
     Missions.launch("cleanup")
     local horde = spawnNow()
     Missions.countKill(hordeZombie(horde[1], alice))
     Missions.countKill(hordeZombie(horde[2], bob))
     Missions.countKill(hordeZombie(horde[3], bob))
-    assertEq(STATE.missions.last.cleanup.team, "P:bob", "deux contre un")
-    assertEq(Trust.get("P:bob"), 30, "+5")
+    assertEq(STATE.missions.last.cleanup.character, "C:bob", "deux contre un")
+    assertEq(Trust.get("C:bob"), 30, "+5")
+    assertEq(Trust.get("C:alice"), 25, "no collective reward")
 end
 
 function T.horde_destroyed_without_any_player_kill_closes_without_reward()
@@ -985,7 +992,7 @@ function T.horde_destroyed_without_any_player_kill_closes_without_reward()
     end
     assertEq(cleanup(), nil, "clos")
     assertEq(STATE.missions.last.cleanup.outcome, "destroyed", "sans vainqueur")
-    assertEq(Trust.get("P:alice"), 25, "aucune récompense")
+    assertEq(Trust.get("C:alice"), 25, "aucune récompense")
     assertEq(lastBroadcast(), "IGUI_MilitaryDrop_Broadcast_CleanupNoWinner|300|400", "annonce sans vainqueur")
 end
 
@@ -993,15 +1000,15 @@ function T.team_is_frozen_at_the_kill()
     SandboxVars.MilitaryDrop.CleanupQuota = 10
     local faction = makeFaction("Rangers", "alice", { "bob" })
     local alice, bob = makePlayer("alice", 0, 0), makePlayer("bob", 0, 0)
-    local team = Teams.idFor(alice)
+    local team = Trust.idFor(alice)
     Missions.launch("cleanup")
     local horde = spawnNow()
     Missions.countKill(hordeZombie(horde[1], bob))
     faction.players = {}
     NOW_MS = NOW_MS + 5000
     Missions.countKill(hordeZombie(horde[2], bob))
-    assertEq(cleanup().counts[team], 1, "mort d'avant le départ : pour la faction")
-    assertEq(cleanup().counts["P:bob"], 1, "mort d'après : pour son équipe individuelle")
+    assertEq(cleanup().counts[team], nil, "Alice ne reçoit pas les morts de Bob")
+    assertEq(cleanup().counts["C:bob"], 2, "changer de faction ne change pas le compteur personnel")
 end
 
 function T.cleanup_expires_after_72_hours()
@@ -1014,7 +1021,7 @@ function T.cleanup_expires_after_72_hours()
     Missions.countKill(hordeZombie(horde[1], alice))
     Missions.update()
     assertEq(STATE.missions.last.cleanup.outcome, "expired", "expirée")
-    assertEq(Trust.get("P:alice"), 25, "aucun gain")
+    assertEq(Trust.get("C:alice"), 25, "aucun gain")
     -- Sans apparition (zone jamais visitée) : expire aussi.
     STATE.missions.nextHours.cleanup = WORLD_HOURS
     LOADED = function() return false end
@@ -1030,10 +1037,10 @@ function T.old_cleanup_format_stays_readable()
     local alice = makePlayer("alice", 0, 0)
     STATE.missions = { open = { cleanup = { id = "M7", kind = "cleanup", openedHours = WORLD_HOURS,
         deadline = WORLD_HOURS + 72, text = "ancienne annonce", x = 300, y = 400, radius = 40, quota = 3,
-        counts = { ["P:alice"] = 2 } } } }
+        counts = { ["C:alice"] = 2 } } } }
     Missions.countKill(makeZombie("Army", 300, 400, alice, 65537))
-    assertEq(cleanup().counts["P:alice"], 2, "ancien format : rien de compté, pas d'erreur")
-    local list = Missions.listForTeam("P:alice")
+    assertEq(cleanup().counts["C:alice"], nil, "anciens comptes collectifs archivés")
+    local list = Missions.listForCharacter("C:alice")
     assertEq(list[1].spotted, false, "horde pas encore repérée")
     assertEq(list[1].progress, 0, "anciens comptes ignorés")
     call("MissionCleanupStatus", alice)
@@ -1041,9 +1048,9 @@ function T.old_cleanup_format_stays_readable()
         .. "|300|400|40", "rendez-vous à la grille")
     local horde = spawnNow()
     assertEq(#horde, 3, "la horde apparaît à la prochaine arrivée")
-    assertEq(cleanup().counts["P:alice"], nil, "comptes remis à zéro")
+    assertEq(cleanup().counts["C:alice"], nil, "comptes remis à zéro")
     Missions.countKill(hordeZombie(horde[1], alice))
-    assertEq(cleanup().counts["P:alice"], 1, "seule la horde compte désormais")
+    assertEq(cleanup().counts["C:alice"], 1, "seule la horde compte désormais")
 end
 
 function T.status_report_before_and_after_the_horde_appears()
@@ -1066,7 +1073,7 @@ function T.status_report_before_and_after_the_horde_appears()
     call("MissionCleanupStatus", alice)
     assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_CleanupStatus|" .. callsign .. "|2|5",
         "deux abattus par la station ; reste 9 - 4 = 5 avant la clôture")
-    assertEq(Trust.get("P:alice"), 25, "aucun gain pour faire le point")
+    assertEq(Trust.get("C:alice"), 25, "aucun gain pour faire le point")
     SandboxVars.MilitaryDrop.CleanupGain = 0
     call("MissionCleanupStatus", alice)
     assertEq(lastReply(alice).status, "disabled", "nettoyages désactivés")
@@ -1102,16 +1109,17 @@ end
 -- SRC-05 appel de contrôle
 -- ----------------------------------------------------------------------------
 
-function T.every_team_that_answers_the_radio_check_gains_once()
+function T.every_character_that_answers_the_radio_check_gains_once()
+    makeFaction("Rangers", "alice", { "bob" })
     local alice, bob = makePlayer("alice"), makePlayer("bob")
     Missions.launch("control")
     call("MissionControl", alice)
     call("MissionControl", bob)
-    assertEq(Trust.get("P:alice"), 26, "première équipe : +1")
-    assertEq(Trust.get("P:bob"), 26, "seconde équipe : +1 aussi")
+    assertEq(Trust.get("C:alice"), 26, "première équipe : +1")
+    assertEq(Trust.get("C:bob"), 26, "seconde équipe : +1 aussi")
     call("MissionControl", alice)
     assertEq(lastReply(alice).status, "already", "une fois par équipe")
-    assertEq(Trust.get("P:alice"), 26, "pas de second gain")
+    assertEq(Trust.get("C:alice"), 26, "pas de second gain")
 end
 
 function T.radio_check_closes_after_4_hours()
@@ -1121,7 +1129,7 @@ function T.radio_check_closes_after_4_hours()
     wait(4)
     call("MissionControl", bob)
     assertEq(lastReply(bob).status, "noMission", "trop tard")
-    assertEq(Trust.get("P:bob"), 25, "aucun gain")
+    assertEq(Trust.get("C:bob"), 25, "aucun gain")
     Missions.update()
     assertEq(AIRED[#AIRED][1][1], "IGUI_MilitaryDrop_Broadcast_ControlClosed|1", "clôture : une station a répondu")
 end
@@ -1133,7 +1141,7 @@ function T.list_for_team_gives_open_missions_and_progress()
     Missions.launch("control")
     call("MissionControl", alice)
     wait(1)
-    local list = Missions.listForTeam("P:alice")
+    local list = Missions.listForCharacter("C:alice")
     assertEq(#list, 2, "deux missions ouvertes")
     assertEq(list[1].kind, "cleanup", "ordre fixe")
     assertEq(list[1].spotted, false, "horde pas encore repérée")
@@ -1145,15 +1153,15 @@ function T.list_for_team_gives_open_missions_and_progress()
     assertEq(list[2].progress, 1, "déjà confirmé")
     local horde = spawnNow()
     Missions.countKill(hordeZombie(horde[1], alice))
-    list = Missions.listForTeam("P:alice")
+    list = Missions.listForCharacter("C:alice")
     assertEq(list[1].spotted, true, "horde repérée")
     assertEq(list[1].progress, 1, "abattus par l'équipe")
     assertEq(list[1].left, 4, "reste à abattre : 5 sur 5 (90 %, arrondi au supérieur) moins 1")
     assertEq(list[1].down, 1, "morts de la horde")
     assertEq(list[1].target, 5, "objectif")
-    assertEq(#Missions.listForTeam("P:bob")[1].title > 0, true, "titre")
-    assertEq(Missions.listForTeam("P:bob")[1].progress, 0, "autre équipe : rien")
-    assertEq(Missions.listForTeam("P:bob")[2].progress, 0, "autre équipe : rien")
+    assertEq(#Missions.listForCharacter("C:bob")[1].title > 0, true, "titre")
+    assertEq(Missions.listForCharacter("C:bob")[1].progress, 0, "autre équipe : rien")
+    assertEq(Missions.listForCharacter("C:bob")[2].progress, 0, "autre équipe : rien")
 end
 
 function T.admin_launches_a_mission_on_demand()

@@ -48,7 +48,7 @@ end
 local function makePlayer(radio, where)
     where = where or "hand"
     local square = { getX = function() return 100 end, getY = function() return 200 end }
-    return {
+    local player = {
         getUsername = function() return "tester" end,
         getX = function() return 100.5 end,
         getY = function() return 200.5 end,
@@ -58,6 +58,12 @@ local function makePlayer(radio, where)
         getInventory = function() return { getItemWithID = function() return radio end } end,
         getCurrentSquare = function() return square end,
     }
+    function player.getModData(self)
+        self.characterData = self.characterData or { MilitaryDrop_characterId = "C:" .. self:getUsername() }
+        return self.characterData
+    end
+    function player.getDescriptor() return nil end
+    return player
 end
 
 function T.setup()
@@ -577,7 +583,7 @@ function T.accepted_request_carries_tier_callsign_and_a_drop_id()
     local flight = MilitaryDrop.Server.getState().flights[1]
     local drop = MilitaryDrop.Secrets.privateState().drops[flight.dropId]
     assertTrue(drop ~= nil, "largage enregistré")
-    assertEq(drop.team, MilitaryDrop.Teams.SOLO_ID, "équipe du demandeur au moment de l'appel")
+    assertEq(drop.character, MilitaryDrop.Trust.idFor(PLAYER), "équipe du demandeur au moment de l'appel")
     assertEq(drop.requester, "tester", "demandeur")
     fly(MilitaryDrop.Flight.dropTime(flight) + 0.5)
     assertEq(#PLACED_ITEMS, 2, "caisses au sol (repli)")
@@ -630,7 +636,7 @@ function T.grid_reminder_disabled_at_zero()
 end
 
 function T.line_cut_is_revealed_only_after_channel_and_code()
-    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    local team = MilitaryDrop.Trust.idFor(PLAYER)
     MilitaryDrop.Trust.add(team, -40, "drop")
     assertTrue(MilitaryDrop.Trust.isLineCut(team), "note sous 15 : ligne coupée")
     assertEq(evaluate(makeRadio(true, 107400), request(CODE)), "noAnswer", "mauvais canal : rien ne trahit la coupure")
@@ -638,7 +644,7 @@ function T.line_cut_is_revealed_only_after_channel_and_code()
     assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "lineCut", "canal et code justes : ligne coupée")
     MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
     assertEq(SENT[1].args.status, "lineCut", "réponse au joueur")
-    assertEq(SENT[1].args.callsign, MilitaryDrop.Teams.callsign(team), "indicatif dans la réponse")
+    assertEq(SENT[1].args.callsign, MilitaryDrop.Teams.callsign(MilitaryDrop.Teams.idFor(PLAYER)), "indicatif dans la réponse")
     assertEq(SENT[1].args.tier, nil, "aucun palier ni chiffre")
     assertEq(#(MilitaryDrop.Server.getState().flights or {}), 0, "aucun vol")
 end
@@ -646,18 +652,18 @@ end
 function T.cooldown_is_scaled_by_the_caller_team_trust()
     local state = MilitaryDrop.Server.getState()
     state.lastDropHours = WORLD_HOURS
-    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    local team = MilitaryDrop.Trust.idFor(PLAYER)
     MilitaryDrop.Trust.add(team, MilitaryDrop.Trust.MAX - MilitaryDrop.Trust.get(team), "drop")
     local private = MilitaryDrop.Secrets.privateState()
     local status, hours = evaluate(makeRadio(true, CHANNEL), request(CODE))
     assertEq(status, "cooldown", "délai")
     assertEq(hours, 101, "note 100 : 168 × 0,6")
-    private.trust[team].value = 0
+    private.characterTrust[team].value = 0
     status, hours = evaluate(makeRadio(true, CHANNEL), request(CODE))
     assertEq(status, "cooldown", "délai allongé")
     assertEq(hours, 252, "note 0 : 168 × 1,5")
     state.lastDropHours = WORLD_HOURS - 101
-    private.trust[team].value = 100
+    private.characterTrust[team].value = 100
     assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "délai raccourci écoulé")
 end
 
@@ -665,7 +671,7 @@ function T.repeated_wrong_codes_cost_trust_at_the_next_hour()
     for i = 1, MilitaryDrop.Server.FAILED_CODE_LIMIT do
         evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i))
     end
-    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    local team = MilitaryDrop.Trust.idFor(PLAYER)
     assertEq(MilitaryDrop.Trust.get(team), 25, "rien de visible sur-le-champ")
     triggerEvent("EveryHours")
     assertEq(MilitaryDrop.Trust.get(team), 23, "−2 au changement d'heure")
@@ -678,7 +684,7 @@ function T.repeated_unanswered_calls_cost_trust_whatever_the_cause()
         evaluate(makeRadio(true, 107400), request("ALPHA-ALPHA-01"))
     end
     triggerEvent("EveryHours")
-    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Teams.idFor(PLAYER)), 23, "mauvais canal : compté comme un code faux")
+    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Trust.idFor(PLAYER)), 23, "mauvais canal : compté comme un code faux")
 end
 
 function T.silenced_caller_still_counts_for_trust()
@@ -712,7 +718,7 @@ function T.v13_state_never_goes_to_the_public_mod_data()
     MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
     local flight = MilitaryDrop.Server.getState().flights[1]
     fly(MilitaryDrop.Flight.dropTime(flight) + 0.5)
-    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    local team = MilitaryDrop.Trust.idFor(PLAYER)
     MilitaryDrop.Trust.add(team, 5, "report")
     MilitaryDrop.Trust.onCaseOpened(PLACED_ITEMS[1], PLAYER)
     for i = 1, 3 do
@@ -720,12 +726,13 @@ function T.v13_state_never_goes_to_the_public_mod_data()
     end
     triggerEvent("EveryHours")
     local public = MilitaryDrop.Server.getState()
-    for _, key in ipairs({ "teams", "teamPlayers", "nextTeamId", "trust", "drops", "nextDropId", "missions",
+    for _, key in ipairs({ "teams", "teamPlayers", "nextTeamId", "trust", "characterTrust", "drops", "nextDropId", "missions",
         "posts", "postLogs", "postMail", "nextPostUid" }) do
         assertEq(public[key], nil, key .. " absent de la table publique")
     end
     local private = MilitaryDrop.Secrets.privateState()
-    assertTrue(private.teams[team] ~= nil and private.trust[team] ~= nil, "équipes et confiance dans l'état privé")
+    assertTrue(private.teams[MilitaryDrop.Teams.idFor(PLAYER)] ~= nil and private.characterTrust[team] ~= nil,
+        "équipes et confiance dans l'état privé")
     assertEq(private.drops[flight.dropId].outcome, "recovered", "largages dans l'état privé")
     assertTrue(public.flights ~= nil and public.lastDropHours ~= nil, "vols et délai restent publics")
 end

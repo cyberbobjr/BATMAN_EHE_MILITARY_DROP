@@ -522,13 +522,13 @@ end
 -- Console : données envoyées aux seuls membres
 -- ----------------------------------------------------------------------------
 
---- Missions en cours de l'équipe (module des missions, s'il est présent).
-function Post.missions(teamId)
+--- Missions en cours et progression du personnage (module des missions).
+function Post.missions(characterId)
     local Missions = MilitaryDrop.Missions
-    if type(Missions) ~= "table" or type(Missions.listForTeam) ~= "function" then
+    if type(Missions) ~= "table" or type(Missions.listForCharacter) ~= "function" then
         return {}
     end
-    local list = Missions.listForTeam(teamId)
+    local list = Missions.listForCharacter(characterId)
     local out = {}
     if type(list) ~= "table" then
         return out
@@ -594,7 +594,8 @@ local function mailOf(teamId)
 end
 
 --- Tout ce qu'affiche la console du poste de l'équipe (object : radio chargée).
-function Post.consoleData(teamId, object)
+function Post.consoleData(teamId, object, player)
+    local characterId = MilitaryDrop.Trust.idFor(player)
     local post = state().posts[teamId]
     post.snapshot = Post.snapshot(object, post.snapshot)
     local data = object:getDeviceData()
@@ -617,11 +618,11 @@ function Post.consoleData(teamId, object)
         power = post.snapshot.source,
         -- Charge de la pile (0 à 1), poste sur pile seulement.
         battery = post.snapshot.source == "battery" and tonumber(post.snapshot.power) or nil,
-        -- Palier de confiance (libellé côté client, jamais de chiffre affiché).
-        tier = Trust.tier(teamId),
-        lineCut = Trust.isLineCut(teamId),
+        -- Confiance du personnage qui consulte ce poste partagé.
+        tier = Trust.tier(characterId),
+        lineCut = Trust.isLineCut(characterId),
         lines = lines,
-        missions = Post.missions(teamId),
+        missions = Post.missions(characterId),
         mail = mail,
     }
 end
@@ -629,7 +630,7 @@ end
 --- Données de la console envoyées au joueur, avec son nom : en écran
 --- partagé, seule sa console les applique.
 function Post.sendConsole(player, teamId, object)
-    local data = Post.consoleData(teamId, object)
+    local data = Post.consoleData(teamId, object, player)
     data.username = tostring(player:getUsername())
     Net.toPlayer(player, "PostData", data)
 end
@@ -728,7 +729,7 @@ function Post.deposit(player, args)
     if not Exchange.isEnabled("dogtag") then
         return reply(player, "unavailable")
     end
-    if MilitaryDrop.Trust.isLineCut(teamId) then
+    if MilitaryDrop.Trust.isLineCut(MilitaryDrop.Trust.idFor(player)) then
         return reply(player, "lineCut")
     end
     local ids = type(args.items) == "table" and args.items or {}

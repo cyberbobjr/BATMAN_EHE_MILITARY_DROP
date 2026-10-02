@@ -159,13 +159,13 @@ local function decoyOffer()
         sectors = { "N", "E", "S", "W" } }
 end
 
---- Offre d'une équipe : budget, palier de lots, lots (ordre d'affichage) et
+--- Offre d'un personnage : budget, palier de lots, lots (ordre d'affichage) et
 --- leurre. Contrat de la réponse « form » (dev/PLAN-V14.md). forced :
 --- largage admin, tous les paliers et le budget d'une note maximale.
-function Requisition.offer(teamId, forced)
+function Requisition.offer(characterId, forced)
     -- Repli paresseux : un seul passage sur les tables pour les 18 lots.
     Lots.warm()
-    local note = forced and MilitaryDrop.Trust.MAX or MilitaryDrop.Trust.get(teamId)
+    local note = forced and MilitaryDrop.Trust.MAX or MilitaryDrop.Trust.get(characterId)
     local maxGroup = forced and math.huge or Requisition.maxGroup(note)
     local lots = {}
     for _, lot in ipairs(Lots.LIST) do
@@ -259,17 +259,18 @@ function Requisition.openForm(player, requestId, forced)
     forced = forced == true
     local name = tostring(player:getUsername())
     local teamId = MilitaryDrop.Teams.idFor(player)
-    local offer = Requisition.offer(teamId, forced)
+    local characterId = MilitaryDrop.Trust.idFor(player)
+    local offer = Requisition.offer(characterId, forced)
     pending[name] = { requestId = requestId, expiresAt = getTimestampMs() + Requisition.AUTH_MS,
-        forced = forced or nil }
+        forced = forced or nil, characterId = characterId }
     if not forced then
-        MilitaryDrop.Trust.touch(teamId)
+        MilitaryDrop.Trust.touch(characterId)
     end
     MilitaryDrop.log("request from " .. name .. ": " .. (forced and "admin " or "") .. "requisition form, budget "
         .. offer.budget)
     Net.toPlayer(player, "Result", {
         requestId = requestId, status = "form", forced = forced or nil,
-        callsign = MilitaryDrop.Teams.callsign(teamId), tier = MilitaryDrop.Trust.tier(teamId),
+        callsign = MilitaryDrop.Teams.callsign(teamId), tier = MilitaryDrop.Trust.tier(characterId),
         budget = offer.budget, expiresMs = Requisition.AUTH_MS,
         lots = offer.lots, decoy = offer.decoy,
     })
@@ -301,7 +302,7 @@ function Requisition.handleOrder(player, args)
         return
     end
     local auth = pending[name]
-    if not auth or auth.requestId ~= requestId then
+    if not auth or auth.requestId ~= requestId or auth.characterId ~= MilitaryDrop.Trust.idFor(player) then
         MilitaryDrop.log("order from " .. name .. " refused: no authorization")
         reply(player, requestId, "expired")
         return
@@ -324,7 +325,7 @@ function Requisition.handleOrder(player, args)
         return
     end
     local status = MilitaryDrop.Radio.status(radio, Config.getChannel())
-    if status == "wrongFrequency" or Server.isSilenced(name, math.floor(Server.clock() / 24)) then
+    if status == "wrongFrequency" or Server.isSilenced(MilitaryDrop.Trust.idFor(player), math.floor(Server.clock() / 24)) then
         reply(player, requestId, "noAnswer")
         return
     end
@@ -333,20 +334,21 @@ function Requisition.handleOrder(player, args)
         return
     end
     local teamId = MilitaryDrop.Teams.idFor(player)
-    if MilitaryDrop.Trust.isLineCut(teamId) then
+    local characterId = MilitaryDrop.Trust.idFor(player)
+    if MilitaryDrop.Trust.isLineCut(characterId) then
         pending[name] = nil
         reply(player, requestId, "lineCut", { callsign = MilitaryDrop.Teams.callsign(teamId) })
         return
     end
     -- Un autre joueur a pu appeler entre-temps.
     local now = getGameTime():getWorldAgeHours()
-    local wait = Server.hoursUntilNextDrop(Server.getState(), now, MilitaryDrop.Trust.factor(teamId))
+    local wait = Server.hoursUntilNextDrop(Server.getState(), now, MilitaryDrop.Trust.factor(characterId))
     if wait > 0 then
         pending[name] = nil
         reply(player, requestId, "cooldown", { hours = math.ceil(wait) })
         return
     end
-    local order, why = Requisition.validate(args.order, args.decoy, Requisition.offer(teamId))
+    local order, why = Requisition.validate(args.order, args.decoy, Requisition.offer(characterId))
     if not order then
         MilitaryDrop.log("order from " .. name .. " refused: " .. tostring(why))
         reply(player, requestId, "orderInvalid")
@@ -383,8 +385,8 @@ function Requisition.handleForcedOrder(player, args, auth)
         reply(player, requestId, "denied")
         return
     end
-    local teamId = MilitaryDrop.Teams.idFor(player)
-    local order, why = Requisition.validate(args.order, args.decoy, Requisition.offer(teamId, true))
+    local characterId = MilitaryDrop.Trust.idFor(player)
+    local order, why = Requisition.validate(args.order, args.decoy, Requisition.offer(characterId, true))
     if not order then
         MilitaryDrop.log("admin order from " .. name .. " refused: " .. tostring(why))
         reply(player, requestId, "orderInvalid")

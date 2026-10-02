@@ -35,7 +35,7 @@ Un poste de liaison est une radio militaire fixe dont votre station fait sa base
 - **Déposer mes plaques (N)** transfère les plaques de soldats tombés de votre inventaire au poste.
 - **Annoncer les matricules** les lit à la base. Les matricules annoncés depuis le poste rapportent 50 % de confiance en plus.
 
-**CONFIANCE** : votre confiance en mots, et son effet sur les largages (« Largages : délai réduit. »).
+**CONFIANCE** (personnelle au personnage qui consulte le poste) : votre confiance en mots, et son effet sur les largages (« Largages : délai réduit. »).
 
 **Code** et **Demander un largage** : le même appel que depuis la fenêtre radio. Le [formulaire de réquisition](03-requisition-form.md) s'ouvre à côté de la console.
 

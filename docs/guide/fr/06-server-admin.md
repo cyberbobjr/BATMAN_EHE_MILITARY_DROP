@@ -130,8 +130,8 @@ Ne partagez ni ne supprimez jamais la graine en cours de partie : les notes et c
 print(MilitaryDrop.Server.getCode())                                       -- code en vigueur
 print(MilitaryDrop.Config.formatChannel(MilitaryDrop.Config.getChannel())) -- fréquence militaire
 print(MilitaryDrop.NumbersStation.frequency)                               -- station de chiffres, en kHz
-MilitaryDrop.Trust.debugPrint()                                            -- confiance de chaque station
-MilitaryDrop.Trust.add("SOLO", 30, "drop")                                 -- donner de la confiance (station du solo)
+MilitaryDrop.Trust.debugPrint()                                            -- confiance de chaque personnage
+MilitaryDrop.Trust.add(MilitaryDrop.Trust.idFor(getPlayer()), 30, "drop")                                 -- donner de la confiance (station du solo)
 MilitaryDrop.Missions.launch("recon")                                      -- "recon", "cleanup" ou "control"
 getPlayer():getInventory():AddItem("MilitaryDrop.MilitaryMemo")
 getPlayer():getInventory():AddItem("MilitaryDrop.Codebook")

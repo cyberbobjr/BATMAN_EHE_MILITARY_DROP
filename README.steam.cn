@@ -8,13 +8,15 @@
 
 把军用无线电调到正确的频率，报出本周的认证码，申领军用物资。直升机会把空投箱投放到远处，并向所有收听者通报坐标……而噪音会引来死人。
 
+[b]BREAKING CHANGE — 0.1.2：[/b]声望归角色所有，与账号和派系无关。旧集体声望不转移：现有角色从25开始。旧空投不影响新声望。任务进度和每日上限改为个人。联络站和呼号仍共享。
+
 [h2]找到频率和认证码[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
 
-军人和警察僵尸身上带有写着军用频率的备忘录，每局游戏的频率都不同。认证码每周一更换：一个数字电台用短波播报它，军用密码本可以破译它。备忘录和密码本保持英文原样，就像真正的美军文件。
+军警备忘录提供频率。每周一，用军用密码本破译短波数字广播。
 
 [h2]用你的无线电呼叫[/h2]
 
@@ -30,7 +32,7 @@
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
 
-用点数预算从 18 类物资中挑选，物资取自游戏自身的战利品表（包括其他模组的物品）：口粮、医疗、弹药、枪械、燃料……也可以申领警报诱饵，把僵尸群引到你选择的扇区。
+点数可兑换18类战利品（含模组物品），或申领警报诱饵引走僵尸群。
 
 [h2]赶到空投箱[/h2]
 
@@ -38,9 +40,9 @@
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
 
-听到直升机声，看到它的影子，然后赶往 150 到 400 格外通报的坐标。频率上的每个人都会得到地图标记，而且有一群僵尸守着空投箱。空的空投箱可以拆解回收木材。
+前往150–400格外的空投箱，那里有僵尸群守卫。空箱可拆成木材。
 
-[b]请让一台无线电保持开启并调到军用频率。[/b]空投箱落地时会播报坐标，之后每 6 小时（服务器设置）重复一次，直到有人打开补给箱：关闭的无线电或调到其他频道的无线电什么也听不到，地图上也不会出现标记。提示：用[b]添加频道[/b]保存这个频率。
+[b]无线电须开启并调到军用频率。[/b]落地及每6小时播报坐标和地图标记，直到开箱。关闭或其他频道：无播报也无标记。用[b]添加频道[/b]保存频率。
 
 [h2]赢得基地的信任[/h2]
 
@@ -48,7 +50,28 @@
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
-回收你的空投，发送每日报告，通报阵亡士兵的狗牌，响应公开任务：侦察、清剿僵尸群、通信检查。信任度越高，等待时间越短，可申领的物资也越多。
+个人信任缩短等待并增加申领预算。新角色从25开始；存档、重连或换派系保留声望。
+
+[h3]声望增减表[/h3]
+
+空投只影响申请角色；其他打开者获得0。其他奖励归执行角色。均为游戏时间和默认值。
+
+[table]
+[tr][td][b]原因[/b][/td][td][b]变化[/b][/td][/tr]
+[tr][td]申请者打开第一个补给箱[/td][td]+10[/td][/tr]
+[tr][td]呼叫时所属派系的另一成员先打开[/td][td]+5[/td][/tr]
+[tr][td]派系外角色先打开[/td][td]−5[/td][/tr]
+[tr][td]落地后48小时内无人打开[/td][td]−10[/td][/tr]
+[tr][td]每天首次情况报告[/td][td]+1[/td][/tr]
+[tr][td]每个有效且未上报的实名狗牌[/td][td]+2[/td][/tr]
+[tr][td]首次侦察确认：25格内 / 48小时[/td][td]+3[/td][/tr]
+[tr][td]清剿群死亡90%时击杀最多[/td][td]+5[/td][/tr]
+[tr][td]4小时内确认通信检查，每角色一次[/td][td]+1[/td][/tr]
+[tr][td]1小时内3次错误认证码或错误频率呼叫[/td][td]−2[/td][/tr]
+[tr][td]24小时无联系后可选声望回归[/td][td]−1 / +1[/td][/tr]
+[/table]
+
+每日上限：每角色+8，空投除外。联络站加成：报告+2、狗牌+3、侦察+5、通信+2；清剿仍+5。声望0–100；扣分后低于15则断线3天。过期任务、管理员空投和诱饵：0。回归默认关闭，每日向25靠近。
 
 [h2]设立联络站[/h2]
 
@@ -56,7 +79,7 @@
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-把一台固定的军用无线电台变成你方电台的控制台：通讯记录、命令、狗牌、信任度和空投请求。在多人模式中，每个阵营就是一个电台，拥有自己的呼号。
+固定军用无线电成为共享控制台：记录、命令、狗牌和空投。每个派系有自己的呼号，信任归个人。
 
 [h2]服务器管理员[/h2]
 
@@ -77,7 +100,7 @@
 
 [h2]指南[/h2]
 
-所有细节和截图：[url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/en/README.md]完整指南（英文）[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/fr/README.md]guide complet（法文）[/url]。
+所有细节和截图：[url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]完整指南（英文）[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet（法文）[/url]。
 
 [h2]支持本项目[/h2]
 

@@ -27,7 +27,7 @@ La caisse est posée quand quelqu'un arrive et que la zone est chargée, jusqu'�
 Le formulaire est valable 5 minutes réelles. Rien n'a été dépensé : rappelez.
 
 **D'autres joueurs peuvent-ils voler mon largage ?**
-Oui. Tous ceux qui écoutent la fréquence militaire entendent la grille. Si une autre station ouvre votre caisse en premier, votre station perd 5 de confiance.
+Oui. Tous ceux qui écoutent la fréquence militaire entendent la grille. Si un autre membre de la faction de l'appel ouvre votre caisse en premier, votre personnage gagne 5 de confiance. Si l'ouvreur est extérieur, votre personnage perd 5. L'ouvreur ne gagne rien.
 
 **Les autres joueurs savent-ils que c'est un leurre ?**
 Non. Un leurre est identique à un vrai largage jusqu'à l'ouverture du coffre.

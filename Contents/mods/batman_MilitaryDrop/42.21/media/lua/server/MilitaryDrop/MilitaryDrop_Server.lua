@@ -149,7 +149,8 @@ function Server.isSilenced(name, day)
     return entry ~= nil and entry.day == day and entry.count >= Server.FAILED_CODE_LIMIT
 end
 
-function Server.recordFailedCode(name, day)
+function Server.recordFailedCode(player, day)
+    local name = MilitaryDrop.Trust.idFor(player)
     local entry = failedCodes[name]
     if not entry or entry.day ~= day then
         entry = { day = day, count = 0 }
@@ -159,9 +160,9 @@ function Server.recordFailedCode(name, day)
     if entry.count == Server.FAILED_CODE_LIMIT then
         MilitaryDrop.log(name .. ": " .. entry.count .. " wrong codes today, ignored until tomorrow", true)
     end
-    -- Code faux répété : perte de confiance de l'équipe (CONF-06). Un appel
+    -- Code faux répété : perte de confiance du personnage (CONF-06). Un appel
     -- sur une mauvaise fréquence compte aussi (Server.evaluate).
-    MilitaryDrop.Trust.onFailedCode(name)
+    MilitaryDrop.Trust.onFailedCode(player)
 end
 
 --- Code juste (ou non exigé) ; compte les codes faux et applique le silence.
@@ -169,17 +170,17 @@ function Server.checkCode(player, code)
     if Config.codeMode() == Codes.MODE_NONE then
         return true
     end
-    local name = tostring(player:getUsername())
+    local name = MilitaryDrop.Trust.idFor(player)
     local clock = Server.clock()
     local day = math.floor(clock / 24)
     if Server.isSilenced(name, day) then
         -- Appel sans réponse compté comme les autres (CONF-06) : la confiance
         -- ne distingue pas le silence d'un code faux.
-        MilitaryDrop.Trust.onFailedCode(name)
+        MilitaryDrop.Trust.onFailedCode(player)
         return false
     end
     if not Codes.matchesAny(code, Server.acceptedCodes(clock)) then
-        Server.recordFailedCode(name, day)
+        Server.recordFailedCode(player, day)
         return false
     end
     failedCodes[name] = nil
@@ -229,7 +230,7 @@ function Server.evaluate(player, args, now)
         -- confiance (CONF-06) : elle ne doit pas distinguer une mauvaise
         -- fréquence d'un mauvais code.
         if Config.codeMode() ~= Codes.MODE_NONE then
-            MilitaryDrop.Trust.onFailedCode(tostring(player:getUsername()))
+            MilitaryDrop.Trust.onFailedCode(player)
         end
         return "noAnswer"
     end
@@ -240,11 +241,11 @@ function Server.evaluate(player, args, now)
         return "noAnswer"
     end
     -- Ligne coupée et délai : révélés seulement après un canal et un code justes.
-    local teamId = MilitaryDrop.Teams.idFor(player)
-    if MilitaryDrop.Trust.isLineCut(teamId) then
+    local characterId = MilitaryDrop.Trust.idFor(player)
+    if MilitaryDrop.Trust.isLineCut(characterId) then
         return "lineCut"
     end
-    local wait = Server.hoursUntilNextDrop(Server.getState(), now, MilitaryDrop.Trust.factor(teamId))
+    local wait = Server.hoursUntilNextDrop(Server.getState(), now, MilitaryDrop.Trust.factor(characterId))
     if wait > 0 then
         return "cooldown", math.ceil(wait)
     end
@@ -632,13 +633,15 @@ function Server.launchDrop(player, requestId, forced, opts)
     if not forced then
         Server.getState().lastDropHours = now
     end
-    -- Équipe du demandeur au moment de l'appel ; réplique choisie par palier.
+    -- Station pour l'indicatif, personnage pour la réputation et le largage.
     local teamId = MilitaryDrop.Teams.idFor(player)
-    local dropId = MilitaryDrop.Trust.registerDrop(teamId, name, forced,
-        { untracked = opts.untracked, order = opts.order, decoy = opts.decoy })
-    MilitaryDrop.Trust.touch(teamId)
+    local characterId = MilitaryDrop.Trust.idFor(player)
+    local dropId = MilitaryDrop.Trust.registerDrop(characterId, name, forced,
+        { untracked = opts.untracked, order = opts.order, decoy = opts.decoy,
+            recoveryFaction = MilitaryDrop.Teams.factionIdFor(player) })
+    MilitaryDrop.Trust.touch(characterId)
     Net.toPlayer(player, "Result", { requestId = requestId, status = "accepted",
-        tier = MilitaryDrop.Trust.tier(teamId), callsign = MilitaryDrop.Teams.callsign(teamId) })
+        tier = MilitaryDrop.Trust.tier(characterId), callsign = MilitaryDrop.Teams.callsign(teamId) })
     MilitaryDrop.Flights.launch(x, y, name, requestId, forced, dropId)
     return dropId
 end
@@ -650,6 +653,7 @@ Server.COMMANDS = {
     -- Arrivée d'un client MP : vols en cours, nettoyage ouvert ou non
     -- (MilitaryDrop_Missions.lua, grisé de « Faire le point »).
     Sync = function(player)
+        MilitaryDrop.Trust.sync(player)
         MilitaryDrop.Flights.sendActive(player)
         if MilitaryDrop.Missions and MilitaryDrop.Missions.sync then
             MilitaryDrop.Missions.sync(player)

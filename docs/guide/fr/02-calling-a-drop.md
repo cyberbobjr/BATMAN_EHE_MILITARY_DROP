@@ -78,7 +78,7 @@ Un **Radioamateur de l'Armée américaine** posé n'affiche qu'un bouton **Poste
 - **« …grésillements. Personne ne répond sur cette fréquence. »** Mauvaise fréquence **ou** mauvais code : impossible de savoir lequel.
 - Après **3 codes faux dans la journée**, la base vous ignore jusqu'au lendemain, même avec le bon code.
 - **« Je ne peux pas les joindre pour l'instant. Je devrais réessayer dans N heures. »** L'attente entre deux largages n'est pas finie. Par défaut : un largage par semaine de jeu pour tout le serveur, plus ou moins selon votre [confiance](04-trust-and-missions.md).
-- **« …L'autorisation de votre station est suspendue… »** Votre confiance est trop basse : la ligne est coupée pour quelques jours.
+- **« …Votre autorisation personnelle est suspendue… »** Votre confiance est trop basse : la ligne est coupée pour quelques jours.
 - **« …Transmettez votre réquisition, à vous. »** Accepté : remplissez le [formulaire de réquisition](03-requisition-form.md). Si le serveur a désactivé le formulaire, le largage part aussitôt avec des caisses de ravitaillement aléatoires.
 
 ## 4. L'hélicoptère
@@ -131,7 +131,7 @@ Rendez-vous à la grille. La caisse apparaît quand quelqu'un arrive et que la z
 - Sortez les caisses et faites un clic droit sur chacune : **Ouvrir la caisse de ravitaillement**. Le contenu est tiré des tables de butin du jeu (et de vos mods). Une arme arrive avec 2 chargeurs et 1 boîte de munitions.
 - Avec **Signal Smoke**, une fumée verte signale la caisse pendant 60 minutes de jeu.
 
-Faites vite : la première caisse ouverte par votre station rapporte **+10 de confiance**. Si rien n'est ouvert dans les 48 heures de jeu, le largage est perdu (**-10**). Si une autre station l'ouvre avant vous, vous perdez 5.
+Faites vite : la première caisse ouverte par le personnage demandeur rapporte **+10 de confiance**. Si rien n'est ouvert dans les 48 heures de jeu, le largage est perdu (**-10**). Si un autre membre de la faction de l'appel l'ouvre avant vous, votre personnage gagne 5 ; si l'ouvreur est extérieur, il perd 5. L'ouvreur ne gagne rien.
 
 ### Démonter la caisse vide
 

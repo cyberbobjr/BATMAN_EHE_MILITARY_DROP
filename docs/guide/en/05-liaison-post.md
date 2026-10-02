@@ -31,7 +31,7 @@ A liaison post is a fixed military radio that your station uses as its base. It 
 - **Leave my tags (N)** moves your fallen soldiers' tags from your inventory to the post.
 - **Announce dog tags** reads them to the base. Tags announced from the post give 50% more trust.
 
-**STANDING**: your trust in words, and its effect on drops ("Drops: shorter wait.").
+**STANDING** (personal to the character using the post): your trust in words, and its effect on drops ("Drops: shorter wait.").
 
 **Code** and **Request a supply drop**: the same call as the radio window. The [requisition form](03-requisition-form.md) opens next to the console.
 

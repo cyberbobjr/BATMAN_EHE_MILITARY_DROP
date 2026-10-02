@@ -39,7 +39,7 @@ Then keep the base happy: [trust and missions](04-trust-and-missions.md) shorten
 The mod works in both. In multiplayer the server decides everything:
 
 - the wait between drops is shared by the **whole server** (one week of game time by default);
-- each faction is a **station** with its own call sign and trust (a player without a faction is a station alone);
+- each faction is a **station** with its own call sign; trust belongs to each character (a player without a faction is a station alone);
 - to transmit, your character takes the walkie-talkie in hand automatically;
 - drop coordinates are broadcast to everyone listening on the frequency. Other players can reach your crate first.
 

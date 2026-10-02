@@ -12,7 +12,7 @@ Quand la base accepte votre appel, elle répond *« Station Kilo-7, ici Logistiq
 
 Le tampon rouge **AUTORISÉ** indique combien de temps le formulaire reste valable : **5 minutes réelles**.
 
-Le **budget alloué** dépend de la [confiance](04-trust-and-missions.md) de votre station :
+Le **budget alloué** dépend de la [confiance](04-trust-and-missions.md) de votre personnage :
 
 | Confiance | 25 (départ) | 50 | 75 | 100 |
 |---|---|---|---|---|

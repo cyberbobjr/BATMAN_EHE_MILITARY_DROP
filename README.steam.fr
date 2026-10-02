@@ -8,13 +8,15 @@
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel militaire. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent… et le bruit attire les morts.
 
+[b]BREAKING CHANGE — 0.1.2 :[/b] Réputation par personnage, indépendante du compte et de la faction. Les anciennes notes collectives ne sont pas transférées : les personnages existants commencent à 25. Les anciens largages ne modifient pas ces nouvelles notes. Progression des missions et plafonds deviennent personnels. Postes et indicatifs restent partagés.
+
 [h2]Trouver la fréquence et le code[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
 
-Les zombies militaires et policiers portent des notes de service avec la fréquence militaire, différente à chaque partie. Le code change chaque lundi : une station de chiffres le diffuse en ondes courtes, et un carnet de codes militaire le déchiffre.
+Les notes des zombies militaires et policiers révèlent la fréquence. Chaque lundi, déchiffrez la station de chiffres sur ondes courtes avec le carnet de codes.
 
 [h2]Appeler depuis votre radio[/h2]
 
@@ -30,7 +32,7 @@ Clic droit sur une radio militaire, [b]Options de l'appareil[/b], section [b]Log
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
 
-Dépensez un budget de points sur 18 lots tirés des tables de butin du jeu, mods compris : rations, soins, munitions, armes à feu, carburant… Ou commandez un leurre à sirène qui entraîne les hordes vers le secteur de votre choix.
+Répartissez vos points sur 18 lots de butin, mods compris. Ou commandez un leurre à sirène pour détourner les hordes.
 
 [h2]Rejoindre la caisse[/h2]
 
@@ -38,9 +40,9 @@ Dépensez un budget de points sur 18 lots tirés des tables de butin du jeu, mod
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
 
-Entendez l'hélicoptère, voyez son ombre, puis foncez vers la grille annoncée, à 150 à 400 cases. Tous ceux qui écoutent la fréquence reçoivent le repère sur la carte, et une horde garde la caisse. La caisse vide se démonte pour son bois.
+Rejoignez la grille à 150–400 cases ; une horde garde la caisse. La caisse vide se démonte pour son bois.
 
-[b]Gardez une radio allumée et réglée sur la fréquence militaire.[/b] La grille est annoncée quand la caisse touche le sol, puis répétée toutes les 6 heures (réglage du serveur) jusqu'à ce qu'une caisse de ravitaillement soit ouverte : une radio éteinte ou sur une autre chaîne n'entend rien, et aucun repère n'apparaît sur votre carte. Astuce : enregistrez la fréquence avec [b]Ajouter un préréglage[/b].
+[b]Gardez une radio allumée sur la fréquence militaire.[/b] Grille et repère arrivent au largage puis toutes les 6 h jusqu’à ouverture. Radio éteinte ou autre chaîne : aucune annonce ni repère. Sauvegardez avec [b]Ajouter un préréglage[/b].
 
 [h2]Gagner la confiance de la base[/h2]
 
@@ -48,7 +50,28 @@ Entendez l'hélicoptère, voyez son ombre, puis foncez vers la grille annoncée,
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
-Récupérez vos largages, envoyez vos rapports quotidiens, annoncez les matricules des soldats tombés et remplissez les missions publiques : reconnaissance, nettoyage d'une horde, appel de contrôle. La confiance raccourcit l'attente et augmente vos réquisitions.
+La confiance personnelle raccourcit l’attente et augmente les réquisitions. Un nouveau personnage part de 25 ; sauvegarde, reconnexion et changement de faction préservent sa note.
+
+[h3]Réputation : gains et pertes[/h3]
+
+Pour un largage, seul le personnage demandeur gagne ou perd ; un autre ouvreur reçoit 0. Les autres gains vont au personnage qui agit. Durées en jeu et valeurs par défaut.
+
+[table]
+[tr][td][b]Cause[/b][/td][td][b]Variation[/b][/td][/tr]
+[tr][td]Le demandeur ouvre la première caisse[/td][td]+10[/td][/tr]
+[tr][td]Un autre membre de la faction de l’appel ouvre la première caisse[/td][td]+5[/td][/tr]
+[tr][td]Un personnage extérieur ouvre la première caisse[/td][td]−5[/td][/tr]
+[tr][td]Aucune caisse ouverte dans les 48 h après livraison[/td][td]−10[/td][/tr]
+[tr][td]Premier rapport de situation du jour[/td][td]+1[/td][/tr]
+[tr][td]Chaque plaque nominative valide et inédite[/td][td]+2[/td][/tr]
+[tr][td]Première reconnaissance confirmée à 25 cases / sous 48 h[/td][td]+3[/td][/tr]
+[tr][td]Plus de victimes dans la horde de nettoyage, morte à 90 %[/td][td]+5[/td][/tr]
+[tr][td]Contrôle confirmé sous 4 h, une fois par personnage[/td][td]+1[/td][/tr]
+[tr][td]3 codes faux / appels sur mauvaise fréquence en 1 h[/td][td]−2[/td][/tr]
+[tr][td]Érosion optionnelle après 24 h sans contact[/td][td]−1 / +1[/td][/tr]
+[/table]
+
+Plafond : +8/jour/personnage hors largages. Bonus du poste : rapport +2, plaque +3, reconnaissance +5, contrôle +2 ; nettoyage +5. Note : 0–100 ; une perte sous 15 coupe la ligne 3 jours. Missions expirées, largages admin et leurres : 0. Érosion désactivée par défaut, retour vers 25.
 
 [h2]Tenir un poste de liaison[/h2]
 
@@ -56,7 +79,7 @@ Récupérez vos largages, envoyez vos rapports quotidiens, annoncez les matricul
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Faites d'un radioamateur militaire fixe la console de votre station : journal des transmissions, ordres, plaques, confiance et demandes de largage. En multijoueur, chaque faction est une station avec son propre indicatif.
+Une radioamateur militaire fixe devient la console partagée de la station : journal, ordres, plaques et largages. La faction garde son indicatif ; la confiance est personnelle.
 
 [h2]Pour les admins[/h2]
 
@@ -77,7 +100,7 @@ Faites d'un radioamateur militaire fixe la console de votre station : journal de
 
 [h2]Guide[/h2]
 
-Tout le détail, avec captures : [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/en/README.md]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/blob/main/docs/guide/fr/README.md]guide complet (français)[/url].
+Tout le détail, avec captures : [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
 
 [h2]Soutenir le projet[/h2]
 

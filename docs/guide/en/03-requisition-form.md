@@ -12,7 +12,7 @@ When the base accepts your call, it answers *"Station Kilo-7, this is Logistics.
 
 The red **AUTHORIZED** stamp shows how long the form stays valid: **5 real minutes**.
 
-Your **allocated budget** depends on your station's [trust](04-trust-and-missions.md):
+Your **allocated budget** depends on your character's [trust](04-trust-and-missions.md):
 
 | Trust | 25 (start) | 50 | 75 | 100 |
 |---|---|---|---|---|

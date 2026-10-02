@@ -184,3 +184,29 @@ Options par défaut (formulaire actif). Confiance réglable pour les essais : `M
 - v1.3 : un client ne connaît pas la fréquence militaire tirée au hasard (seules les notes la donnent) ; deux factions ; indicatif conservé après un renommage ; appel de contrôle crédité aux deux ; reconnaissance et nettoyage à la première ; un joueur de l'autre faction ne peut ni installer ni ouvrir le poste ; talkie à la ceinture : prise en main puis échange accepté par le serveur.
 - Code de la semaine : les deux clients entendent la station et lisent le même carnet ; la graine et le code restent absents de la ModData (`ModData.request("MilitaryDrop")` côté client) ; 3 codes faux d'un joueur ne font pas taire la base pour l'autre.
 - Avec HEF actif : départ retardé si un événement HEF est proche.
+
+
+## Réputation personnelle — 0.1.2 (à valider en jeu)
+
+Redémarrage complet requis. Ces cas n'ont pas encore été exécutés en jeu.
+En solo, lire l'identité et la note dans la console de débogage :
+
+```lua
+local id = MilitaryDrop.Trust.idFor(getSpecificPlayer(0))
+print(id, MilitaryDrop.Trust.get(id))
+```
+
+| Cas | Attendu |
+|---|---|
+| Partie existante avec l'ancien mod, premier contact | Nouvelle note à 25 ; anciennes notes conservées sans transfert ; largages antérieurs sans effet sur les nouvelles notes |
+| Gagner des points, sauvegarder, quitter complètement et relancer | Même identité, même note, même plafond quotidien et même suspension éventuelle |
+| Mort puis nouveau personnage sur la même sauvegarde, avec le même nom | Nouvelle identité, note 25 ; aucune sanction ni aucun gain du personnage précédent |
+| MP : déconnexion, redémarrage serveur, reconnexion du même personnage | Identité et note conservées ; tester aussi après modification des favoris d'inventaire (ModData vanilla) |
+| MP : deux personnages dans la même faction, rapport et contrôle chacun | Récompense personnelle pour chacun ; plafond de +8 séparé |
+| Créer, rejoindre, quitter et dissoudre une faction | Identité et note de chaque personnage inchangées |
+| Poste partagé, deux personnages avec des notes différentes | Même poste et indicatif, confiance et progression propres au personnage qui ouvre la console |
+| Demander un largage puis ouvrir sa première caisse | +10 au demandeur, une seule fois |
+| Un autre membre de la faction de l'appel ouvre la caisse | +5 au personnage demandeur uniquement, une seule fois ; aucun gain pour l'ouvreur |
+| Un personnage extérieur à la faction de l'appel ouvre la caisse, y compris un successeur sans faction | −5 au demandeur d'origine ; aucun gain ni aucune perte pour l'ouvreur |
+| MP : nettoyage partagé entre deux membres de faction | Comptes séparés ; +5 seulement au personnage ayant le plus de morts de la horde |
+| Écran partagé, second personnage ajouté après le démarrage | Identités et réputations séparées ; synchronisation de l'identité du second joueur |

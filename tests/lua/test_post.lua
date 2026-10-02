@@ -149,6 +149,10 @@ local function makePlayer(name, x, y, z, items)
             getSurname = function() return "Smith" end }
     end
     PLAYERS[name] = player
+    function player.getModData(self)
+        self.characterData = self.characterData or { MilitaryDrop_characterId = "C:" .. self:getUsername() }
+        return self.characterData
+    end
     return player
 end
 
@@ -578,8 +582,8 @@ end
 
 function T.console_data_has_labels_but_no_trust_number()
     WORLD_HOURS = 1000
-    MilitaryDrop.Missions = { listForTeam = function(teamId)
-        assertEq(teamId, "SOLO", "missions de l'équipe")
+    MilitaryDrop.Missions = { listForCharacter = function(teamId)
+        assertEq(teamId, "C:alice", "missions du personnage")
         -- Format du module des missions : deadline absolue, deadlineHours restantes.
         return { { kind = "cleanup", title = "Nettoyage", text = "Zone", deadline = 1030, deadlineHours = 30,
             progress = 12, hours = 72, x = 300.5, y = 400, spotted = true, left = 9, down = 18, target = 27 },
@@ -880,8 +884,8 @@ end
 function T.no_deposit_while_the_line_is_cut()
     ALICE.inventory = makeInventory({ makeItem(3, "John Doe") })
     install(ALICE, RADIO)
-    STATE.trust = STATE.trust or {}
-    STATE.trust.SOLO = { value = 10, lockedUntil = WORLD_HOURS + 72 }
+    STATE.characterTrust = STATE.characterTrust or {}
+    STATE.characterTrust["C:alice"] = { value = 10, lockedUntil = WORLD_HOURS + 72 }
     command("PostDeposit", ALICE, { radio = ref(RADIO), items = { 3 } })
     assertEq(lastSent("PostResult").status, "lineCut", "dépôt refusé")
     assertEq(#ALICE.inventory.items, 1, "la plaque reste à son porteur")
@@ -1013,6 +1017,22 @@ function T.post_button_is_greyed_on_another_team_post()
     -- Poste installé ou déplacé : états oubliés, redemandés.
     MilitaryDrop.Client.onServerCommand("MilitaryDrop", "PostInfo", { none = true })
     assertEq(PostWindow.radioStatus(RADIO), "none", "état redeviné")
+end
+
+function T.shared_post_shows_the_acting_characters_personal_standing()
+    isServer = function() return true end
+    makeFaction("Rangers", "alice", { "bob" })
+    local bob = makePlayer("bob", 100, 101, 0)
+    install(ALICE, RADIO)
+    local a, b = MilitaryDrop.Trust.idFor(ALICE), MilitaryDrop.Trust.idFor(bob)
+    MilitaryDrop.Trust.add(a, 65, "drop")
+    MilitaryDrop.Trust.add(b, -20, "drop")
+    local team = Teams.idFor(ALICE)
+    local aliceData = Post.consoleData(team, RADIO, ALICE)
+    local bobData = Post.consoleData(team, RADIO, bob)
+    assertEq(aliceData.tier, 4, "Alice has high esteem")
+    assertEq(bobData.tier, 1, "Bob has low standing")
+    assertTrue(bobData.lineCut and not aliceData.lineCut, "only Bob is suspended")
 end
 
 return T

@@ -27,7 +27,7 @@ The crate is placed when someone arrives and the area is loaded, up to 30 tiles 
 The form is valid for 5 real minutes. Nothing was spent: call again.
 
 **Can other players steal my drop?**
-Yes. Everyone tuned to the military frequency hears the grid. If another station opens your crate first, your station loses 5 trust.
+Yes. Everyone tuned to the military frequency hears the grid. If another member of the calling faction opens your crate first, your character earns 5 trust. If an outsider opens it, your character loses 5. The opener earns nothing.
 
 **Do the other players know it is a decoy?**
 No. A decoy looks exactly like a real drop until someone opens the trunk.

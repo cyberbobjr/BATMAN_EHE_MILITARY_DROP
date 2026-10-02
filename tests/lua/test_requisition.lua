@@ -153,7 +153,7 @@ local function makeRadio(on, channel)
 end
 
 local function makePlayer(radio, name)
-    return {
+    local player = {
         getUsername = function() return name or "tester" end,
         getX = function() return 100.5 end,
         getY = function() return 200.5 end,
@@ -161,6 +161,12 @@ local function makePlayer(radio, name)
         getSecondaryHandItem = function() return nil end,
         getClothingItem_Back = function() return nil end,
     }
+    function player.getModData(self)
+        self.characterData = self.characterData or { MilitaryDrop_characterId = "C:" .. self:getUsername() }
+        return self.characterData
+    end
+    function player.getDescriptor() return nil end
+    return player
 end
 
 function T.setup()
@@ -297,7 +303,7 @@ local function flights()
 end
 
 local function setNote(value)
-    local team = MilitaryDrop.Teams.idFor(PLAYER)
+    local team = MilitaryDrop.Trust.idFor(PLAYER)
     MilitaryDrop.Trust.add(team, value - MilitaryDrop.Trust.get(team), "drop")
 end
 
@@ -380,7 +386,7 @@ function T.accepted_call_opens_the_form_without_launching()
 end
 
 function T.new_team_has_only_tier_one()
-    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Teams.idFor(PLAYER)), MilitaryDrop.Trust.START, "équipe neuve")
+    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Trust.idFor(PLAYER)), MilitaryDrop.Trust.START, "équipe neuve")
     assertEq(MilitaryDrop.Trust.START, 25, "confiance de départ : 25")
     for _, lot in ipairs(call().lots) do
         if lot.group == 1 then
@@ -551,7 +557,7 @@ function T.valid_order_launches_and_delivers_requisition_cases()
     local dropId = flights()[1].dropId
     local drop = MilitaryDrop.Secrets.privateState().drops[dropId]
     assertEq(drop.order.lots.rations, 2, "commande dans l'état privé")
-    assertEq(drop.team, MilitaryDrop.Teams.idFor(PLAYER), "largage suivi par la confiance")
+    assertEq(drop.character, MilitaryDrop.Trust.idFor(PLAYER), "largage suivi par la confiance")
     assertEq(MilitaryDrop.Requisition.pendingFor("tester"), nil, "autorisation consommée")
     fly()
     assertEq(#PLACED_ITEMS, 3, "une caisse par unité (repli au sol)")
@@ -812,6 +818,15 @@ function T.order_never_reaches_public_mod_data_or_broadcasts()
         assertTrue(broadcast:find(word, 1, true) == nil, word .. " absent des messages à tous")
     end
     assertTrue(#BROADCAST > 0, "les vols sont bien annoncés à tous")
+end
+
+function T.successor_cannot_use_the_previous_characters_authorization()
+    MilitaryDrop.Requisition.openForm(PLAYER, 42, false)
+    local successor = makePlayer(makeRadio(true, CHANNEL))
+    successor:getModData().MilitaryDrop_characterId = "C:successor"
+    SENT = {}
+    MilitaryDrop.Requisition.handleOrder(successor, { requestId = 42, order = { lots = { rations = 1 } } })
+    assertEq(SENT[#SENT].args.status, "expired", "same account does not share an authorization")
 end
 
 return T

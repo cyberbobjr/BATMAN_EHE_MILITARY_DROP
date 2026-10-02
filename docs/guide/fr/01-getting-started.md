@@ -39,7 +39,7 @@ Ensuite, gardez la base de votre côté : la [confiance et les missions](04-trus
 Le mod fonctionne dans les deux modes. En multijoueur, le serveur décide de tout :
 
 - l'attente entre deux largages est commune à **tout le serveur** (une semaine de jeu par défaut) ;
-- chaque faction est une **station**, avec son indicatif et sa confiance (un joueur sans faction forme une station à lui seul) ;
+- chaque faction est une **station**, avec son indicatif ; la confiance est personnelle à chaque personnage (un joueur sans faction forme une station à lui seul) ;
 - pour émettre, votre personnage prend automatiquement le talkie-walkie en main ;
 - les coordonnées du largage sont diffusées à tous ceux qui écoutent la fréquence. D'autres joueurs peuvent atteindre votre caisse avant vous.
 

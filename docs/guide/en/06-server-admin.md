@@ -38,7 +38,7 @@ All options are on the **Military Drop** page of the sandbox options. Hours and 
 
 | Option | Key | Default | Effect |
 |---|---|---|---|
-| Daily trust cap | `TrustDailyCap` | 8 | Most trust a station earns per day from everything except drops. 0: only drops count. |
+| Daily trust cap | `TrustDailyCap` | 8 | Most trust a character earns per day from everything except drops. 0: only drops count. |
 | Command post bonus (percent) | `TrustPostBonus` | 50 | Extra trust for exchanges made from the liaison post. |
 | Line cut (days) | `TrustLineCutDays` | 3 | Days without drops when trust falls under 15. 0: never cut. |
 | Hours to recover a drop | `TrustDropLostHours` | 48 | After this, an unopened drop is lost (-10). |
@@ -130,8 +130,8 @@ Never share or delete the seed file during a game: memos and codebooks already f
 print(MilitaryDrop.Server.getCode())                                       -- current code
 print(MilitaryDrop.Config.formatChannel(MilitaryDrop.Config.getChannel())) -- military frequency
 print(MilitaryDrop.NumbersStation.frequency)                               -- numbers station, in kHz
-MilitaryDrop.Trust.debugPrint()                                            -- trust of every station
-MilitaryDrop.Trust.add("SOLO", 30, "drop")                                 -- give trust (single player station)
+MilitaryDrop.Trust.debugPrint()                                            -- trust of every character
+MilitaryDrop.Trust.add(MilitaryDrop.Trust.idFor(getPlayer()), 30, "drop")                                 -- give trust (single player station)
 MilitaryDrop.Missions.launch("recon")                                      -- "recon", "cleanup" or "control"
 getPlayer():getInventory():AddItem("MilitaryDrop.MilitaryMemo")
 getPlayer():getInventory():AddItem("MilitaryDrop.Codebook")

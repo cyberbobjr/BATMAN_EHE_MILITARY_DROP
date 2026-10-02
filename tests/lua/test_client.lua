@@ -401,4 +401,16 @@ function T.context_menu_keeps_only_the_admin_entries()
     Client.canForce, MilitaryDrop.Net.toServer = canForce, toServer
 end
 
+function T.character_identity_is_applied_only_to_the_named_local_player()
+    local data = {}
+    local localPlayer = { getUsername = function() return "batman" end, getModData = function() return data end }
+    getSpecificPlayer = function(index) return index == 1 and localPlayer or nil end
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "CharacterIdentity",
+        { id = "C:uuid", username = "batman", index = 1 })
+    assertEq(data.MilitaryDrop_characterId, "C:uuid", "own identity saved")
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "CharacterIdentity",
+        { id = "C:other", username = "other", index = 1 })
+    assertEq(data.MilitaryDrop_characterId, "C:uuid", "other player ignored")
+end
+
 return T

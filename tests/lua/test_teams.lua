@@ -196,31 +196,7 @@ function T.duplicate_names_do_not_match_by_name()
     assertEq(STATE.teams[team].dissolved, true, "ancienne équipe dissoute (absente une heure)")
 end
 
-function T.leaving_player_carries_the_faction_note_capped_at_50()
-    local faction = makeFaction("Rangers", "alice", { "bob", "carol" })
-    poll()
-    local team = Teams.idFor("alice")
-    setNote(team, 80)
-    faction.players = { "carol" }
-    poll()
-    local bob = Teams.idFor("bob")
-    assertEq(Trust.get(bob), 50, "excellente note plafonnée à 50")
-    assertEq(Trust.get(team), 80, "la faction garde la sienne")
-end
 
-function T.leaving_player_keeps_a_bad_note_and_a_cut_line()
-    local faction = makeFaction("Rangers", "alice", { "bob" })
-    poll()
-    local team = Teams.idFor("alice")
-    setNote(team, 20)
-    Trust.add(team, -10, "drop")
-    assertTrue(Trust.isLineCut(team), "ligne coupée de la faction")
-    faction.players = {}
-    poll()
-    local bob = Teams.idFor("bob")
-    assertEq(Trust.get(bob), 10, "mauvaise note emportée")
-    assertTrue(Trust.isLineCut(bob), "la ligne coupée le suit")
-end
 
 function T.dissolved_faction_sends_everyone_back_alone()
     local faction = makeFaction("Rangers", "alice", { "bob" })
@@ -235,8 +211,8 @@ function T.dissolved_faction_sends_everyone_back_alone()
     pollLater(Teams.MISSING_HOURS / 2)
     assertTrue(Teams.idFor("alice") ~= team and Teams.idFor("bob") ~= team, "membres rendus à eux-mêmes")
     assertEq(STATE.teams[team].dissolved, true, "équipe dissoute")
-    assertEq(Trust.get(Teams.idFor("alice")), 50, "propriétaire : note plafonnée")
-    assertEq(Trust.get(Teams.idFor("bob")), 50, "membre : note plafonnée")
+    assertEq(Trust.get(Teams.idFor("alice")), 25, "propriétaire : note plafonnée")
+    assertEq(Trust.get(Teams.idFor("bob")), 25, "membre : note plafonnée")
     assertEq(#Teams.members(team), 0, "plus aucun membre")
 end
 
@@ -250,7 +226,7 @@ function T.empty_faction_list_at_startup_keeps_the_teams()
     poll()
     assertEq(Teams.idFor("bob"), team, "membre gardé")
     assertEq(STATE.teams[team].dissolved, false, "pas dissoute")
-    assertEq(Trust.get(Teams.idFor("alice")), 90, "aucune note plafonnée")
+    assertEq(Trust.get(Teams.idFor("alice")), 25, "aucune note plafonnée")
     FACTIONS[#FACTIONS + 1] = faction
     pollLater(1 / 6)
     assertEq(STATE.teams[team].missingSince, nil, "retrouvée : l'absence est oubliée")
@@ -263,41 +239,7 @@ function T.empty_faction_list_at_startup_keeps_the_teams()
     assertEq(STATE.teams[team].dissolved, true, "absente une heure : dissoute")
 end
 
-function T.joining_player_adopts_the_faction_note()
-    local faction = makeFaction("Rangers", "alice", {})
-    poll()
-    local team = Teams.idFor("alice")
-    setNote(team, 70)
-    local carol = Teams.idFor("carol")
-    setNote(carol, 30)
-    faction.players = { "carol" }
-    poll()
-    assertEq(Teams.idFor("carol"), team, "rattachée à la faction")
-    assertEq(Trust.get(Teams.idFor("carol")), 70, "note de la faction adoptée")
-end
 
-function T.new_faction_starts_from_its_founders_lowest_note()
-    poll()
-    -- newcomer, inconnu, compte pour la note de départ (25).
-    setNote(Teams.idFor("alice"), 20)
-    setNote(Teams.idFor("bob"), 70)
-    makeFaction("Rangers", "bob", { "alice", "newcomer" })
-    poll()
-    local team = Teams.idFor("bob")
-    assertEq(Teams.idFor("alice"), team, "fondateurs réunis")
-    assertEq(Trust.get(team), 20, "plus basse note des fondateurs")
-end
-
-function T.founder_leaving_a_faction_brings_only_the_capped_note()
-    local old = makeFaction("Rangers", "alice", { "bob" })
-    poll()
-    setNote(Teams.idFor("alice"), 90)
-    -- bob quitte les Rangers et fonde sa faction avant le sondage suivant.
-    old.players = {}
-    makeFaction("Wolves", "bob", {})
-    poll()
-    assertEq(Trust.get(Teams.idFor("bob")), 50, "note de l'ancienne faction plafonnée à 50")
-end
 
 function T.unknown_founders_count_as_25()
     makeFaction("Rangers", "alice", {})

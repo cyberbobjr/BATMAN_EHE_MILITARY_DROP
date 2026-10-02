@@ -4,8 +4,8 @@
 -- Équipe = faction vanilla, ou joueur seul sans faction. En solo (aucune
 -- faction), une seule équipe SOLO_ID pour la partie : le nom d'un personnage
 -- solo change à chaque nouveau personnage (IsoPlayer.updateUsername : prénom
--- + nom), il ne peut pas porter la confiance ; les joueurs d'un écran partagé
--- forment la même équipe.
+-- + nom) ; les joueurs d'un écran partagé forment la même station.
+-- La réputation est personnelle et n'est jamais stockée par ce module.
 --
 -- Une faction vanilla n'a pas d'identifiant stable (nom et propriétaire
 -- modifiables, Faction.java:255-269) ni d'événement côté serveur : le serveur
@@ -15,11 +15,8 @@
 -- ≥ 0,5), sinon même nom s'il est unique, sinon nouvelle équipe. Membres réels
 -- = {getOwner()} ∪ getPlayers() (getPlayers n'inclut pas le propriétaire).
 --
--- Mouvements (CONF-03), appliqués par MilitaryDrop_Trust.lua : un joueur qui
--- quitte sa faction (ou dont la faction est dissoute) repart en équipe
--- individuelle avec la note de l'ancienne, plafonnée ; un joueur qui rejoint
--- une faction adopte sa note ; une faction nouvelle part de la plus basse note
--- de ses fondateurs.
+-- Changer de faction ne modifie jamais la note, le plafond ou la suspension
+-- d'un personnage. Les factions servent aux indicatifs et postes partagés.
 --
 -- Faction disparue : l'équipe n'est dissoute qu'après deux sondages sans elle,
 -- espacés d'au moins MISSING_HOURS heure de jeu (Faction.getFactions() peut
@@ -295,7 +292,6 @@ function Teams.refresh()
     if Teams.isSolo() then
         return
     end
-    local Trust = MilitaryDrop.Trust
     local live = liveFactions()
     local assigned, taken, candidates = matchFactions(s, live)
 
@@ -312,14 +308,6 @@ function Teams.refresh()
                 faction = true,
                 dissolved = false,
             }
-            local sources = {}
-            for _, name in ipairs(sortedKeys(faction.members)) do
-                local previous = s.teamPlayers[name] or Teams.individualId(name)
-                local previousTeam = s.teams[previous]
-                -- Un fondateur qui vient de quitter une faction n'en garde que la note plafonnée.
-                sources[#sources + 1] = { teamId = previous, left = previousTeam ~= nil and previousTeam.faction == true }
-            end
-            Trust.founded(teamId, sources)
             assigned[index] = teamId
             MilitaryDrop.log("team " .. teamId .. " (" .. s.teams[teamId].callsign .. ") for faction " .. faction.name)
         end
@@ -393,7 +381,6 @@ function Teams.refresh()
             -- Hors de toute faction : équipe individuelle.
             local individual = ensureIndividual(s, name)
             if fromTeam and fromTeam.faction then
-                Trust.leave(individual, move.from)
                 MilitaryDrop.log(name .. " left team " .. move.from .. " for " .. individual)
             end
             s.teamPlayers[name] = individual
@@ -439,6 +426,13 @@ function Teams.idFor(player)
     teamId = ensureIndividual(s, username)
     s.teamPlayers[username] = teamId
     return teamId
+end
+
+--- Faction actuelle (hors stations individuelles et SOLO), ou nil.
+function Teams.factionIdFor(player)
+    local id = Teams.idFor(player)
+    local team = id and state().teams[id]
+    return team and team.faction and not team.dissolved and id or nil
 end
 
 --- Indicatif d'une équipe (« Station Kilo-7 »), ou nil.

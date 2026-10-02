@@ -3,6 +3,20 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.1.2 — 2026-10-02
+
+### Breaking changes
+
+- Existing collective reputation is not transferred: existing characters start at 25. Previous shared suspensions and mission progress do not carry over. Earlier drops cannot change the new personal scores. Faction posts and call signs remain shared.
+
+### Changes
+
+- Reputation now belongs to each character, independently of account and faction. It persists through saves and reconnects; a new character starts at 25.
+- Reports, daily gain caps, radio checks, clearance kills, requisition budgets and suspensions are personal. The requester earns +10 by opening their drop, +5 when a member of the calling faction opens it, or -5 when an outsider does. A different opener earns nothing.
+- Shared liaison posts show the acting character's standing. Joining or leaving a faction never transfers reputation.
+- Existing collective scores are preserved as legacy data, without transferring them to characters. Earlier drops do not affect the new scores.
+- Player guide and all eight Workshop descriptions include the reputation gains/losses table, daily caps, liaison post bonuses and migration warning.
+
 ## 0.1.1 — 2026-10-02
 
 - Missed the drop announcement? The base now repeats the grid on the military frequency every 6 hours of game time until someone opens a supply case of that drop (for up to 48 hours). As with the first announcement, only a radio that is on and tuned to the military frequency hears it and gets the map marker. Server admins can change the interval or turn it off (new sandbox option "Grid reminder every (hours)", 0 = off).

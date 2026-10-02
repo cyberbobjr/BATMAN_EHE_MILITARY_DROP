@@ -2,11 +2,15 @@
 
 [Français](../fr/04-trust-and-missions.md) · [Guide home](README.md) · Previous: [Requisition form](03-requisition-form.md) · Next: [Liaison post](05-liaison-post.md)
 
+## Breaking change in 0.1.2
+
+**BREAKING CHANGE — 0.1.2:** Reputation belongs to each character, not the account or faction. Existing collective scores are not transferred: existing characters start at 25. Earlier drops do not affect the new scores. Mission progress and daily limits become personal. Shared posts and call signs remain.
+
 ## Your station
 
 For the base, your group is a **station** with a call sign, for example "Station Kilo-7". In multiplayer a station is a faction; a player without a faction is a station alone. In single player you are one station.
 
-The base keeps a **trust** score for each station, from 0 to 100. A new station starts at **25**. You never see the number: the base tells you in words, in the tone of its answers and on the [liaison post](05-liaison-post.md) console:
+The base keeps a **personal trust** score for each character, from 0 to 100. A new character starts at **25**, even on the same account. Saving, reconnecting or changing factions keeps the same score. You never see the number: the base tells you in words, in the tone of its answers and on the [liaison post](05-liaison-post.md) console:
 
 | Trust | What command says |
 |---|---|
@@ -23,21 +27,28 @@ The base keeps a **trust** score for each station, from 0 to 100. A new station 
 
 ## Earn and lose trust
 
-| Event | Trust |
-|---|---|
-| Your station opens the first case of its drop | +10 |
-| Daily situation report | +1 |
-| Each fallen soldier's dog tag announced | +2 |
-| Recon confirmed first | +3 |
-| Clearance: your station kills the most of the horde | +5 |
-| Radio check answered in time | +1 |
-| Drop lost (nothing opened within 48 h) | -10 |
-| Drop opened first by another station | -5 |
-| Repeated wrong codes (3 in an hour) | -2 |
+All values below are defaults; all durations are game time.
 
-- Everything except drops is limited to **+8 per day** of game time.
-- Dog tags announced from your [liaison post](05-liaison-post.md) give 50% more.
-- The server may enable a slow erosion: each day without contact, trust moves one point back toward 25.
+| Cause | Character affected | Gain / loss |
+|---|---|---|
+| Requester opens first case | Requester only | +10 |
+| Another member of the calling faction opens first case | Requester only | +5 |
+| Outsider opens first case | Requester only | −5 |
+| No case opened within 48 h of delivery | Requester only | −10 |
+| First daily situation report | Sender | +1 |
+| Each valid, unused named dog tag | Sender | +2 |
+| First recon confirmation within 25 tiles / 48 h | First confirmer | +3 |
+| Most kills in clearance horde, 90% dead | Character with most kills | +5 |
+| Radio check answered within 4 h, once per character | Each responder, once | +1 |
+| 3 wrong codes / wrong-frequency calls in 1 h | Caller | −2 |
+| Optional erosion after 24 h without contact | Idle character | −1 / +1 |
+
+- Only the first supply case opened counts per drop. Another opener earns **0**; faction membership is checked at opening against the faction recorded when the drop was requested.
+- Positive gains except drops share a **+8/day/character** cap. Scores stay within **0–100**.
+- From the liaison post, the 50% bonus rounds up: report **+2**, dog tag **+3**, recon **+5**, radio check **+2**. These still share the cap. Clearance stays **+5**.
+- Three wrong-code or wrong-frequency calls within one hour trigger **−2**, applied at the next hourly update, at most once per hour.
+- Erosion is **disabled by default**. After 24 hours without contact, it moves the score one point per day toward 25 (−1 above, +1 below, 0 at 25).
+- Expired missions, forced admin drops and decoys cause **0** change. Changing faction also causes **0**. A new character starts at **25**.
 
 These exchanges need **no code**: only a military radio tuned to the military frequency. They are in the **Logistics** section of the radio window (**Device Options**).
 
@@ -65,9 +76,9 @@ From time to time, the base gives an order to **all stations** on the military f
 
 ### Recon
 
-*"All stations, Logistics. Recon required at grid X / Y. First station to confirm on site within 48 hours."*
+*"All stations, Logistics. Recon required at grid X / Y. First survivor to confirm on site within 48 hours."*
 
-A blue **eye** symbol marks the grid on your map. Go there and press **Confirm the recon** within **25 tiles** of the point. The first station gets +3.
+A blue **eye** symbol marks the grid on your map. Go there and press **Confirm the recon** within **25 tiles** of the point. The first character gets +3.
 
 ### Clearance
 
@@ -75,8 +86,8 @@ A blue **eye** symbol marks the grid on your map. Go there and press **Confirm t
 
 A red **skull** marks the zone. The horde appears when the first player comes near, out of sight. You have **72 hours** of game time.
 
-- **Clearance status** asks the base how it is going: zombies of the horde brought down by your station, and how many are left.
-- When **90%** of the horde is dead, the station that killed the most gets +5. Fire and traps kill zombies but credit nobody.
+- **Clearance status** asks the base how it is going: zombies of the horde brought down by your character, and how many are left.
+- When **90%** of the horde is dead, the character that killed the most gets +5. Fire and traps kill zombies but credit nobody.
 
 
 Map symbols of the missions: <img src="../images/map-symbol-recon.png" width="32" alt="Blue eye"> reconnaissance, <img src="../images/map-symbol-clearance.png" width="32" alt="Red skull"> clearance (see [Map symbols](02-calling-a-drop.md#map-symbols)).
@@ -85,11 +96,12 @@ Map symbols of the missions: <img src="../images/map-symbol-recon.png" width="32
 
 *"All stations, Logistics. Radio check. Confirm reception on this frequency within 4 hours."*
 
-Press **Confirm reception** in time. Every station that answers gets +1.
+Press **Confirm reception** in time. Every character that answers gets +1.
 
-## Factions (multiplayer)
+## Characters and factions
 
-- Joining a faction: you take its trust.
-- Leaving a faction: you keep its trust, capped at 50.
-- A new faction starts at the lowest trust of its founders.
-- Renaming a faction keeps its call sign.
+- Trust belongs to a character, never to an account or faction.
+- Joining, leaving, founding or dissolving a faction never transfers trust.
+- A new character starts at 25. Earlier drops and sanctions remain attached to the previous character.
+- Factions keep their call signs and shared liaison posts. The console displays the acting character's trust.
+- Upgrading from collective trust: old scores are preserved in legacy data, without transferring them. Each character starts at 25. Earlier drops do not affect the new scores.

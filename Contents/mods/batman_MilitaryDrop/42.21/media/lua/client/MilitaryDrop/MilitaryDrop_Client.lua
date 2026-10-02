@@ -14,7 +14,7 @@
 -- La fréquence militaire n'est jamais vérifiée ici : griser l'option sur une
 -- mauvaise fréquence permettrait de la trouver en balayant les canaux.
 --
--- Confiance (v1.3) : le serveur envoie avec l'accord le palier de l'équipe
+-- Confiance personnelle : le serveur envoie avec l'accord le palier du personnage
 -- (args.tier, 1 à 4) et son indicatif ; la réplique de la base en dépend. Aucun
 -- chiffre n'est jamais affiché.
 --
@@ -478,6 +478,16 @@ local FLIGHT_COMMANDS = {
 --- d'OnServerCommand : un seul point d'entrée dans les deux cas.
 Client.HANDLERS = {}
 
+Client.HANDLERS.CharacterIdentity = function(args)
+    if type(args.id) ~= "string" or not args.id:match("^C:") then
+        return
+    end
+    local player = getSpecificPlayer(tonumber(args.index) or 0)
+    if player and tostring(player:getUsername()) == args.username then
+        player:getModData().MilitaryDrop_characterId = args.id
+    end
+end
+
 function Client.onServerCommand(module, command, args)
     if module ~= Net.MODULE or type(args) ~= "table" then
         return
@@ -668,6 +678,11 @@ function Client.onGameStart()
 end
 
 Events.OnGameStart.Add(Client.onGameStart)
+Events.OnCreatePlayer.Add(function(index, player)
+    if isClient() and index > 0 then
+        Net.toServer(player, "Sync", {})
+    end
+end)
 Events.OnFillInventoryObjectContextMenu.Add(Client.onFillInventoryContextMenu)
 Events.OnFillWorldObjectContextMenu.Add(Client.onFillWorldContextMenu)
 Events.OnServerCommand.Add(Client.onServerCommand)

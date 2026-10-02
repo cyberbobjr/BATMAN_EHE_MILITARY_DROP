@@ -1,5 +1,9 @@
 # Military Drop: guide / guide du joueur
 
+Online wiki / Wiki en ligne : [English](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home) · [Français](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home).
+
+These files are the source of the wiki pages. / Ces fichiers sont la source des pages du wiki.
+
 ![Military Drop](images/header.png)
 
 | English | Français |
