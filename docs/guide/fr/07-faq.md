@@ -18,7 +18,7 @@ Une semaine de jeu par défaut, pour tout le serveur, plus ou moins selon votre 
 Seules les radios militaires ont cette section (talkie-walkie, poste radio nomade et radioamateur de l'Armée américaine). Elle doit être allumée. Un radioamateur de l'armée posé n'affiche que le bouton **Poste de liaison**.
 
 **J'ai manqué l'annonce. Où est la caisse ?**
-Le repère n'apparaît que sur la carte des joueurs qui écoutaient à ce moment. Demandez à quelqu'un qui écoutait, ou lisez le journal de votre [poste de liaison](05-liaison-post.md) s'il était allumé.
+Le repère n'apparaît que sur la carte des joueurs dont la radio était **allumée et réglée sur la fréquence militaire** à ce moment. C'est le piège le plus courant : enregistrez la fréquence avec **Ajouter un préréglage** et gardez une radio allumée. Restez à l'écoute : la base répète la grille toutes les 6 heures par défaut, jusqu'à ce qu'une caisse de ravitaillement soit ouverte (48 heures au plus). Si vous l'avez manquée, demandez à quelqu'un qui écoutait, ou lisez le journal de votre [poste de liaison](05-liaison-post.md) s'il était allumé.
 
 **Je suis à la grille, mais il n'y a pas de caisse.**
 La caisse est posée quand quelqu'un arrive et que la zone est chargée, jusqu'à 30 cases du point annoncé. Cherchez autour.

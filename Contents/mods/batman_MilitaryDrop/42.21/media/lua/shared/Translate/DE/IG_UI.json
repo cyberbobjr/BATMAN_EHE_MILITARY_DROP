@@ -25,6 +25,7 @@
     "IGUI_MilitaryDrop_Dropped": "Abwurf bestätigt bei Koordinaten %1 / %2. Kommen.",
     "IGUI_MilitaryDrop_BroadcastInbound": "An alle Stationen, hier Logistik. Versorgungshubschrauber unterwegs zu einer angeforderten Abwurfzone, Ankunft in einer Minute.",
     "IGUI_MilitaryDrop_BroadcastDropped": "Versorgungskiste geliefert in Planquadrat %1 / %2. Ich wiederhole, Planquadrat %1 / %2.",
+    "IGUI_MilitaryDrop_BroadcastPending": "An alle Stationen, hier Logistik. Versorgungskiste wartet noch auf Abholung in Planquadrat %1 / %2. Ich wiederhole, Planquadrat %1 / %2.",
     "IGUI_MilitaryDrop_BroadcastOut": "Logistik, Ende.",
     "IGUI_VehicleNameMilitaryDrop_SupplyCrate": "Militärische Versorgungskiste",
     "IGUI_MilitaryDrop_Note_1": "Notfrequenz: %1 MHz. Brauchen Verstärkung und Abwurf von leichten Waffen und Munition. Authentifizierungscode: %2. Position: Planquadrat 07Z.",

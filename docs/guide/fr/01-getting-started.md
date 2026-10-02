@@ -30,7 +30,7 @@ Aucun autre mod n'est nécessaire. Vous pouvez ajouter le mod à une partie en c
 2. Écoutez la station de chiffres, trouvez un **Carnet de codes militaire** et déchiffrez le code de la semaine.
 3. Réglez votre radio militaire sur la fréquence militaire. Clic droit, **Options de l'appareil**, ouvrez la section **Logistique**, tapez le code et appuyez sur **Demander un largage**.
 4. Remplissez le [formulaire de réquisition](03-requisition-form.md) et transmettez-le.
-5. Rejoignez la grille annoncée, abattez la horde, ouvrez la caisse.
+5. **Gardez la radio allumée et réglée** : la grille est annoncée quand la caisse touche le sol, puis répétée toutes les 6 heures par défaut jusqu'à ce qu'une caisse de ravitaillement soit ouverte. Rejoignez-la, abattez la horde, ouvrez la caisse.
 
 Ensuite, gardez la base de votre côté : la [confiance et les missions](04-trust-and-missions.md) raccourcissent l'attente entre deux largages et ouvrent de meilleures fournitures.
 

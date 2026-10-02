@@ -8,6 +8,8 @@
     "Sandbox_MilitaryDrop_DropMinDistance_tooltip": "Distance minimale en cases entre le joueur qui appelle et le point de largage, tiré au hasard.",
     "Sandbox_MilitaryDrop_DropMaxDistance": "Distance maximale du largage",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "Distance maximale en cases entre le joueur qui appelle et le point de largage.",
+    "Sandbox_MilitaryDrop_DropRepeatHours": "Rappel de la grille toutes les (heures)",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Heures de jeu entre deux rappels, sur la fréquence militaire, de la grille d'un largage dont aucune caisse de ravitaillement n'a été ouverte. Les rappels cessent quand une caisse est ouverte, ou après les heures pour récupérer un largage. 0 = aucun rappel.",
     "Sandbox_MilitaryDrop_AuthCode": "Code d'authentification",
     "Sandbox_MilitaryDrop_AuthCode_tooltip": "Ce que les joueurs doivent donner à la radio pour obtenir un largage. Un code de la semaine change chaque lundi à 00:00 (calendrier du jeu) et le précédent reste accepté pendant 24 heures. Après 3 codes faux dans la journée, la base ignore l'appelant jusqu'au lendemain.",
     "Sandbox_MilitaryDrop_AuthCode_option1": "Aucun",

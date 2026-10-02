@@ -25,6 +25,7 @@
     "IGUI_MilitaryDrop_Dropped": "Lançamento confirmado nas coordenadas %1 / %2. Escuto.",
     "IGUI_MilitaryDrop_BroadcastInbound": "A todas as estações, aqui Logística. Helicóptero de abastecimento a caminho de uma zona de lançamento pedida, chegada prevista dentro de um minuto.",
     "IGUI_MilitaryDrop_BroadcastDropped": "Caixote de abastecimento entregue na quadrícula %1 / %2. Repito, quadrícula %1 / %2.",
+    "IGUI_MilitaryDrop_BroadcastPending": "A todas as estações, aqui Logística. Caixote de abastecimento ainda por recolher na quadrícula %1 / %2. Repito, quadrícula %1 / %2.",
     "IGUI_MilitaryDrop_BroadcastOut": "Logística, terminado.",
     "IGUI_VehicleNameMilitaryDrop_SupplyCrate": "Caixote Militar de Abastecimento",
     "IGUI_MilitaryDrop_Note_1": "Frequência de emergência: %1 MHz. Precisamos de reforços e de lançamento aéreo de armas ligeiras e munições. Código de autenticação: %2. Posição: quadrícula 07Z.",

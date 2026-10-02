@@ -8,6 +8,8 @@
     "Sandbox_MilitaryDrop_DropMinDistance_tooltip": "呼叫的玩家与随机选定的空投点之间的最小距离（格）。",
     "Sandbox_MilitaryDrop_DropMaxDistance": "最大空投距离",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "呼叫的玩家与空投点之间的最大距离（格）。",
+    "Sandbox_MilitaryDrop_DropRepeatHours": "坐标提醒间隔（小时）",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "在军用频率上两次提醒空投坐标之间的游戏内小时数，仅针对补给箱一个都还没被打开的空投。打开一个补给箱后，或超过回收空投时限后，提醒停止。0 = 不提醒。",
     "Sandbox_MilitaryDrop_AuthCode": "认证码",
     "Sandbox_MilitaryDrop_AuthCode_tooltip": "玩家必须通过无线电报出什么才能获得空投。每周认证码在每周一 00:00（游戏日历）更换，旧认证码在之后 24 小时内仍被接受。一天内输错 3 次后，基地会不理会该呼叫者直到第二天。",
     "Sandbox_MilitaryDrop_AuthCode_option1": "无",

@@ -30,6 +30,8 @@ function T.setup()
     PLAYER = { getX = function() return 100 end, getY = function() return 100 end, getZ = function() return 0 end }
     getNumActivePlayers = function() return 1 end
     getSpecificPlayer = function() return PLAYER end
+    NOW_MS = 0
+    getTimestampMs = function() return NOW_MS end
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_Announce.lua")
 end
@@ -40,6 +42,32 @@ function T.handheld_radio_marks_once()
     triggerEvent("OnDeviceText", "guid", "MDRP", -1, -1, -1, "line", {})
     assertEq(#SYMBOLS, 1, "un seul symbole malgré trois répétitions")
     assertEq(SYMBOLS[1].getWorldX(), 500, "position")
+end
+
+function T.grid_reminder_marks_every_grid_heard()
+    MilitaryDrop.Announce.onDropAnnounce({ grids = { { x = 500, y = 600 }, { x = 700, y = 800 } } })
+    triggerEvent("OnDeviceText", "guid", "MDRP", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 2, "les deux grilles du rappel")
+    MilitaryDrop.Announce.onDropAnnounce({ grids = { { x = 500, y = 600 } } })
+    triggerEvent("OnDeviceText", "guid", "MDRP", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 2, "grille déjà marquée : pas de doublon")
+end
+
+function T.unheard_announcement_is_forgotten_at_the_next_one()
+    MilitaryDrop.Announce.onDropAnnounce({ x = 500, y = 600 })
+    NOW_MS = MilitaryDrop.Announce.PENDING_MS + 1
+    MilitaryDrop.Announce.onDropAnnounce({ x = 700, y = 800 })
+    triggerEvent("OnDeviceText", "guid", "MDRP", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 1, "seule la grille entendue")
+    assertEq(SYMBOLS[1].getWorldX(), 700, "la dernière annonce")
+end
+
+function T.announcement_and_reminder_aired_together_are_both_marked()
+    MilitaryDrop.Announce.onDropAnnounce({ x = 500, y = 600 })
+    NOW_MS = 1000
+    MilitaryDrop.Announce.onDropAnnounce({ grids = { { x = 700, y = 800 } } })
+    triggerEvent("OnDeviceText", "guid", "MDRP", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 2, "les deux grilles en cours de diffusion")
 end
 
 function T.other_codes_are_ignored()

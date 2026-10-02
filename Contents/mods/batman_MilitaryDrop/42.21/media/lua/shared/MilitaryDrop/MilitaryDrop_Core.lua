@@ -37,6 +37,8 @@ local DEFAULTS = {
     CaseRolls = 6,
     DropMinDistance = 150,
     DropMaxDistance = 400,
+    -- Rappel de la grille d'un largage non ouvert toutes les N heures de jeu (0 = aucun).
+    DropRepeatHours = 6,
     -- 1 aucun, 2 fixe en clair, 3 de la semaine en clair, 4 de la semaine chiffré
     -- (MilitaryDrop.Codes.MODE_*).
     AuthCode = 4,

@@ -144,6 +144,10 @@ local function drop(flight)
     flight.dropped = true
     local x, y = math.floor(flight.tx), math.floor(flight.ty)
     addSound(nil, x, y, 0, Flights.DROP_NOISE_RADIUS, Flights.DROP_NOISE_VOLUME)
+    -- Grille gardée pour les rappels de la base (Server.repeatGrids).
+    if MilitaryDrop.Trust then
+        MilitaryDrop.Trust.onDropAnnounced(flight.dropId, x, y)
+    end
     MilitaryDrop.Broadcast.dropped(x, y)
     Server.notifyDrop(flight.requester, flight.requestId, x, y, flight.forced)
     Flights.deliverAt(x, y, flight.requester, flight.dropId)

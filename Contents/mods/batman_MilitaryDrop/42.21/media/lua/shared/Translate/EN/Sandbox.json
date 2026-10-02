@@ -8,6 +8,8 @@
     "Sandbox_MilitaryDrop_DropMinDistance_tooltip": "Minimum distance in tiles between the player who calls and the drop point, chosen at random.",
     "Sandbox_MilitaryDrop_DropMaxDistance": "Maximum drop distance",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "Maximum distance in tiles between the player who calls and the drop point.",
+    "Sandbox_MilitaryDrop_DropRepeatHours": "Grid reminder every (hours)",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "In-game hours between two reminders, on the military frequency, of the grid of a drop whose supply cases are all still unopened. Reminders stop when a case is opened, or after the hours to recover a drop. 0 = no reminder.",
     "Sandbox_MilitaryDrop_AuthCode": "Authentication code",
     "Sandbox_MilitaryDrop_AuthCode_tooltip": "What players must give on the radio to get a drop. A weekly code changes every Monday at 00:00 (game calendar) and the previous one is still accepted for 24 hours. After 3 wrong codes in one day, the base ignores the caller until the next day.",
     "Sandbox_MilitaryDrop_AuthCode_option1": "None",

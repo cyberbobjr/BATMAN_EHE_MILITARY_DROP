@@ -39,15 +39,15 @@ Les zombies militaires portent parfois un **Carnet de codes militaire**, qu'on t
 
 Cherchez les deux premiers groupes dans la table pour obtenir les deux mots. Les deux derniers chiffres passent en clair. Avec la table ci-dessus, `20-71-58` donne `WHISKEY-ALPHA-58`.
 
-![Carnet, note et station de chiffres en jeu](../images/ingame-codebook-memo.png)
+![Carnet et note en jeu](../images/ingame-codebook-memo.png)
 
-*En jeu : le carnet, la note et la station de chiffres entendue au talkie-walkie.*
+*En jeu : le carnet de codes et une note de service. Vos fréquences sont différentes.*
 
 > Le serveur peut choisir un mode plus simple : aucun code, un code fixe écrit sur les notes, ou le code de la semaine écrit en clair sur les notes. Voir [Administration](06-server-admin.md).
 
 ## 3. Appeler la base
 
-1. Allumez votre radio militaire et réglez-la sur la fréquence militaire (section **Chaîne** du jeu).
+1. Allumez votre radio militaire et réglez-la sur la fréquence militaire (section **Chaîne** du jeu). Enregistrez-la avec **Ajouter un préréglage** : il vous la faudra encore pour l'annonce du largage.
 2. Clic droit sur la radio, **Options de l'appareil**.
 3. Ouvrez la section **Logistique**, en bas de la fenêtre radio.
 4. Tapez le code dans le champ **Code**. Il est retenu pour ce personnage, même après un rechargement.
@@ -56,6 +56,10 @@ Cherchez les deux premiers groupes dans la table pour obtenir les deux mots. Les
 ![La section Logistique de la fenêtre radio](../images/radio-logistics-fr.png)
 
 *Rendu hors jeu.*
+
+![La fenêtre du talkie-walkie en jeu](../images/ingame-walkie-logistics.png)
+
+*En jeu (interface en anglais) : la fréquence enregistrée en préréglage (« 150.6 MHz drop » ; la vôtre est différente) et la section Logistique en bas.*
 
 Un bouton grisé donne sa raison dans son infobulle (radio éteinte, code manquant…). Votre personnage parle, et la base répond après quelques secondes.
 
@@ -92,6 +96,12 @@ L'hélicoptère s'arrête quand le jeu est en pause, et reprend son vol après u
 Au largage : *« Caisse de ravitaillement livrée en grille X / Y. Je répète, grille X / Y. »* puis *« Ici Logistique, terminé. »*
 
 Toute radio **allumée et réglée** sur la fréquence militaire à ce moment l'entend, et son propriétaire reçoit un symbole **cible** vert sur sa carte. Radio éteinte ou sur une autre chaîne : pas de repère. En multijoueur, les autres joueurs l'entendent aussi.
+
+> **Gardez une radio allumée et réglée sur la fréquence militaire.** Une radio éteinte, sans pile ou sur une autre chaîne n'entend rien, et aucun repère n'apparaît. Un talkie-walkie accroché à la ceinture continue d'écouter pendant que vous bougez.
+
+### Rappels de la grille
+
+Vous l'avez manquée ? La base répète la grille de chaque largage dont aucune caisse de ravitaillement n'a été ouverte : *« À toutes les stations, ici Logistique. Caisse de ravitaillement toujours en attente en grille X / Y. »* Par défaut toutes les **6 heures** de jeu, pendant **48 heures** au plus ; les rappels cessent dès qu'une caisse de ravitaillement est ouverte. Un rappel fonctionne comme l'annonce : seule une radio allumée et réglée l'entend et marque votre carte. Tous ceux qui écoutent l'entendent aussi : d'autres peuvent rejoindre la caisse avant vous.
 
 ![Repère du largage sur la carte](../images/ingame-map-drop-marker.png)
 

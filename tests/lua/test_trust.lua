@@ -32,6 +32,24 @@ local function makeCase(dropId)
     return item
 end
 
+function T.announced_drops_keep_their_grid_until_opened_or_found()
+    local real = Trust.registerDrop("P:alice", "alice", false)
+    local decoy = Trust.registerDrop("P:alice", "alice", false, { untracked = true })
+    Trust.onDropAnnounced(real, 10, 20)
+    WORLD_HOURS = WORLD_HOURS + 1
+    Trust.onDropAnnounced(decoy, 30, 40)
+    Trust.onDropAnnounced("D999", 1, 2)
+    local list = Trust.announcedDrops()
+    assertEq(#list, 2, "deux largages annoncés")
+    assertEq(list[1].id, real, "le plus ancien d'abord")
+    assertEq(list[1].drop.x .. "," .. list[1].drop.y, "10,20", "grille gardée")
+    assertTrue(not Trust.markFound(real), "un vrai largage ne se clôt qu'à l'ouverture d'une caisse")
+    assertTrue(Trust.markFound(decoy), "leurre trouvé")
+    assertEq(STATE.drops[decoy].outcome, "opened", "clos comme une caisse ouverte")
+    assertEq(#Trust.announcedDrops(), 1, "plus de rappel pour le leurre")
+    assertEq(Trust.get("P:alice"), Trust.START, "sans effet sur la confiance")
+end
+
 function T.setup()
     SandboxVars = { MilitaryDrop = {} }
     isClient = function() return false end

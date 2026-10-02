@@ -15,6 +15,7 @@ Toutes les options sont sur la page **Military Drop** des options du bac à sabl
 | Fréquence militaire (MHz) | `Frequency` | 0 | 0 : fréquence libre tirée au hasard entre 120 et 170 MHz, écrite sur les notes. Une valeur fixe est visible par tous les joueurs. 112,2 MHz est réservée. |
 | Distance minimale du largage | `DropMinDistance` | 150 | Cases au minimum entre l'appelant et le point de largage. |
 | Distance maximale du largage | `DropMaxDistance` | 400 | Cases au maximum entre l'appelant et le point de largage. |
+| Rappel de la grille toutes les (heures) | `DropRepeatHours` | 6 | Heures de jeu entre deux rappels de la grille d'un largage dont aucune caisse de ravitaillement n'a été ouverte, pendant `TrustDropLostHours` au plus. 0 = aucun rappel. |
 | Zombies au largage (minimum) | `MinZombies` | 3 | 0 et 0 : aucun zombie. |
 | Zombies au largage (maximum) | `MaxZombies` | 30 | Zombies qui apparaissent autour de la caisse. |
 | Caisses par largage | `CaseRolls` | 6 | Tirages de butin quand le formulaire est désactivé. |

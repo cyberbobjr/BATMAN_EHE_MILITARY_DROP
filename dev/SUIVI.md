@@ -79,6 +79,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | DROP-02 | Annonce au passage, pose à l'arrivée d'un joueur, quand la case du point est chargée, à 30 cases au plus | PLAN-V2 étape 0 | testé solo | `555593e`, test_flights, E1 (console du 2026-09-30 : livré en 8041,12035, point annoncé, caisse ouverte) | MP |
 | DROP-03 | Repli près du demandeur si aucun point lointain ne convient | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_server | — |
 | DROP-04 | Vol interrompu repris après un redémarrage, renvoyé aux clients | PLAN-V2 étape 0 | testé hors jeu | `555593e`, test_flights | F1 en jeu ; MP (reconnexion) |
+| DROP-05 | Rappel de la grille par la base toutes les N heures (option DropRepeatHours, 6 par défaut, 0 = aucun) tant qu'aucune caisse de ravitaillement n'est ouverte, pendant TrustDropLostHours au plus ; leurre trouvé (sirène coupée, caisse démontée ou disparue) = plus de rappel ; repère de carte pour qui l'entend | Décision de l'utilisateur du 2026-10-02 (solution 3) | testé hors jeu | test_server (base_repeats_the_grid_until_a_case_is_opened, grid_reminders_stop_after_the_recovery_window_without_catching_up, grid_reminder_disabled_at_zero), test_trust, test_broadcast, test_announce | En jeu : manquer l'annonce, attendre 6 h, rappel entendu et repère posé ; MP |
 
 ## Phases 7 et 8 — Tests en jeu et publication
 
@@ -89,7 +90,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | TEST-03 | Serveur dédié, 2 clients : appel, écoute, reconnexion pendant un vol, commande forgée | PLAN phase 7 | décidé | — | `C:\pzserver` |
 | PUB-02 | Poster, aperçu et icône définitifs | PLAN phase 8 | codé | `poster.png`, `preview.png`, `icon.png` (Codex, validés par l'utilisateur) | Vérifier le poster et l'icône dans le sélecteur de mods du jeu |
 | PUB-03 | Suppression de `legacy-b41/` avant la sortie | PLAN phase 8 | décidé | — | — |
-| PUB-04 | Nouvel élément Workshop B42, lien depuis la page B41 | PLAN décisions | publié | Workshop `3811752923` (privé), `workshop.txt` | Passer en public après TEST-03 ; lien depuis la page B41 |
+| PUB-04 | Nouvel élément Workshop B42, lien depuis la page B41 | PLAN décisions | publié | Workshop 3811752923 (privé), `c1c8b1b`, `workshop.txt` | Passer en public après TEST-03 ; lien depuis la page B41 |
 | PUB-05 | Mod multilingue : DE, ES, PT, PTBR, RU, CN en plus de EN/FR (jeu et description Steam) | demande utilisateur | testé hors jeu | run_tests (clés, paramètres, balises, tailles) | Largeur des libellés longs (DE, PT) à voir en jeu ; documents en anglais en CN (polices SDF sans CJK) |
 | PUB-06 | Illustrations d'en-tête de la description Steam (bannière + 6 sections), hébergées sur GitHub | demande utilisateur | codé | `docs/guide/images/steam-*.png` | Validation par l'utilisateur |
 
@@ -182,7 +183,9 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 ## Journal
 
-- **2026-10-02** — Première mise en ligne en privé : élément Workshop `3811752923`, version 0.1.0, descriptions dans les 8 langues publiées, aucune capture touchée (PUB-04).
+- **2026-10-02** — DROP-05 (rappel de la grille, solution 3 retenue par l'utilisateur) : grille gardée à l'annonce dans l'état privé, rappel groupé toutes les 6 heures sur la chaîne militaire, repère pour qui l'entend (le client garde une liste de grilles en attente, oubliées à l'annonce suivante au-delà de 5 minutes réelles). 45 options. Capture du carnet et de la note (`docs/shot1.png`) dans le guide et la description Steam. Version 0.1.1. 565 tests `lupa`.
+- **2026-10-02** — Documentation : capture en jeu du talkie-walkie avec la section Logistique (guide EN/FR, description Steam) ; avertissement « radio allumée et réglée jusqu'au largage, grille annoncée une seule fois » dans le guide (démarrage, annonce, FAQ) et les 8 descriptions ; images de la description Steam réduites (bandeaux 636 × 200, captures de 360 px de haut au plus, `docs/steam/`).
+- **2026-10-02** — Première mise en ligne en privé : élément Workshop 3811752923, version 0.1.0, descriptions dans les 8 langues publiées, aucune capture touchée (PUB-04).
 - **2026-10-02** — Poster validé par l'utilisateur et installé (poster du sélecteur, aperçu Workshop 512 px) ; icône 64 px générée par Codex à partir du poster (caisse sous parachute), fond blanc enfermé entre les sangles retiré au détourage (PUB-02).
 - **2026-10-02** — Préparation de la publication : six langues ajoutées par des sous-agents (PUB-05, 470 clés chacune, descriptions Steam traduites avec la mention « multijoueur conçu mais non testé ») ; bannière et six illustrations de section générées par Codex dans le style maison, insérées dans les 8 descriptions et `workshop.txt` (PUB-06) ; poster généré (PUB-02, à valider).
 - **2026-10-01** — Largage forcé tombé dans l'eau (test de l'utilisateur) : le point de largage était encore tiré au hasard sur la métagrille, qui ne connaît pas l'eau (les missions étaient déjà corrigées). Il vise maintenant une route (zone « Nav »), sinon le pied d'un bâtiment, avec le secteur du leurre respecté ; la caisse se pose ensuite sur la case libre la plus proche.

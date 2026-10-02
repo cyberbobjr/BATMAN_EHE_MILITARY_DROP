@@ -1,6 +1,6 @@
 [h1]Military Drop - Versorgungsabwürfe per Funk[/h1]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-banner.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
 [b]Build 42.21 · Einzelspieler & Mehrspieler · Eigenständig[/b]
 
@@ -10,56 +10,58 @@ Stell ein Militärfunkgerät auf die richtige Frequenz ein, nenne den Code diese
 
 [h2]Frequenz und Code finden[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-code.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-codebook-memo.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
 
 Militär- und Polizeizombies tragen Dienstmitteilungen mit der Militärfrequenz, die in jedem Spiel anders ist. Der Code wechselt jeden Montag: Ein Zahlensender sendet ihn auf Kurzwelle, ein militärisches Codebuch entschlüsselt ihn.
 
 [h2]Von deinem Funkgerät aus rufen[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-radio.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/radio-logistics-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
 Rechtsklick auf ein Militärfunkgerät, [b]Geräteeinstellung[/b], Abschnitt [b]Logistik[/b]: Code eingeben und [b]Versorgungsabwurf anfordern[/b] drücken. Walkie-Talkie in der Hand, am Gürtel oder in einer Tasche, oder ein aufgestelltes Funkgerät.
 
 [h2]Den Anforderungsschein ausfüllen[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-requisition.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/requisition-form-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
 
 Gib ein Punktebudget für 18 Posten aus, die aus den Beutetabellen des Spiels stammen, Mods inklusive: Rationen, Sanität, Munition, Schusswaffen, Treibstoff... Oder fordere einen Sirenenköder an, der die Horden in einen Sektor deiner Wahl lockt.
 
 [h2]Die Kiste erreichen[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-crate.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-crate-trunk.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
 
 Hör den Hubschrauber, sieh seinen Schatten und eile dann zum durchgegebenen Planquadrat, 150 bis 400 Kacheln entfernt. Alle auf der Frequenz erhalten die Kartenmarkierung, und eine Horde bewacht die Kiste. Leere Kisten lassen sich für Holz auseinandernehmen.
 
+[b]Lass ein Funkgerät eingeschaltet und auf der Militärfrequenz.[/b] Das Planquadrat wird bei der Landung durchgegeben und dann alle 6 Stunden wiederholt (Servereinstellung), bis jemand einen Versorgungskoffer öffnet: Ein ausgeschaltetes oder anders eingestelltes Gerät hört nichts, und auf deiner Karte erscheint keine Markierung. Tipp: Speichere die Frequenz mit [b]Voreinstellung hinzufügen[/b].
+
 [h2]Das Vertrauen der Basis gewinnen[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-trust.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-console-missions.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
 Birg deine Abwürfe, sende tägliche Lagemeldungen, melde die Hundemarken gefallener Soldaten und übernimm öffentliche Einsätze: Aufklärung, Säuberung von Horden, Funkproben. Vertrauen verkürzt die Wartezeit und schaltet größere Anforderungen frei.
 
 [h2]Einen Verbindungsposten halten[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-post.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/console-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
 Mach ein fest aufgestelltes militärisches Stationsfunkgerät zur Konsole deiner Station: Funkprotokoll, Befehle, Hundemarken, Vertrauen und Abwurfanforderungen. Im Mehrspieler ist jede Fraktion eine Station mit eigenem Rufzeichen.
 
 [h2]Für Server-Admins[/h2]
 
 [list]
-[*]44 Sandbox-Optionen: Wartezeit zwischen Abwürfen (standardmäßig eine Woche, für den ganzen Server), Entfernung, Horde, Code-Modus, Vertrauen, Einsätze, Anforderung, Köder.
+[*]45 Sandbox-Optionen: Wartezeit zwischen Abwürfen (standardmäßig eine Woche, für den ganzen Server), Entfernung, Horde, Code-Modus, Vertrauen, Einsätze, Anforderung, Köder.
 [*]Anforderungsposten lassen sich in Zomboid/Lua/MilitaryDrop/requisition.txt bearbeiten, deaktivieren oder ergänzen.
 [*]Serverautoritativer Mehrspieler. Admins können von einem Militärfunkgerät aus einen Abwurf erzwingen und Einsätze starten.
 [/list]

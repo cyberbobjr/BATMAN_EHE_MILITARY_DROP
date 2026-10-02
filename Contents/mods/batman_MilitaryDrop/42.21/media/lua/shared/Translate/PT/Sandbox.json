@@ -8,6 +8,8 @@
     "Sandbox_MilitaryDrop_DropMinDistance_tooltip": "Distância mínima em quadrados entre o jogador que chama e o ponto de lançamento, escolhido ao acaso.",
     "Sandbox_MilitaryDrop_DropMaxDistance": "Distância máxima do lançamento",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "Distância máxima em quadrados entre o jogador que chama e o ponto de lançamento.",
+    "Sandbox_MilitaryDrop_DropRepeatHours": "Lembrete da quadrícula a cada (horas)",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Horas de jogo entre dois lembretes, na frequência militar, da quadrícula de um lançamento cujas caixas de abastecimento continuam todas por abrir. Os lembretes param quando uma caixa é aberta, ou depois das horas para recuperar um lançamento. 0 = sem lembrete.",
     "Sandbox_MilitaryDrop_AuthCode": "Código de autenticação",
     "Sandbox_MilitaryDrop_AuthCode_tooltip": "O que os jogadores têm de indicar pelo rádio para obter um lançamento. Um código semanal muda todas as segundas-feiras às 00:00 (calendário do jogo) e o anterior continua aceite durante 24 horas. Após 3 códigos errados no mesmo dia, a base ignora quem chama até ao dia seguinte.",
     "Sandbox_MilitaryDrop_AuthCode_option1": "Nenhum",

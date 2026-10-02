@@ -8,6 +8,8 @@
     "Sandbox_MilitaryDrop_DropMinDistance_tooltip": "Minimale Entfernung in Kacheln zwischen dem rufenden Spieler und dem zufällig gewählten Abwurfpunkt.",
     "Sandbox_MilitaryDrop_DropMaxDistance": "Maximale Abwurfentfernung",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "Maximale Entfernung in Kacheln zwischen dem rufenden Spieler und dem Abwurfpunkt.",
+    "Sandbox_MilitaryDrop_DropRepeatHours": "Planquadrat-Erinnerung alle (Stunden)",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Spielstunden zwischen zwei Erinnerungen auf der Militärfrequenz an das Planquadrat eines Abwurfs, dessen Versorgungskoffer noch alle ungeöffnet sind. Die Erinnerungen enden, sobald ein Koffer geöffnet wird, oder nach den Stunden zum Bergen eines Abwurfs. 0 = keine Erinnerung.",
     "Sandbox_MilitaryDrop_AuthCode": "Authentifizierungscode",
     "Sandbox_MilitaryDrop_AuthCode_tooltip": "Was die Spieler am Funkgerät angeben müssen, um einen Abwurf zu erhalten. Ein Wochencode wechselt jeden Montag um 00:00 (Spielkalender), der vorherige wird noch 24 Stunden akzeptiert. Nach 3 falschen Codes an einem Tag ignoriert die Basis den Anrufer bis zum nächsten Tag.",
     "Sandbox_MilitaryDrop_AuthCode_option1": "Keiner",

@@ -587,6 +587,48 @@ function T.accepted_request_carries_tier_callsign_and_a_drop_id()
     assertEq(drop.deadline, WORLD_HOURS + 48, "échéance de 48 h depuis la pose")
 end
 
+-- Rappel de la grille (option DropRepeatHours, 6 h par défaut).
+
+local function dropOnce()
+    withChannel()
+    MilitaryDrop.Server.handleRequest(PLAYER, request(CODE))
+    local flight = MilitaryDrop.Server.getState().flights[1]
+    fly(MilitaryDrop.Flight.dropTime(flight) + 0.5)
+    return MilitaryDrop.Secrets.privateState().drops[flight.dropId]
+end
+
+function T.base_repeats_the_grid_until_a_case_is_opened()
+    local drop = dropOnce()
+    assertEq(drop.x .. "," .. drop.y, "250,200", "grille gardée à l'annonce")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 5), 0, "rien avant 6 h")
+    AIRING = nil
+    SENT = {}
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 6), 1, "rappel à 6 h")
+    assertEq(SENT[1].command, "DropAnnounce", "grilles envoyées aux clients")
+    assertEq(SENT[1].args.grids[1].x .. "," .. SENT[1].args.grids[1].y, "250,200", "grille du rappel")
+    assertEq(#AIRING.lines, 3, "grille répétée deux fois, puis fin de message")
+    assertEq(AIRING.lines[1].codes, "MDRP", "ligne marquée du code du repère")
+    assertTrue(AIRING.lines[1].text:find("BroadcastPending|250|200", 1, true) ~= nil, "texte du rappel")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 7), 0, "une fois par période")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 12), 1, "rappel suivant à 12 h")
+    MilitaryDrop.Trust.onCaseOpened(PLACED_ITEMS[1], PLAYER)
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 18), 0, "caisse ouverte : plus de rappel")
+end
+
+function T.grid_reminders_stop_after_the_recovery_window_without_catching_up()
+    dropOnce()
+    SENT = {}
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 47), 1, "rappels manqués : un seul")
+    assertEq(#SENT, 1, "un seul message aux clients")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 48), 0, "fenêtre de 48 h écoulée")
+end
+
+function T.grid_reminder_disabled_at_zero()
+    SandboxVars.MilitaryDrop.DropRepeatHours = 0
+    dropOnce()
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 6), 0, "option à 0 : aucun rappel")
+end
+
 function T.line_cut_is_revealed_only_after_channel_and_code()
     local team = MilitaryDrop.Teams.idFor(PLAYER)
     MilitaryDrop.Trust.add(team, -40, "drop")

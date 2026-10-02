@@ -1,6 +1,6 @@
 [h1]Military Drop - 无线电呼叫补给空投[/h1]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-banner.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
 [b]Build 42.21 · 单人与多人 · 独立运行[/b]
 
@@ -10,56 +10,58 @@
 
 [h2]找到频率和认证码[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-code.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-codebook-memo.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
 
 军人和警察僵尸身上带有写着军用频率的备忘录，每局游戏的频率都不同。认证码每周一更换：一个数字电台用短波播报它，军用密码本可以破译它。备忘录和密码本保持英文原样，就像真正的美军文件。
 
 [h2]用你的无线电呼叫[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-radio.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/radio-logistics-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
 右键点击军用无线电，[b]设备选项[/b]，[b]后勤处[/b]栏：输入认证码，然后按[b]请求空投补给[/b]。对讲机可以拿在手上、挂在腰带上或放在包里，也可以使用放置好的无线电。
 
 [h2]填写申领单[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-requisition.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/requisition-form-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
 
 用点数预算从 18 类物资中挑选，物资取自游戏自身的战利品表（包括其他模组的物品）：口粮、医疗、弹药、枪械、燃料……也可以申领警报诱饵，把僵尸群引到你选择的扇区。
 
 [h2]赶到空投箱[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-crate.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-crate-trunk.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
 
 听到直升机声，看到它的影子，然后赶往 150 到 400 格外通报的坐标。频率上的每个人都会得到地图标记，而且有一群僵尸守着空投箱。空的空投箱可以拆解回收木材。
 
+[b]请让一台无线电保持开启并调到军用频率。[/b]空投箱落地时会播报坐标，之后每 6 小时（服务器设置）重复一次，直到有人打开补给箱：关闭的无线电或调到其他频道的无线电什么也听不到，地图上也不会出现标记。提示：用[b]添加频道[/b]保存这个频率。
+
 [h2]赢得基地的信任[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-trust.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-console-missions.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
 回收你的空投，发送每日报告，通报阵亡士兵的狗牌，响应公开任务：侦察、清剿僵尸群、通信检查。信任度越高，等待时间越短，可申领的物资也越多。
 
 [h2]设立联络站[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-post.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/console-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
 把一台固定的军用无线电台变成你方电台的控制台：通讯记录、命令、狗牌、信任度和空投请求。在多人模式中，每个阵营就是一个电台，拥有自己的呼号。
 
 [h2]服务器管理员[/h2]
 
 [list]
-[*]44 个沙盒选项：空投间隔（默认一周，对整个服务器生效）、距离、僵尸群、认证码模式、信任度、任务、申领、诱饵。
+[*]45 个沙盒选项：空投间隔（默认一周，对整个服务器生效）、距离、僵尸群、认证码模式、信任度、任务、申领、诱饵。
 [*]可以在 Zomboid/Lua/MilitaryDrop/requisition.txt 中修改、禁用或添加申领物资。
 [*]多人模式由服务器做主。管理员可以用军用无线电强制空投和发起任务。
 [/list]

@@ -48,6 +48,13 @@
 -- à la commande). Un leurre (v1.5) est tiré dans
 -- le secteur choisi (pickDropPoint) ; sa livraison prévient
 -- MilitaryDrop.Decoy.onDelivered.
+--
+-- Rappel de la grille (option DropRepeatHours, 0 = aucun) : toutes les N
+-- heures de jeu après l'annonce, la base répète sur la chaîne militaire la
+-- grille de chaque largage dont aucune caisse n'a été ouverte (leurre trouvé
+-- compris), pendant TrustDropLostHours heures au plus (Server.repeatGrids).
+-- Comme l'annonce, le rappel s'entend seulement sur une radio allumée et
+-- réglée, et marque la carte de qui l'entend.
 -- ============================================================================
 
 if isClient() then
@@ -660,6 +667,36 @@ function Server.onClientCommand(module, command, player, args)
     end
 end
 
+--- Rappels de la grille dus à l'heure hours (heures de jeu) : une diffusion
+--- groupée pour tous les largages en attente. Renvoie le nombre de grilles.
+function Server.repeatGrids(hours)
+    local every = math.floor(tonumber(Config.get("DropRepeatHours")) or 0)
+    if every <= 0 then
+        return 0
+    end
+    hours = hours or getGameTime():getWorldAgeHours()
+    local window = math.max(1, tonumber(Config.get("TrustDropLostHours")) or 48)
+    local grids = {}
+    for _, entry in ipairs(MilitaryDrop.Trust.announcedDrops()) do
+        local drop = entry.drop
+        local elapsed = hours - drop.announcedHours
+        local due = math.floor(elapsed / every)
+        if elapsed < window and due > (tonumber(drop.repeats) or 0) then
+            -- Rappels manqués (serveur arrêté) : un seul, pas de rattrapage.
+            drop.repeats = due
+            grids[#grids + 1] = { x = drop.x, y = drop.y }
+        end
+    end
+    if #grids > 0 then
+        MilitaryDrop.Broadcast.pending(grids)
+        MilitaryDrop.log("grid reminder: " .. #grids .. " drop(s)", true)
+    end
+    return #grids
+end
+
+Events.EveryHours.Add(function()
+    Server.repeatGrids()
+end)
 Events.OnInitGlobalModData.Add(function()
     Secrets.getSeed()
     Server.getCode()

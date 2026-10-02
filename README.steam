@@ -1,6 +1,6 @@
 [h1]Military Drop - Radio Supply Airdrops[/h1]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-banner.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
 [b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]
 
@@ -10,56 +10,58 @@ Tune a military radio to the right frequency, give this week's code and requisit
 
 [h2]Find the frequency and the code[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-code.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-codebook-memo.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
 
 Military and police zombies carry memos with the military frequency, different in every game. The code changes every Monday: a numbers station broadcasts it on shortwave, and a military codebook deciphers it.
 
 [h2]Call from your radio[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-radio.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/radio-logistics-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
 Right-click a military radio, [b]Device Options[/b], [b]Logistics[/b] section: type the code and press [b]Request a supply drop[/b]. Walkie-talkie in hand, on the belt or in a bag, or a placed radio.
 
 [h2]Fill the requisition[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-requisition.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/requisition-form-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
 
 Spend a point budget on 18 lots drawn from the game's own loot tables, mods included: rations, medical, ammunition, firearms, fuel... Or order a siren decoy that drags the hordes to a sector you choose.
 
 [h2]Reach the crate[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-crate.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-crate-trunk.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
 
 Hear the helicopter, see its shadow, then race to the announced grid, 150 to 400 tiles away. Everyone on the frequency gets the map marker, and a horde guards the crate. Empty crates can be dismantled for wood.
 
+[b]Keep a radio on and tuned to the military frequency.[/b] The grid is announced when the crate lands, then repeated every 6 hours (server setting) until someone opens a supply case: a radio that is off or on another channel hears nothing, and no marker appears on your map. Tip: save the frequency with [b]Add preset[/b].
+
 [h2]Earn the base's trust[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-trust.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-console-missions.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
 Recover your drops, send daily reports, announce fallen soldiers' dog tags and answer public missions: recon, horde clearance, radio checks. Trust shortens the wait and unlocks bigger requisitions.
 
 [h2]Hold a liaison post[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-post.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/console-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
 Turn a fixed military ham radio into your station's console: transmission log, orders, dog tags, standing and drop requests. In multiplayer, each faction is a station with its own call sign.
 
 [h2]For server admins[/h2]
 
 [list]
-[*]44 sandbox options: wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy.
+[*]45 sandbox options: wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy.
 [*]Requisition lots can be edited, disabled or added in Zomboid/Lua/MilitaryDrop/requisition.txt.
 [*]Server-authoritative multiplayer. Admins can force a drop and launch missions from a military radio.
 [/list]

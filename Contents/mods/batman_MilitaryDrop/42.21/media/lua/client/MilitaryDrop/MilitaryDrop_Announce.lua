@@ -11,6 +11,14 @@
 -- ouvrir la carte du monde) : sauvegardé comme une note du joueur, qui peut
 -- l'effacer.
 --
+-- Rappel de la base (option DropRepeatHours, Server.repeatGrids) : même
+-- principe, DropAnnounce { grids = { { x, y }, ... } } pour toutes les grilles
+-- du rappel. Les grilles en attente d'être entendues forment une liste : une
+-- ligne entendue les marque toutes (elles sont diffusées ensemble). Une
+-- annonce qui n'a pas été entendue est oubliée à l'arrivée d'une suivante,
+-- au-delà de PENDING_MS : jamais de repère pour une grille qu'on n'a pas
+-- entendue.
+--
 -- Reconnaissance (SRC-03) : même principe. Le serveur envoie la grille à tous
 -- (ReconAnnounce, { id, x, y }, MilitaryDrop.Broadcast.reconAnnounced) et
 -- l'annonce de la mission porte le code RECON_CODE ; symbole « Eye », bleu,
@@ -44,8 +52,12 @@ Announce.CLEANUP_SYMBOL = "Skull"
 Announce.CLEANUP_COLOR = { r = 0.75, g = 0.15, b = 0.1, a = 1 }
 -- Radio posée : OnDeviceText donne sa position, même loin du joueur (solo).
 Announce.HEARING_DISTANCE = 5
+-- Durée (ms réelles) pendant laquelle une grille annoncée attend d'être
+-- entendue, comptée à l'annonce suivante.
+Announce.PENDING_MS = 5 * 60 * 1000
 
-local lastDrop = nil
+-- Grilles annoncées pas encore entendues : { x, y, at }.
+local pendingDrops = {}
 -- Dernière mission annoncée par type (recon, cleanup) : { id, x, y, marked }.
 local lastMission = {}
 -- Missions déjà marquées (id → true) : une fois par mission. Les id
@@ -59,9 +71,32 @@ local MISSION_MARKS = {
     { kind = "cleanup", code = "CLEANUP_CODE", symbol = "CLEANUP_SYMBOL", color = "CLEANUP_COLOR" },
 }
 
+local function addPending(x, y, now)
+    local kept = {}
+    for _, entry in ipairs(pendingDrops) do
+        if now - entry.at <= Announce.PENDING_MS and not (entry.x == x and entry.y == y) then
+            kept[#kept + 1] = entry
+        end
+    end
+    kept[#kept + 1] = { x = x, y = y, at = now }
+    pendingDrops = kept
+end
+
+--- Annonce d'un largage ({ x, y }) ou rappel de la base ({ grids }).
 function Announce.onDropAnnounce(args)
-    if type(args) == "table" and type(args.x) == "number" and type(args.y) == "number" then
-        lastDrop = { x = args.x, y = args.y, marked = false }
+    if type(args) ~= "table" then
+        return
+    end
+    local now = getTimestampMs()
+    if type(args.x) == "number" and type(args.y) == "number" then
+        addPending(args.x, args.y, now)
+    end
+    if type(args.grids) == "table" then
+        for _, grid in ipairs(args.grids) do
+            if type(grid) == "table" and type(grid.x) == "number" and type(grid.y) == "number" then
+                addPending(grid.x, grid.y, now)
+            end
+        end
     end
 end
 
@@ -132,7 +167,7 @@ local function hasCode(codes, code)
 end
 
 function Announce.onDeviceText(_, codes, x, y, z)
-    local drop = lastDrop and not lastDrop.marked and hasCode(codes, Announce.CODE)
+    local drop = #pendingDrops > 0 and hasCode(codes, Announce.CODE)
     local missions = {}
     for _, mark in ipairs(MISSION_MARKS) do
         local mission = lastMission[mark.kind]
@@ -144,9 +179,12 @@ function Announce.onDeviceText(_, codes, x, y, z)
         return
     end
     if drop then
-        lastDrop.marked = true
-        Announce.markMap(lastDrop.x, lastDrop.y)
-        MilitaryDrop.log("drop marked on the map at " .. lastDrop.x .. "," .. lastDrop.y)
+        local heard = pendingDrops
+        pendingDrops = {}
+        for _, entry in ipairs(heard) do
+            Announce.markMap(entry.x, entry.y)
+            MilitaryDrop.log("drop marked on the map at " .. entry.x .. "," .. entry.y)
+        end
     end
     for _, entry in ipairs(missions) do
         local mission, mark = entry.mission, entry.mark

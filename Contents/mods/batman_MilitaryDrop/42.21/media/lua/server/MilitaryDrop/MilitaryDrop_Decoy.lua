@@ -315,6 +315,12 @@ function Decoy.stop(dropId, reason)
     silenceListeners(dropId, entry)
     sirens[dropId] = nil
     runtime[dropId] = nil
+    -- Leurre trouvé (sirène coupée, caisse démontée ou disparue) : la base ne
+    -- répète plus sa grille, comme pour une caisse ouverte. À l'échéance des
+    -- piles, personne ne l'a trouvé : les rappels continuent.
+    if reason ~= "expired" and MilitaryDrop.Trust and MilitaryDrop.Trust.markFound then
+        MilitaryDrop.Trust.markFound(dropId)
+    end
     MilitaryDrop.log(string.format("decoy siren %s stopped (%s)", tostring(dropId), tostring(reason)), true)
     return true
 end

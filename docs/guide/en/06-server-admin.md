@@ -15,6 +15,7 @@ All options are on the **Military Drop** page of the sandbox options. Hours and 
 | Military frequency (MHz) | `Frequency` | 0 | 0: random free frequency between 120 and 170 MHz, written on the memos. A fixed value is visible to every player. 112.2 MHz is reserved. |
 | Minimum drop distance | `DropMinDistance` | 150 | Minimum tiles between the caller and the drop point. |
 | Maximum drop distance | `DropMaxDistance` | 400 | Maximum tiles between the caller and the drop point. |
+| Grid reminder every (hours) | `DropRepeatHours` | 6 | In-game hours between two reminders of the grid of a drop whose supply cases are all unopened, for up to `TrustDropLostHours`. 0 = no reminder. |
 | Minimum zombies at the drop | `MinZombies` | 3 | 0 and 0: no zombies. |
 | Maximum zombies at the drop | `MaxZombies` | 30 | Zombies spawned around the crate. |
 | Supply cases per drop | `CaseRolls` | 6 | Loot rolls when the form is off. |

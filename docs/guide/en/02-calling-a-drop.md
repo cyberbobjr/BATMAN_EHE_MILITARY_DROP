@@ -39,23 +39,23 @@ Military zombies sometimes carry a **Military Codebook**, and it can be found in
 
 Look up the first two groups in the table to get the two words. The last two digits are sent in clear. With the table above, `20-71-58` gives `WHISKEY-ALPHA-58`.
 
-![Codebook, memo and the numbers station in game](../images/ingame-codebook-memo.png)
+![Codebook and memo in game](../images/ingame-codebook-memo.png)
 
-*In game: the codebook, the memo, and the numbers station heard on the walkie-talkie.*
+*In game: the codebook and a memo. Your frequencies are different.*
 
 > The server may use a simpler mode: no code at all, a fixed code written on the memos, or this week's code written in clear on the memos. See [Server admin](06-server-admin.md).
 
 ## 3. Call the base
 
-1. Turn your military radio on and tune it to the military frequency (vanilla **Channel** section).
+1. Turn your military radio on and tune it to the military frequency (vanilla **Channel** section). Save it with **Add preset**: you will need it again for the drop announcement.
 2. Right-click the radio and choose **Device Options**.
 3. Open the **Logistics** section at the bottom of the radio window.
 4. Type the code in the **Code** field. It is remembered for this character, even after you reload.
 5. Press **Request a supply drop**.
 
-![The Logistics section of the radio window](../images/radio-logistics-en.png)
+![The walkie-talkie window in game, with the Logistics section](../images/ingame-walkie-logistics.png)
 
-*Out-of-game render.*
+*In game: the frequency saved as a preset ("150.6 MHz drop"; yours is different) and the Logistics section at the bottom.*
 
 A greyed button tells you why in its tooltip (radio off, code missing...). Your character speaks, and the base answers after a few seconds.
 
@@ -92,6 +92,12 @@ The helicopter stops when the game is paused, and resumes its flight after a sav
 When the crate drops: *"Supply crate delivered at grid X / Y. I repeat, grid X / Y."* then *"Logistics out."*
 
 Every radio **on and tuned** to the military frequency at that moment hears it, and its owner gets a green **target** symbol on the map. Turned off or on another channel: no marker. In multiplayer, other players hear it too.
+
+> **Keep a radio on and tuned to the military frequency.** A radio that is off, out of battery or on another channel hears nothing, and you get no marker. A walkie-talkie clipped to the belt keeps listening while you move.
+
+### Grid reminders
+
+Missed it? The base repeats the grid of every drop whose supply cases are all still unopened: *"All stations, Logistics. Supply crate still awaiting pickup at grid X / Y."* By default every **6 hours** of game time, for up to **48 hours**; the reminders stop as soon as someone opens a supply case. A reminder works like the announcement: only a radio that is on and tuned hears it and marks your map. Everyone listening hears it too, so others may race you to the crate.
 
 ![Drop marker on the map](../images/ingame-map-drop-marker.png)
 

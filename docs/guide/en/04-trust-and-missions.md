@@ -41,9 +41,9 @@ The base keeps a **trust** score for each station, from 0 to 100. A new station 
 
 These exchanges need **no code**: only a military radio tuned to the military frequency. They are in the **Logistics** section of the radio window (**Device Options**).
 
-![Logistics section](../images/radio-logistics-en.png)
+![Logistics section](../images/ingame-walkie-logistics-section.png)
 
-*Out-of-game render.*
+*In game.*
 
 ## Daily report
 

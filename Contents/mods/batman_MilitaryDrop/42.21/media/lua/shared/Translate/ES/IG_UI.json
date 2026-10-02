@@ -25,6 +25,7 @@
     "IGUI_MilitaryDrop_Dropped": "Lanzamiento confirmado en las coordenadas %1 / %2. Cambio.",
     "IGUI_MilitaryDrop_BroadcastInbound": "A todas las estaciones, aquí Logística. Helicóptero de suministros en ruta hacia una zona de lanzamiento solicitada, llegada en un minuto.",
     "IGUI_MilitaryDrop_BroadcastDropped": "Caja de suministros entregada en la cuadrícula %1 / %2. Repito, cuadrícula %1 / %2.",
+    "IGUI_MilitaryDrop_BroadcastPending": "A todas las estaciones, aquí Logística. Caja de suministros aún pendiente de recogida en la cuadrícula %1 / %2. Repito, cuadrícula %1 / %2.",
     "IGUI_MilitaryDrop_BroadcastOut": "Logística, corto.",
     "IGUI_VehicleNameMilitaryDrop_SupplyCrate": "Caja de suministros militares",
     "IGUI_MilitaryDrop_Note_1": "Frecuencia de emergencia: %1 MHz. Necesitamos refuerzos y un lanzamiento aéreo de armas ligeras y munición. Código de autenticación: %2. Posición: cuadrícula 07Z.",

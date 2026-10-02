@@ -30,7 +30,7 @@ No other mod is required. You can add the mod to an existing save: military note
 2. Listen to the numbers station, find a **Military Codebook** and decode this week's code.
 3. Tune your military radio to the military frequency. Right-click it, **Device Options**, open the **Logistics** section, type the code and press **Request a supply drop**.
 4. Fill the [requisition form](03-requisition-form.md) and transmit it.
-5. Follow the announced grid, kill the horde, open the crate.
+5. **Keep the radio on and tuned**: the grid is announced when the crate lands, then repeated every 6 hours by default until someone opens a supply case. Follow it, kill the horde, open the crate.
 
 Then keep the base happy: [trust and missions](04-trust-and-missions.md) shorten the wait between drops and unlock better supplies.
 

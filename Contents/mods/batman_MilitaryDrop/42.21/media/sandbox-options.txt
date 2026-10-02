@@ -24,6 +24,12 @@ option MilitaryDrop.DropMaxDistance
     page = MilitaryDrop, translation = MilitaryDrop_DropMaxDistance,
 }
 
+option MilitaryDrop.DropRepeatHours
+{
+    type = integer, min = 0, max = 168, default = 6,
+    page = MilitaryDrop, translation = MilitaryDrop_DropRepeatHours,
+}
+
 option MilitaryDrop.AuthCode
 {
     type = enum, numValues = 4, default = 4,

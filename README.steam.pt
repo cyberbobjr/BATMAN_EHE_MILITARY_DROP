@@ -1,6 +1,6 @@
 [h1]Military Drop - Abastecimento aéreo por rádio[/h1]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-banner.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
 [b]Build 42.21 · Um jogador e multijogador · Autónomo[/b]
 
@@ -10,56 +10,58 @@ Sintoniza um rádio militar na frequência certa, indica o código da semana e r
 
 [h2]Encontrar a frequência e o código[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-code.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-codebook-memo.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
 
 Os zombies militares e polícias levam memorandos com a frequência militar, diferente em cada partida. O código muda todas as segundas-feiras: uma estação de números transmite-o em ondas curtas e um livro de códigos militar decifra-o.
 
 [h2]Chamar a partir do teu rádio[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-radio.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/radio-logistics-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
 Clica com o botão direito num rádio militar, [b]Opções do Dispositivo[/b], secção [b]Logística[/b]: escreve o código e prime [b]Pedir abastecimento aéreo[/b]. Walkie-talkie na mão, à cintura ou num saco, ou um rádio pousado.
 
 [h2]Preencher a requisição[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-requisition.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/requisition-form-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
 
 Gasta um orçamento de pontos em 18 lotes tirados das próprias tabelas de saque do jogo, mods incluídos: rações, material médico, munições, armas de fogo, combustível... Ou pede um isco com sirene que arrasta as hordas para um setor à tua escolha.
 
 [h2]Chegar ao caixote[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-crate.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-crate-trunk.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
 
 Ouve o helicóptero, vê a sua sombra e corre até à quadrícula anunciada, a 150 a 400 quadrados de distância. Todos os que estão na frequência recebem o marcador no mapa, e uma horda guarda o caixote. Os caixotes vazios podem ser desmantelados para obter madeira.
 
+[b]Mantém um rádio ligado e sintonizado na frequência militar.[/b] A quadrícula é anunciada quando o caixote aterra e repetida a cada 6 horas (definição do servidor) até alguém abrir uma caixa de abastecimento: um rádio desligado ou noutro canal não ouve nada, e não aparece nenhum marcador no teu mapa. Dica: guarda a frequência com [b]Adicionar predefinição[/b].
+
 [h2]Ganhar a confiança da base[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-trust.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/ingame-console-missions.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
 Recupera os teus lançamentos, envia relatórios diários, anuncia as placas de identificação dos soldados caídos e responde às missões públicas: reconhecimento, limpeza de hordas, verificações de rádio. A confiança encurta a espera e desbloqueia requisições maiores.
 
 [h2]Manter um posto de ligação[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/steam-post.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/guide/images/console-en.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
 Transforma um radioamador militar fixo na consola da tua estação: registo de transmissões, ordens, placas de identificação, confiança e pedidos de lançamento. Em multijogador, cada facção é uma estação com o seu próprio indicativo.
 
 [h2]Para administradores de servidores[/h2]
 
 [list]
-[*]44 opções sandbox: espera entre lançamentos (uma semana por predefinição, para todo o servidor), distância, horda, modo do código, confiança, missões, requisição, isco.
+[*]45 opções sandbox: espera entre lançamentos (uma semana por predefinição, para todo o servidor), distância, horda, modo do código, confiança, missões, requisição, isco.
 [*]Os lotes de requisição podem ser editados, desativados ou acrescentados em Zomboid/Lua/MilitaryDrop/requisition.txt.
 [*]Multijogador com autoridade do servidor. Os administradores podem forçar um lançamento e iniciar missões a partir de um rádio militar.
 [/list]

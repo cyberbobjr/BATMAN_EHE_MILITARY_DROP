@@ -25,6 +25,7 @@
     "IGUI_MilitaryDrop_Dropped": "空投已确认，坐标 %1 / %2。完毕。",
     "IGUI_MilitaryDrop_BroadcastInbound": "各台注意，这里是后勤处。补给直升机正飞往申请的空投区，预计一分钟后抵达。",
     "IGUI_MilitaryDrop_BroadcastDropped": "补给空投箱已投放至坐标 %1 / %2。重复，坐标 %1 / %2。",
+    "IGUI_MilitaryDrop_BroadcastPending": "各台注意，这里是后勤处。补给空投箱仍在坐标 %1 / %2 等待回收。重复，坐标 %1 / %2。",
     "IGUI_MilitaryDrop_BroadcastOut": "后勤处，通话结束。",
     "IGUI_VehicleNameMilitaryDrop_SupplyCrate": "军用空投箱",
     "IGUI_MilitaryDrop_Note_1": "Emergency frequency: %1 MHz. Need backup and airdrop of light weapons and ammunition. Authentication code: %2. Position: grid 07Z.",

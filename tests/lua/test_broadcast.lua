@@ -66,6 +66,19 @@ function T.setup()
     end }
 end
 
+function T.pending_grids_go_out_in_one_message_then_on_the_channel()
+    triggerEvent("OnLoadRadioScripts", SCRIPT_MANAGER, false)
+    assertTrue(not MilitaryDrop.Broadcast.pending({}), "rien à rappeler")
+    MilitaryDrop.Broadcast.pending({ { x = 10, y = 20 }, { x = 30, y = 40 } })
+    assertEq(#SENT, 1, "un seul message aux clients")
+    assertEq(SENT[1].command, "DropAnnounce", "même commande que l'annonce")
+    assertEq(#SENT[1].args.grids, 2, "toutes les grilles du rappel")
+    assertEq(#AIRED.lines, 5, "deux lignes par grille, puis fin de message")
+    assertEq(AIRED.lines[3].text, "IGUI_MilitaryDrop_BroadcastPending|30|40", "seconde grille")
+    assertEq(AIRED.lines[3].codes, "MDRP", "code du repère")
+    assertEq(AIRED.lines[5].codes, nil, "fin de message sans code")
+end
+
 function T.channel_on_military_frequency()
     triggerEvent("OnLoadRadioScripts", SCRIPT_MANAGER, false)
     local channel = MilitaryDrop.Broadcast.channel

@@ -55,6 +55,8 @@ Broadcast.RECON_CODE = "MDRC"
 -- (MilitaryDrop.Announce.CLEANUP_CODE, même valeur).
 Broadcast.CLEANUP_CODE = "MDCU"
 Broadcast.REPEATS = 3
+-- Rappel de la grille d'un largage en attente (Broadcast.pending).
+Broadcast.PENDING_REPEATS = 2
 Broadcast.COLOR = { r = 0.45, g = 0.85, b = 0.45 }
 -- Bande de la fréquence libre (kHz, comme DeviceData:getChannel()).
 Broadcast.BAND_MIN = 120000
@@ -173,6 +175,27 @@ function Broadcast.dropped(x, y)
     lines[#lines + 1] = { getText("IGUI_MilitaryDrop_BroadcastOut") }
     Broadcast.air(lines)
     toPostLogs(text)
+end
+
+--- Rappel de la base (Server.repeatGrids) : grille de chaque largage dont
+--- aucune caisse n'a été ouverte, avec le code du repère. Toutes les grilles
+--- partent aux clients dans un seul message (DropAnnounce { grids }), avant
+--- les lignes qui les annoncent.
+function Broadcast.pending(grids)
+    if type(grids) ~= "table" or #grids == 0 then
+        return false
+    end
+    Net.toAll("DropAnnounce", { grids = grids })
+    local lines = {}
+    for _, grid in ipairs(grids) do
+        local text = getText("IGUI_MilitaryDrop_BroadcastPending", tostring(grid.x), tostring(grid.y))
+        for _ = 1, Broadcast.PENDING_REPEATS do
+            lines[#lines + 1] = { text, Broadcast.CODE }
+        end
+        toPostLogs(text)
+    end
+    lines[#lines + 1] = { getText("IGUI_MilitaryDrop_BroadcastOut") }
+    return Broadcast.air(lines)
 end
 
 --- Reconnaissance lancée (MilitaryDrop_Missions.lua) : grille envoyée à tous

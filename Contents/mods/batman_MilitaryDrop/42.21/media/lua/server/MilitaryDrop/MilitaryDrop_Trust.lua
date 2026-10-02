@@ -29,7 +29,10 @@
 --   trust[teamId] = { value, lockedUntil (heures de jeu), day, dayGain,
 --                     lastCallHours, erodedDay }
 --   drops[dropId] = { team, requester, forced, requestedHours, deliveredHours,
---                     deadline, outcome, openedBy, closedHours, order, decoy }
+--                     deadline, outcome, openedBy, closedHours, order, decoy,
+--                     x, y, announcedHours, repeats }
+--   (x, y, announcedHours : grille annoncée au passage de l'hélicoptère ;
+--   repeats : rappels de la base déjà diffusés, Server.repeatGrids)
 --   (team nil : largage admin ou leurre, sans effet sur la confiance)
 --   nextDropId = compteur ("D1", "D2"…)
 -- Chaque caisse de ravitaillement d'un largage porte son dropId en ModData
@@ -304,6 +307,50 @@ function Trust.onDropDelivered(dropId)
     local hours = hoursNow()
     drop.deliveredHours = hours
     drop.deadline = hours + math.max(1, tonumber(Config.get("TrustDropLostHours")) or 48)
+end
+
+--- Grille annoncée au passage de l'hélicoptère (MilitaryDrop_Flights.lua) :
+--- point de départ des rappels de la base (Server.repeatGrids).
+function Trust.onDropAnnounced(dropId, x, y)
+    local drop = dropId and state().drops[dropId]
+    if not drop or type(x) ~= "number" or type(y) ~= "number" then
+        return
+    end
+    drop.x, drop.y = x, y
+    drop.announcedHours = hoursNow()
+    drop.repeats = 0
+end
+
+--- Largages annoncés dont aucune caisse n'a été ouverte (ni échus, ni
+--- trouvés) : { { id, drop } }, du plus ancien au plus récent.
+function Trust.announcedDrops()
+    local list = {}
+    for dropId, drop in pairs(state().drops) do
+        if drop.announcedHours and not drop.outcome then
+            list[#list + 1] = { id = dropId, drop = drop }
+        end
+    end
+    table.sort(list, function(a, b)
+        if a.drop.announcedHours ~= b.drop.announcedHours then
+            return a.drop.announcedHours < b.drop.announcedHours
+        end
+        return a.id < b.id
+    end)
+    return list
+end
+
+--- Caisse trouvée sans caisse de ravitaillement ouverte : sirène d'un leurre
+--- coupée, caisse démontée ou disparue (MilitaryDrop_Decoy.lua). Le largage est
+--- clos comme une caisse ouverte (plus de rappel), sans effet sur la confiance :
+--- seuls les leurres, hors suivi, passent par ici.
+function Trust.markFound(dropId)
+    local drop = dropId and state().drops[dropId]
+    if not drop or drop.outcome or drop.team then
+        return false
+    end
+    drop.outcome = "opened"
+    drop.closedHours = hoursNow()
+    return true
 end
 
 --- Marque une caisse de ravitaillement du largage dropId.
