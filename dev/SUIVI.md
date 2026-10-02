@@ -87,7 +87,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | TEST-01 | Protocole solo restant : C1, E1, F1, F2, D3, D4 | TEST-PROTOCOL | décidé | — | Partie solo |
 | TEST-02 | Partie avec HEF actif | PLAN phase 7 | décidé | — | Partie solo avec HEF |
 | TEST-03 | Serveur dédié, 2 clients : appel, écoute, reconnexion pendant un vol, commande forgée | PLAN phase 7 | décidé | — | `C:\pzserver` |
-| PUB-02 | Poster, aperçu et icône définitifs | PLAN phase 8 | décidé | — | Poster généré par Codex, en attente de validation ; icône ensuite (skill `pz-workshop-art`) |
+| PUB-02 | Poster, aperçu et icône définitifs | PLAN phase 8 | codé | `poster.png`, `preview.png`, `icon.png` (Codex, validés par l'utilisateur) | Vérifier le poster et l'icône dans le sélecteur de mods du jeu |
 | PUB-03 | Suppression de `legacy-b41/` avant la sortie | PLAN phase 8 | décidé | — | — |
 | PUB-04 | Nouvel élément Workshop B42, lien depuis la page B41 | PLAN décisions | décidé | — | Après TEST-03 |
 | PUB-05 | Mod multilingue : DE, ES, PT, PTBR, RU, CN en plus de EN/FR (jeu et description Steam) | demande utilisateur | testé hors jeu | run_tests (clés, paramètres, balises, tailles) | Largeur des libellés longs (DE, PT) à voir en jeu ; documents en anglais en CN (polices SDF sans CJK) |
@@ -182,6 +182,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 
 ## Journal
 
+- **2026-10-02** — Poster validé par l'utilisateur et installé (poster du sélecteur, aperçu Workshop 512 px) ; icône 64 px générée par Codex à partir du poster (caisse sous parachute), fond blanc enfermé entre les sangles retiré au détourage (PUB-02).
 - **2026-10-02** — Préparation de la publication : six langues ajoutées par des sous-agents (PUB-05, 470 clés chacune, descriptions Steam traduites avec la mention « multijoueur conçu mais non testé ») ; bannière et six illustrations de section générées par Codex dans le style maison, insérées dans les 8 descriptions et `workshop.txt` (PUB-06) ; poster généré (PUB-02, à valider).
 - **2026-10-01** — Largage forcé tombé dans l'eau (test de l'utilisateur) : le point de largage était encore tiré au hasard sur la métagrille, qui ne connaît pas l'eau (les missions étaient déjà corrigées). Il vise maintenant une route (zone « Nav »), sinon le pied d'un bâtiment, avec le secteur du leurre respecté ; la caisse se pose ensuite sur la case libre la plus proche.
 - **2026-10-01** — Cinquième test solo : bouton « Poste de liaison » (POSTE-07), silence après 3 codes faux (CODE-06), largage et missions de l'admin (SRC-09, I9) réussis. Guide public (`docs/guide/`, EN/FR) et descriptions Steam EN/FR rédigés ; `b42` fusionnée dans `main`.
