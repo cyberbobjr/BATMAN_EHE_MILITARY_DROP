@@ -39,7 +39,7 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | v1.5 | Largage leurre (idée 9) | testé hors jeu ([PLAN-V14.md](PLAN-V14.md)) |
 | Intégrations | Fumée sur la caisse avec Signal Smoke (facultatif) | testé solo |
 | Idée 3 | Balises, détecteur, chasses au trésor | mis de côté |
-| Idée 8 | Mayday, épave démontable | à décider |
+| Idée 8 | Mayday, épave démontable | testé hors jeu, solo et MP à faire |
 | Idée 10 | Extraction, pont avec Opération Artemis | à décider |
 
 ## v1.0 — Parité B41 et code d'authentification
@@ -177,12 +177,16 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | BAL-01 | Détecteur directionnel : voyant et bip dont la cadence suit la distance, 12 niveaux | analyses/idee-03, décision 5 | conçu | — | Idée mise de côté |
 | BAL-02 | Annonce réduite à un secteur, balise à retrouver | analyses/idee-03 | à décider | — | — |
 | BAL-03 | Chasses au trésor aléatoires | analyses/idee-03 | à décider | — | — |
-| MAY-01 | Hélicoptère abattu, épave 3D démontable, pilote et documents | analyses/idee-08 | à décider | — | Estimation 11 à 15 jours |
+| MAY-01 | Hélicoptère abattu, deux épaves 3D, débris, pilote, documents et enregistreur | analyses/idee-08, demande du 2026-10-02 | testé hors jeu | test_crash, test_flights, test_wreck, test_heli, check_mayday_assets.py | M1-M6 : rendu, collisions, corps et restauration en jeu |
+| MAY-02 | Récupération des pièces par étapes, outils et compétences revérifiés au serveur, lots puis découpe vanilla | analyses/idee-08 | testé hors jeu | test_salvage, test_wreckparts, test_wreckmenu | M3, M7 : accès mécanique et deux joueurs concurrents ; maillage conservé jusqu’à la découpe finale |
+| MAY-03 | Probabilités panne/orage, tirs facultatifs, feu/fumée et ravitaillement configurables | analyses/idee-08 | testé hors jeu | test_crash, test_flights, test_wreck | M4, M5, M8 : effets et tirs réels ; signal client de tir seulement revérifié pour plausibilité |
+| MAY-04 | Menu admin : faire crasher le prochain départ, ordre unique persistant et contrôle des droits | Demande du 2026-10-02 | testé hors jeu | test_client, test_flights | M1, M6, M7 : menu réel et serveur dédié |
 | EXT-01 | Extraction et pont avec Opération Artemis | analyses/idee-10 | à décider | — | Modèle MP d'Artemis à trancher ; coût en confiance de faction |
 | RADIO-06 | Module « Logistique » dans la fenêtre radio du jeu (radio militaire) : saisie du code, largage, rapport, matricules, reconnaissance, contrôle, dernière réponse de la base ; la feuille de réquisition s'ouvre collée à la fenêtre radio | Décision de l'utilisateur du 2026-10-01 | testé solo | test_radiomodule, test_client, test_requisitionwindow, `source/radio_module/preview.py`, B1, B2, K1-K4 (test solo du 2026-10-01, 3e passage) | K5 (manette, pas de manette pour le test) ; MP ; code saisi gardé d'une session à l'autre, par personnage (demande du 2026-10-01, en cours) |
 
 ## Journal
 
+- **2026-10-02** — MAY-01 à MAY-04 sur `feature/mayday-wreck` : MAYDAY, secteur sur carte pour les auditeurs, crash serveur, sites persistants attendant les chunks, deux modèles originaux (fuselage et queue arrondis), pilote et documents, récupération et découpe finale, options de causes/effets. Commande admin du prochain départ persistante, y compris pour un largage forcé ; vol déjà parti conservé. API installée contrôlée en 42.21.0 ; tests Lua et FBX hors jeu, aucun test en jeu ni publication de ce lot.
 - **2026-10-02** — DROP-05 (rappel de la grille, solution 3 retenue par l'utilisateur) : grille gardée à l'annonce dans l'état privé, rappel groupé toutes les 6 heures sur la chaîne militaire, repère pour qui l'entend (le client garde une liste de grilles en attente, oubliées à l'annonce suivante au-delà de 5 minutes réelles). 45 options. Capture du carnet et de la note (`docs/shot1.png`) dans le guide et la description Steam. Version 0.1.1. 565 tests `lupa`.
 - **2026-10-02** — Documentation : capture en jeu du talkie-walkie avec la section Logistique (guide EN/FR, description Steam) ; avertissement « radio allumée et réglée jusqu'au largage, grille annoncée une seule fois » dans le guide (démarrage, annonce, FAQ) et les 8 descriptions ; images de la description Steam réduites (bandeaux 636 × 200, captures de 360 px de haut au plus, `docs/steam/`).
 - **2026-10-02** — Première mise en ligne en privé : élément Workshop 3811752923, version 0.1.0, descriptions dans les 8 langues publiées, aucune capture touchée (PUB-04).

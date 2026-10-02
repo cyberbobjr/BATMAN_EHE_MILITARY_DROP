@@ -104,4 +104,35 @@ function T.duplicate_start_only_resyncs()
     assertEq(MilitaryDrop.Heli.count(), 1, "un seul vol")
 end
 
+function T.crash_removes_flight_visuals_and_plays_impact_only_within_range()
+    start()
+    tick(100)
+    local sounds = {}
+    EMITTER.playSoundImpl = function(_, name) sounds[#sounds+1]=name end
+    MilitaryDrop.Heli.onFlightCrash({id=4,x=1000,y=2000})
+    assertEq(MilitaryDrop.Heli.count(),0)
+    assertEq(STOPPED,1)
+    assertEq(MARKERS,0)
+    assertEq(ARROWS,0)
+    assertEq(sounds[1],"VehicleCrash")
+    assertEq(sounds[2],"BurnedObjectExploded")
+    MilitaryDrop.Heli.onFlightCrash({id=5,x=3000,y=2000})
+    assertEq(#sounds,2,"impact lointain inaudible")
+end
+
+function T.updated_flight_start_replaces_the_trajectory_with_the_crash()
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Crash.lua")
+    local flight = start()
+    tick(100)
+    flight.crash = MilitaryDrop.Crash.plan(flight,"gunfire")
+    flight.elapsed = flight.crash.t
+    MilitaryDrop.Heli.onFlightStart(MilitaryDrop.Flight.toArgs(flight))
+    tick(100)
+    assertEq(STOPPED,1)
+    assertEq(MARKERS,0,"ombre retirée à l’impact plutôt que survol")
+    MilitaryDrop.Heli.onFlightSync({id=4, elapsed=flight.crash.t + MilitaryDrop.Heli.GRACE_SECONDS + 1})
+    tick(100)
+    assertEq(MilitaryDrop.Heli.count(),0,"nettoyage après le délai réseau")
+end
+
 return T

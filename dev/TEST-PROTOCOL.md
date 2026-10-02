@@ -186,6 +186,21 @@ Options par défaut (formulaire actif). Confiance réglable pour les essais : `M
 - Avec HEF actif : départ retardé si un événement HEF est proche.
 
 
+## Mayday — branche feature/mayday-wreck (à valider en jeu)
+
+Redémarrer complètement le jeu avec cette version locale, sur une partie de test. Aucun cas ci-dessous n’a encore été joué. Vérifier `version=42.21.0` dans le journal de cette session.
+
+| Cas | Action et attendu |
+|---|---|
+| M1 | Solo debug : clic droit sur une radio militaire, « Faire crasher le prochain hélicoptère », puis « Forcer un largage (admin) » et commander. Confirmation privée, arrivée, MAYDAY, impact au lieu du largage normal ; appel suivant forcé normal. Réarmer deux fois ne programme qu’un crash. |
+| M2 | Écouter la fréquence militaire jusqu’au MAYDAY : secteur orange « ? » sur carte. Radio éteinte/autre fréquence : aucun repère. Aller au secteur : fuselage et queue arrondis à la bonne échelle, débris, horde, absence de collisions avec murs/eau ; zone trop petite : lots au sol. |
+| M3 | Fouiller le corps : pilote mort, enregistreur, note et carnet. Clic droit sur les deux épaves → récupération : avionique Électricité 2/tournevis, radio Électricité 1 après avionique ; moteur Mécanique 2/clé, moyeu Mécanique 1 après moteur ; panneaux Soudure 1/tournevis après moyeu. Queue : panneaux seuls. Sans outil/niveau : refus. Lots ouverts par recette, puis découpe vanilla au chalumeau/masque seulement après retrait complet. |
+| M4 | Essayer aucun effet, fumée, puis feu et fumée. Fumée présente à l’arrivée tardive, cesse après sa durée ; pas de feu quand `NoFire` l’interdit. `CrashCrates=false` : pas de ravitaillement ; `PilotDocuments=false` : pas de note/carnet. |
+| M5 | Avec chance et bonus à 0 : vols normaux. Chance à 100 : crashes normaux ; largages admin et leurres restent normaux sauf ordre explicite. Réputation du demandeur conservée après le crash et récupération des caisses ; aucun rappel de grille de largage perdu. |
+| M6 | Sauvegarder/quitter après armement et avant départ : ordre conservé. Refaire avec vol en attente HEF : attente conservée, ordre consommé au départ. Sauvegarder en vol condamné : site en attente au retour, jamais deuxième pilote/horde/épave. S’approcher progressivement des chunks pour vérifier que chaque épave attend toute son enveloppe. |
+| M7 | Serveur dédié + deux clients : non-admin sans option et commande forgée refusée ; admin armé, crash visible et audible par les voisins. Deux joueurs désinstallent la même pièce : un seul lot. Reconnexion/redémarrage : mêmes pièces retirées, même corps et matériel, fumée si durée non expirée. Voiture poussant l’épave : contrôler stabilité et collisions. |
+| M8 | Tirs désactivés : aucun crash causé par tir. Activés/chance 100 : arme à feu chargée, proche et orientée vers un appareil en approche → MAYDAY. Arme vide, mêlée, dos tourné ou éloignement : refus. Vérifier le comportement du dernier tir du chargeur et l’absence d’erreur réseau. |
+
 ## Réputation personnelle — 0.1.2 (à valider en jeu)
 
 Redémarrage complet requis. Ces cas n'ont pas encore été exécutés en jeu.

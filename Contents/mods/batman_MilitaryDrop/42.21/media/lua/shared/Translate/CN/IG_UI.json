@@ -354,5 +354,18 @@
     "IGUI_MilitaryDrop_PostCleanupPending": "尚未发现僵尸群",
     "IGUI_MilitaryDrop_PostOpenTooltip": "打开你方电台的联络站控制台：通讯记录、当前任务、狗牌和空投请求。",
     "IGUI_MilitaryDrop_PostTransferTooltip": "你方电台的联络站在另一台无线电上。把它迁移到这里，然后打开控制台。",
-    "IGUI_MilitaryDrop_PostTransferConfirm": "把联络站迁移到这里？"
+    "IGUI_MilitaryDrop_PostTransferConfirm": "把联络站迁移到这里？",
+    "IGUI_MilitaryDrop_BroadcastMayday": "MAYDAY，MAYDAY！后勤直升机正在网格 %1 / %2 附近坠落。搜索该区域。联系中断。",
+    "IGUI_VehiclePartAvionics": "航电",
+    "IGUI_VehiclePartRadioRack": "无线电架",
+    "IGUI_VehiclePartEngineBay": "发动机舱",
+    "IGUI_VehiclePartRotorHub": "旋翼毂",
+    "IGUI_VehiclePartSkinPanels": "机身面板",
+    "IGUI_VehicleNameMilitaryDrop_HeliWreckBurnt": "军用直升机残骸",
+    "IGUI_VehicleNameMilitaryDrop_HeliTailBurnt": "军用直升机尾部残骸",
+    "IGUI_MilitaryDrop_RecoverWreck": "回收残骸零件",
+    "IGUI_MilitaryDrop_RecoverWreckFirst": "切割残骸前，请通过车辆机械菜单取下所有零件。",
+    "IGUI_MilitaryDrop_AdminCrashNext": "让下一架直升机坠毁",
+    "IGUI_MilitaryDrop_AdminCrashArmed": "下一架起飞的直升机将会坠毁。",
+    "IGUI_MilitaryDrop_AdminCrashAlreadyArmed": "下一架直升机已经设定为坠毁。"
 }

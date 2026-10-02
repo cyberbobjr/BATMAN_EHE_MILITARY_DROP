@@ -511,7 +511,8 @@ end
 --- véhicule garé) et remplacée au besoin par la plus proche. Renvoie false si
 --- aucune case ne convient encore (la livraison reste en attente). dropId :
 --- largage (confiance), porté par chaque caisse de ravitaillement.
-function Server.deliver(x, y, requester, dropId)
+function Server.deliver(x, y, requester, dropId, opts)
+    opts = opts or {}
     local square = Server.findLandingNear(x, y)
     local count = 0
     local vehicle = square and MilitaryDrop.Crate.spawn(square, dropId) or nil
@@ -541,8 +542,8 @@ function Server.deliver(x, y, requester, dropId)
     end
     x, y = square:getX(), square:getY()
     -- Fumée de repérage (Signal Smoke, facultatif).
-    MilitaryDrop.Smoke.markCrate(x, y)
-    local zombies = Server.hordeSize()
+    if not opts.crash then MilitaryDrop.Smoke.markCrate(x, y) end
+    local zombies = opts.crash and 0 or Server.hordeSize()
     if zombies > 0 then
         local r = Server.HORDE_RADIUS
         spawnHorde(x - r, y - r, x + r, y + r, 0, zombies)

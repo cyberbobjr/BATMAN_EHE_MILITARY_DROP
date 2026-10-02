@@ -71,6 +71,23 @@ Toutes les options sont sur la page **Military Drop** des options du bac à sabl
 | Durée de la sirène du leurre (heures) | `DecoySirenHours` | 6 | |
 | Portée du bruit de la sirène (cases) | `DecoyNoiseRadius` | 120 | Seulement quand la zone autour de la caisse est chargée. |
 
+### Hélicoptère abattu (branche Mayday)
+
+| Option | Clé | Défaut | Effet |
+|---|---|---|---|
+| Risque de crash (%) | `CrashChance` | 5 | Probabilité par départ normal ; largages admin et leurres exclus. |
+| Bonus d’orage | `CrashStormBonus` | 15 | Points de probabilité ajoutés pendant un orage, maximum total 100 %. |
+| Tirs pouvant abattre l’appareil | `CrashGunfire` | faux | Signal client revérifié pour plausibilité au serveur : arme chargée, distance et direction. |
+| Chance par tir plausible (%) | `CrashGunfireChance` | 10 | Approche seulement, largages admin et leurres exclus. |
+| Effets au sol | `CrashFire` | Fumée | Aucun / fumée / feu et fumée ; règles d’incendie du jeu appliquées. |
+| Durée de la fumée (minutes) | `CrashSmokeMinutes` | 60 | Minutes de jeu ; réémise pour les nouveaux arrivants. Aucun besoin de Signal Smoke. |
+| Ravitaillement au crash | `CrashCrates` | vrai | Livraison des caisses au site ; crash sans effet sur la réputation. |
+| Objets par lot récupéré | `SalvageRolls` | 3 | Tirages parmi les catégories/tags du jeu et des mods. |
+| Tenues du pilote | `PilotOutfits` | `Army` | Mots recherchés dans les noms de tenue, séparés par `;`. |
+| Documents du pilote | `PilotDocuments` | vrai | Note et carnet dans le corps ; l’enregistreur reste récupérable. |
+
+Le MAYDAY annonce un secteur approximatif sur la fréquence militaire. Le clic droit sur l’épave ouvre la récupération des pièces ; après retrait de toutes les pièces, la découpe finale suit les règles vanilla. L’enregistreur n’a pas encore d’échange ni de récompense à la base.
+
 ### Débogage
 
 | Option | Clé | Défaut | Effet |
@@ -110,6 +127,7 @@ Clic droit sur une radio militaire (dans l'inventaire ou posée) :
 
 - **Forcer un largage (admin)** : ouvre le formulaire tamponné **ADMIN**, avec tous les lots et 20 points. Ni code, ni contrôle de la radio, ni attente. Les coordonnées vous sont envoyées en privé, le largage ne compte pas pour la confiance et l'attente entre deux largages ne démarre pas. Formulaire désactivé : le largage part aussitôt avec des caisses aléatoires.
 - **Missions (admin)** : **Lancer une reconnaissance**, **Lancer un nettoyage**, **Lancer un appel de contrôle**, ou clore la mission en cours (**Clore … en cours**). Une mission close est annoncée comme annulée, sans récompense.
+- **Faire crasher le prochain hélicoptère** : programme un seul crash au prochain départ du mod, y compris un largage forcé ou un leurre. Confirmation privée, ordre conservé avec la sauvegarde ; cliquer plusieurs fois ne cumule pas les crashes. Un vol déjà parti continue et une attente HEF ne consomme pas l’ordre. Pour essayer : activer l’option, puis forcer un largage et valider le formulaire.
 
 Qui les voit : en solo, le mode debug seulement. En multijoueur, les rôles qui peuvent déclencher des événements (admin, et tout rôle doté de la capacité `MakeEventsAlarmGunshot`). Le serveur revérifie.
 

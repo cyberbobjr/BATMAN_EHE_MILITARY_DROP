@@ -1,3 +1,6 @@
 {
-    "OpenMilitarySupplyCase": "Abrir estuche de suministros"
+    "OpenMilitarySupplyCase": "Abrir estuche de suministros",
+    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Abrir lote de aviónica",
+    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Abrir lote de mecánica",
+    "CraftRecipe_OpenMilitaryMetalSalvage": "Abrir lote de metal"
 }

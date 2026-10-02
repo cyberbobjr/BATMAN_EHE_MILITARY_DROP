@@ -50,6 +50,9 @@ Announce.RECON_COLOR = { r = 0.15, g = 0.35, b = 0.75, a = 1 }
 Announce.CLEANUP_CODE = "MDCU"
 Announce.CLEANUP_SYMBOL = "Skull"
 Announce.CLEANUP_COLOR = { r = 0.75, g = 0.15, b = 0.1, a = 1 }
+Announce.MAYDAY_CODE = "MDAY"
+Announce.MAYDAY_SYMBOL = "Question"
+Announce.MAYDAY_COLOR = { r = 0.85, g = 0.35, b = 0.1, a = 1 }
 -- Radio posée : OnDeviceText donne sa position, même loin du joueur (solo).
 Announce.HEARING_DISTANCE = 5
 -- Durée (ms réelles) pendant laquelle une grille annoncée attend d'être
@@ -69,6 +72,7 @@ local symbolsApi = nil
 local MISSION_MARKS = {
     { kind = "recon", code = "RECON_CODE", symbol = "RECON_SYMBOL", color = "RECON_COLOR" },
     { kind = "cleanup", code = "CLEANUP_CODE", symbol = "CLEANUP_SYMBOL", color = "CLEANUP_COLOR" },
+    { kind = "mayday", code = "MAYDAY_CODE", symbol = "MAYDAY_SYMBOL", color = "MAYDAY_COLOR" },
 }
 
 local function addPending(x, y, now)
@@ -104,6 +108,12 @@ local function onMissionAnnounce(kind, args)
     if type(args) == "table" and type(args.id) == "string" and type(args.x) == "number"
         and type(args.y) == "number" then
         lastMission[kind] = { id = args.id, x = args.x, y = args.y, marked = markedMissions[args.id] == true }
+    end
+end
+
+function Announce.onMaydayAnnounce(args)
+    if type(args) == "table" then
+        onMissionAnnounce("mayday", { id = "W" .. tostring(args.id), x = args.x, y = args.y })
     end
 end
 

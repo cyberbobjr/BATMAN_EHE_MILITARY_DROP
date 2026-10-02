@@ -354,5 +354,18 @@
     "IGUI_MilitaryDrop_PostCleanupPending": "horde not spotted",
     "IGUI_MilitaryDrop_PostOpenTooltip": "Open your station's liaison post console: transmission log, current missions, dog tags and drop requests.",
     "IGUI_MilitaryDrop_PostTransferTooltip": "Your station's liaison post is on another radio. Move it here, then open the console.",
-    "IGUI_MilitaryDrop_PostTransferConfirm": "Move the liaison post here?"
+    "IGUI_MilitaryDrop_PostTransferConfirm": "Move the liaison post here?",
+    "IGUI_MilitaryDrop_BroadcastMayday": "MAYDAY, MAYDAY! Logistics flight going down near grid %1 / %2. Search the area. No further contact.",
+    "IGUI_VehiclePartAvionics": "Avionics",
+    "IGUI_VehiclePartRadioRack": "Radio rack",
+    "IGUI_VehiclePartEngineBay": "Engine bay",
+    "IGUI_VehiclePartRotorHub": "Rotor hub",
+    "IGUI_VehiclePartSkinPanels": "Skin panels",
+    "IGUI_VehicleNameMilitaryDrop_HeliWreckBurnt": "Military helicopter wreck",
+    "IGUI_VehicleNameMilitaryDrop_HeliTailBurnt": "Military helicopter tail wreck",
+    "IGUI_MilitaryDrop_RecoverWreck": "Recover wreck parts",
+    "IGUI_MilitaryDrop_RecoverWreckFirst": "Recover all parts through vehicle mechanics before cutting up the wreck.",
+    "IGUI_MilitaryDrop_AdminCrashNext": "Crash the next helicopter",
+    "IGUI_MilitaryDrop_AdminCrashArmed": "The next helicopter to take off will crash.",
+    "IGUI_MilitaryDrop_AdminCrashAlreadyArmed": "The next helicopter is already set to crash."
 }

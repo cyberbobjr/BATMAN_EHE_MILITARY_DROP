@@ -6,5 +6,9 @@
     "MilitaryDrop.MilitaryMemo": "Note de service militaire",
     "MilitaryDrop.Codebook": "Carnet de codes militaire",
     "MilitaryDrop.DecoyBeacon": "Balise-sirène - DIVERSION",
-    "MilitaryDrop.RequisitionCase": "Caisse de réquisition militaire"
+    "MilitaryDrop.RequisitionCase": "Caisse de réquisition militaire",
+    "MilitaryDrop.AvionicsSalvage": "Lot d’avionique récupérée",
+    "MilitaryDrop.MechanicalSalvage": "Lot de mécanique récupérée",
+    "MilitaryDrop.MetalSalvage": "Lot de métal récupéré",
+    "MilitaryDrop.FlightRecorder": "Enregistreur de vol"
 }

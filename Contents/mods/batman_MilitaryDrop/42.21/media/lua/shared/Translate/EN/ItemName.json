@@ -6,5 +6,9 @@
     "MilitaryDrop.MilitaryMemo": "Military Memo",
     "MilitaryDrop.Codebook": "Military Codebook",
     "MilitaryDrop.DecoyBeacon": "Siren Beacon - DIVERSION",
-    "MilitaryDrop.RequisitionCase": "Military Requisition Case"
+    "MilitaryDrop.RequisitionCase": "Military Requisition Case",
+    "MilitaryDrop.AvionicsSalvage": "Recovered avionics bundle",
+    "MilitaryDrop.MechanicalSalvage": "Recovered mechanical bundle",
+    "MilitaryDrop.MetalSalvage": "Recovered metal bundle",
+    "MilitaryDrop.FlightRecorder": "Flight recorder"
 }

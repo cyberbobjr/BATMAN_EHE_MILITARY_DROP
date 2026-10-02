@@ -354,5 +354,18 @@
     "IGUI_MilitaryDrop_PostCleanupPending": "Horde nicht gesichtet",
     "IGUI_MilitaryDrop_PostOpenTooltip": "Die Konsole des Verbindungspostens deiner Station öffnen: Funkprotokoll, laufende Einsätze, Hundemarken und Abwurfanforderungen.",
     "IGUI_MilitaryDrop_PostTransferTooltip": "Der Verbindungsposten deiner Station ist auf einem anderen Funkgerät. Verlege ihn hierher und öffne dann die Konsole.",
-    "IGUI_MilitaryDrop_PostTransferConfirm": "Den Verbindungsposten hierher verlegen?"
+    "IGUI_MilitaryDrop_PostTransferConfirm": "Den Verbindungsposten hierher verlegen?",
+    "IGUI_MilitaryDrop_BroadcastMayday": "MAYDAY, MAYDAY! Logistikflug stürzt nahe Raster %1 / %2 ab. Gebiet durchsuchen. Funkkontakt verloren.",
+    "IGUI_VehiclePartAvionics": "Avionik",
+    "IGUI_VehiclePartRadioRack": "Funkanlage",
+    "IGUI_VehiclePartEngineBay": "Motorraum",
+    "IGUI_VehiclePartRotorHub": "Rotornabe",
+    "IGUI_VehiclePartSkinPanels": "Rumpfplatten",
+    "IGUI_VehicleNameMilitaryDrop_HeliWreckBurnt": "Militärhubschrauberwrack",
+    "IGUI_VehicleNameMilitaryDrop_HeliTailBurnt": "Heck eines Militärhubschraubers",
+    "IGUI_MilitaryDrop_RecoverWreck": "Wrackteile bergen",
+    "IGUI_MilitaryDrop_RecoverWreckFirst": "Alle Teile über die Fahrzeugmechanik bergen, bevor das Wrack zerlegt wird.",
+    "IGUI_MilitaryDrop_AdminCrashNext": "Den nächsten Hubschrauber abstürzen lassen",
+    "IGUI_MilitaryDrop_AdminCrashArmed": "Der nächste startende Hubschrauber wird abstürzen.",
+    "IGUI_MilitaryDrop_AdminCrashAlreadyArmed": "Der Absturz des nächsten Hubschraubers ist bereits vorgemerkt."
 }

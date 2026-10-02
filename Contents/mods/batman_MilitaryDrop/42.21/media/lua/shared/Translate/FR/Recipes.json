@@ -1,3 +1,6 @@
 {
-    "OpenMilitarySupplyCase": "Ouvrir la caisse de ravitaillement"
+    "OpenMilitarySupplyCase": "Ouvrir la caisse de ravitaillement",
+    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Ouvrir le lot d’avionique",
+    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Ouvrir le lot de mécanique",
+    "CraftRecipe_OpenMilitaryMetalSalvage": "Ouvrir le lot de métal"
 }

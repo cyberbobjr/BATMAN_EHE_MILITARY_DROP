@@ -448,4 +448,16 @@ function T.faction_member_who_left_cannot_recover_for_the_requester()
     assertEq(Trust.get(b), 25, "opener earns nothing")
 end
 
+function T.crash_closes_recovery_without_penalizing_the_requester()
+    local trust = MilitaryDrop.Trust
+    local id = trust.registerDrop("T1", "tester", false)
+    trust.onDropAnnounced(id,500,600)
+    local before = trust.get("T1")
+    trust.onCrash(id)
+    trust.onDropDelivered(id)
+    trust.checkDrops(1000)
+    assertEq(trust.get("T1"),before)
+    assertEq(#trust.announcedDrops(),0)
+end
+
 return T

@@ -354,5 +354,18 @@
     "IGUI_MilitaryDrop_PostCleanupPending": "орда не обнаружена",
     "IGUI_MilitaryDrop_PostOpenTooltip": "Открыть пульт поста связи вашей станции: журнал передач, текущие задания, жетоны и запросы на сброс.",
     "IGUI_MilitaryDrop_PostTransferTooltip": "Пост связи вашей станции на другой рации. Перенести его сюда, затем открыть пульт.",
-    "IGUI_MilitaryDrop_PostTransferConfirm": "Перенести пост связи сюда?"
+    "IGUI_MilitaryDrop_PostTransferConfirm": "Перенести пост связи сюда?",
+    "IGUI_MilitaryDrop_BroadcastMayday": "MAYDAY, MAYDAY! Вертолёт снабжения падает около квадрата %1 / %2. Обыщите район. Связь потеряна.",
+    "IGUI_VehiclePartAvionics": "Авионика",
+    "IGUI_VehiclePartRadioRack": "Радиостойка",
+    "IGUI_VehiclePartEngineBay": "Моторный отсек",
+    "IGUI_VehiclePartRotorHub": "Втулка ротора",
+    "IGUI_VehiclePartSkinPanels": "Панели фюзеляжа",
+    "IGUI_VehicleNameMilitaryDrop_HeliWreckBurnt": "Обломки военного вертолёта",
+    "IGUI_VehicleNameMilitaryDrop_HeliTailBurnt": "Хвост военного вертолёта",
+    "IGUI_MilitaryDrop_RecoverWreck": "Снять детали с обломков",
+    "IGUI_MilitaryDrop_RecoverWreckFirst": "Снимите все детали через механику автомобиля перед разделкой обломков.",
+    "IGUI_MilitaryDrop_AdminCrashNext": "Разбить следующий вертолёт",
+    "IGUI_MilitaryDrop_AdminCrashArmed": "Следующий взлетающий вертолёт потерпит крушение.",
+    "IGUI_MilitaryDrop_AdminCrashAlreadyArmed": "Крушение следующего вертолёта уже запланировано."
 }

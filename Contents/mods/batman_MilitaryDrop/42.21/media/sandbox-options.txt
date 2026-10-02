@@ -272,3 +272,64 @@ option MilitaryDrop.DebugLog
     type = boolean, default = false,
     page = MilitaryDrop, translation = MilitaryDrop_DebugLog,
 }
+
+option MilitaryDrop.CrashChance
+{
+    type = integer, min = 0, max = 100, default = 5,
+    page = MilitaryDrop, translation = MilitaryDrop_CrashChance,
+}
+
+option MilitaryDrop.CrashStormBonus
+{
+    type = integer, min = 0, max = 100, default = 15,
+    page = MilitaryDrop, translation = MilitaryDrop_CrashStormBonus,
+}
+
+option MilitaryDrop.CrashGunfire
+{
+    type = boolean, default = false,
+    page = MilitaryDrop, translation = MilitaryDrop_CrashGunfire,
+}
+
+option MilitaryDrop.CrashGunfireChance
+{
+    type = integer, min = 0, max = 100, default = 10,
+    page = MilitaryDrop, translation = MilitaryDrop_CrashGunfireChance,
+}
+
+option MilitaryDrop.CrashFire
+{
+    type = enum, numValues = 3, default = 2,
+    page = MilitaryDrop, translation = MilitaryDrop_CrashFire,
+    valueTranslation = MilitaryDrop_CrashFire,
+}
+
+option MilitaryDrop.CrashSmokeMinutes
+{
+    type = integer, min = 0, max = 1440, default = 60,
+    page = MilitaryDrop, translation = MilitaryDrop_CrashSmokeMinutes,
+}
+
+option MilitaryDrop.CrashCrates
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_CrashCrates,
+}
+
+option MilitaryDrop.SalvageRolls
+{
+    type = integer, min = 1, max = 20, default = 3,
+    page = MilitaryDrop, translation = MilitaryDrop_SalvageRolls,
+}
+
+option MilitaryDrop.PilotOutfits
+{
+    type = string, default = "Army",
+    page = MilitaryDrop, translation = MilitaryDrop_PilotOutfits,
+}
+
+option MilitaryDrop.PilotDocuments
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_PilotDocuments,
+}

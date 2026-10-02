@@ -371,8 +371,12 @@ function T.context_menu_keeps_only_the_admin_entries()
     -- RADIO-06 : la section « Logistique » de la fenêtre radio remplace le menu ;
     -- un admin garde le largage forcé et les missions à la demande.
     getText = getText or function(key) return key end
-    local options, subOptions, sent = {}, {}, {}
-    local context = { addOption = function(_, name) options[#options + 1] = name; return {} end,
+    local options, subOptions, sent, callbacks = {}, {}, {}, {}
+    local context = { addOption = function(_, name, target, fn)
+        options[#options + 1] = name
+        callbacks[#options] = {target=target, fn=fn}
+        return {}
+    end,
         addSubMenu = function() end }
     ISContextMenu = { getNew = function()
         return { addOption = function(_, name, target, fn, arg, arg2)
@@ -389,6 +393,7 @@ function T.context_menu_keeps_only_the_admin_entries()
     Client.addOptions({}, context, {})
     assertEq(options[1], "IGUI_MilitaryDrop_RequestDropAdmin", "admin : largage forcé")
     assertEq(options[2], "IGUI_MilitaryDrop_AdminMissions", "admin : sous-menu des missions")
+    assertEq(options[3], "IGUI_MilitaryDrop_AdminCrashNext", "admin : prochain hélicoptère")
     assertEq(#subOptions, 6, "lancer puis clore : reconnaissance, nettoyage, appel de contrôle")
     assertEq(subOptions[5].name, "IGUI_MilitaryDrop_AdminMissionClose_cleanup", "clore le nettoyage")
     subOptions[5].fn(subOptions[5].target, subOptions[5].arg, subOptions[5].arg2)
@@ -398,6 +403,8 @@ function T.context_menu_keeps_only_the_admin_entries()
     assertEq(sent[1][3], "close", "action de clôture")
     subOptions[2].fn(subOptions[2].target, subOptions[2].arg, subOptions[2].arg2)
     assertEq(sent[2][3], nil, "lancement sans action")
+    callbacks[3].fn(callbacks[3].target)
+    assertEq(sent[#sent][1], "AdminCrashNext", "ordre de crash envoyé au serveur")
     Client.canForce, MilitaryDrop.Net.toServer = canForce, toServer
 end
 

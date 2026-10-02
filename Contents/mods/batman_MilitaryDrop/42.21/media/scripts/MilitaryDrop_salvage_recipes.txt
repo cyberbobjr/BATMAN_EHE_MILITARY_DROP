@@ -1,0 +1,30 @@
+module MilitaryDrop
+{
+    craftRecipe OpenMilitaryAvionicsSalvage
+    {
+        timedAction = Making,
+        time = 70,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark;RightClickOnly,
+        OnCreate = MilitaryDrop.Salvage.open,
+        inputs { item 1 [MilitaryDrop.AvionicsSalvage], }
+    }
+    craftRecipe OpenMilitaryMechanicalSalvage
+    {
+        timedAction = Making,
+        time = 70,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark;RightClickOnly,
+        OnCreate = MilitaryDrop.Salvage.open,
+        inputs { item 1 [MilitaryDrop.MechanicalSalvage], }
+    }
+    craftRecipe OpenMilitaryMetalSalvage
+    {
+        timedAction = Making,
+        time = 70,
+        category = Packing,
+        Tags = InHandCraft;CanBeDoneInDark;RightClickOnly,
+        OnCreate = MilitaryDrop.Salvage.open,
+        inputs { item 1 [MilitaryDrop.MetalSalvage], }
+    }
+}

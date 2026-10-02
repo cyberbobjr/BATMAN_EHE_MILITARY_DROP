@@ -470,6 +470,7 @@ local FLIGHT_COMMANDS = {
     FlightStart = "onFlightStart",
     FlightSync = "onFlightSync",
     FlightEnd = "onFlightEnd",
+    FlightCrash = "onFlightCrash",
 }
 
 --- Commandes du serveur traitées par d'autres modules client (poste…) :
@@ -503,6 +504,10 @@ function Client.onServerCommand(module, command, args)
     end
     if command == "DropAnnounce" then
         MilitaryDrop.Announce.onDropAnnounce(args)
+        return
+    end
+    if command == "MaydayAnnounce" then
+        MilitaryDrop.Announce.onMaydayAnnounce(args)
         return
     end
     if command == "ReconAnnounce" then
@@ -617,6 +622,7 @@ function Client.addOptions(player, context, device)
             sub:addOption(getText("IGUI_MilitaryDrop_AdminMissionClose_" .. kind), player, Client.onAdminMission, kind,
                 "close")
         end
+        context:addOption(getText("IGUI_MilitaryDrop_AdminCrashNext"), player, Client.onAdminCrashNext)
     end
 end
 
@@ -625,6 +631,10 @@ Client.ADMIN_MISSIONS = { "recon", "cleanup", "control" }
 
 function Client.onAdminMission(player, kind, action)
     Net.toServer(player, "AdminMission", { kind = kind, action = action })
+end
+
+function Client.onAdminCrashNext(player)
+    Net.toServer(player, "AdminCrashNext", {})
 end
 
 function Client.onFillInventoryContextMenu(playerNum, context, items)

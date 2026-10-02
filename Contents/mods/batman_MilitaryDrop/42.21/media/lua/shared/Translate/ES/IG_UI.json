@@ -354,5 +354,18 @@
     "IGUI_MilitaryDrop_PostCleanupPending": "horda no localizada",
     "IGUI_MilitaryDrop_PostOpenTooltip": "Abre la consola del puesto de enlace de tu estación: registro de transmisiones, misiones en curso, placas militares y solicitudes de lanzamiento.",
     "IGUI_MilitaryDrop_PostTransferTooltip": "El puesto de enlace de tu estación está en otra radio. Trasládalo aquí y luego abre la consola.",
-    "IGUI_MilitaryDrop_PostTransferConfirm": "¿Trasladar aquí el puesto de enlace?"
+    "IGUI_MilitaryDrop_PostTransferConfirm": "¿Trasladar aquí el puesto de enlace?",
+    "IGUI_MilitaryDrop_BroadcastMayday": "¡MAYDAY, MAYDAY! Vuelo de Logística cayendo cerca de la cuadrícula %1 / %2. Registren la zona. Contacto perdido.",
+    "IGUI_VehiclePartAvionics": "Aviónica",
+    "IGUI_VehiclePartRadioRack": "Equipo de radio",
+    "IGUI_VehiclePartEngineBay": "Compartimento del motor",
+    "IGUI_VehiclePartRotorHub": "Buje del rotor",
+    "IGUI_VehiclePartSkinPanels": "Paneles del fuselaje",
+    "IGUI_VehicleNameMilitaryDrop_HeliWreckBurnt": "Restos de helicóptero militar",
+    "IGUI_VehicleNameMilitaryDrop_HeliTailBurnt": "Cola de helicóptero militar",
+    "IGUI_MilitaryDrop_RecoverWreck": "Recuperar piezas de los restos",
+    "IGUI_MilitaryDrop_RecoverWreckFirst": "Retira todas las piezas mediante mecánica de vehículos antes de cortar los restos.",
+    "IGUI_MilitaryDrop_AdminCrashNext": "Hacer que se estrelle el próximo helicóptero",
+    "IGUI_MilitaryDrop_AdminCrashArmed": "El próximo helicóptero que despegue se estrellará.",
+    "IGUI_MilitaryDrop_AdminCrashAlreadyArmed": "El próximo helicóptero ya está programado para estrellarse."
 }

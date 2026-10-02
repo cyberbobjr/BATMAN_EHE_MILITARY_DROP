@@ -6,5 +6,9 @@
     "MilitaryDrop.MilitaryMemo": "军用备忘录",
     "MilitaryDrop.Codebook": "军用密码本",
     "MilitaryDrop.DecoyBeacon": "警报信标 - 佯动",
-    "MilitaryDrop.RequisitionCase": "军用申领补给箱"
+    "MilitaryDrop.RequisitionCase": "军用申领补给箱",
+    "MilitaryDrop.AvionicsSalvage": "回收航电包",
+    "MilitaryDrop.MechanicalSalvage": "回收机械包",
+    "MilitaryDrop.MetalSalvage": "回收金属包",
+    "MilitaryDrop.FlightRecorder": "飞行记录器"
 }

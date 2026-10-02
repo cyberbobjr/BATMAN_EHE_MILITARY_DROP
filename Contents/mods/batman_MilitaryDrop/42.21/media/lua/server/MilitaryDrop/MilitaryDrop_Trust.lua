@@ -320,6 +320,14 @@ function Trust.markFound(dropId)
     return true
 end
 
+--- Panne de l'appareil : clôt le suivi, sans perte de confiance ni rappels de ravitaillement.
+function Trust.onCrash(dropId)
+    local drop = dropId and state().drops[dropId]
+    if not drop or drop.outcome then return end
+    drop.outcome = "crashed"
+    drop.closedHours = hoursNow()
+end
+
 --- Marque une caisse de ravitaillement du largage dropId.
 function Trust.tagItem(item, dropId)
     if item and dropId then

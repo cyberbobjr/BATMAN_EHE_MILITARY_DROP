@@ -1,3 +1,6 @@
 {
-    "OpenMilitarySupplyCase": "打开补给箱"
+    "OpenMilitarySupplyCase": "打开补给箱",
+    "CraftRecipe_OpenMilitaryAvionicsSalvage": "打开回收航电包",
+    "CraftRecipe_OpenMilitaryMechanicalSalvage": "打开回收机械包",
+    "CraftRecipe_OpenMilitaryMetalSalvage": "打开回收金属包"
 }

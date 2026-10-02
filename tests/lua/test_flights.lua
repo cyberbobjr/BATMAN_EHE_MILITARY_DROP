@@ -274,4 +274,133 @@ function T.restart_keeps_the_drop_id_of_flights_and_pending_deliveries()
     assertEq(PLACED_ITEMS[2].modData.MilitaryDrop_dropId, "D5", "vol repris avec son dropId")
 end
 
+local function maydaySetup()
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Crash.lua")
+    getClimateManager = function() return { getIsThunderStorming = function() return false end } end
+    CRASHES, MAYDAYS = 0, 0
+    MilitaryDrop.Wreck = { add = function() CRASHES = CRASHES + 1 end }
+    MilitaryDrop.Broadcast.mayday = function() MAYDAYS = MAYDAYS + 1 end
+end
+
+function T.crash_warns_before_impact_and_does_not_deliver_normally()
+    maydaySetup()
+    local flight = launch()
+    assertTrue(flight.crash)
+    flight.elapsed = 44
+    MilitaryDrop.Flights.advance(flight, 1)
+    assertEq(MAYDAYS, 1)
+    assertEq(CRASHES, 0)
+    MilitaryDrop.Flights.advance(flight, 5)
+    assertEq(CRASHES, 1)
+    assertEq(#PLACED, 0)
+    MilitaryDrop.Flights.advance(flight, 1)
+    assertEq(CRASHES, 1)
+    assertEq(MAYDAYS, 1)
+end
+
+function T.crash_restore_creates_one_site_instead_of_rerolling_or_delivering()
+    maydaySetup()
+    local flight = launch()
+    flight.started = true
+    MilitaryDrop.Flights.restore()
+    assertEq(CRASHES, 1)
+    assertEq(#MilitaryDrop.Server.getState().flights, 0)
+    MilitaryDrop.Flights.restore()
+    assertEq(CRASHES, 1)
+    assertEq(#PLACED, 0)
+    assertTrue(flight.crash)
+end
+
+function T.admin_and_decoy_flights_are_not_randomly_crashed()
+    maydaySetup()
+    local admin = MilitaryDrop.Flights.launch(500,600,"tester",1,true)
+    assertEq(admin.crash,nil)
+    MilitaryDrop.Requisition = { orderOf = function() return { decoy=true } end }
+    local decoy = MilitaryDrop.Flights.launch(500,600,"tester",1,false,"D1")
+    assertEq(decoy.crash,nil)
+end
+
+function T.gunfire_checks_its_option_weapon_ammo_heading_and_distance()
+    maydaySetup()
+    SandboxVars.MilitaryDrop.CrashChance = 0
+    SandboxVars.MilitaryDrop.CrashGunfireChance = 100
+    local flight = launch()
+    flight.started, flight.elapsed = true, 35
+    MilitaryDrop.Guard.throttled = function() return false end
+    instanceof = function(_, cls) return cls=="HandWeapon" end
+    local px, ammo, heading = 300, 1, 1
+    local weapon = { isRanged=function() return true end, getMaxDamage=function() return 1 end,
+        isJammed=function() return false end, getCurrentAmmoCount=function() return ammo end,
+        isRoundChambered=function() return false end }
+    local player = { isDead=function() return false end, getZ=function() return 0 end,
+        getX=function() return px end, getY=function() return 600.5 end,
+        getPrimaryHandItem=function() return weapon end, getForwardDirectionX=function() return heading end,
+        getForwardDirectionY=function() return 0 end }
+    assertEq(MilitaryDrop.Flights.groundFire(player),false)
+    SandboxVars.MilitaryDrop.CrashGunfire = true
+    px = 1
+    assertEq(MilitaryDrop.Flights.groundFire(player),false)
+    px, ammo = 300, 0
+    assertEq(MilitaryDrop.Flights.groundFire(player),false)
+    ammo, heading = 1, -1
+    assertEq(MilitaryDrop.Flights.groundFire(player),false)
+    heading = 1
+    assertTrue(MilitaryDrop.Flights.groundFire(player))
+    assertEq(flight.crash.cause,"gunfire")
+end
+
+function T.next_crash_requires_admin_and_does_not_stack_orders()
+    maydaySetup()
+    local Flights, Server = MilitaryDrop.Flights, MilitaryDrop.Server
+    local player = { getUsername=function() return "admin" end }
+    local allowed, throttled = false, false
+    Server.canForce = function() return allowed end
+    MilitaryDrop.Guard.throttled = function() return throttled end
+    assertEq(Server.COMMANDS.AdminCrashNext(player), "denied")
+    assertEq(MilitaryDrop.Secrets.privateState().nextCrash, nil)
+    allowed, throttled = true, true
+    assertEq(Flights.adminCrashNext(player), "busy")
+    assertEq(MilitaryDrop.Secrets.privateState().nextCrash, nil)
+    throttled = false
+    assertEq(Flights.adminCrashNext(player), "armed")
+    assertEq(Flights.adminCrashNext(player), "armedAlready")
+    assertEq(SENT[#SENT].args.key, "IGUI_MilitaryDrop_AdminCrashAlreadyArmed")
+    assertEq(MilitaryDrop.Server.getState().nextCrash, nil, "ordre privé")
+end
+
+function T.next_crash_waits_for_takeoff_and_only_affects_one_flight_after_restart()
+    maydaySetup()
+    SandboxVars.MilitaryDrop.CrashChance = 0
+    local Flights = MilitaryDrop.Flights
+    local flying = launch()
+    Flights.advance(flying, 0.25)
+    MilitaryDrop.Secrets.privateState().nextCrash = true
+    local queued = MilitaryDrop.Flights.launch(500,600,"tester",1,true)
+    HTT = { Server={state={active=true, centerX=500, centerY=600, radius=100}} }
+    Flights.advance(queued, 0.25)
+    assertEq(queued.started, false)
+    assertEq(MilitaryDrop.Secrets.privateState().nextCrash, true, "attente HEF")
+    Flights.restore()
+    Flights.advance(flying, 0.25)
+    assertEq(flying.crash, nil, "vol déjà parti conservé")
+    HTT = nil
+    Flights.advance(queued, 0.25)
+    assertEq(queued.crash.cause, "admin", "largage forcé ciblé")
+    assertEq(MilitaryDrop.Secrets.privateState().nextCrash, nil)
+    local nextFlight = MilitaryDrop.Flights.launch(500,600,"tester",2,true)
+    Flights.advance(nextFlight, 0.25)
+    assertEq(nextFlight.crash, nil, "ordre consommé une fois")
+end
+
+function T.condemned_flight_waiting_for_departure_is_not_crashed_by_restart()
+    maydaySetup()
+    local flight = launch()
+    MilitaryDrop.Flights.restore()
+    assertEq(CRASHES, 0)
+    assertEq(#MilitaryDrop.Server.getState().flights, 1)
+    assertTrue(flight.crash)
+    MilitaryDrop.Flights.advance(flight, 0.25)
+    assertTrue(flight.started)
+end
+
 return T

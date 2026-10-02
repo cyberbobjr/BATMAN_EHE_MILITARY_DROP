@@ -34,6 +34,7 @@ if isClient() then
 end
 
 require "MilitaryDrop/MilitaryDrop_Server"
+require "MilitaryDrop/MilitaryDrop_Wreck"
 
 local Flight = MilitaryDrop.Flight
 local Net = MilitaryDrop.Net
@@ -167,7 +168,14 @@ function Flights.advance(flight, dt)
             flight.holdSeconds = (flight.holdSeconds or 0) + dt
             return false
         end
+        -- Ordre admin consommé au départ réel, même pour un largage forcé.
+        local private = MilitaryDrop.Secrets.privateState()
+        if private.nextCrash == true then
+            flight.crash = MilitaryDrop.Crash.plan(flight, "admin")
+            private.nextCrash = nil
+        end
         flight.started = true
+        flight.resumed = nil
         Net.toAll("FlightStart", Flight.toArgs(flight))
         MilitaryDrop.Broadcast.inbound()
         MilitaryDrop.log(string.format("flight %d started toward %d,%d", flight.id, flight.tx, flight.ty))
@@ -178,7 +186,14 @@ function Flights.advance(flight, dt)
     end
     flight.elapsed = flight.elapsed + dt
     local x, y, phase = Flight.position(flight, flight.elapsed)
-    if not flight.dropped and flight.elapsed >= Flight.dropTime(flight) then
+    if flight.crash and not flight.mayday and flight.elapsed >= flight.crash.t - 5 then
+        flight.mayday = true
+        MilitaryDrop.Broadcast.mayday(flight.id, flight.crash.x, flight.crash.y)
+    end
+    if flight.crash and not flight.dropped and flight.elapsed >= flight.crash.t then
+        flight.dropped = true
+        MilitaryDrop.Wreck.add(flight)
+    elseif not flight.crash and not flight.dropped and flight.elapsed >= Flight.dropTime(flight) then
         drop(flight)
     end
     flight.noiseIn = (flight.noiseIn or 0) - dt
@@ -230,6 +245,12 @@ function Flights.launch(x, y, requester, requestId, forced, dropId)
     flight.dropId = dropId
     flight.dropped = false
     flight.started = false
+    -- Tirage unique, sauvegardé avec le vol ; leurres et largages admin exclus.
+    local order = dropId and MilitaryDrop.Requisition and MilitaryDrop.Requisition.orderOf(dropId)
+    if MilitaryDrop.Crash and not forced and not (order and order.decoy) then
+        local climate = getClimateManager()
+        flight.crash = MilitaryDrop.Crash.roll(flight, climate:getIsThunderStorming())
+    end
     table.insert(s.flights, flight)
     startTicking()
     return flight
@@ -248,8 +269,15 @@ end
 --- guettent le chargement de leur zone.
 function Flights.restore()
     local s = state()
-    for _, flight in ipairs(s.flights) do
-        flight.resumed = true
+    for i = #s.flights, 1, -1 do
+        local flight = s.flights[i]
+        if flight.crash and flight.started then
+            -- Un vol condamné au redémarrage devient un site en attente, sans nouveau tirage.
+            if not flight.dropped then MilitaryDrop.Wreck.add(flight) end
+            table.remove(s.flights, i)
+        else
+            flight.resumed = true
+        end
     end
     if #s.flights > 0 then
         startTicking()
@@ -258,6 +286,60 @@ function Flights.restore()
         watchSquares()
     end
 end
+
+--- Console debug solo/serveur : crash du dernier vol, sans changer les options.
+function Flights.forceCrash()
+    local list = state().flights
+    local flight = list[#list]
+    if not flight or flight.dropped then return false end
+    flight.crash = MilitaryDrop.Crash.plan(flight, "debug")
+    flight.mayday = nil
+    if flight.started then Net.toAll("FlightStart", Flight.toArgs(flight)) end
+    return true
+end
+
+function Flights.groundFire(player)
+    if MilitaryDrop.Config.get("CrashGunfire") ~= true or player:isDead() or math.floor(player:getZ()) ~= 0
+        or MilitaryDrop.Guard.throttled(player, "GroundFire", 500) then return false end
+    local weapon = player:getPrimaryHandItem()
+    if not weapon or not instanceof(weapon, "HandWeapon") or not weapon:isRanged()
+        or weapon:getMaxDamage() <= 0 or weapon:isJammed()
+        or (weapon:getCurrentAmmoCount() <= 0 and not weapon:isRoundChambered()) then return false end
+    local best, bestDistance
+    for _, flight in ipairs(state().flights) do
+        if flight.started and not flight.crash and not flight.dropped and not flight.forced then
+            local order = flight.dropId and MilitaryDrop.Requisition and MilitaryDrop.Requisition.orderOf(flight.dropId)
+            local x, y, phase = Flight.position(flight, flight.elapsed)
+            local dx, dy = x - player:getX(), y - player:getY()
+            local distance = math.sqrt(dx * dx + dy * dy)
+            local dot = dx * player:getForwardDirectionX() + dy * player:getForwardDirectionY()
+            if not (order and order.decoy) and phase == "approach" and distance <= 80 and distance > 0
+                and dot / distance >= 0.7 and (not bestDistance or distance < bestDistance) then
+                best, bestDistance = flight, distance
+            end
+        end
+    end
+    local chance = MilitaryDrop.Crash.chance(MilitaryDrop.Config.get("CrashGunfireChance"), 0, false)
+    if not best or ZombRand(100) >= chance then return false end
+    best.crash = MilitaryDrop.Crash.plan(best, "gunfire")
+    Net.toAll("FlightStart", Flight.toArgs(best))
+    return true
+end
+Server.COMMANDS.GroundFire = Flights.groundFire
+
+-- Ordre unique persistant ; ne modifie pas les hélicoptères déjà en vol.
+function Flights.adminCrashNext(player)
+    if not Server.canForce(player) then return "denied" end
+    if MilitaryDrop.Guard.throttled(player, "AdminCrashNext", 1000) then return "busy" end
+    local private = MilitaryDrop.Secrets.privateState()
+    local already = private.nextCrash == true
+    private.nextCrash = true
+    Net.toPlayer(player, "Notice", { username = tostring(player:getUsername()),
+        key = already and "IGUI_MilitaryDrop_AdminCrashAlreadyArmed" or "IGUI_MilitaryDrop_AdminCrashArmed" })
+    MilitaryDrop.log("admin " .. tostring(player:getUsername()) .. " armed the next helicopter crash", true)
+    return already and "armedAlready" or "armed"
+end
+Server.COMMANDS.AdminCrashNext = Flights.adminCrashNext
 
 Events.OnInitGlobalModData.Add(Flights.restore)
 

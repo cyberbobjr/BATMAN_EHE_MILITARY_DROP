@@ -29,8 +29,9 @@ README.steam*      Steam Workshop descriptions (English = workshop.txt, French)
 ## Checks
 
 ```
-pip install lupa
+pip install lupa pillow
 python tests/run_tests.py
+python tests/check_mayday_assets.py
 ```
 
 Luacheck, Lua syntax, translations, Steam descriptions (8,000-byte limit), `dev/SUIVI.md` and the Lua tests (game API simulated with `lupa`).

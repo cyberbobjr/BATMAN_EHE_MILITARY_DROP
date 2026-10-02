@@ -166,6 +166,18 @@ local function onTick()
                 updateSound(entry, x, y)
                 updateShadow(entry, x, y)
                 updateArrows(entry, x, y)
+                if phase == "crash" then
+                    if entry.shadow then
+                        entry.shadow:setAlphaMin(0.1)
+                        entry.shadow:setAlphaMax(0.9)
+                        entry.shadow:setSize(Heli.SHADOW_SIZE * (1 + 0.15 * math.sin(entry.flight.elapsed * 20)))
+                    end
+                    for _, arrow in pairs(entry.arrows) do
+                        arrow:setR(0.9)
+                        arrow:setG(0.15)
+                        arrow:setB(0.1)
+                    end
+                end
             end
         end
     end
@@ -194,11 +206,28 @@ function Heli.onFlightStart(args)
     end
     local entry = active[flight.id]
     if entry then
-        entry.flight.elapsed = flight.elapsed
+        entry.flight = flight
         return
     end
     active[flight.id] = { flight = flight, arrows = {} }
     startTicking()
+end
+
+function Heli.onFlightCrash(args)
+    if type(args) ~= "table" or type(args.x) ~= "number" or type(args.y) ~= "number" then return end
+    removeEntry(args.id)
+    for playerNum = 0, getNumActivePlayers() - 1 do
+        local player = getSpecificPlayer(playerNum)
+        if player then
+            local dx, dy = player:getX() - args.x, player:getY() - args.y
+            if dx * dx + dy * dy <= 1000000 then
+                local emitter = getWorld():getFreeEmitter(args.x, args.y, 0)
+                emitter:playSoundImpl("VehicleCrash", nil)
+                emitter:playSoundImpl("BurnedObjectExploded", nil)
+                break
+            end
+        end
+    end
 end
 
 function Heli.onFlightSync(args)

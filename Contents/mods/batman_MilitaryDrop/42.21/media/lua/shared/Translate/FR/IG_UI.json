@@ -354,5 +354,18 @@
     "IGUI_MilitaryDrop_PostCleanupPending": "horde non repérée",
     "IGUI_MilitaryDrop_PostOpenTooltip": "Ouvrir la console du poste de liaison de votre station : journal des transmissions, missions en cours, plaques et demandes de largage.",
     "IGUI_MilitaryDrop_PostTransferTooltip": "Le poste de liaison de votre station est sur une autre radio. Le transférer ici, puis ouvrir la console.",
-    "IGUI_MilitaryDrop_PostTransferConfirm": "Transférer le poste de liaison ici ?"
+    "IGUI_MilitaryDrop_PostTransferConfirm": "Transférer le poste de liaison ici ?",
+    "IGUI_MilitaryDrop_BroadcastMayday": "MAYDAY, MAYDAY ! Appareil Logistique en chute près de la grille %1 / %2. Fouillez le secteur. Contact perdu.",
+    "IGUI_VehiclePartAvionics": "Avionique",
+    "IGUI_VehiclePartRadioRack": "Baie radio",
+    "IGUI_VehiclePartEngineBay": "Compartiment moteur",
+    "IGUI_VehiclePartRotorHub": "Moyeu du rotor",
+    "IGUI_VehiclePartSkinPanels": "Panneaux de fuselage",
+    "IGUI_VehicleNameMilitaryDrop_HeliWreckBurnt": "Épave d’hélicoptère militaire",
+    "IGUI_VehicleNameMilitaryDrop_HeliTailBurnt": "Queue d’hélicoptère militaire",
+    "IGUI_MilitaryDrop_RecoverWreck": "Récupérer les pièces de l’épave",
+    "IGUI_MilitaryDrop_RecoverWreckFirst": "Retirez toutes les pièces via la mécanique du véhicule avant de découper l’épave.",
+    "IGUI_MilitaryDrop_AdminCrashNext": "Faire crasher le prochain hélicoptère",
+    "IGUI_MilitaryDrop_AdminCrashArmed": "Le prochain hélicoptère à décoller s’écrasera.",
+    "IGUI_MilitaryDrop_AdminCrashAlreadyArmed": "Le crash du prochain hélicoptère est déjà programmé."
 }

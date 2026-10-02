@@ -71,6 +71,23 @@ All options are on the **Military Drop** page of the sandbox options. Hours and 
 | Decoy siren duration (hours) | `DecoySirenHours` | 6 | |
 | Decoy siren noise radius (tiles) | `DecoyNoiseRadius` | 120 | Only while the area around the crate is loaded. |
 
+### Helicopter crash (Mayday branch)
+
+| Option | Key | Default | Effect |
+|---|---|---|---|
+| Crash chance (%) | `CrashChance` | 5 | Per normal flight ; admin drops and decoys excluded. |
+| Storm bonus | `CrashStormBonus` | 15 | Added percentage points during a thunderstorm, capped at 100 %. |
+| Gunfire can down helicopters | `CrashGunfire` | false | Client signal checked on the server for weapon, ammunition, distance and heading. |
+| Chance per plausible shot (%) | `CrashGunfireChance` | 10 | Approach phase only ; admin drops and decoys excluded. |
+| Ground effects | `CrashFire` | Smoke | None / smoke / fire and smoke ; game fire rules apply. |
+| Smoke duration (minutes) | `CrashSmokeMinutes` | 60 | Game minutes ; repeated for late arrivals. Signal Smoke is not required. |
+| Supplies at crash site | `CrashCrates` | true | Supplies delivered at the site ; a crash has no reputation effect. |
+| Items per salvage bundle | `SalvageRolls` | 3 | Drawn from game and mod item categories/tags. |
+| Pilot outfits | `PilotOutfits` | `Army` | Words matched against outfit names, separated by `;`. |
+| Pilot documents | `PilotDocuments` | true | Memo and codebook on the body ; the flight recorder remains available. |
+
+The MAYDAY gives an approximate sector over the military frequency. Right-click the wreck to recover its parts ; after all parts are removed, final cutting follows vanilla rules. The flight recorder has no base exchange or reward yet.
+
 ### Debug
 
 | Option | Key | Default | Effect |
@@ -110,6 +127,7 @@ Right-click a military radio (in the inventory or placed):
 
 - **Force a supply drop (admin)**: opens the form stamped **ADMIN**, with every lot and 20 points. No code, no radio check, no wait. The coordinates are sent to you privately, the drop is not tracked for trust, and the wait between drops does not start. With the form disabled, the drop leaves at once with random cases.
 - **Missions (admin)**: **Launch a reconnaissance**, **Launch a cleanup**, **Launch a radio check**, or close the current one (**Close the current ...**). A closed mission is announced as cancelled, without reward.
+- **Crash the next helicopter**: arms one crash for the next mod helicopter to take off, including an admin drop or decoy. Private confirmation ; saved with the world ; repeated clicks do not stack crashes. Flights already airborne continue, and waiting for HEF does not consume the order. To try it, arm the crash, then force a drop and submit its form.
 
 Who sees them: in single player, debug mode only. In multiplayer, the roles allowed to trigger events (admin, and any role with the `MakeEventsAlarmGunshot` capability). The server checks again.
 

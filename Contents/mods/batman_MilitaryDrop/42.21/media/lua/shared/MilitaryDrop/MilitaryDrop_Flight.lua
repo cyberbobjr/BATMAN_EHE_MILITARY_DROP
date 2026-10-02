@@ -10,6 +10,7 @@
 -- ============================================================================
 
 require "MilitaryDrop/MilitaryDrop_Core"
+require "MilitaryDrop/MilitaryDrop_Crash"
 
 local Flight = {}
 MilitaryDrop.Flight = Flight
@@ -51,12 +52,19 @@ function Flight.dropTime(flight)
 end
 
 function Flight.totalTime(flight)
+    if flight.crash then return flight.crash.t end
     local approach, hover, leave = Flight.timeline(flight)
     return approach + hover + leave
 end
 
 --- Position (x, y) et phase ("approach", "hover", "leave", "done") à l'instant t.
 function Flight.position(flight, t)
+    if flight.crash then
+        local impact = flight.crash
+        local k = math.max(0, math.min(1, t / math.max(0.001, impact.t)))
+        return flight.sx + (impact.x - flight.sx) * k, flight.sy + (impact.y - flight.sy) * k,
+            t >= impact.t and "done" or (t >= impact.t - 5 and "crash" or "approach")
+    end
     local approach, hover, leave = Flight.timeline(flight)
     if t <= 0 then
         return flight.sx, flight.sy, "approach"
@@ -81,6 +89,7 @@ function Flight.toArgs(flight)
     return {
         id = flight.id, sx = flight.sx, sy = flight.sy, tx = flight.tx, ty = flight.ty,
         ex = flight.ex, ey = flight.ey, elapsed = flight.elapsed,
+        crash = flight.crash and MilitaryDrop.Crash.copy(flight.crash) or nil,
     }
 end
 
@@ -90,10 +99,11 @@ function Flight.fromArgs(args)
         return nil
     end
     for _, key in ipairs({ "id", "sx", "sy", "tx", "ty", "ex", "ey", "elapsed" }) do
-        if type(args[key]) ~= "number" then
+        if type(args[key]) ~= "number" or args[key] ~= args[key] or math.abs(args[key]) == math.huge then
             return nil
         end
     end
+    if args.crash and (not MilitaryDrop.Crash or not MilitaryDrop.Crash.copy(args.crash)) then return nil end
     return Flight.toArgs(args)
 end
 

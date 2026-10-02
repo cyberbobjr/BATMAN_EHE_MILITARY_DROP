@@ -163,6 +163,15 @@ function Broadcast.inbound()
     toPostLogs(text)
 end
 
+--- Position approchée (secteur de 50 cases), repère seulement pour les auditeurs.
+function Broadcast.mayday(id, x, y)
+    x, y = math.floor(x / 50) * 50 + 25, math.floor(y / 50) * 50 + 25
+    Net.toAll("MaydayAnnounce", { id = tostring(id), x = x, y = y })
+    local text = getText("IGUI_MilitaryDrop_BroadcastMayday", tostring(x), tostring(y))
+    Broadcast.air({ { text, "MDAY" }, { text, "MDAY" } })
+    toPostLogs(text)
+end
+
 --- Largage effectué : coordonnées répétées, et repère de carte pour les
 --- joueurs qui entendent la ligne (MilitaryDrop_Announce.lua).
 function Broadcast.dropped(x, y)

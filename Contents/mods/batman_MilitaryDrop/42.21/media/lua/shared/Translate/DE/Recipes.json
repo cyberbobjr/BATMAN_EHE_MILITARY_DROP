@@ -1,3 +1,6 @@
 {
-    "OpenMilitarySupplyCase": "Versorgungskoffer öffnen"
+    "OpenMilitarySupplyCase": "Versorgungskoffer öffnen",
+    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Geborgene Avionik auspacken",
+    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Geborgene Fahrzeugteile auspacken",
+    "CraftRecipe_OpenMilitaryMetalSalvage": "Geborgenes Metall auspacken"
 }

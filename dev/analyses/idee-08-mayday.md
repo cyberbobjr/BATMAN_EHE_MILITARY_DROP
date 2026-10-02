@@ -2,6 +2,21 @@
 
 Analyse du 2026-09-30, en lecture seule (sous-agent). **[C]** = confirmé dans les sources ; **[S]** = supposé ou à vérifier en jeu. **Rien n'a été testé en jeu.**
 
+## Implémentation du 2026-10-02
+
+Autorisée par l’utilisateur, sur `feature/mayday-wreck`. Les sections suivantes restent l’analyse d’origine ; les choix réalisés sont précisés ici.
+
+- Crash décidé une fois par le serveur et sauvé dans le vol ; MAYDAY cinq secondes avant l’impact, secteur de 50 cases marqué seulement pour ceux qui entendent la radio. Pas de modèle volant : ombre vacillante, flèche rouge et sons vanilla.
+- Fuselage et queue sont deux véhicules sans roues/sièges, avec des modèles originaux arrondis. Enveloppes libres et entièrement chargées de 11 × 11 et 7 × 7 cases, couvrant rotations et pales. Recherche à proximité ; absence de place : lots de récupération au sol.
+- Clic droit « Récupérer les pièces de l’épave » : mécanique du véhicule. Avionique puis baie radio ; moteur puis moyeu puis panneaux. Outils et compétences revérifiés à la fin de l’action serveur ; réinstallation interdite. Le maillage est conservé jusqu’à la découpe finale vanilla, disponible une fois toutes les pièces retirées. Les lots s’ouvrent par leurs recettes contextuelles et utilisent les catégories/tags du jeu et des mods.
+- Pilote définitivement mort, note, carnet et enregistreur récupérables. L’enregistreur est un objet de collection ; son envoi à la base et une récompense ne font pas partie de cette implémentation.
+- Dix options : `CrashChance` (5 %), `CrashStormBonus` (+15 points), `CrashGunfire` (faux), `CrashGunfireChance` (10 %), `CrashFire` (fumée), `CrashSmokeMinutes` (60), `CrashCrates` (vrai), `SalvageRolls` (3), `PilotOutfits` (`Army`), `PilotDocuments` (vrai). Horde selon les options existantes. Pas de gain/perte de réputation pour un crash, même avec du ravitaillement récupéré.
+- Les largages forcés et leurres sont exclus des crashes aléatoires/tirs. Le menu admin « Faire crasher le prochain hélicoptère » impose toutefois le prochain départ du mod, y compris forcé ou leurre. Même droit que `/chopper`, réponse privée ; pas de radio en main exigée. L’ordre persiste dans les données privées, ne s’empile pas, et attend la fin de l’attente HEF ; aucun effet sur les appareils déjà partis.
+- Après redémarrage, un appareil condamné déjà parti devient un site en attente ; un départ encore en attente reste en attente. Le registre de chaque composant est écrit avant sa pose. Une interruption marquée `placing` est journalisée et ne relance pas aveuglément la pose : elle peut laisser un composant manquant, à inspecter.
+- Les tirs facultatifs dépendent d’un signal client. Le serveur vérifie option, cadence, arme, munitions, direction, distance et phase du vol ; il ne peut pas prouver qu’une détonation a réellement eu lieu. Option désactivée par défaut.
+
+Validation hors jeu : `tests/run_tests.py --require-luacheck`, `tests/check_mayday_assets.py`, aperçus Blender. Source installée : `projectzomboid.jar` SHA256 `E1A69EB743EDE60B213A0FE7F8B83D4FCAB773036D256CC4543A336F3B058A33`, identique au relevé des sources décompilées 42.21.0 ; journal `console.txt` : `version=42.21.0 4a0e9546ec`. Cela confirme la version inspectée, pas une exécution du nouveau code en jeu. Protocole M1-M8 dans [TEST-PROTOCOL.md](../TEST-PROTOCOL.md).
+
 ## 1. Faisabilité
 
 **La carcasse est un véhicule sans roues, dans la continuité de la caisse.**

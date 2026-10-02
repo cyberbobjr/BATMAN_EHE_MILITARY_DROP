@@ -5,5 +5,6 @@
     "Tooltip_MilitaryDrop_AttachmentSupplyCase": "Lançada pelos militares. Abra para obter acessórios de armas.",
     "Tooltip_MilitaryDrop_Codebook": "Tabela de códigos militar. Decifra o código semanal transmitido pela estação de números.",
     "Tooltip_MilitaryDrop_DecoyBeacon": "DESVIO. Este lançamento não traz suprimentos: sua sirene atrai os mortos para o caixote.",
-    "Tooltip_MilitaryDrop_RequisitionCase": "Entregue pelos militares conforme sua requisição. Abra para obter os suprimentos pedidos."
+    "Tooltip_MilitaryDrop_RequisitionCase": "Entregue pelos militares conforme sua requisição. Abra para obter os suprimentos pedidos.",
+    "Tooltip_MilitaryDrop_FlightRecorder": "Gravador recuperado de um helicóptero abatido. Guarde: a transmissão para a base está prevista para uma atualização futura."
 }

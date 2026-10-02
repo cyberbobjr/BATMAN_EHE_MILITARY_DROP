@@ -1,3 +1,6 @@
 {
-    "OpenMilitarySupplyCase": "Open Supply Case"
+    "OpenMilitarySupplyCase": "Open Supply Case",
+    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Unpack recovered avionics",
+    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Unpack recovered mechanical parts",
+    "CraftRecipe_OpenMilitaryMetalSalvage": "Unpack recovered metal"
 }

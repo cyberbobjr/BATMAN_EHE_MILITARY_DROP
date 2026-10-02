@@ -6,5 +6,9 @@
     "MilitaryDrop.MilitaryMemo": "Военная служебная записка",
     "MilitaryDrop.Codebook": "Военная кодовая книга",
     "MilitaryDrop.DecoyBeacon": "Маяк-сирена - ПРИМАНКА",
-    "MilitaryDrop.RequisitionCase": "Военный кейс по заявке"
+    "MilitaryDrop.RequisitionCase": "Военный кейс по заявке",
+    "MilitaryDrop.AvionicsSalvage": "Набор найденной авионики",
+    "MilitaryDrop.MechanicalSalvage": "Набор найденных автодеталей",
+    "MilitaryDrop.MetalSalvage": "Набор найденного металла",
+    "MilitaryDrop.FlightRecorder": "Бортовой самописец"
 }

@@ -18,8 +18,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y lua-check
-          python -m pip install lupa
+          python -m pip install lupa pillow
 
       # Sans le jeu, les tests qui lisent les tables vanilla sont ignorés.
       - name: Run checks
         run: python tests/run_tests.py --require-luacheck
+
+      - name: Check Mayday models and textures
+        run: python tests/check_mayday_assets.py

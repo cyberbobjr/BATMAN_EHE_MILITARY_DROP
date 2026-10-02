@@ -354,5 +354,18 @@
     "IGUI_MilitaryDrop_PostCleanupPending": "horda não avistada",
     "IGUI_MilitaryDrop_PostOpenTooltip": "Abra o console do posto de ligação da sua estação: registro de transmissões, missões em andamento, plaquetas e solicitações de lançamento.",
     "IGUI_MilitaryDrop_PostTransferTooltip": "O posto de ligação da sua estação está em outro rádio. Transfira-o para cá e depois abra o console.",
-    "IGUI_MilitaryDrop_PostTransferConfirm": "Transferir o posto de ligação para cá?"
+    "IGUI_MilitaryDrop_PostTransferConfirm": "Transferir o posto de ligação para cá?",
+    "IGUI_MilitaryDrop_BroadcastMayday": "MAYDAY, MAYDAY! Aeronave da Logística caindo perto da grade %1 / %2. Vasculhem a área. Contato perdido.",
+    "IGUI_VehiclePartAvionics": "Aviônica",
+    "IGUI_VehiclePartRadioRack": "Equipamento de rádio",
+    "IGUI_VehiclePartEngineBay": "Compartimento do motor",
+    "IGUI_VehiclePartRotorHub": "Cubo do rotor",
+    "IGUI_VehiclePartSkinPanels": "Painéis da fuselagem",
+    "IGUI_VehicleNameMilitaryDrop_HeliWreckBurnt": "Destroços de helicóptero militar",
+    "IGUI_VehicleNameMilitaryDrop_HeliTailBurnt": "Cauda de helicóptero militar",
+    "IGUI_MilitaryDrop_RecoverWreck": "Recuperar peças dos destroços",
+    "IGUI_MilitaryDrop_RecoverWreckFirst": "Retire todas as peças pela mecânica do veículo antes de cortar os destroços.",
+    "IGUI_MilitaryDrop_AdminCrashNext": "Derrubar o próximo helicóptero",
+    "IGUI_MilitaryDrop_AdminCrashArmed": "O próximo helicóptero a decolar vai cair.",
+    "IGUI_MilitaryDrop_AdminCrashAlreadyArmed": "A queda do próximo helicóptero já está programada."
 }

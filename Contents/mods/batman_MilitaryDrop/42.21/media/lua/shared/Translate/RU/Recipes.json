@@ -1,3 +1,6 @@
 {
-    "OpenMilitarySupplyCase": "Открыть кейс снабжения"
+    "OpenMilitarySupplyCase": "Открыть кейс снабжения",
+    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Открыть набор авионики",
+    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Открыть набор автодеталей",
+    "CraftRecipe_OpenMilitaryMetalSalvage": "Открыть набор металла"
 }

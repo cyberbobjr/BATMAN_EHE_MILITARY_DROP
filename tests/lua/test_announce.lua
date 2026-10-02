@@ -172,4 +172,15 @@ function T.existing_symbol_is_not_duplicated()
     assertEq(#SYMBOLS, 1, "un symbole")
 end
 
+function T.mayday_marks_an_approximate_sector_only_when_heard()
+    MilitaryDrop.Announce.onMaydayAnnounce({ id="7", x=525, y=625 })
+    assertEq(#SYMBOLS,0)
+    triggerEvent("OnDeviceText", "guid", "MDAY", -1, -1, -1, "MAYDAY", {})
+    assertEq(#SYMBOLS,1)
+    assertEq(SYMBOLS[1].getSymbolID(),"Question")
+    assertEq(SYMBOLS[1].getWorldX(),525)
+    triggerEvent("OnDeviceText", "guid", "MDAY", -1, -1, -1, "MAYDAY", {})
+    assertEq(#SYMBOLS,1)
+end
+
 return T

@@ -1,0 +1,24 @@
+module MilitaryDrop
+{
+    item AvionicsSalvage
+    {
+        DisplayCategory = Container, ItemType = base:normal, Weight = 1.5,
+        Icon = MilitaryDrop_AvionicsSalvage,
+    }
+    item MechanicalSalvage
+    {
+        DisplayCategory = Container, ItemType = base:normal, Weight = 3,
+        Icon = MilitaryDrop_MechanicalSalvage,
+    }
+    item MetalSalvage
+    {
+        DisplayCategory = Container, ItemType = base:normal, Weight = 2,
+        Icon = MilitaryDrop_MetalSalvage,
+    }
+    item FlightRecorder
+    {
+        DisplayCategory = Electronics, ItemType = base:normal, Weight = 2,
+        Icon = MilitaryDrop_FlightRecorder,
+        Tooltip = Tooltip_MilitaryDrop_FlightRecorder,
+    }
+}

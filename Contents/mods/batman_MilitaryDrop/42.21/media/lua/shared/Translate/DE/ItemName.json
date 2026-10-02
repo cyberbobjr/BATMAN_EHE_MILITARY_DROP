@@ -6,5 +6,9 @@
     "MilitaryDrop.MilitaryMemo": "Militärische Dienstmitteilung",
     "MilitaryDrop.Codebook": "Militärisches Codebuch",
     "MilitaryDrop.DecoyBeacon": "Sirenenbake - ABLENKUNG",
-    "MilitaryDrop.RequisitionCase": "Militärischer Anforderungskoffer"
+    "MilitaryDrop.RequisitionCase": "Militärischer Anforderungskoffer",
+    "MilitaryDrop.AvionicsSalvage": "Geborgenes Avionikpaket",
+    "MilitaryDrop.MechanicalSalvage": "Geborgenes Mechanikpaket",
+    "MilitaryDrop.MetalSalvage": "Geborgenes Metallpaket",
+    "MilitaryDrop.FlightRecorder": "Flugschreiber"
 }
