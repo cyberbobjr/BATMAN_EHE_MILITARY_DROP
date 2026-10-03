@@ -22,9 +22,11 @@ local function makeRadio(opts)
         data[name] = function() return v end
     end
     local radio = { kind = "Radio", said = {} }
+    data.update = function() end -- batterie native couverte par test_beltbattery
     radio.getDeviceData = function() return data end
     radio.getContainer = function() return opts.container or INVENTORY end
-    radio.AddDeviceText = function(self, text, r, g, b, guid, codes, distance)
+    radio.AddDeviceText = function(self, player, text, r, g, b, guid, codes, distance)
+        assertEq(player, PLAYER, "surcharge vanilla avec joueur")
         self.said[#self.said + 1] = { text = text, r = r, codes = codes, distance = distance }
     end
     return radio
@@ -74,6 +76,7 @@ local function makeBroadcast(texts)
 end
 
 function T.setup()
+    getGameTime = function() return { getMinutesStamp = function() return 100 end } end
     SandboxVars = {}
     SOLO = true
     isClient = function() return not SOLO end
@@ -106,7 +109,9 @@ function T.setup()
         return { getWeatherInterference = function() return INTERFERENCE end }
     end
     getZomboidRadio = function()
-        return { scrambleString = function(_, text, intensity) return "bzzt" .. intensity .. ":" .. text end }
+        return { scrambleString = function(_, text, intensity) return "bzzt" .. intensity .. ":" .. text end,
+            getScriptManager = function() end, getDisableBroadcasting = function() return false end,
+            PlayerListensChannel = function() end }
     end
     AIRING = nil
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
@@ -442,11 +447,11 @@ end
 function T.multiplayer_client_is_left_to_vanilla()
     SOLO = false
     startListening()
-    assertEq(listenerCount("OnTick"), 0, "client MP : pas d'écoute ajoutée")
+    assertEq(listenerCount("OnTick"), 1, "client MP : batterie seulement, pas d'écoute ajoutée")
     SOLO = true
     startListening()
     startListening()
-    assertEq(listenerCount("OnTick"), 1, "solo : un seul abonnement")
+    assertEq(listenerCount("OnTick"), 2, "solo : batterie et un seul récepteur")
 end
 
 function T.no_channel_no_delivery()
@@ -456,6 +461,25 @@ function T.no_channel_no_delivery()
     MilitaryDrop.Broadcast = nil
     triggerEvent("OnTick")
     assertEq(#radio.said, 0, "pas de chaîne")
+end
+
+function T.world_restart_releases_broadcasts_and_keeps_one_receiver()
+    local radio = makeRadio()
+    PLAYER.attached = { radio }
+    startListening()
+    AIRING = makeBroadcast({ { "premier monde" } })
+    AIRING.count = 1
+    triggerEvent("OnTick")
+    assertEq(#radio.said, 1, "premier monde")
+    triggerEvent("OnMainMenuEnter")
+    assertEq(listenerCount("OnTick"), 1, "retour au menu : plus de récepteur, batterie seule")
+    AIRING = makeBroadcast({ { "second monde" } })
+    AIRING.count = 1
+    startListening()
+    startListening()
+    triggerEvent("OnTick")
+    assertEq(#radio.said, 2, "nouvelle diffusion reçue une seule fois")
+    assertEq(listenerCount("OnTick"), 2, "un récepteur et une batterie")
 end
 
 return T

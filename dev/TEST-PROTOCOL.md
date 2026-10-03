@@ -225,3 +225,158 @@ print(id, MilitaryDrop.Trust.get(id))
 | Un personnage extérieur à la faction de l'appel ouvre la caisse, y compris un successeur sans faction | −5 au demandeur d'origine ; aucun gain ni aucune perte pour l'ouvreur |
 | MP : nettoyage partagé entre deux membres de faction | Comptes séparés ; +5 seulement au personnage ayant le plus de morts de la horde |
 | Écran partagé, second personnage ajouté après le démarrage | Identités et réputations séparées ; synchronisation de l'identité du second joueur |
+
+## Batterie des talkies accrochés — 2026-10-03
+
+Le module `client/BatmanRadio/BatmanRadio_BeltBattery.lua` est commun à Artemis
+et MilitaryDrop, livré avec des copies identiques au même chemin relatif.
+Il appelle `DeviceData.update(false, true)` à l'allumage puis chaque minute de
+jeu pour les radios à pile accrochées, hors main/dos. Le compteur de temps
+vanilla avance avec la consommation : aucun deuxième décompte à la reprise
+en main. La synchronisation utilise les paquets vanilla pour une radio
+d'inventaire identifiée par son ID (sources 42.21.0, `4a0e9546ec`).
+
+Un seul handler, même avec les deux mods. Si BetterWalkieTalkies est actif,
+notre gestionnaire lui laisse toujours la batterie ; son option `BatteryDrain`
+est respectée même désactivée. Aucune option BWT à désactiver pour la cohabitation.
+Sans BWT, le gestionnaire commun applique la consommation vanilla à la ceinture.
+Le test de cohérence des copies est dans les lanceurs MilitaryDrop et Artemis.
+
+Validation automatisée : 13 tests batterie, 22 tests ceinture MilitaryDrop,
+13 tests radio Artemis, suite complète MilitaryDrop et luacheck sans échec.
+API Java simulées ; aucun test en jeu effectué. Redémarrage complet requis.
+
+| Cas à confirmer en 42.21 | Attendu |
+|---|---|
+| MilitaryDrop seul, talkie allumé à la ceinture dix minutes de jeu | Charge qui baisse chaque minute au débit vanilla |
+| Artemis seul, puis les deux mods actifs | Même débit, sans cumul des deux modules |
+| Reprise en main après dix minutes à la ceinture | Pas de nouvelle chute pour la période déjà consommée |
+| Radio éteinte, volume à zéro, puis pile presque vide | Éteinte : pas de consommation ; volume zéro : consommation ; pile vide : extinction |
+| MP : ceinture, reprise en main, sauvegarde/reconnexion | Charge et extinction cohérentes sur le client et le serveur |
+
+## Compatibilité Better Walkie Talkies et code commun — 2026-10-03
+
+La source unique des fonctions de ceinture, batterie et compatibilité se trouve
+dans `source/radio/lua`. `python source/radio/sync_radio.py` génère les copies
+embarquées dans les deux projets ; `--check` vérifie leur égalité. Ces copies
+identiques permettent à chaque mod de fonctionner indépendamment, sans ajouter
+une dépendance chargeable ni entretenir deux implémentations. Artemis inscrit
+sa chaîne par UUID ; MilitaryDrop inscrit ses deux chaînes et son ouverture des
+radios rangées. Un seul menu, wrapper et récepteur solo est installé.
+
+La réception ajoutée couvre le registre des stations radio en **solo** :
+vanilla, AEBS et chaînes des scénarios, à la fréquence réglée de l'appareil.
+En **MP**, elle est laissée au vanilla/BWT : pas de doublon ajouté par nos mods.
+Si BWT est actif, il conserve seul la batterie, la VOIP et les réglages PTT.
+Le risque de double décompte interne de sa batterie n'est pas corrigé ici.
+
+`BatmanRadio_Compat.features()` centralise les décisions. L'activation vient
+de `getActivatedMods()` et des IDs exacts `BetterWalkieTalkies` ou
+`BetterWalkieTalkiesDev`, avec ou sans le préfixe `\` de Build 42. Le dossier
+Workshop installé, les anciennes options sandbox et une globale BWT laissée
+en mémoire ne suffisent pas. Le bridge texte est utilisé seulement sur un
+client MP, si BWT est actif et si sa fonction est disponible. La détection
+est réévaluée à l'appel pour supporter son initialisation après notre module.
+
+| Fonction commune | BWT désactivé | BWT actif |
+|---|---|---|
+| Batterie à la ceinture, solo/client | Mise à jour native par notre module | Notre module s'efface ; option BWT respectée |
+| Réception des stations radio en solo | Récepteur commun | Récepteur commun, toujours nécessaire |
+| Réception en MP | Pas de récepteur supplémentaire | Pas de récepteur supplémentaire |
+| Phrases scriptées en MP | `player:Say` direct | Bridge texte BWT lorsqu'il est prêt |
+| Menu appareil et fenêtre à la ceinture | Support commun | Support commun, BWT ne remplace pas ces fonctions |
+
+Le serveur dédié n'exécute ni notre consommation locale ni notre réception
+locale ; aucun bridge vocal client n'est utilisé côté serveur.
+
+`RadioPTT` = **Radio Push-to-Talk** : maintenir une touche pour transmettre
+sa voix par radio, en MP. Les phrases scriptées des scénarios ne sont pas une
+captation du microphone. BWT met le micro radio en silence au repos ; nos
+appels utilisent son `RadioTextBridgeHandler` pour transmettre le texte et
+restaurer les réglages. Artemis distingue ainsi le silence automatique PTT
+d'un micro volontairement coupé, qui reste refusé.
+
+Validation locale : **53 tests radio/batterie/BWT réussis**, dont 7 exécutent
+les vrais modules `RadioPTT.lua` et `PortableRadioBattery.lua` de la copie
+Workshop lue seulement (`3779480293`, variante `42.20`). Suite complète
+MilitaryDrop et luacheck sans échec. Les interfaces Java, la capture audio et
+le réseau sont simulés : aucune certification de VOIP réelle en 42.21.
+Six tests supplémentaires couvrent la politique d'activation sans BWT installé,
+et un test de coexistence vérifie les deux scénarios solo avec BWT actif.
+Quatorze tests couvrent aussi le registre vanilla, l'écoute déclarée, les segments,
+le changement de fréquence et les émissions reprises depuis une sauvegarde.
+
+| Essai en jeu après redémarrage complet | Attendu |
+|---|---|
+| Solo : Artemis seul, MilitaryDrop seul, les deux, avec/sans BWT | Une option appareil et une seule occurrence des lignes de scénario à la ceinture |
+| BWT actif, consommation activée puis désactivée | BWT reste seul responsable ; option désactivée respectée |
+| MP, PTT activé, touche relâchée : appel Artemis et échange MilitaryDrop | Appels possibles malgré le silence automatique du micro ; mode vocal restauré |
+| Micro volontairement coupé avant activation du PTT | Artemis refuse l'appel ; aucun déverrouillage permanent du micro |
+| Deux clients : VOIP proche puis radio à distance, talkies à la ceinture | Voix entendue sur la bonne fréquence ; relâcher la touche arrête la transmission |
+| Client émetteur en véhicule, puis sortie / retour à proximité | Pas de disparition ou de doublon de joueur ; VOIP retrouvée |
+| Batterie à la ceinture, reprise en main, déconnexion/reconnexion | Vérifier consommation, éventuelle seconde chute propre à BWT et charge sauvegardée |
+
+## Stations vanilla à la ceinture en solo — 2026-10-03
+
+Le récepteur lit `RadioScriptManager:getChannelsList()` plutôt qu'une liste
+figée de fréquences. Les chaînes TV sont exclues et les fournisseurs de
+scénarios sont dédoublonnés avec le registre. La fréquence aléatoire de l'AEBS
+est donc prise dans la partie chargée. Une radio accrochée allumée déclare
+`PlayerListensChannel(fréquence, true, false)` : les émissions scriptées
+démarrent et leur horaire reste géré par le moteur. Aucun message `false`
+n'est envoyé, afin de ne pas interrompre l'écoute d'un autre appareil.
+
+L'affichage utilise la surcharge native `AddDeviceText(player, ...)`, comme
+`DistributeToPlayerInternal`, pour conserver ChatManager, le traitement du
+trait sourd, les parasites et OnDeviceText. Les filtres de fréquence, volume,
+pile, média et radio équipée sont conservés ; `getDisableBroadcasting()`
+est respecté. Le récepteur n'avance aucun compteur de diffusion. Lors d'une
+reprise au milieu d'une émission, les lignes sauvegardées ne sont pas rejouées.
+
+Sources vérifiées : jeu et journal **42.21.0, révision 4a0e9546ec**. Le SHA256
+du JAR installé correspond à celui des sources décompilées
+`E:\pz-decompiled\42.21.0` :
+`e1a69eb743ede60b213a0fe7f8b83d4fcab773036d256cc4543a336f3b058a33`.
+API et comportement relevés dans `RadioScriptManager.java:47-91`,
+`RadioChannel.java:150-262`, `RadioBroadCast.java:81-109`,
+`ZomboidRadio.java:568-608` et `WaveSignalDevice.java:50-79`.
+
+**Limites : ce n'est pas une reproduction à 100 % de la transmission Java.**
+Les publicités pré/post et pauses sont suivies par `getLastAiredLine()` parce
+qu'elles n'avancent pas le compteur des lignes principales. Leurs métadonnées
+et compteurs propres restent privés : texte en gris sans codes, et deux
+publicités identiques consécutives ne peuvent pas être distinguées.
+Le brouillage scénarisé de Louisville (stations 93,2 / 98,0 / 101,2 MHz)
+n'est pas reproduit par ce récepteur Lua : le texte brut peut être reçu
+alors que la radio équipée reçoit une version brouillée. L'état réel de ce
+brouillage n'a pas de getter ; la valeur exposée du champ statique est une
+copie faite à l'initialisation Lua, pas une lecture dynamique. La réflexion
+sur les champs privés est réservée au mode debug ; aucun contournement ni
+changement du JAR n'est ajouté. Les transmissions directes hors du registre
+des émissions ne sont pas interceptées. Le brouillage météo est traité,
+mais son tirage aléatoire n'est pas partagé avec la transmission native.
+
+| Essai supplémentaire après redémarrage complet, Artemis seul puis MilitaryDrop seul | Attendu |
+|---|---|
+| Hitz FM (89,4 MHz), talkie à la ceinture à l'horaire d'une émission | Lignes diffusées une fois, selon volume et charge |
+| AEBS, fréquence relevée dans cette partie, ceinture puis main | Bulletin sur la fréquence réelle ; aucun doublon à la reprise en main |
+| Éteindre ou changer de fréquence pendant un bulletin, puis revenir | Pas de rejeu des lignes déjà diffusées |
+| Sauvegarder/recharger au milieu d'un bulletin | Suite de l'émission, pas tout son historique |
+| Publicités avant/après et pause `~` | Texte reçu ; noter la limite de couleur et les répétitions identiques |
+| Joueur sourd et casque audio, volume zéro, pile vide | Vérifier le comportement natif du texte et des sons ; aucun apprentissage via codes inaudibles |
+
+Les **53 tests** restent des simulations Lua 5.1. La suite complète MilitaryDrop
+et luacheck passent ; les essais radio/audio interactifs en 42.21 restent à faire.
+
+Protection de la radio en main : aucune livraison de texte ni mise à jour de
+pile par le patch de ceinture. Si la radio équipée reçoit déjà cette fréquence,
+le patch n'ajoute ni écoute déclarée ni brouillage météo : aucun tirage aléatoire
+ni changement de l'état radio interne pour une réception déjà native.
+Trois régressions supplémentaires vérifient l'état main/ceinture transitoire,
+la présence de deux radios sur la même fréquence et une station de mod créée
+pendant la partie sans fournisseur spécifique BatmanRadio.
+
+Les nouvelles stations utilisant `RadioScriptManager:AddChannel()` ou le
+chargement radio XML standard sont automatiquement couvertes en solo. Une
+station qui diffuse uniquement via un système privé ou des appels directs
+`SendTransmission`, sans émission observable dans ce registre, ne l'est pas.

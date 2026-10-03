@@ -66,6 +66,17 @@ def mod_lua_files():
     return sorted(MOD_LUA.rglob("*.lua"))
 
 
+def check_radio_common(report):
+    report.section("Modules radio communs")
+    source = REPO / "source/radio/lua"
+    for path in sorted(source.rglob("*.lua")):
+        packaged = MOD_LUA / path.relative_to(source)
+        if packaged.is_file() and packaged.read_bytes() == path.read_bytes():
+            report.ok(str(path.relative_to(source)))
+        else:
+            report.fail(f"module radio divergent : {packaged}")
+
+
 def strip_comments(line):
     # Suffisant pour repérer un appel : les chaînes contenant « -- » sont rares.
     return line.split("--", 1)[0]
@@ -364,6 +375,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
     report = Report()
     check_luacheck(report, "--require-luacheck" in sys.argv)
+    check_radio_common(report)
     check_kahlua(report)
     check_scripts(report)
     check_references(report)

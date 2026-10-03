@@ -26,6 +26,7 @@ MOD_COMMON = REPO / "Contents" / "mods" / "batman_MilitaryDrop" / "common"
 PZ_MEDIA = Path(os.environ.get(
     "PZ_MEDIA", r"D:\SteamLibrary\steamapps\common\ProjectZomboid\media"))
 VANILLA_LUA = PZ_MEDIA / "lua"
+BWT_LUA = Path(os.environ.get("BWT_LUA", r"D:\SteamLibrary\steamapps\workshop\content\108600\3779480293\mods\BetterWalkieTalkies\42.20\media\lua"))
 
 PRELUDE = r"""
 -- Kahlua n'a pas next() (pairs fonctionne sans elle).
@@ -46,6 +47,18 @@ end
 
 function loadMod(rel)
     return run(readModFile(rel), rel)
+end
+
+-- Charger réellement les seuls modules communs de radio ; les autres require
+-- gardent les simulations propres à chaque fichier de test.
+local radioModules = {}
+require = function(name)
+    if not name:find("BatmanRadio/", 1, true) then return end
+    if not radioModules[name] then
+        local scope = name == "BatmanRadio/BatmanRadio_Compat" and "shared/" or "client/"
+        radioModules[name] = loadMod(scope .. name .. ".lua")
+    end
+    return radioModules[name]
 end
 
 --- Fichier vanilla (lua/...) ; nil si le jeu n'est pas installé.
@@ -128,6 +141,9 @@ def new_runtime():
     # Ressource du dossier common du mod (textures des documents…).
     globals_.commonFileExists = lambda rel: (MOD_COMMON / rel).is_file()
     globals_.hasVanilla = VANILLA_LUA.is_dir()
+    globals_.hasBWT = (BWT_LUA / "client/BetterWalkieTalkies/RadioPTT.lua").is_file()
+    globals_.readBWTFile = lambda rel: _read(BWT_LUA, rel)
+    globals_.readArtemisFile = lambda rel: _read(REPO.parent / "OperationArtemis/Contents/mods/batman_OperationArtemis/42.21/media/lua", rel)
     lua.execute(PRELUDE)
     return lua
 

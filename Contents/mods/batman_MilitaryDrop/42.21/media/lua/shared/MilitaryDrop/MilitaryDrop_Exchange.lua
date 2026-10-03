@@ -41,6 +41,7 @@
 require "TimedActions/ISBaseTimedAction"
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
+local RadioCompat = require "BatmanRadio/BatmanRadio_Compat"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
@@ -314,7 +315,7 @@ if ISBaseTimedAction then
             Exchange.resync(self.device)
         end
         if self.speech then
-            self.character:Say(self.speech)
+            RadioCompat.say(self.character, self.speech)
         end
     end
 

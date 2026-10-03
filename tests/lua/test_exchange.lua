@@ -297,6 +297,23 @@ end
 -- Options
 -- ----------------------------------------------------------------------------
 
+function T.scripted_exchange_uses_bwt_text_bridge_when_present()
+    isClient = function() return true end
+    getActivatedMods = function()
+        return { size = function() return 1 end, get = function() return "\\BetterWalkieTalkies" end }
+    end
+    local called = 0
+    BetterWalkieTalkies = { RadioTextBridgeHandler = function(callback, message)
+        called = called + 1
+        return callback(message)
+    end }
+    local radio = makeRadio()
+    local player = makePlayer(radio)
+    Exchange.run(player, radio, "MissionReport", function() end)
+    QUEUE[1]:start()
+    assertEq(called, 1, "parole de l'action transmise par le bridge BWT")
+end
+
 function T.source_gains_have_defaults_and_0_disables()
     assertEq(Exchange.gain("report"), 1, "rapport")
     assertEq(Exchange.gain("dogtag"), 2, "plaque")
