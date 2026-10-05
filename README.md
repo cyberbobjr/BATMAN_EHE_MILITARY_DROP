@@ -8,7 +8,7 @@ This branch (`b42`) is a standalone rewrite for Build 42.21 of [Expanded Helicop
 
 - Mod ID: `batman_MilitaryDrop`
 - **Player's guide**: [English](docs/guide/en/README.md) · [Français](docs/guide/fr/README.md) ([both](docs/guide/README.md))
-- Server admins: [sandbox options, requisition lots file, admin tools](docs/guide/en/06-server-admin.md)
+- Server admins: [sandbox options, requisition lots file, drop zones, admin tools](docs/guide/en/06-server-admin.md)
 - Design notes, work plans and implementation status: [dev/](dev/) — internal working notes, **in French**: [dev/SUIVI.md](dev/SUIVI.md) (status of every feature), [dev/TEST-PROTOCOL.md](dev/TEST-PROTOCOL.md) (in-game test protocol), plans `dev/PLAN*.md`.
 - Changes: [CHANGELOG.md](CHANGELOG.md)
 

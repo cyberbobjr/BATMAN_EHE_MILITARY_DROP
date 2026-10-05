@@ -87,6 +87,8 @@ Sur la fréquence militaire, la base annonce : *« À toutes les stations, ici L
 
 Le point de largage est à **150 à 400 cases** de l'appelant, sur une route ou au pied d'un bâtiment, jamais dans l'eau. On entend l'hélicoptère passer, on voit son **ombre** au sol et une **flèche de direction** tant qu'il est à moins de 400 cases. Il reste quelques secondes au-dessus du point, puis repart.
 
+> **Zones de largage.** Sur certains serveurs, surtout PvP, l'admin définit des **zones de largage**. La caisse tombe alors dans l'une de ces zones, souvent dans la ville disputée la plus proche, au lieu de 150 à 400 cases de vous, toujours hors de l'eau. Admins : voir [Zones de largage](06-server-admin.md#zones-de-largage).
+
 ![Ombre de l'hélicoptère et flèche de direction](../images/ingame-helicopter.png)
 
 L'hélicoptère s'arrête quand le jeu est en pause, et reprend son vol après une sauvegarde et un rechargement.
@@ -94,6 +96,8 @@ L'hélicoptère s'arrête quand le jeu est en pause, et reprend son vol après u
 ## 5. Annonce et repère sur la carte
 
 Au largage : *« Caisse de ravitaillement livrée en grille X / Y. Je répète, grille X / Y. »* puis *« Ici Logistique, terminé. »*
+
+Sur un serveur à zones de largage, l'annonce et ses rappels peuvent aussi donner le nom de la zone : *« Caisse de ravitaillement livrée sur la zone Central Park, grille X / Y. »*
 
 Toute radio **allumée et réglée** sur la fréquence militaire à ce moment l'entend, et son propriétaire reçoit un symbole **cible** vert sur sa carte. Radio éteinte ou sur une autre chaîne : pas de repère. En multijoueur, les autres joueurs l'entendent aussi.
 

@@ -172,12 +172,25 @@ function Broadcast.mayday(id, x, y)
     toPostLogs(text)
 end
 
+--- Le nom de la zone de largage (idée 11) est lu dans l'annonce : nom
+--- donné et option DropZoneAnnounceName vraie (défaut).
+function Broadcast.announcesZone(zoneName)
+    return type(zoneName) == "string" and zoneName ~= "" and Config.get("DropZoneAnnounceName") ~= false
+end
+
 --- Largage effectué : coordonnées répétées, et repère de carte pour les
---- joueurs qui entendent la ligne (MilitaryDrop_Announce.lua).
-function Broadcast.dropped(x, y)
+--- joueurs qui entendent la ligne (MilitaryDrop_Announce.lua). zoneName
+--- (facultatif) : nom de la zone de largage, lu avant la grille (« LZ … ») ;
+--- le repère et le message aux clients ne changent pas.
+function Broadcast.dropped(x, y, zoneName)
     Net.toAll("DropAnnounce", { x = x, y = y })
     local lines = {}
-    local text = getText("IGUI_MilitaryDrop_BroadcastDropped", tostring(x), tostring(y))
+    local text
+    if Broadcast.announcesZone(zoneName) then
+        text = getText("IGUI_MilitaryDrop_BroadcastDroppedZone", zoneName, tostring(x), tostring(y))
+    else
+        text = getText("IGUI_MilitaryDrop_BroadcastDropped", tostring(x), tostring(y))
+    end
     for i = 1, Broadcast.REPEATS do
         lines[i] = { text, Broadcast.CODE }
     end
@@ -189,15 +202,25 @@ end
 --- Rappel de la base (Server.repeatGrids) : grille de chaque largage dont
 --- aucune caisse n'a été ouverte, avec le code du repère. Toutes les grilles
 --- partent aux clients dans un seul message (DropAnnounce { grids }), avant
---- les lignes qui les annoncent.
+--- les lignes qui les annoncent. grid.zoneName (facultatif) : nom de la zone
+--- de largage, dans le texte seulement (jamais envoyé à tous les clients).
 function Broadcast.pending(grids)
     if type(grids) ~= "table" or #grids == 0 then
         return false
     end
-    Net.toAll("DropAnnounce", { grids = grids })
+    local marks = {}
+    for i, grid in ipairs(grids) do
+        marks[i] = { x = grid.x, y = grid.y }
+    end
+    Net.toAll("DropAnnounce", { grids = marks })
     local lines = {}
     for _, grid in ipairs(grids) do
-        local text = getText("IGUI_MilitaryDrop_BroadcastPending", tostring(grid.x), tostring(grid.y))
+        local text
+        if Broadcast.announcesZone(grid.zoneName) then
+            text = getText("IGUI_MilitaryDrop_BroadcastPendingZone", grid.zoneName, tostring(grid.x), tostring(grid.y))
+        else
+            text = getText("IGUI_MilitaryDrop_BroadcastPending", tostring(grid.x), tostring(grid.y))
+        end
         for _ = 1, Broadcast.PENDING_REPEATS do
             lines[#lines + 1] = { text, Broadcast.CODE }
         end

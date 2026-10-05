@@ -78,6 +78,8 @@ Sous **COMMANDE SPÉCIALE**, le **Leurre à sirène** (3 pts) largue une caisse 
 2. Choisissez le **secteur de largage** : N, E, S ou O. La caisse tombe dans ce quart, à la distance habituelle.
 3. Transmettez.
 
+Sur un serveur à [zones de largage](06-server-admin.md#zones-de-largage), l'étape 2 propose un **secteur** au lieu de N, E, S et O : une ville, affichée « < Louisville > » (flèches, ou gauche et droite à la manette). Avec un seul secteur, il est déjà sélectionné. Le leurre tombe alors dans une zone de largage de ce secteur, comme un vrai largage.
+
 Le leurre est **identique** à un vrai largage : même réponse, même hélicoptère, même annonce, même caisse. Personne ne peut le reconnaître avant d'ouvrir le coffre, qui ne contient qu'une **Balise-sirène - DIVERSION**.
 
 - La sirène démarre quand la caisse se pose et hurle pendant **6 heures** de jeu. Les zombies l'entendent jusqu'à **120 cases**, tant que la zone autour de la caisse est chargée.

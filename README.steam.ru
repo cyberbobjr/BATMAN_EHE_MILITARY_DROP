@@ -89,8 +89,9 @@
 [h2]Для администраторов[/h2]
 
 [list]
-[*]55 настроек; ожидание сброса — неделя на весь сервер.
-[*]Позиции заявки можно изменить, отключить или добавить в Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]60 настроек; ожидание сброса — неделя на весь сервер.
+[*]Позиции заявки правятся в Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]PvP: зоны сброса задаёт админ (dropzones.txt или в игре).
 [*]Админы вызывают сбросы, крушение и задания с рации; всё решает сервер.
 [/list]
 
@@ -101,7 +102,7 @@
 [*]Создан для совместной работы с [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]С [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] ящик отмечает зелёный дым.
 [*]Совместим с Better Walkie Talkies (его PTT, голос и батарея).
-[*]Предметы из ваших модов на оружие и предметы появляются в ящиках.
+[*]Предметы из ваших модов появляются в ящиках.
 [/list]
 
 [h2]Руководство[/h2]

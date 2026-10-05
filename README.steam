@@ -89,8 +89,9 @@ A fixed military ham radio becomes a shared station console: tasks to handle (fl
 [h2]For server admins[/h2]
 
 [list]
-[*]55 sandbox options: wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy, helicopter crashes.
+[*]60 sandbox options: wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy, helicopter crashes.
 [*]Requisition lots can be edited, disabled or added in Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]PvP servers: drop zones chosen by the admin (dropzones.txt or an in-game tool), so every crate lands in a contested area.
 [*]Server-authoritative multiplayer. Admins can force a drop, crash the next helicopter and launch missions from a military radio.
 [/list]
 

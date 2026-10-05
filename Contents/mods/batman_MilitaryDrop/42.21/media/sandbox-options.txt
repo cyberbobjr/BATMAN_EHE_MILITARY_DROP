@@ -30,6 +30,38 @@ option MilitaryDrop.DropRepeatHours
     page = MilitaryDrop, translation = MilitaryDrop_DropRepeatHours,
 }
 
+option MilitaryDrop.DropPlacement
+{
+    type = enum, numValues = 3, default = 1,
+    page = MilitaryDrop, translation = MilitaryDrop_DropPlacement,
+    valueTranslation = MilitaryDrop_DropPlacement,
+}
+
+option MilitaryDrop.DropZoneChoice
+{
+    type = enum, numValues = 2, default = 1,
+    page = MilitaryDrop, translation = MilitaryDrop_DropZoneChoice,
+    valueTranslation = MilitaryDrop_DropZoneChoice,
+}
+
+option MilitaryDrop.DropZoneMinDistance
+{
+    type = integer, min = 0, max = 5000, default = 0,
+    page = MilitaryDrop, translation = MilitaryDrop_DropZoneMinDistance,
+}
+
+option MilitaryDrop.DropZoneMaxDistance
+{
+    type = integer, min = 100, max = 20000, default = 1500,
+    page = MilitaryDrop, translation = MilitaryDrop_DropZoneMaxDistance,
+}
+
+option MilitaryDrop.DropZoneAnnounceName
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_DropZoneAnnounceName,
+}
+
 option MilitaryDrop.AuthCode
 {
     type = enum, numValues = 4, default = 4,

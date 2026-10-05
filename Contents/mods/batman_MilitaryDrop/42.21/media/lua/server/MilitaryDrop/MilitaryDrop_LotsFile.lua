@@ -847,9 +847,11 @@ end
 -- Lecture, écriture, chargement
 -- ----------------------------------------------------------------------------
 
---- Texte du fichier ; nil s'il n'existe pas ; false et l'erreur s'il est trop long.
-function LotsFile.readText()
-    local reader = getFileReader(LotsFile.PATH, false)
+--- Texte du fichier ; nil s'il n'existe pas ; false et l'erreur s'il est trop
+--- long. path (facultatif) : autre fichier du dossier Lua lu avec les mêmes
+--- garde-fous (zones de largage, MilitaryDrop_ZonesFile.lua).
+function LotsFile.readText(path)
+    local reader = getFileReader(path or LotsFile.PATH, false)
     if not reader then
         return nil
     end

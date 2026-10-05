@@ -83,6 +83,8 @@ On the military frequency, the base announces: *"All stations, Logistics. Supply
 
 The drop point is **150 to 400 tiles** from the caller, on a road or next to a building, never in water. You hear the helicopter pass, see its **shadow** on the ground and a **direction arrow** while it is within 400 tiles. It hovers a few seconds over the point, then leaves.
 
+> **Drop zones.** On some servers, usually PvP ones, the admin defines **drop zones**. The crate then falls in one of these zones, often in the nearest contested town, instead of 150 to 400 tiles from you, still never in water. Admins: see [Drop zones](06-server-admin.md#drop-zones).
+
 ![Helicopter shadow and direction arrow](../images/ingame-helicopter.png)
 
 The helicopter stops when the game is paused, and resumes its flight after a save and reload.
@@ -90,6 +92,8 @@ The helicopter stops when the game is paused, and resumes its flight after a sav
 ## 5. Announcement and map marker
 
 When the crate drops: *"Supply crate delivered at grid X / Y. I repeat, grid X / Y."* then *"Logistics out."*
+
+On a server with drop zones, the announcement and its reminders may also give the zone name: *"Supply crate delivered at LZ Central Park, grid X / Y."*
 
 Every radio **on and tuned** to the military frequency at that moment hears it, and its owner gets a green **target** symbol on the map. Turned off or on another channel: no marker. In multiplayer, other players hear it too.
 

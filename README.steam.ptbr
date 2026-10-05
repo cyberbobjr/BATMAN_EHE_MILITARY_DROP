@@ -89,8 +89,9 @@ Um rádio militar fixo vira console compartilhado: tarefas pendentes (gravadores
 [h2]Para administradores de servidor[/h2]
 
 [list]
-[*]55 opções de sandbox: espera entre lançamentos (uma semana por padrão, para todo o servidor), distância, horda, modo de código, confiança, missões, requisição, isca, quedas de helicóptero.
+[*]60 opções de sandbox: espera entre lançamentos (uma semana por padrão, para todo o servidor), distância, horda, modo de código, confiança, missões, requisição, isca, quedas de helicóptero.
 [*]Os lotes de requisição podem ser editados, desativados ou adicionados em Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]Servidores PvP: zonas de lançamento escolhidas pelo admin (dropzones.txt ou ferramenta no jogo), para que cada caixa caia em área disputada.
 [*]Multijogador com autoridade do servidor. Os admins podem forçar um lançamento, derrubar o próximo helicóptero e lançar missões a partir de um rádio militar.
 [/list]
 

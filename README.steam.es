@@ -89,8 +89,9 @@ Una radio militar fija se convierte en consola compartida: asuntos pendientes (r
 [h2]Para administradores de servidor[/h2]
 
 [list]
-[*]55 opciones de mundo abierto: espera entre lanzamientos (una semana por defecto, para todo el servidor), distancia, horda, modo de código, confianza, misiones, requisición, señuelo, accidentes de helicóptero.
+[*]60 opciones de mundo abierto: espera entre lanzamientos (una semana por defecto, para todo el servidor), distancia, horda, modo de código, confianza, misiones, requisición, señuelo, accidentes de helicóptero.
 [*]Los lotes de requisición se pueden editar, desactivar o añadir en Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]Servidores PvP: zonas de lanzamiento elegidas por el administrador (dropzones.txt o herramienta en el juego), para que cada caja caiga en zona disputada.
 [*]Multijugador con autoridad del servidor. Los administradores pueden forzar un lanzamiento, estrellar el próximo helicóptero y lanzar misiones desde una radio militar.
 [/list]
 

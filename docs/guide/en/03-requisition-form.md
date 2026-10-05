@@ -78,6 +78,8 @@ Under **SPECIAL ORDER**, the **Siren decoy** (3 pts) drops a dummy crate whose s
 2. Choose the **drop sector**: N, E, S or W. The crate falls in that quarter, at the usual distance.
 3. Transmit.
 
+On a server with [drop zones](06-server-admin.md#drop-zones), step 2 offers a **sector** instead of N, E, S and W: a town, shown as "< Louisville >" (arrows, or left and right on a gamepad). With a single sector, it is already selected. The decoy then falls in a drop zone of that sector, like a real drop.
+
 The decoy looks **exactly** like a real drop: same answer, same helicopter, same announcement, same crate. Nobody can tell before opening the trunk, which holds only a **Siren Beacon - DIVERSION**.
 
 - The siren starts when the crate lands and sounds for **6 hours** of game time. Zombies hear it up to **120 tiles** away, while the area around the crate is loaded.

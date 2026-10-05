@@ -12,6 +12,16 @@
 -- Le leurre est exclusif : le cocher bloque les autres lots, et un lot choisi
 -- bloque le leurre ; il exige un secteur (N, E, S, O).
 --
+-- Zones de largage (ZONE-04, decoy.zones = true) : les secteurs sont des
+-- noms libres de l'admin (villes, ≤ 32 caractères, liste triée par le
+-- serveur) au lieu de N/E/S/O. La rose des vents laisse place à un sélecteur
+-- « < Louisville > » : flèches et nom cliquables (le nom passe au suivant),
+-- gauche et droite à la manette ; nom mesuré, raccourci (« ... ») s'il ne
+-- tient pas, complet dans l'infobulle. Un seul secteur : aucun choix, il est
+-- sélectionné d'office et affiché pour information (le serveur tire une zone
+-- de ce secteur). Le nom des zones n'est jamais connu du client. La commande
+-- envoie decoy = "<secteur>" ; le serveur le revalide.
+--
 -- Le client ne décide rien : il compose la commande (budget, paliers) pour
 -- l'affichage, puis MilitaryDrop.Client l'envoie (RequisitionOrder) ou
 -- l'annule (RequisitionCancel) ; le serveur revalide tout. Fermer la feuille
@@ -56,6 +66,12 @@ MilitaryDrop.RequisitionWindow = RW
 
 -- Secteurs du leurre, dans l'ordre du contrat (W s'affiche « O » en français).
 RW.SECTORS = { "N", "E", "S", "W" }
+-- Secteurs nommés (mode zones) : longueur (unités de chaîne, comme le
+-- serveur) et nombre bornés ; largeur réservée au nom dans la colonne, en
+-- hauteurs de police (au-delà, nom raccourci).
+RW.SECTOR_NAME_LIMIT = 32
+RW.MAX_ZONE_SECTORS = 200
+RW.SECTOR_NAME_EM = 12
 -- Validité par défaut si le serveur ne l'envoie pas (ms réelles), et marge
 -- retranchée côté client : le délai part de la réception, après celui du serveur.
 RW.DEFAULT_EXPIRES_MS = 300000
@@ -180,14 +196,22 @@ function RW.newForm(args, nowMs)
     end
     local decoy = args.decoy
     if type(decoy) == "table" then
-        local sectors, known = {}, {}
-        for _, sector in ipairs(RW.SECTORS) do
-            known[sector] = true
-        end
-        for _, sector in ipairs(type(decoy.sectors) == "table" and decoy.sectors or RW.SECTORS) do
-            if known[sector] then
-                sectors[#sectors + 1] = sector
-                known[sector] = false
+        local zones = decoy.zones == true
+        local sectors
+        if zones then
+            sectors = RW.zoneSectors(decoy.sectors)
+        else
+            -- Proximité : seulement N, E, S, W (secteurs inconnus écartés).
+            local known = {}
+            sectors = {}
+            for _, sector in ipairs(RW.SECTORS) do
+                known[sector] = true
+            end
+            for _, sector in ipairs(type(decoy.sectors) == "table" and decoy.sectors or RW.SECTORS) do
+                if known[sector] then
+                    sectors[#sectors + 1] = sector
+                    known[sector] = false
+                end
             end
         end
         form.decoy = {
@@ -195,12 +219,56 @@ function RW.newForm(args, nowMs)
             allowed = decoy.allowed == true and #sectors > 0,
             reason = decoy.allowed ~= true and (type(decoy.reason) == "string" and decoy.reason or "empty") or nil,
             sectors = sectors,
+            zones = zones or nil,
         }
         if decoy.allowed == true and #sectors == 0 then
             form.decoy.reason = "empty"
         end
+        -- Un seul secteur nommé : sélectionné d'office.
+        form.sector = RW.fixedSector(form)
     end
     return form
+end
+
+--- Secteurs nommés du mode zones nettoyés : textes non vides, sans caractère
+--- de contrôle ni espaces de bord, bornés (sans couper un caractère), sans
+--- doublon, dans l'ordre du serveur (alphabétique). Aucun nom de zone.
+function RW.zoneSectors(list)
+    local sectors, seen = {}, {}
+    for _, name in ipairs(type(list) == "table" and list or {}) do
+        if type(name) == "string" and #sectors < RW.MAX_ZONE_SECTORS then
+            name = name:gsub("%c", " "):gsub("^%s+", ""):gsub("%s+$", "")
+            name = MilitaryDrop.cutText(name, RW.SECTOR_NAME_LIMIT)
+            if name ~= "" and not seen[name] then
+                seen[name] = true
+                sectors[#sectors + 1] = name
+            end
+        end
+    end
+    return sectors
+end
+
+--- Leurre en mode zones (secteurs nommés).
+function RW.zoneDecoy(form)
+    return form.decoy ~= nil and form.decoy.zones == true
+end
+
+--- Secteur imposé : mode zones avec un seul secteur, sinon nil.
+function RW.fixedSector(form)
+    local decoy = form.decoy
+    if decoy and decoy.zones and #decoy.sectors == 1 then
+        return decoy.sectors[1]
+    end
+    return nil
+end
+
+--- Nom complet d'un secteur pour l'infobulle : le nom libre (mode zones),
+--- sinon le point cardinal traduit.
+function RW.sectorName(form, sector)
+    if RW.zoneDecoy(form) then
+        return sector
+    end
+    return getText("IGUI_MilitaryDrop_ReqSectorName_" .. tostring(sector))
 end
 
 --- Points engagés (lots, ou leurre coché).
@@ -270,7 +338,8 @@ function RW.toggleDecoy(form)
     end
     form.decoyOn = not form.decoyOn
     if not form.decoyOn then
-        form.sector = nil
+        -- Secteur oublié, sauf le secteur imposé (un seul secteur nommé).
+        form.sector = RW.fixedSector(form)
     end
     return true
 end
@@ -298,6 +367,36 @@ function RW.pickSector(form, sector)
     end
     form.sector = sector
     return true
+end
+
+--- Le secteur peut changer par les flèches (au moins un secteur, pas de
+--- secteur imposé, leurre coché ou cochable).
+function RW.canStepSector(form)
+    local sectors = form.decoy and form.decoy.sectors
+    return sectors ~= nil and sectors[1] ~= nil and not RW.fixedSector(form)
+        and RW.canPickSector(form, sectors[1])
+end
+
+--- Secteur précédent (-1) ou suivant (+1), en boucle ; sans secteur choisi,
+--- le premier (+1) ou le dernier (-1). Coche le leurre au besoin.
+function RW.stepSector(form, delta)
+    if not RW.canStepSector(form) then
+        return false
+    end
+    local sectors = form.decoy.sectors
+    local index = 0
+    for i, sector in ipairs(sectors) do
+        if sector == form.sector then
+            index = i
+        end
+    end
+    index = index + delta
+    if index < 1 then
+        index = #sectors
+    elseif index > #sectors then
+        index = 1
+    end
+    return RW.pickSector(form, sectors[index])
 end
 
 function RW.expired(form, nowMs)
@@ -675,6 +774,21 @@ local function place(form, mode, view)
     end
     L.ctrlW = ctrlW
     local colW = L.labelW + 2 * u + costW + 2 * u + ctrlW
+    if RW.zoneDecoy(form) then
+        -- Secteurs nommés : libellé, sélecteur « < nom > » sur toute la
+        -- largeur (retrait de la case du leurre), note. La colonne s'élargit
+        -- pour le nom le plus long, au plus SECTOR_NAME_EM hauteurs de police
+        -- (au-delà, le nom est raccourci).
+        L.zones = true
+        L.sectorsH = (compact and 1 or math.floor(u / 2)) + fh + L.gapS + L.box + L.gapS + fh
+            + (compact and 1 or math.ceil(u / 2))
+        local nameW = 0
+        for _, sector in ipairs(form.decoy.sectors) do
+            nameW = math.max(nameW, measureOnce(sector))
+        end
+        nameW = math.min(nameW, fh * RW.SECTOR_NAME_EM)
+        colW = math.max(colW, L.box + u + 2 * (L.box + L.gapS) + 2 * u + nameW)
+    end
     -- Pied : budget (libellé, points de suite, valeur), note, boutons.
     L.budgetLabelW = 0
     for _, key in ipairs(BUDGET_KEYS) do
@@ -783,17 +897,22 @@ local function place(form, mode, view)
                 row.check = rect(cx, cy + (L.rowH - L.box) / 2, L.box, L.box)
                 L.decoyRow = row
                 cy = cy + L.rowH
-                local sb = L.sectorBox
-                local mid = cx + colW - math.floor((3 * sb + 4) / 2)
-                local top = cy + (compact and 1 or math.floor(u / 2))
-                L.sectorsArea = rect(cx, cy, colW, L.sectorsH)
-                L.sectorLabelX = cx + L.box + u
-                L.sectorBoxes.N = rect(mid - sb / 2, top, sb, sb)
-                L.sectorBoxes.W = rect(mid - sb / 2 - sb - 2, top + sb + 2, sb, sb)
-                L.sectorBoxes.E = rect(mid + sb / 2 + 2, top + sb + 2, sb, sb)
-                L.sectorBoxes.S = rect(mid - sb / 2, top + 2 * (sb + 2), sb, sb)
-                L.compassCenter = { x = mid, y = top + sb + 2 + sb / 2 }
-                cy = cy + L.sectorsH
+                if L.zones then
+                    RW.zoneSectorRects(L, form, cx, cy, colW)
+                    cy = cy + L.sectorsH
+                else
+                    local sb = L.sectorBox
+                    local mid = cx + colW - math.floor((3 * sb + 4) / 2)
+                    local top = cy + (compact and 1 or math.floor(u / 2))
+                    L.sectorsArea = rect(cx, cy, colW, L.sectorsH)
+                    L.sectorLabelX = cx + L.box + u
+                    L.sectorBoxes.N = rect(mid - sb / 2, top, sb, sb)
+                    L.sectorBoxes.W = rect(mid - sb / 2 - sb - 2, top + sb + 2, sb, sb)
+                    L.sectorBoxes.E = rect(mid + sb / 2 + 2, top + sb + 2, sb, sb)
+                    L.sectorBoxes.S = rect(mid - sb / 2, top + 2 * (sb + 2), sb, sb)
+                    L.compassCenter = { x = mid, y = top + sb + 2 + sb / 2 }
+                    cy = cy + L.sectorsH
+                end
             end
         end
         if c == cols then
@@ -846,6 +965,28 @@ function RW.rowRects(L, x, y, colW)
     row.qty = rect(row.plus.x - L.gapS - L.numW, midY, L.numW, L.box)
     row.minus = rect(row.qty.x - L.gapS - L.box, midY, L.box, L.box)
     return row
+end
+
+--- Bloc des secteurs nommés (mode zones) sous la ligne du leurre, en (x, y),
+--- largeur colW : libellé, puis sélecteur (flèches < et > aux bords, nom
+--- entre elles ; un seul secteur : le nom seul, sans flèche), puis note.
+function RW.zoneSectorRects(L, form, x, y, colW)
+    local top = y + (L.compact and 1 or math.floor(L.u / 2))
+    L.sectorsArea = rect(x, y, colW, L.sectorsH)
+    L.sectorLabelX = x + L.box + L.u
+    L.sectorLabelY = top
+    local by = top + L.fh + L.gapS
+    local right = x + colW
+    if RW.fixedSector(form) then
+        L.sectorPrev, L.sectorNext = nil, nil
+        L.sectorName = rect(L.sectorLabelX, by, right - L.sectorLabelX, L.box)
+    else
+        L.sectorPrev = rect(L.sectorLabelX, by, L.box, L.box)
+        L.sectorNext = rect(right - L.box, by, L.box, L.box)
+        local nameX = L.sectorPrev.x + L.box + L.gapS
+        L.sectorName = rect(nameX, by, L.sectorNext.x - L.gapS - nameX, L.box)
+    end
+    L.sectorNoteY = by + L.box + L.gapS
 end
 
 --- Disposition complète du formulaire dans un écran de maxWidth × maxHeight
@@ -1081,7 +1222,8 @@ function RW:deviceValid()
         and math.abs(player:getY() - (square:getY() + 0.5)) <= limit
 end
 
---- Lignes accessibles à la manette : lots permis, leurre, secteurs.
+--- Lignes accessibles à la manette : lots permis, leurre, secteurs (sauf
+--- secteur imposé : rien à choisir).
 function RW:navigation()
     local items = {}
     for _, section in ipairs(RW.sections(self.form)) do
@@ -1092,7 +1234,9 @@ function RW:navigation()
         end
         if section.decoy and self.form.decoy.allowed then
             items[#items + 1] = { kind = "decoy" }
-            items[#items + 1] = { kind = "sectors" }
+            if not RW.fixedSector(self.form) then
+                items[#items + 1] = { kind = "sectors" }
+            end
         end
     end
     return items
@@ -1180,9 +1324,20 @@ function RW:hitTest(x, y)
             end
         end
     end
-    for _, sector in ipairs(self.form.decoy and self.form.decoy.sectors or {}) do
-        if inside(L.sectorBoxes[sector], x, y) then
-            return "sector", sector
+    if L.zones then
+        -- Secteurs nommés : flèches, nom (suivant), ou nom imposé (infobulle seule).
+        if inside(L.sectorPrev, x, y) then
+            return "sectorPrev"
+        elseif inside(L.sectorNext, x, y) then
+            return "sectorNext"
+        elseif inside(L.sectorName, x, y) then
+            return L.sectorPrev and "sectorName" or "sectorInfo"
+        end
+    else
+        for _, sector in ipairs(self.form.decoy and self.form.decoy.sectors or {}) do
+            if inside(L.sectorBoxes[sector], x, y) then
+                return "sector", sector
+            end
         end
     end
     if L.decoyRow and inside(L.decoyRow.row, x, y) then
@@ -1221,6 +1376,8 @@ function RW:isEnabled(target, payload)
         return RW.canToggleDecoy(form)
     elseif target == "sector" then
         return RW.canPickSector(form, payload)
+    elseif target == "sectorPrev" or target == "sectorNext" or target == "sectorName" then
+        return RW.canStepSector(form)
     end
     return false
 end
@@ -1244,11 +1401,15 @@ function RW:activate(target, payload)
         RW.toggleDecoy(form)
     elseif target == "sector" then
         RW.pickSector(form, payload)
+    elseif target == "sectorPrev" then
+        RW.stepSector(form, -1)
+    elseif target == "sectorNext" or target == "sectorName" then
+        RW.stepSector(form, 1)
     end
 end
 
 local CLICKABLE = { close = true, transmit = true, cancel = true, minus = true, plus = true, decoy = true, sector = true,
-    pagePrev = true, pageNext = true }
+    pagePrev = true, pageNext = true, sectorPrev = true, sectorNext = true, sectorName = true }
 
 function RW:onMouseDown(x, y)
     local target, payload = self:hitTest(x, y)
@@ -1304,12 +1465,16 @@ function RW:tooltipFor(target, payload)
             parts[#parts + 1] = " <RGB:1,0.55,0.45> " .. escape(RW.reasonText(lot))
         end
         return table.concat(parts)
-    elseif target == "decoy" or target == "sector" then
+    elseif target == "decoy" or target == "sector" or target == "sectorPrev" or target == "sectorNext"
+        or target == "sectorName" or target == "sectorInfo" then
         local parts = { " <RGB:1,1,1> " .. escape(getText("IGUI_MilitaryDrop_ReqDecoy")) .. " <LINE> ",
             " <RGB:0.85,0.85,0.85> " .. escape(getText("IGUI_MilitaryDrop_ReqDecoyDesc")) }
-        if target == "sector" then
-            parts[#parts + 1] = " <LINE> <RGB:1,1,1> " .. escape(getText("IGUI_MilitaryDrop_ReqSectorName_" .. payload))
-        elseif form.decoy and not form.decoy.allowed then
+        -- Secteur visé : la case survolée (rose), sinon le secteur choisi ou
+        -- imposé (nom libre complet, échappé : jamais interprété en balise).
+        local sector = target == "sector" and payload or (target ~= "decoy" and form.sector) or nil
+        if sector then
+            parts[#parts + 1] = " <LINE> <RGB:1,1,1> " .. escape(RW.sectorName(form, sector))
+        elseif target == "decoy" and form.decoy and not form.decoy.allowed then
             parts[#parts + 1] = " <LINE> <RGB:1,0.55,0.45> " .. escape(RW.reasonText(form.decoy))
         end
         return table.concat(parts)
@@ -1660,6 +1825,10 @@ function RW:drawDecoy(hover, payload, now)
         x = x + 4
     end
     self:typeRight(costText, row.costRight, ty, INK, alpha)
+    if L.zones then
+        self:drawZoneSectors(hover, expired, focusedSectors)
+        return
+    end
     -- Secteurs : libellé, mention d'exclusivité, rose des vents.
     local area = L.sectorsArea
     local sy = area.y + math.floor(L.u / 2)
@@ -1694,6 +1863,52 @@ function RW:drawDecoy(hover, payload, now)
             end
         end
     end
+end
+
+--- Secteurs nommés (mode zones) : libellé, sélecteur « < nom > » (nom choisi
+--- écrit à l'encre bleue et souligné, champ en pointillés tant qu'aucun
+--- secteur n'est choisi), ou nom imposé imprimé ; puis la note. Noms dessinés
+--- par drawText (aucune balise interprétée), raccourcis à la largeur du champ.
+function RW:drawZoneSectors(hover, expired, focused)
+    local L, form = self.L, self.form
+    local area = L.sectorsArea
+    if focused then
+        self:drawRectBorder(area.x - 3, area.y, area.w + 6, area.h, 0.85, BLUE[1], BLUE[2], BLUE[3])
+    end
+    local textW = area.x + area.w - L.sectorLabelX
+    self:type(RW.fit(getText("IGUI_MilitaryDrop_ReqSectorLabel"), L.font, textW), L.sectorLabelX, L.sectorLabelY,
+        INK, form.decoyOn and 1 or 0.6)
+    local r = L.sectorName
+    local ty = r.y + math.floor((r.h - L.fh) / 2)
+    local fixed = RW.fixedSector(form)
+    if fixed then
+        -- Secteur imposé : simple information, imprimée.
+        self:type(RW.fit(fixed, L.font, r.w), r.x, ty, INK, form.decoyOn and 1 or 0.6)
+    else
+        local enabled = not expired and RW.canStepSector(form)
+        local nameHover = hover == "sectorName" and enabled
+        self:pageButton(L.sectorPrev, "<", enabled, hover == "sectorPrev", self.pressed == "sectorPrev")
+        self:pageButton(L.sectorNext, ">", enabled, hover == "sectorNext", self.pressed == "sectorNext")
+        local fill = nameHover and { INK[1], INK[2], INK[3], self.pressed == "sectorName" and 0.22 or 0.1 } or nil
+        self:printedBox(r, enabled and 0.5 or 0.22, fill)
+        if form.sector then
+            local name = RW.fit(form.sector, L.font, r.w - 2 * L.u)
+            local nameW = measure(name, L.font)
+            local cx = r.x + r.w / 2
+            self:type(name, cx - nameW / 2, ty, BLUE, 1)
+            self:drawRect(cx - nameW / 2, ty + L.fh - 1, nameW, 1, 0.7, BLUE[1], BLUE[2], BLUE[3])
+        else
+            -- Champ à remplir : pointillés.
+            local x = r.x + L.u
+            while x + 1 < r.x + r.w - L.u do
+                self:drawRect(x, ty + L.fh - math.floor(L.fh / 4), 1, 1, 0.45, INK[1], INK[2], INK[3])
+                x = x + 4
+            end
+        end
+    end
+    local missing = form.decoyOn and not form.sector
+    local note = getText(missing and "IGUI_MilitaryDrop_ReqBlock_sector" or "IGUI_MilitaryDrop_ReqExclusive")
+    self:type(RW.fit(note, L.font, textW), L.sectorLabelX, L.sectorNoteY, missing and RED or INK, 0.6)
 end
 
 --- Pied : budget, engagé, restant (points de conduite), note, boutons.
@@ -1834,7 +2049,8 @@ function RW:onKeyRelease(key)
 end
 
 -- Manette : haut et bas choisissent la ligne, gauche et droite retirent ou
--- ajoutent (leurre : décoche ou coche ; secteurs : tour de la rose), A
+-- ajoutent (leurre : décoche ou coche ; secteurs : tour de la rose, ou
+-- secteur nommé précédent ou suivant en mode zones), A
 -- transmet, B annule.
 function RW:onGainJoypadFocus(joypadData)
     ISPanelJoypad.onGainJoypadFocus(self, joypadData)
@@ -1877,20 +2093,8 @@ function RW:stepCursor(delta)
             RW.toggleDecoy(form)
         end
     elseif item.kind == "sectors" then
-        local sectors = form.decoy.sectors
-        local index = 0
-        for i, sector in ipairs(sectors) do
-            if sector == form.sector then
-                index = i
-            end
-        end
-        index = index + delta
-        if index < 1 then
-            index = #sectors
-        elseif index > #sectors then
-            index = 1
-        end
-        RW.pickSector(form, sectors[index])
+        -- Tour de la rose (N, E, S, O) ou secteur nommé précédent/suivant.
+        RW.stepSector(form, delta)
     end
 end
 

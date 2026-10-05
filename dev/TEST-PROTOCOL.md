@@ -381,3 +381,49 @@ Les nouvelles stations utilisant `RadioScriptManager:AddChannel()` ou le
 chargement radio XML standard sont automatiquement couvertes en solo. Une
 station qui diffuse uniquement via un système privé ou des appels directs
 `SendTransmission`, sans émission observable dans ce registre, ne l'est pas.
+
+## Zones de largage — branche feature/drop-zones (à valider en jeu)
+
+ZONE-01 à ZONE-08 (idée 11). Aucun cas n'a encore été joué. Redémarrer complètement le jeu et vérifier `version=42.21.0` dans le journal de la session. Guide : `docs/guide/fr/06-server-admin.md`, section « Zones de largage ».
+
+Préparation :
+
+1. **Sauvegarder puis supprimer** `C:\Users\cyber\Zomboid\Lua\MilitaryDrop\dropzones.txt` : le fichier est commun à toutes les parties et à tous les serveurs du compte.
+2. Solo en mode debug, nouvelle partie sur la carte vanilla. Page **Military Drop** : **Placement des largages** : Zones de largage ; **Heures entre deux largages** : 1 ; **Journal de débogage** : activé.
+3. Un talkie militaire allumé sur la fréquence militaire, et le code (commandes de la préparation générale) : les cas de zones passent par un **appel normal** (section « Logistique »), car le largage forcé de l'admin ignore les zones (Z21). Entre deux appels, attendre le délai (1 h, ×1,5 au plus selon la confiance). Pour changer une option pendant la session seulement (non sauvegardée) : `SandboxVars.MilitaryDrop.DropPlacement = 3`, `SandboxVars.MilitaryDrop.DropZoneAnnounceName = false`, `SandboxVars.MilitaryDrop.DropZoneMinDistance = 300`.
+
+### Parcours nominal, solo
+
+| # | Action | Attendu |
+|---|---|---|
+| Z1 | Démarrer la partie, ouvrir les options du bac à sable | `dropzones.txt` créé (notice anglaise, `zones = {}`) ; `console.txt` : « drop zones: 0 (0 active) from created » ; 5 options nouvelles, libellés et infobulles en français |
+| Z2 | À Louisville, au rez-de-chaussée : clic droit au sol › **Military Drop (admin)** › **Zones de largage** › **Coin 1 ici**, s'éloigner, puis **Coin 2 ici** › **Nouveau secteur...** › « Louisville » › « Parc » | Contour bleu qui suit le curseur pendant le tracé ; « Zone de largage Parc ajoutée. » ; contour vert ; fichier réécrit avec `map = "Muldraugh, KY"` et la zone `z1` |
+| Z3 | Tracer une 2e zone à Louisville (secteur proposé dans le sous-menu du coin 2), puis une zone à West Point (nouveau secteur) | Trois contours verts ; ids `z2`, `z3` |
+| Z4 | **Liste des zones...** | Zones groupées par secteur, en-tête « Carte attendue : Muldraugh, KY (chargée) », « Placement : zones », « 3 zones, 3 utilisables ». **Désactiver** : contour gris, puis **Activer** ; **Aller à** : téléportation au centre ; **Supprimer** demande un second clic dans les 4 s |
+| Z5 | Près de Louisville : appel normal avec le code, valider le formulaire | `console.txt` : « drop point x,y in zone z1 (Louisville) » (ou `z2`) ; annonce « Caisse de ravitaillement livrée sur la zone Parc, grille X / Y » ; la caisse se pose dans le rectangle, sur la terre ferme, avec sa horde |
+| Z6 | Près de West Point : appel normal avec le code, puis attendre un rappel de grille | Caisse dans la zone de West Point ; le rappel nomme la zone. Avec `DropZoneAnnounceName = false` : grille seule, repère de carte inchangé |
+| Z7 | Appel suivant, cocher le leurre | Sélecteur « < Louisville > » au lieu de N/E/S/O ; choisir West Point : leurre dans une zone de West Point, même annonce, sirène à la pose |
+| Z8 | Modifier le fichier à la main (`weight = 3` sur `z2`), **Recharger dropzones.txt** ; puis casser la syntaxe, recharger, essayer d'ajouter une zone | « dropzones.txt rechargé. », poids 3 dans la liste ; erreur : message d'erreur, numéro de ligne dans `console.txt`, ajout refusé, fichier non écrasé ; corriger et recharger |
+| Z9 | Désactiver toutes les zones, appel normal | Repli sur une ville vanilla : « drop point … in town town:<ville> », annonce « zone <ville> » |
+| Z10 | `DropPlacement = 3` : appeler à plus de 1500 cases de toute zone, puis près d'une zone | Loin : caisse à 150-400 cases, sans message ; près : caisse dans la zone |
+| Z11 | Sauvegarder et quitter avant d'atteindre une caisse de zone, relancer, y aller | Caisse posée dans la zone ; rappel avec le nom de la zone |
+
+### Parcours nominal, MP (serveur dédié `C:\pzserver`, 2 clients, PvP actif, une zone non-PvP)
+
+| # | Action | Attendu |
+|---|---|---|
+| Z12 | Démarrer le serveur avec un `dropzones.txt` contenant une zone qui chevauche la zone non-PvP | `console.txt` du serveur : zones lues au démarrage, avertissement `nonPvp` pour cette zone (listes non-PvP remplies sur le serveur dédié) |
+| Z13 | Admin : tracer une zone PvP avec l'outil ; essayer d'en tracer une sur la zone non-PvP | Fichier écrit côté serveur ; contours chez l'admin seulement (rien chez l'autre client) ; seconde zone refusée (« chevauche une zone non-PvP ») |
+| Z14 | Client 1 appelle ; client 2 écoute la fréquence, rejoint la caisse et l'ouvre | Caisse dans la zone PvP ; annonce avec le nom de la zone chez les deux ; −5 au demandeur (CONF-04) |
+| Z15 | Client 2 non admin | Pas de menu « Military Drop (admin) » ; commande forgée `ZoneAdd` refusée (« refused for … : not an admin » au journal serveur) |
+
+### Cas limites
+
+| # | Action | Attendu |
+|---|---|---|
+| Z16 | Riverside : tracer une zone qui couvre la berge et l'Ohio, la laisser seule dans son secteur, appeler au moins 5 fois depuis Riverside (appels normaux) | Jamais de caisse dans l'eau ni hors zone ; un largage sans case sèche répond « aucune zone de largage sûre », formulaire gardé |
+| Z17 | Tracer une zone entièrement sur un plan d'eau (lac), seule dans son secteur, appel normal | Avertissement « ni route ni bâtiment » à la création ; « aucune zone de largage sûre » à chaque appel |
+| Z18 | Solo sans mode debug, puis MP client non admin | Aucun menu des zones ; aucune liste reçue |
+| Z19 | Laisser un seul secteur actif, commander un leurre | Le secteur est affiché et sélectionné d'office, sans flèches ; leurre dans une zone de ce secteur. Sans case possible : refus sans proposer d'autre secteur |
+| Z20 | Divers : coin 2 à plus de 300 cases (contour rouge, option grisée) ; clic droit à l'étage (coins grisés) ; zone d'une carte absente du fichier (`map = "Autre"` : contour orange, « carte non chargée ») ; `DropZoneMinDistance = 300` en appelant depuis une zone ; nom de secteur de 32 caractères et grande police ; **Aller à** en écran partagé ; largage dans une zone de 300 × 300 | Comportements décrits dans le guide ; pas de saccade notable ; pas d'erreur dans `console.txt` |
+| Z21 | Largage admin hors zones (§2.1) : `DropPlacement = 2`, zones actives à Louisville et West Point, se placer à Muldraugh (loin de toute zone). **Forcer un largage (admin)** et valider le formulaire ; puis forcer un 2e largage, cocher le leurre dans la feuille ADMIN | Caisse à 150-400 cases de l'admin, hors de toute zone ; ni « in zone » ni « in town » dans `console.txt`, pas de message « aucune zone utilisable » ; annonce sans nom de zone. Feuille ADMIN : leurre avec N/E/S/O (pas de sélecteur de secteur), leurre dans le quart choisi |

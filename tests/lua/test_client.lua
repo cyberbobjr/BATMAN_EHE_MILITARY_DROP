@@ -247,6 +247,21 @@ function T.no_point_in_decoy_sector_reopens_the_form()
     assertTrue(Client.sendRequisition(requestId, {}, "S", form), "autre secteur sans rappeler")
 end
 
+function T.no_point_in_the_single_decoy_sector_says_no_zone_site()
+    local w = requisitionWorld()
+    local Client = MilitaryDrop.Client
+    Client.sendRequest(w.player, w.device, nil, false)
+    local requestId = w.toServer[1].args.requestId
+    result(formResult(requestId))
+    wait(Client.REPLY_DELAY_MS)
+    local form = { deadline = NOW + 200000 }
+    Client.sendRequisition(requestId, {}, "Bravo", form)
+    result({ requestId = requestId, status = "noSite", sector = "Bravo", single = true })
+    wait(Client.REPLY_DELAY_MS)
+    assertEq(w.device.said.text, "IGUI_MilitaryDrop_ReqNoZoneSite|nil", "pas d'« autre secteur » à choisir")
+    assertEq(w.shown[1], form, "feuille rouverte (commande de lots, nouvel essai)")
+end
+
 function T.no_site_without_form_is_unchanged()
     local w = requisitionWorld()
     local Client = MilitaryDrop.Client

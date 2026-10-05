@@ -89,8 +89,9 @@ Ein festes Militärfunkgerät wird zur gemeinsamen Stationskonsole: offene Aufga
 [h2]Für Server-Admins[/h2]
 
 [list]
-[*]55 Sandbox-Optionen: Wartezeit zwischen Abwürfen (standardmäßig eine Woche, für den ganzen Server), Entfernung, Horde, Code-Modus, Vertrauen, Einsätze, Anforderung, Köder, Hubschrauberabstürze.
+[*]60 Sandbox-Optionen: Wartezeit zwischen Abwürfen (standardmäßig eine Woche, für den ganzen Server), Entfernung, Horde, Code-Modus, Vertrauen, Einsätze, Anforderung, Köder, Hubschrauberabstürze.
 [*]Anforderungsposten lassen sich in Zomboid/Lua/MilitaryDrop/requisition.txt bearbeiten, deaktivieren oder ergänzen.
+[*]PvP-Server: vom Admin festgelegte Abwurfzonen (dropzones.txt oder Werkzeug im Spiel), damit jede Kiste in umkämpftem Gebiet landet.
 [*]Serverautoritativer Mehrspieler. Admins können von einem Militärfunkgerät aus einen Abwurf erzwingen, den nächsten Hubschrauber abstürzen lassen und Einsätze starten.
 [/list]
 

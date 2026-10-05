@@ -89,8 +89,9 @@ Une radioamateur militaire fixe devient la console partagée de la station : aff
 [h2]Pour les admins[/h2]
 
 [list]
-[*]55 options du bac à sable : attente entre deux largages (une semaine par défaut, pour tout le serveur), distance, horde, mode du code, confiance, missions, réquisition, leurre, crashs d’hélicoptère.
+[*]60 options du bac à sable : attente entre deux largages (une semaine par défaut, pour tout le serveur), distance, horde, mode du code, confiance, missions, réquisition, leurre, crashs d’hélicoptère.
 [*]Lots de réquisition modifiables, désactivables ou à ajouter dans Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]Serveurs PvP : zones de largage choisies par l’admin (dropzones.txt ou outil en jeu), pour que chaque caisse tombe en zone disputée.
 [*]Multijoueur où le serveur décide de tout. Les admins peuvent forcer un largage, faire s’écraser le prochain hélicoptère et lancer des missions depuis une radio militaire.
 [/list]
 

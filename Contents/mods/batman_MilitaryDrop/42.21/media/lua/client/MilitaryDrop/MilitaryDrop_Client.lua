@@ -339,7 +339,8 @@ local RADIO_REPLIES = {
 
 -- Refus d'une commande qui gardent l'autorisation du serveur (radio éteinte
 -- ou introuvable, cadence, aucun point de largage : secteur du leurre hors
--- carte) : le formulaire se rouvre, rempli, pour renvoyer.
+-- carte) : le formulaire se rouvre, rempli, pour renvoyer. Leurre à secteur
+-- unique (single) : la feuille reste utile (commande de lots, nouvel essai).
 Client.REQUISITION_RETRY = { busy = true, radioOff = true, noRadio = true, notMilitary = true, noSite = true }
 
 --- La base invite à transmettre, puis le formulaire s'ouvre. Le délai de
@@ -435,9 +436,11 @@ local function onResult(request, args)
             Client.radioSay(request, Client.ackText(args))
         end)
     elseif status == "noSite" and args.sector then
-        -- Leurre : aucun point de largage dans le secteur choisi.
+        -- Leurre : aucun point de largage dans le secteur choisi. Secteur
+        -- unique (single, mode zones) : pas d'« autre secteur » à proposer.
+        local key = args.single == true and "IGUI_MilitaryDrop_ReqNoZoneSite" or "IGUI_MilitaryDrop_ReqNoSector"
         Client.later(Client.REPLY_DELAY_MS, function()
-            Client.radioSay(request, getText("IGUI_MilitaryDrop_ReqNoSector"))
+            Client.radioSay(request, getText(key))
         end)
     elseif status == "lineCut" then
         -- Ligne coupée : la base le dit (révélé seulement après un canal et un code justes).

@@ -55,6 +55,15 @@
 -- compris), pendant TrustDropLostHours heures au plus (Server.repeatGrids).
 -- Comme l'annonce, le rappel s'entend seulement sur une radio allumée et
 -- réglée, et marque la carte de qui l'entend.
+--
+-- Zones de largage (idée 11, MilitaryDrop_Zones.lua) : avec l'option
+-- DropPlacement à 2 ou 3, chooseDropPoint vise une zone de l'admin (ou une
+-- ville vanilla) ; la zone tirée est rangée dans l'état privé du largage et
+-- la livraison (deliver) ne cherche une case qu'à l'intérieur. Option à 1
+-- (défaut) : comportement inchangé. Le largage forcé de l'admin (direct ou
+-- feuille admin, leurre compris) n'est pas concerné (analyse §2.1) : il
+-- garde la proximité (chooseDropPoint, argument proximity). Les fournitures
+-- d'un crash (opts.crash) tombent près de l'épave, sans borne de zone.
 -- ============================================================================
 
 if isClient() then
@@ -288,12 +297,27 @@ function Server.findLandingSquare(centerX, centerY)
     return nil
 end
 
---- Case la plus proche de (x, y), dans RELOCATE_RADIUS, qui satisfait accept, ou nil.
-local function searchAround(x, y, accept)
+--- Le point (x, y) reste dans bounds (largage d'une zone, idée 11 :
+--- rectangle du point d'atterrissage, Zones.landingBounds) et hors d'une zone
+--- non-PvP ou d'un refuge. bounds nil : aucune borne (proximité).
+local function withinBounds(bounds, x, y)
+    if not bounds then
+        return true
+    end
+    if x < bounds.x1 or x > bounds.x2 or y < bounds.y1 or y > bounds.y2 then
+        return false
+    end
+    local ZonesFile = MilitaryDrop.ZonesFile
+    return not (ZonesFile and ZonesFile.isProtected(x, y))
+end
+
+--- Case la plus proche de (x, y), dans RELOCATE_RADIUS (et dans bounds s'il
+--- est donné), qui satisfait accept, ou nil.
+local function searchAround(x, y, accept, bounds)
     for radius = 0, Server.RELOCATE_RADIUS do
         for dx = -radius, radius do
             for dy = -radius, radius do
-                if math.max(math.abs(dx), math.abs(dy)) == radius then
+                if math.max(math.abs(dx), math.abs(dy)) == radius and withinBounds(bounds, x + dx, y + dy) then
                     local square = accept(x + dx, y + dy)
                     if square then
                         return square
@@ -305,13 +329,69 @@ local function searchAround(x, y, accept)
     return nil
 end
 
---- Case d'atterrissage la plus proche de (x, y), ou nil.
-function Server.findLandingNear(x, y)
-    return searchAround(x, y, Server.landingSquareAt)
+--- Case d'atterrissage la plus proche de (x, y), ou nil. bounds (facultatif) :
+--- recherche bornée au rectangle d'une zone de largage.
+function Server.findLandingNear(x, y, bounds)
+    return searchAround(x, y, Server.landingSquareAt, bounds)
 end
 
---- Case extérieure hors de l'eau la plus proche (repli des caisses au sol), ou nil.
-function Server.findOpenGroundNear(x, y)
+-- Côté d'un chunk (8 × 8 cases) pour le second passage d'un largage de zone.
+Server.CHUNK_SIZE = 8
+
+--- Écart (cases) de v à l'intervalle [a, b], 0 dedans.
+local function gap(v, a, b)
+    return v < a and a - v or (v > b and v - b or 0)
+end
+
+--- Second passage d'un largage de zone (Server.deliver) : case d'atterrissage
+--- la plus proche de (x, y) (distance de Chebyshev, comme searchAround) au-delà
+--- de RELOCATE_RADIUS, sur les cases chargées du rectangle bounds seulement.
+--- Coût borné : chunks du rectangle (au plus ~38 × 38 pour 300 × 300) triés
+--- par distance, un chunk non chargé coûte une sonde (le niveau 0 d'un chunk
+--- chargé est complet : pz-knowledge map-files.md), arrêt dès qu'aucun chunk
+--- restant ne peut battre la meilleure case. Mêmes règles que findLandingNear.
+function Server.findLandingInBounds(x, y, bounds)
+    local size = Server.CHUNK_SIZE
+    local chunks = {}
+    for cx = math.floor(bounds.x1 / size), math.floor(bounds.x2 / size) do
+        for cy = math.floor(bounds.y1 / size), math.floor(bounds.y2 / size) do
+            local x1, x2 = math.max(bounds.x1, cx * size), math.min(bounds.x2, cx * size + size - 1)
+            local y1, y2 = math.max(bounds.y1, cy * size), math.min(bounds.y2, cy * size + size - 1)
+            local far = math.max(math.abs(x - x1), math.abs(x - x2), math.abs(y - y1), math.abs(y - y2))
+            -- Chunk entièrement couvert par le premier passage : sauté.
+            if far > Server.RELOCATE_RADIUS then
+                chunks[#chunks + 1] = { x1 = x1, y1 = y1, x2 = x2, y2 = y2,
+                    near = math.max(gap(x, x1, x2), gap(y, y1, y2)) }
+            end
+        end
+    end
+    table.sort(chunks, function(a, b) return a.near < b.near end)
+    local cell = getCell()
+    local best, bestDistance = nil, math.huge
+    for _, chunk in ipairs(chunks) do
+        if chunk.near >= bestDistance then
+            break
+        end
+        if cell:getGridSquare(chunk.x1, chunk.y1, 0) then
+            for sx = chunk.x1, chunk.x2 do
+                for sy = chunk.y1, chunk.y2 do
+                    local distance = math.max(math.abs(sx - x), math.abs(sy - y))
+                    if distance > Server.RELOCATE_RADIUS and distance < bestDistance then
+                        local square = Server.landingSquareAt(sx, sy)
+                        if square and withinBounds(bounds, sx, sy) then
+                            best, bestDistance = square, distance
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return best
+end
+
+--- Case extérieure hors de l'eau la plus proche (repli des caisses au sol), ou
+--- nil. bounds (facultatif) : comme findLandingNear.
+function Server.findOpenGroundNear(x, y, bounds)
     local cell = getCell()
     return searchAround(x, y, function(sx, sy)
         local square = cell:getGridSquare(sx, sy, 0)
@@ -319,7 +399,31 @@ function Server.findOpenGroundNear(x, y)
             return square
         end
         return nil
-    end)
+    end, bounds)
+end
+
+--- Zone d'un largage (état privé, rangée par launchDrop), ou nil.
+local function dropZone(dropId)
+    local drops = dropId and Secrets.privateState().drops
+    local drop = drops and drops[dropId]
+    return type(drop) == "table" and type(drop.zone) == "table" and drop.zone or nil
+end
+
+--- Bornes du point d'atterrissage d'un largage de zone (rectangle élargi
+--- d'une case au sud et à l'est : la caisse couvre x-1..x, y-1..y), ou nil.
+function Server.dropBounds(dropId)
+    local zone = dropZone(dropId)
+    if not zone or type(zone.x1) ~= "number" or type(zone.y1) ~= "number" or type(zone.x2) ~= "number"
+        or type(zone.y2) ~= "number" then
+        return nil
+    end
+    return { x1 = zone.x1, y1 = zone.y1, x2 = zone.x2 + 1, y2 = zone.y2 + 1 }
+end
+
+--- Nom de la zone d'un largage (annonce, ZONE-06), ou nil.
+function Server.dropZoneName(dropId)
+    local zone = dropZone(dropId)
+    return zone and type(zone.name) == "string" and zone.name or nil
 end
 
 --- Point (x, y) sur la carte et hors bâtiment, d'après la métagrille : valable
@@ -513,14 +617,24 @@ end
 --- largage (confiance), porté par chaque caisse de ravitaillement.
 function Server.deliver(x, y, requester, dropId, opts)
     opts = opts or {}
-    local square = Server.findLandingNear(x, y)
+    -- Largage d'une zone (idée 11) : jamais hors du rectangle, ni dans une
+    -- zone non-PvP ou un refuge ; sinon la livraison attend. Rien à
+    -- RELOCATE_RADIUS cases : second passage sur les cases chargées du
+    -- rectangle (grande zone, point au bord de l'eau). Fournitures d'un
+    -- crash (opts.crash, MilitaryDrop_Wreck.lua) : à l'épave, qui peut être
+    -- loin de la zone visée ; bornées, elles n'apparaîtraient jamais.
+    local bounds = not opts.crash and Server.dropBounds(dropId) or nil
+    local square = Server.findLandingNear(x, y, bounds)
+    if not square and bounds then
+        square = Server.findLandingInBounds(x, y, bounds)
+    end
     local count = 0
     local vehicle = square and MilitaryDrop.Crate.spawn(square, dropId) or nil
     if vehicle then
         count = 1
     else
         -- Repli : la caisse n'a pas pu apparaître (aucune place libre).
-        square = square or Server.findOpenGroundNear(x, y)
+        square = square or Server.findOpenGroundNear(x, y, bounds)
         if not square then
             MilitaryDrop.log(string.format("no ground near %d,%d yet: delivery waits", x, y))
             return false
@@ -596,9 +710,29 @@ end
 --- Point de largage d'un appel : loin du demandeur ; à défaut (carte trop
 --- petite, bord de la carte), près de lui. Avec un secteur (leurre),
 --- seulement dans ce secteur : refus plutôt qu'une sirène ailleurs ou près
---- du demandeur. Renvoie x, y, ou nil.
-function Server.chooseDropPoint(player, sector)
+--- du demandeur. Renvoie x, y, info, ou nil.
+--- Zones de largage (idée 11, MilitaryDrop_Zones.lua, option DropPlacement) :
+--- en mode zones, point dans une zone de l'admin (ou une ville vanilla),
+--- sector étant alors le nom du secteur du leurre ; aucune case : nil, jamais
+--- hors zone. info = { zoneId, zoneName, sector, source = "zone"|"town",
+--- x1, y1, x2, y2 }, ou { source = "proximity" } au repli du mode 2 ; nil en
+--- proximité classique (mode 1). proximity vrai : largage forcé de l'admin
+--- (APPEL-05, hors zones, analyse §2.1), proximité quel que soit le mode,
+--- sector étant alors N/E/S/W.
+function Server.chooseDropPoint(player, sector, proximity)
     local px, py = math.floor(player:getX()), math.floor(player:getY())
+    local info = nil
+    local Zones = MilitaryDrop.Zones
+    if Zones and not proximity then
+        local handled, zx, zy, zoneInfo = Zones.choosePoint(px, py, sector)
+        if handled then
+            if not zx then
+                return nil
+            end
+            return zx, zy, zoneInfo
+        end
+        info = zoneInfo
+    end
     local x, y = Server.pickDropPoint(px, py, sector)
     if not x and not sector then
         local square = Server.findLandingSquare(px, py)
@@ -607,24 +741,27 @@ function Server.chooseDropPoint(player, sector)
     if not x then
         return nil
     end
-    return x, y
+    return x, y, info
 end
 
 --- Lance le largage d'un appel accepté (ou d'une commande validée) : point,
 --- délai global, dropId, réponse « accepted », vol. opts (facultatif) :
---- point ({ x, y } déjà choisi par Server.chooseDropPoint), sector (leurre :
---- point dans ce secteur, sans repli près du demandeur), untracked (hors
---- suivi de confiance), order et decoy (rangés dans l'état privé du largage).
+--- point ({ x, y, info } déjà choisi par Server.chooseDropPoint), sector
+--- (leurre : point dans ce secteur, sans repli près du demandeur), untracked
+--- (hors suivi de confiance), order et decoy (rangés dans l'état privé du
+--- largage). La zone tirée (idée 11) est rangée dans l'état privé du largage
+--- (drops[dropId].zone), jamais dans la ModData publique. Largage forcé
+--- (forced) : point par proximité, hors zones (analyse §2.1).
 --- Renvoie le dropId, ou nil (réponse « noSite », rien de consommé).
 function Server.launchDrop(player, requestId, forced, opts)
     opts = opts or {}
     local name = tostring(player:getUsername())
     local now = getGameTime():getWorldAgeHours()
-    local x, y
+    local x, y, info
     if opts.point then
-        x, y = opts.point.x, opts.point.y
+        x, y, info = opts.point.x, opts.point.y, opts.point.info
     else
-        x, y = Server.chooseDropPoint(player, opts.sector)
+        x, y, info = Server.chooseDropPoint(player, opts.sector, forced == true)
     end
     if not x then
         MilitaryDrop.log("request from " .. name .. ": no landing square", true)
@@ -641,6 +778,13 @@ function Server.launchDrop(player, requestId, forced, opts)
         { untracked = opts.untracked, order = opts.order, decoy = opts.decoy,
             recoveryFaction = MilitaryDrop.Teams.factionIdFor(player) })
     MilitaryDrop.Trust.touch(characterId)
+    if type(info) == "table" and info.zoneName then
+        local drop = Secrets.privateState().drops[dropId]
+        if drop then
+            drop.zone = { id = info.zoneId, name = info.zoneName, sector = info.sector, source = info.source,
+                x1 = info.x1, y1 = info.y1, x2 = info.x2, y2 = info.y2 }
+        end
+    end
     Net.toPlayer(player, "Result", { requestId = requestId, status = "accepted",
         tier = MilitaryDrop.Trust.tier(characterId), callsign = MilitaryDrop.Teams.callsign(teamId) })
     MilitaryDrop.Flights.launch(x, y, name, requestId, forced, dropId)
@@ -689,7 +833,9 @@ function Server.repeatGrids(hours)
         if elapsed < window and due > (tonumber(drop.repeats) or 0) then
             -- Rappels manqués (serveur arrêté) : un seul, pas de rattrapage.
             drop.repeats = due
-            grids[#grids + 1] = { x = drop.x, y = drop.y }
+            -- Nom de la zone (idée 11) : pour le texte de la base seulement.
+            grids[#grids + 1] = { x = drop.x, y = drop.y,
+                zoneName = type(drop.zone) == "table" and drop.zone.name or nil }
         end
     end
     if #grids > 0 then

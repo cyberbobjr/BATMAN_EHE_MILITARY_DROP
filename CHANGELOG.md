@@ -3,6 +3,22 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## Unreleased
+
+Not published yet. This heading has no version number, so it is not read as a change note: give it a version and a date, and the same `modversion=` in `mod.info`, at the next release.
+
+### Drop zones for PvP servers
+
+- Server admins can now choose where supply crates fall. New sandbox option "Drop placement": near the caller (default, unchanged), in drop zones, or in drop zones only when one is near.
+- Drop zones are rectangles grouped into sectors, usually towns, for example a park, a mall and a block of flats in Louisville. The nearest sector is used (or one at random), then one of its zones is drawn by weight, so nobody can camp the exact spot.
+- Zones are kept in Zomboid/Lua/MilitaryDrop/dropzones.txt (created empty, with a notice) and can be drawn in game: right-click the ground, Military Drop (admin), Drop zones, then Corner 1 and Corner 2. A zone list enables, disables, deletes, reloads and teleports to zones. Outlines are drawn on the admin's screen only, and the zone list is never sent to players.
+- The radio announcement and its reminders name the zone: "LZ Central Park, grid ...". An option turns this off.
+- In zone mode, the siren decoy falls in a zone too: the requisition form offers the sectors instead of N, E, S and W.
+- Admin drops (Force a supply drop) ignore drop zones: they still fall near the admin, whatever the placement, and the decoy of the admin form keeps N, E, S and W.
+- A crate never lands in water or outside its zone. A zone with no usable spot gives no drop, and the caller is asked to try again. Zones overlapping a non-PvP zone or a safehouse are refused by the tool and never get a crate in the protected part.
+- Without any usable zone, drops use the vanilla towns (vanilla map only), then fall near the caller with a warning to the admins.
+- New sandbox options: drop zone sector (nearest or random), minimum distance, range of "zones if one is near", zone name in the announcement.
+
 ## 0.2.0 — 2026-10-05
 
 ### Mayday: supply helicopters can crash

@@ -21,7 +21,11 @@
 -- chunk de 8 × 8 cases), jusqu'à ce qu'une case convienne. Livrer dès qu'un
 -- chunk voisin se chargeait posait la caisse sur la case chargée la plus
 -- proche, en bordure de la zone chargée, loin du repère (test solo du
--- 2026-09-30 : 24 et 42 cases).
+-- 2026-09-30 : 24 et 42 cases). Une livraison qui échoue case chargée
+-- (aucune case sèche, zone de largage bornée) n'est retentée qu'au plus une
+-- fois par RETRY_MS réelles (LoadChunk ou EveryOneMinute) ; la case vue
+-- déchargée, l'essai suivant redevient immédiat. Clé « x,y,dropId » : deux
+-- largages au même point attendent chacun leur tour.
 --
 -- Persistance (ModData « MilitaryDrop ») : les vols en cours et les
 -- livraisons en attente, avec le dropId du largage (confiance, jamais envoyé
@@ -65,8 +69,29 @@ local function state()
     return s
 end
 
-local function pendingKey(x, y)
-    return x .. "," .. y
+-- Nouvel essai d'une livraison qui a échoué alors que sa case était chargée
+-- (aucune case sèche : recherche coûteuse, surtout bornée à une zone) : au
+-- plus une fois par RETRY_MS réelles. Mémoire du serveur seulement ; une
+-- case vue déchargée efface l'attente (premier essai immédiat au retour).
+Flights.RETRY_MS = 60000
+-- clé de livraison en attente → heure (getTimestampMs) du prochain essai permis.
+local retryAt = {}
+
+--- Clé d'une livraison en attente : « x,y,dropId » (« x,y » sans dropId,
+--- format des sauvegardes d'avant, dont les entrées sont relues telles
+--- quelles : la livraison ne lit que les champs de l'entrée). Deux largages
+--- au même point ne s'écrasent plus ; « #n » départage un doublon restant.
+local function pendingKey(pending, x, y, dropId)
+    local base = x .. "," .. y
+    if dropId ~= nil then
+        base = base .. "," .. tostring(dropId)
+    end
+    local key, n = base, 1
+    while pending[key] ~= nil do
+        n = n + 1
+        key = base .. "#" .. n
+    end
+    return key
 end
 
 local function hasPending()
@@ -81,14 +106,21 @@ end
 -- Livraisons en attente du chargement de leur chunk
 -- ----------------------------------------------------------------------------
 
---- Livre les largages en attente dont la case du point est désormais chargée.
+--- Livre les largages en attente dont la case du point est désormais
+--- chargée (LoadChunk, et EveryOneMinute pour un nouvel essai espacé).
 local function onLoadChunk()
     local pending = state().pending
     local cell = getCell()
+    if not cell then
+        return
+    end
+    local now = getTimestampMs()
     -- Kahlua : relever les entrées, puis les retirer après le pairs.
     local ready = {}
     for key, entry in pairs(pending) do
-        if cell:getGridSquare(entry.x, entry.y, 0) then
+        if not cell:getGridSquare(entry.x, entry.y, 0) then
+            retryAt[key] = nil
+        elseif not retryAt[key] or now >= retryAt[key] then
             ready[#ready + 1] = key
         end
     end
@@ -96,10 +128,14 @@ local function onLoadChunk()
         local entry = pending[key]
         if Server.deliver(entry.x, entry.y, entry.requester, entry.dropId) then
             pending[key] = nil
+            retryAt[key] = nil
+        else
+            retryAt[key] = now + Flights.RETRY_MS
         end
     end
     if not hasPending() then
         Events.LoadChunk.Remove(onLoadChunk)
+        Events.EveryOneMinute.Remove(onLoadChunk)
         watchingSquares = false
     end
 end
@@ -108,16 +144,25 @@ local function watchSquares()
     if not watchingSquares then
         watchingSquares = true
         Events.LoadChunk.Add(onLoadChunk)
+        -- Case chargée mais bloquée, joueur immobile : aucun LoadChunk ne
+        -- viendrait relancer l'essai espacé.
+        Events.EveryOneMinute.Add(onLoadChunk)
     end
 end
 
 --- Livre au point (x, y) : tout de suite si la zone est chargée, sinon en
 --- attente du chargement de cette case. dropId : largage (confiance).
 function Flights.deliverAt(x, y, requester, dropId)
-    if getCell():getGridSquare(x, y, 0) and Server.deliver(x, y, requester, dropId) then
+    local loaded = getCell():getGridSquare(x, y, 0) ~= nil
+    if loaded and Server.deliver(x, y, requester, dropId) then
         return
     end
-    state().pending[pendingKey(x, y)] = { x = x, y = y, requester = requester, dropId = dropId }
+    local pending = state().pending
+    local key = pendingKey(pending, x, y, dropId)
+    pending[key] = { x = x, y = y, requester = requester, dropId = dropId }
+    if loaded then
+        retryAt[key] = getTimestampMs() + Flights.RETRY_MS
+    end
     watchSquares()
     MilitaryDrop.log(string.format("drop at %d,%d waits for its area to load", x, y))
 end
@@ -149,7 +194,8 @@ local function drop(flight)
     if MilitaryDrop.Trust then
         MilitaryDrop.Trust.onDropAnnounced(flight.dropId, x, y)
     end
-    MilitaryDrop.Broadcast.dropped(x, y)
+    -- Nom de la zone de largage (idée 11), lu dans l'état privé du largage.
+    MilitaryDrop.Broadcast.dropped(x, y, Server.dropZoneName(flight.dropId))
     Server.notifyDrop(flight.requester, flight.requestId, x, y, flight.forced)
     Flights.deliverAt(x, y, flight.requester, flight.dropId)
 end

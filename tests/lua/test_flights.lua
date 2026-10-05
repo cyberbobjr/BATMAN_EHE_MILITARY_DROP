@@ -1,5 +1,7 @@
 -- MilitaryDrop_Flights : attente d'un événement HEF, livraison différée
--- jusqu'au chargement de la case, reprise après redémarrage.
+-- jusqu'au chargement de la case, reprise après redémarrage, deux largages
+-- au même point (clé avec dropId, ancienne clé relue), nouvel essai espacé
+-- d'une livraison bloquée.
 
 local T = {}
 
@@ -249,7 +251,7 @@ function T.drop_id_follows_the_flight_and_the_pending_delivery()
     LOADED = false
     local flight = MilitaryDrop.Flights.launch(500, 600, "tester", 1, false, "D7")
     flyOver(flight)
-    assertEq(MilitaryDrop.Server.getState().pending["500,600"].dropId, "D7", "dropId de la livraison en attente")
+    assertEq(MilitaryDrop.Server.getState().pending["500,600,D7"].dropId, "D7", "dropId de la livraison en attente")
     for _, sent in ipairs(SENT) do
         assertEq(sent.args.dropId, nil, "jamais envoyé aux clients (" .. sent.command .. ")")
     end
@@ -272,6 +274,77 @@ function T.restart_keeps_the_drop_id_of_flights_and_pending_deliveries()
     assertEq(PLACED_ITEMS[1].modData.MilitaryDrop_dropId, "D9", "livraison en attente reprise avec son dropId")
     flyOver(state.flights[1])
     assertEq(PLACED_ITEMS[2].modData.MilitaryDrop_dropId, "D5", "vol repris avec son dropId")
+end
+
+function T.two_drops_at_the_same_point_are_both_delivered()
+    -- Livraison d'une sauvegarde d'avant (clé « x,y »), puis deux largages au
+    -- même point : aucun n'écrase l'autre.
+    local state = MilitaryDrop.Server.getState()
+    state.pending = { ["500,600"] = { x = 500, y = 600, requester = "tester", dropId = "D1" } }
+    LOADED = false
+    MilitaryDrop.Flights.restore()
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester", "D2")
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester", "D3")
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester", "D3")
+    local count = 0
+    for _ in pairs(state.pending) do
+        count = count + 1
+    end
+    assertEq(count, 4, "quatre livraisons en attente, ancienne clé comprise")
+    LOADED = true
+    triggerEvent("LoadChunk", makeChunk(496, 600))
+    local ids = {}
+    for _, item in ipairs(PLACED_ITEMS) do
+        ids[#ids + 1] = item.modData.MilitaryDrop_dropId
+    end
+    table.sort(ids)
+    assertEq(table.concat(ids, ","), "D1,D2,D3,D3", "toutes livrées, l'ancienne entrée aussi")
+    assertEq(listenerCount("LoadChunk"), 0, "plus rien en attente")
+end
+
+function T.blocked_delivery_is_retried_at_most_once_a_minute()
+    local now = 0
+    getTimestampMs = function() return now end
+    local dry = false
+    getCell = function()
+        return { getGridSquare = function(_, x, y)
+            if not LOADED then
+                return nil
+            end
+            local square = makeSquare(x, y)
+            square.isWaterSquare = function() return not dry end
+            return square
+        end }
+    end
+    local calls = 0
+    local deliver = MilitaryDrop.Server.deliver
+    MilitaryDrop.Server.deliver = function(...)
+        calls = calls + 1
+        return deliver(...)
+    end
+    -- Case jamais chargée : premier essai dès son chargement.
+    LOADED = false
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester", "D1")
+    assertEq(calls, 0, "rien tant que la case n'est pas chargée")
+    LOADED = true
+    triggerEvent("LoadChunk", makeChunk(496, 600))
+    assertEq(calls, 1, "essai immédiat au premier chargement")
+    for _ = 1, 5 do
+        triggerEvent("LoadChunk", makeChunk(504, 600))
+        triggerEvent("EveryOneMinute")
+    end
+    assertEq(calls, 1, "pas de nouvelle recherche avant RETRY_MS")
+    now = MilitaryDrop.Flights.RETRY_MS
+    triggerEvent("EveryOneMinute")
+    assertEq(calls, 2, "nouvel essai espacé, même sans chargement de chunk")
+    -- Case déchargée puis rechargée : essai immédiat.
+    LOADED = false
+    triggerEvent("LoadChunk", makeChunk(800, 800))
+    LOADED, dry = true, true
+    triggerEvent("LoadChunk", makeChunk(496, 600))
+    assertEq(calls, 3, "case revenue : essai sans attendre")
+    assertEq(#PLACED, 1, "livré")
+    assertEq(listenerCount("EveryOneMinute"), 0, "surveillance arrêtée")
 end
 
 local function maydaySetup()

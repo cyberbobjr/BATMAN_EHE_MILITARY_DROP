@@ -121,21 +121,131 @@ Recharger sans redémarrer :
 - solo, console de débogage : `MilitaryDrop.Requisition.reload()`
 - multijoueur, depuis la console de débogage d'un admin : `sendClientCommand(getPlayer(), "MilitaryDrop", "ReloadLots", {})` (rôle admin seulement ; le résumé s'affiche dans la console de l'admin)
 
+## Zones de largage
+
+Par défaut, une caisse tombe entre 150 et 400 cases de l'appelant. Sur un serveur PvP qui a des zones protégées, ce point tombe souvent dans une zone protégée, et la caisse annoncée se ramasse sans aucun risque. Les **zones de largage** permettent à l'admin de choisir où tombent les caisses : des rectangles regroupés en **secteurs** (en général une ville), par exemple un parc, un centre commercial et un immeuble à Louisville. Chaque largage tire une zone au hasard : personne ne peut camper le point exact.
+
+Rien ne change tant que **Placement des largages** n'est pas modifié : la valeur par défaut reste « Près du demandeur ».
+
+### Options
+
+| Option | Clé | Défaut | Effet |
+|---|---|---|---|
+| Placement des largages | `DropPlacement` | Près du demandeur | **Près du demandeur** : un point tiré entre les distances minimale et maximale du largage, comme avant. **Zones de largage** : dans une zone de l'admin ; sans zone utilisable, une ville vanilla, sinon près du demandeur (voir [Repli](#repli)). **Zones si l'une est proche** : seules les zones plus proches que la portée des zones sont utilisées ; s'il n'y en a aucune, près du demandeur. |
+| Secteur des zones de largage | `DropZoneChoice` | Le plus proche du demandeur | **Le plus proche du demandeur** ou **Au hasard**. Une zone de ce secteur est ensuite tirée au hasard, selon son poids. |
+| Distance minimale des zones de largage | `DropZoneMinDistance` | 0 | Cases, de 0 à 5000. Les zones plus proches du demandeur sont écartées : personne ne peut appeler depuis une zone pour se servir aussitôt. Si toutes les zones sont plus proches, le secteur le plus proche est retenu. 0 : aucune distance minimale. |
+| Portée des zones de largage | `DropZoneMaxDistance` | 1500 | Cases, de 100 à 20000. Sert seulement à « Zones si l'une est proche ». |
+| Annoncer le nom de la zone | `DropZoneAnnounceName` | vrai | L'annonce et ses rappels donnent le nom de la zone avant la grille. Désactivé : la grille seule. |
+
+Les distances vont du demandeur au bord le plus proche d'une zone (0 à l'intérieur). En mode zones, `DropMinDistance` et `DropMaxDistance` ne servent que lorsque le largage revient près du demandeur, et pour les largages de l'admin. Les largages de l'admin (**Forcer un largage**, direct ou par le formulaire admin) ignorent les zones : ils tombent toujours près de l'admin, quel que soit le **Placement des largages**.
+
+### Le fichier `dropzones.txt`
+
+Les zones sont gardées dans `Zomboid/Lua/MilitaryDrop/dropzones.txt`, à côté de `requisition.txt`. Le fichier est créé au premier démarrage, sans zone, avec une notice en anglais.
+
+> Comme le fichier des lots, il est commun à **toutes** les parties solo et à **tous** les serveurs lancés par ce compte. Le champ `map` lie les zones à une carte.
+
+Vous pouvez tracer les zones avec l'[outil en jeu](#outil-en-jeu) ou les écrire à la main :
+
+```lua
+return {
+    version = 1,
+    map = "Muldraugh, KY",
+    zones = {
+        { id = "z1", sector = "Louisville", name = "Central Park", x1 = 12900, y1 = 2100, x2 = 12980, y2 = 2160 },
+        { id = "z2", sector = "Louisville", name = "Mall", x1 = 13200, y1 = 2300, x2 = 13290, y2 = 2380, weight = 2 },
+        { id = "z3", sector = "Riverside", name = "Main Street", x1 = 6400, y1 = 5380, x2 = 6480, y2 = 5440, enabled = false },
+    },
+}
+```
+
+Les coordonnées ci-dessus sont des exemples : relevez les vôtres en jeu (l'outil affiche la case sous le curseur).
+
+| Champ | Contenu |
+|---|---|
+| `map` | Cartes pour lesquelles les zones sont tracées : noms de dossiers de cartes séparés par `;`, comme dans la ligne `Map=` du serveur (carte vanilla : `Muldraugh, KY`). Facultatif. Une zone peut porter son propre `map`. |
+| `id` | Nom unique : lettres, chiffres, `_` et `-`, 16 caractères au plus. L'outil numérote ses zones `z1`, `z2`... |
+| `sector` | Groupe de zones, en général une ville. 32 caractères au plus, sans `<` ni `>`. |
+| `name` | Nom de la zone, lu dans l'annonce radio. Mêmes limites. |
+| `x1`, `y1`, `x2`, `y2` | Rectangle au rez-de-chaussée. Les deux coins font partie de la zone ; de 1 à 300 cases de côté. |
+| `weight` | De 1 à 100, 1 par défaut. Une zone de poids 2 est tirée deux fois plus souvent qu'une zone de poids 1 du même secteur. |
+| `enabled` | `true` ou `false`, `true` par défaut. |
+
+- **Carte attendue** : une zone dont la carte n'est pas chargée dans la partie en cours est ignorée, avec une ligne dans `console.txt`. L'outil l'affiche « carte non chargée ». Quand le fichier n'a pas de `map`, l'outil y écrit la carte de la partie à sa première modification.
+- Seules des données sont lues, jamais du code. Une erreur de syntaxe désactive **toutes** les zones (voir [Repli](#repli)) ; le numéro de ligne est écrit dans `console.txt`. Une zone invalide est écartée (`zone #3 (z3): ...`). 200 zones au plus.
+- À chaque chargement, le serveur contrôle chaque zone et écrit ses avertissements dans `console.txt` et dans la liste de l'outil : **aucune route** (les caisses tombent seulement au pied des bâtiments), **ni route ni bâtiment** (aucune caisse ne peut y tomber : les données de la carte ne connaissent pas l'eau), **chevauche une zone non-PvP** ou **un refuge** (aucune caisse dans cette partie), **hors de la carte**, **carte non chargée**.
+
+Recharger sans redémarrer : **Recharger dropzones.txt** dans l'outil, le bouton **Recharger** de sa liste, ou depuis la console de débogage d'un admin : `sendClientCommand(getPlayer(), "MilitaryDrop", "ZoneReload", {})`.
+
+> Après une modification à la main, **rechargez avant d'utiliser l'outil**. L'outil réécrit tout le fichier à partir de la dernière version lue : les modifications non rechargées seraient perdues, de même que vos propres commentaires. Il refuse d'écrire tant que le fichier contient une erreur de syntaxe, pour ne jamais écraser une modification à la main.
+
+### Outil en jeu
+
+Qui le voit : en solo, le mode debug seulement. En multijoueur, les rôles qui peuvent modifier et recharger les options du serveur (admin, et tout rôle doté de la capacité `ChangeAndReloadServerOptions`). Le serveur revérifie : la commande de tout autre joueur est refusée et notée au journal.
+
+1. Au rez-de-chaussée, clic droit sur le premier coin : **Military Drop (admin)** > **Zones de largage** > **Coin 1 ici (x, y)**.
+2. Allez au coin opposé. Un contour bleu suit le curseur ; il passe au rouge au-delà de 300 cases de côté.
+3. Clic droit sur le coin opposé : **Zones de largage** > **Coin 2 ici (L x H cases)**, puis choisissez un secteur connu ou **Nouveau secteur...** et tapez son nom, puis tapez le nom de la zone.
+4. Le serveur contrôle la zone et répond par un message : **Zone de largage ... ajoutée**, avec ses avertissements, ou un refus (trop grande, hors de la carte, chevauchement d'une zone non-PvP ou d'un refuge, déjà 200 zones). Il écrit `dropzones.txt` et le recharge.
+
+Autres entrées du menu **Zones de largage** :
+
+- **Liste des zones...** : zones groupées par secteur, avec leur état (active, désactivée, carte non chargée), leurs coins, leur taille, leur poids et leurs avertissements, puis la carte attendue, le mode de placement, le nombre de zones utilisables et les premiers problèmes du fichier. Boutons : **Activer** / **Désactiver**, **Supprimer** (recliquer dans les 4 secondes pour confirmer), **Aller à** (vous téléporte au centre de la zone ; demande le droit de téléportation), **Recharger**, **Fermer**. Manette : A active ou désactive, X va à la zone, Y recharge, B ferme.
+- **Recharger dropzones.txt**.
+- **Afficher / masquer les contours** : zones dessinées au sol, sur votre écran seulement : vert active, gris désactivée, orange carte non chargée.
+- **Annuler le tracé en cours**.
+
+L'outil ne règle pas les poids et ne renomme pas : modifiez le fichier, puis rechargez-le.
+
+### Ce que voient les joueurs
+
+- L'annonce et ses rappels nomment la zone : « Caisse de ravitaillement livrée sur la zone Central Park, grille 12937 / 2125. » Avec **Annoncer le nom de la zone** désactivé, ils donnent la grille seule. Le repère de carte ne change pas.
+- La liste des zones n'est jamais envoyée aux joueurs, et les contours ne s'affichent que sur l'écran de l'admin. Les joueurs découvrent les zones par les annonces.
+- **Leurre** : en mode zones, le formulaire propose un sélecteur de secteur (« < Louisville > », flèches, ou gauche et droite à la manette) au lieu de N, E, S et O. Avec un seul secteur, il est sélectionné d'office et affiché, sans choix. Le leurre tombe dans une zone de ce secteur, comme un vrai largage, avec la même annonce. Près du demandeur, et sur le formulaire admin, le leurre garde N, E, S et O.
+- La confiance ne change pas : un joueur extérieur qui ouvre la caisse coûte toujours 5 points au demandeur.
+
+### Repli
+
+Avec **Zones de largage** et aucune zone utilisable (aucune zone, toutes désactivées, carte non chargée, ou erreur de syntaxe) :
+
+1. **Villes vanilla**, seulement si la carte vanilla (`Muldraugh, KY`) est chargée : Louisville, Valley Station, West Point, Muldraugh, Riverside, Brandenburg, Ekron, Irvington, Echo Creek, March Ridge, Fallas Lake et Rosewood. Chaque ville est un secteur d'une seule zone, de 150 cases autour de son centre, choisi avec les mêmes règles (le plus proche ou au hasard, distance minimale).
+2. Sinon, **près du demandeur**, comme avant. Le serveur écrit un avertissement dans `console.txt`, et les admins connectés reçoivent le message « Aucune zone de largage utilisable : la caisse tombe près du demandeur. Vérifiez les zones de largage. »
+
+Avec **Zones si l'une est proche**, un appel loin de toute zone tombe simplement près du demandeur, sans avertissement. Une carte de mod sans zone revient près du demandeur.
+
+### Ce que le mod ne fait jamais
+
+- **Une caisse dans l'eau.** Les données de la carte ne connaissent pas l'eau : le point est donc toujours une route ou le pied d'un bâtiment dans la zone, jamais une case quelconque du rectangle. À la livraison, les quatre cases sous la caisse sont revérifiées.
+- **Une caisse hors de sa zone.** Si aucune case de la zone tirée ne convient, le serveur essaie une autre zone du même secteur, puis répond à l'appelant « aucune zone de largage sûre » : le largage ne part pas et le formulaire reste ouvert. À la livraison, la caisse n'est posée que sur une case sèche et libre de la zone ; sinon la livraison attend.
+- **Une caisse dans une zone non-PvP ou un refuge**, même créé après la zone.
+- **Envoyer la liste des zones aux joueurs.**
+
+### Limites
+
+- Rectangles au rez-de-chaussée seulement, 300 cases de côté au plus, 200 zones en tout.
+- Une zone tracée sur un lac ou sur l'Ohio, ou sans route ni bâtiment, peut ne donner aucun largage (« aucune zone de largage sûre »), jamais une caisse dans l'eau. Vérifiez les avertissements de la liste.
+- Les villes vanilla ne sont connues que pour la carte vanilla. Sur une carte de mod, tracez vos propres zones.
+- Avec un seul secteur et beaucoup de joueurs, la zone devient un lieu de rendez-vous régulier : c'est voulu sur un serveur PvP, à équilibrer avec **Heures entre deux largages**.
+- En mode zones, tout le monde sait déjà où regarder : un leurre surprend moins. Il ressemble pourtant à un vrai largage jusqu'à ce qu'on entende sa sirène ou qu'on ouvre sa caisse.
+
 ## Outils d'admin en jeu
 
 Clic droit sur une radio militaire (dans l'inventaire ou posée) :
 
-- **Forcer un largage (admin)** : ouvre le formulaire tamponné **ADMIN**, avec tous les lots et 20 points. Ni code, ni contrôle de la radio, ni attente. Les coordonnées vous sont envoyées en privé, le largage ne compte pas pour la confiance et l'attente entre deux largages ne démarre pas. Formulaire désactivé : le largage part aussitôt avec des caisses aléatoires.
+- **Forcer un largage (admin)** : ouvre le formulaire tamponné **ADMIN**, avec tous les lots et 20 points. Ni code, ni contrôle de la radio, ni attente. Les coordonnées vous sont envoyées en privé, le largage ne compte pas pour la confiance et l'attente entre deux largages ne démarre pas. Formulaire désactivé : le largage part aussitôt avec des caisses aléatoires. Il tombe toujours près de vous, même avec des zones de largage, et le leurre de ce formulaire garde N, E, S et O.
 - **Missions (admin)** : **Lancer une reconnaissance**, **Lancer un nettoyage**, **Lancer un appel de contrôle**, ou clore la mission en cours (**Clore … en cours**). Une mission close est annoncée comme annulée, sans récompense.
 - **Faire crasher le prochain hélicoptère** : programme un seul crash au prochain départ du mod, y compris un largage forcé ou un leurre. Confirmation privée, ordre conservé avec la sauvegarde ; cliquer plusieurs fois ne cumule pas les crashes. Un vol déjà parti continue et une attente HEF ne consomme pas l’ordre. Pour essayer : activer l’option, puis forcer un largage et valider le formulaire.
 
 Qui les voit : en solo, le mode debug seulement. En multijoueur, les rôles qui peuvent déclencher des événements (admin, et tout rôle doté de la capacité `MakeEventsAlarmGunshot`). Le serveur revérifie.
+
+Les zones de largage ont leur propre outil, par clic droit au sol : voir [Outil en jeu](#outil-en-jeu).
 
 ## Fichiers gardés par le mod
 
 | Fichier | Contenu |
 |---|---|
 | `Zomboid/Lua/MilitaryDrop/requisition.txt` | Lots de réquisition (ci-dessus). |
+| `Zomboid/Lua/MilitaryDrop/dropzones.txt` | Zones de largage (ci-dessus). |
 | `Zomboid/Lua/MilitaryDrop/<mode>_<partie>_seed.txt` | Graine secrète de la partie : codes de la semaine, table du carnet, fréquences tirées au hasard. Serveur seulement. |
 | `Zomboid/Lua/MilitaryDrop/<mode>_<partie>_code.txt` | Code fixe (mode code fixe). Serveur seulement. |
 | `Zomboid/Lua/MilitaryDrop/code_<sp ou mp>_<partie>_<joueur>.txt` | Code saisi par un joueur, gardé sur son ordinateur. |

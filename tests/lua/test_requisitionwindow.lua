@@ -138,7 +138,20 @@ local function checkLayout(L, form, label)
         assertTrue(disjoint(row.row, L.budget) and disjoint(row.row, L.transmit), label .. " : lignes hors du pied")
         rows[#rows + 1] = row.row
     end
-    if form.decoy then
+    if form.decoy and form.decoy.zones then
+        -- Secteurs nommés : sélecteur et nom dans leur bloc, flèches séparées.
+        assertTrue(within(L.decoyRow.check, L.decoyRow.row), label .. " : case du leurre")
+        assertTrue(L.sectorBoxes.N == nil, label .. " : pas de rose des vents")
+        assertTrue(within(L.sectorName, L.sectorsArea), label .. " : nom du secteur dans son bloc")
+        if L.sectorPrev then
+            assertTrue(within(L.sectorPrev, L.sectorsArea) and within(L.sectorNext, L.sectorsArea),
+                label .. " : flèches dans le bloc")
+            assertTrue(disjoint(L.sectorPrev, L.sectorName) and disjoint(L.sectorName, L.sectorNext),
+                label .. " : flèches et nom séparés")
+        end
+        assertTrue(L.sectorNoteY + FONT_H <= L.sectorsArea.y + L.sectorsArea.h, label .. " : note dans le bloc")
+        assertTrue(disjoint(L.sectorsArea, L.budget), label .. " : secteurs au-dessus du budget")
+    elseif form.decoy then
         assertTrue(within(L.decoyRow.check, L.decoyRow.row), label .. " : case du leurre")
         for _, sector in ipairs(RW.SECTORS) do
             local box = L.sectorBoxes[sector]
@@ -654,6 +667,238 @@ function T.admin_form_is_stamped_admin_and_ignores_the_radio()
     assertEq(RW.deviceValid({ form = normal, player = alive }), false, "feuille ordinaire : radio exigée")
     local L = RW.computeLayout(form, 1920, 1080)
     checkLayout(L, form, "feuille admin")
+end
+
+-- ----------------------------------------------------------------------------
+-- Leurre en mode zones (ZONE-04) : secteurs nommés au lieu de N/E/S/O.
+-- ----------------------------------------------------------------------------
+
+--- Result « form » en mode zones : secteurs nommés (liste du serveur).
+local function zoneArgs(sectors, maxGroup, budget)
+    local args = formArgs(maxGroup or 3, budget or 12)
+    args.decoy = { cost = 3, allowed = true, zones = true, sectors = sectors }
+    return args
+end
+
+--- Fenêtre dont le dessin est enregistré (textes dessinés avec leur position).
+local function recordingWindow(form)
+    getTexture = function() return nil end
+    local window = makeWindow(form)
+    local drawn = {}
+    window.drawText = function(_, text, x, y) drawn[#drawn + 1] = { text = text, x = x, y = y } end
+    window.drawRect = function() end
+    window.drawRectBorder = function() end
+    window.drawTextureScaled = function() end
+    window.drawTextureTiled = function() end
+    window.drawTextZoomed = function() end
+    window.isReallyVisible = function() return false end
+    return window, drawn
+end
+
+--- Textes dessinés dans le rectangle r (position de départ dans r).
+local function drawnIn(drawn, r)
+    local found = {}
+    for _, d in ipairs(drawn) do
+        if d.x >= r.x and d.x < r.x + r.w and d.y >= r.y - FONT_H and d.y < r.y + r.h then
+            found[#found + 1] = d
+        end
+    end
+    return found
+end
+
+function T.zone_decoy_offers_named_sectors()
+    local form = RW.newForm(zoneArgs({ "Louisville", "Riverside", "West Point" }), NOW)
+    assertTrue(form.decoy.zones and form.decoy.allowed, "leurre en mode zones")
+    assertEq(#form.decoy.sectors, 3, "trois secteurs nommés gardés")
+    assertEq(form.decoy.sectors[2], "Riverside", "ordre du serveur")
+    assertEq(form.sector, nil, "plusieurs secteurs : rien d'imposé")
+    assertTrue(not RW.pickSector(form, "N"), "plus de N/E/S/O")
+    assertTrue(RW.stepSector(form, 1) and form.decoyOn and form.sector == "Louisville",
+        "suivant : coche le leurre et choisit le premier")
+    RW.stepSector(form, 1)
+    assertEq(form.sector, "Riverside", "secteur suivant")
+    RW.stepSector(form, -1)
+    RW.stepSector(form, -1)
+    assertEq(form.sector, "West Point", "précédent en boucle")
+    assertEq(RW.buildOrder(form).decoy, "West Point", "commande : nom du secteur")
+    -- Disposition : grand écran, écran partagé, écran étroit.
+    useTexts(FRENCH)
+    checkLayout(RW.computeLayout(form, 1920, 1080), form, "zones")
+    local small = RW.computeLayout(form, 960, 540)
+    assertTrue(small.W <= 960 and small.H <= 540, "zones : tient dans 960 x 540")
+    checkLayout(small, form, "zones, petit écran")
+    checkLayout(RW.computeLayout(form, 560, 1080), form, "zones, une colonne")
+    -- Souris : flèches et nom cliquables.
+    local fresh = RW.newForm(zoneArgs({ "Louisville", "Riverside", "West Point" }), NOW)
+    local window = makeWindow(fresh)
+    local L = window.L
+    local function click(r)
+        window:onMouseDown(r.x + 1, r.y + 1)
+        window:onMouseUp(r.x + 1, r.y + 1)
+    end
+    assertEq(window:hitTest(L.sectorNext.x + 1, L.sectorNext.y + 1), "sectorNext", "flèche >")
+    assertEq(window:hitTest(L.sectorPrev.x + 1, L.sectorPrev.y + 1), "sectorPrev", "flèche <")
+    assertEq(window:hitTest(L.sectorName.x + 1, L.sectorName.y + 1), "sectorName", "nom")
+    click(L.sectorPrev)
+    assertTrue(fresh.decoyOn and fresh.sector == "West Point", "< sans choix : dernier secteur, leurre coché")
+    click(L.sectorName)
+    assertEq(fresh.sector, "Louisville", "clic sur le nom : suivant")
+    click(L.sectorNext)
+    assertEq(fresh.sector, "Riverside", "> : suivant")
+    assertTrue(window:tooltipFor("sectorName"):find("Riverside", 1, true) ~= nil, "infobulle : secteur choisi")
+    -- Manette : la ligne des secteurs fait défiler les noms.
+    local nav = window:navigation()
+    assertEq(#nav, 18 + 2, "lots, leurre, secteurs")
+    window.cursor = #nav
+    window:stepCursor(1)
+    assertEq(fresh.sector, "West Point", "droite : suivant")
+    window:stepCursor(1)
+    assertEq(fresh.sector, "Louisville", "droite : en boucle")
+    -- Transmission : le nom du secteur part dans decoy.
+    assertTrue(window:transmit(), "transmis")
+    assertEq(sent[#sent].decoy, "Louisville", "decoy = nom du secteur")
+    for _ in pairs(sent[#sent].order) do
+        error("le leurre part seul")
+    end
+    -- Lots choisis : flèches inactives (leurre exclusif).
+    local busy = RW.newForm(zoneArgs({ "Louisville", "Riverside" }), NOW)
+    RW.add(busy, "rations")
+    assertTrue(not RW.canStepSector(busy) and not RW.stepSector(busy, 1), "un lot bloque le choix du secteur")
+    -- Feuille paginée : le sélecteur tient sur la dernière page.
+    local args = zoneArgs({ "Louisville", "Riverside" }, 3, 40)
+    for i = 1, 22 do
+        args.lots[#args.lots + 1] = { id = "extra" .. i, group = (i % 3) + 1, cost = 1, allowed = true,
+            texts = { EN = { label = "Extra lot " .. i } } }
+    end
+    checkPages(RW.newForm(args, NOW), 960, 540, "zones paginées")
+end
+
+function T.zone_decoy_with_one_sector_is_preselected()
+    local form = RW.newForm(zoneArgs({ "Louisville" }), NOW)
+    assertEq(form.sector, "Louisville", "secteur sélectionné d'office")
+    assertEq(RW.fixedSector(form), "Louisville", "secteur imposé")
+    assertTrue(not RW.canStepSector(form) and not RW.stepSector(form, 1), "aucun choix")
+    local window = makeWindow(form)
+    local nav = window:navigation()
+    assertEq(#nav, 18 + 1, "manette : pas de ligne de secteurs")
+    assertEq(nav[#nav].kind, "decoy", "dernière ligne : le leurre")
+    local L = window.L
+    assertTrue(L.sectorPrev == nil and L.sectorNext == nil, "pas de flèches")
+    checkLayout(L, form, "un secteur")
+    assertEq(window:hitTest(L.sectorName.x + 1, L.sectorName.y + 1), "sectorInfo", "nom affiché pour information")
+    assertTrue(not window:isEnabled("sectorInfo"), "pas cliquable")
+    assertTrue(window:tooltipFor("sectorInfo"):find("Louisville", 1, true) ~= nil, "infobulle : secteur imposé")
+    -- Cocher le leurre suffit ; le décocher garde le secteur imposé.
+    assertTrue(RW.toggleDecoy(form), "leurre coché")
+    assertEq(RW.blocker(form, NOW), nil, "transmissible sans choisir")
+    assertTrue(RW.toggleDecoy(form) and form.sector == "Louisville", "décoché : secteur gardé")
+    assertEq(RW.buildOrder(form).decoy, nil, "leurre décoché : rien d'envoyé")
+    window.cursor = #nav
+    window:stepCursor(1)
+    assertTrue(form.decoyOn, "manette : droite coche le leurre")
+    assertTrue(window:transmit(), "transmis")
+    assertEq(sent[#sent].decoy, "Louisville", "decoy = le secteur imposé")
+    -- Aucun secteur : leurre indisponible.
+    local empty = RW.newForm(zoneArgs({}), NOW)
+    assertTrue(not empty.decoy.allowed and empty.decoy.reason == "empty", "aucun secteur : indisponible")
+    assertEq(empty.sector, nil, "aucun secteur imposé")
+end
+
+function T.classic_decoy_is_unchanged_without_zones()
+    -- Sans decoy.zones : N/E/S/W seulement, noms inconnus écartés.
+    local args = formArgs(3, 12)
+    args.decoy = { cost = 3, allowed = true, sectors = { "Louisville", "N" } }
+    local form = RW.newForm(args, NOW)
+    assertEq(form.decoy.zones, nil, "mode proximité")
+    assertEq(#form.decoy.sectors, 1, "nom de ville écarté")
+    assertEq(form.sector, nil, "un seul point cardinal : rien d'imposé")
+    assertEq(RW.fixedSector(form), nil, "pas de secteur imposé hors zones")
+    local window = makeWindow(form)
+    assertEq(#window:navigation(), 18 + 2, "ligne des secteurs gardée")
+    assertTrue(window.L.zones == nil and window.L.sectorBoxes.N ~= nil, "rose des vents")
+    args.decoy.sectors = { "Louisville" }
+    local refused = RW.newForm(args, NOW)
+    assertTrue(not refused.decoy.allowed, "aucun point cardinal : indisponible")
+    -- Rose complète : infobulle traduite du point cardinal, commande « S ».
+    local classic = RW.newForm(formArgs(3, 12), NOW)
+    local w2 = makeWindow(classic)
+    assertTrue(w2:tooltipFor("sector", "S"):find("IGUI_MilitaryDrop_ReqSectorName_S", 1, true) ~= nil,
+        "infobulle du point cardinal")
+    RW.pickSector(classic, "S")
+    assertEq(RW.buildOrder(classic).decoy, "S", "commande inchangée")
+end
+
+function T.zone_sector_names_are_cleaned_and_drawn_safely()
+    local long = string.rep("Abcdefghij", 5)
+    local form = RW.newForm(zoneArgs({ "<RGB:1,0,0> Fort <LINE>", long, "", 5, "Louisville", "Louisville",
+        " Ekron\n " }), NOW)
+    local sectors = form.decoy.sectors
+    assertEq(#sectors, 4, "vide, non textuel et doublon écartés")
+    assertEq(sectors[2], long:sub(1, RW.SECTOR_NAME_LIMIT), "nom borné à 32")
+    assertEq(sectors[4], "Ekron", "contrôles et espaces de bord retirés")
+    -- Infobulle : nom échappé, jamais interprété comme balise.
+    RW.pickSector(form, sectors[1])
+    local window, drawn = recordingWindow(form)
+    local tip = window:tooltipFor("sectorName")
+    assertTrue(tip:find("&lt;RGB:1,0,0&gt; Fort &lt;LINE&gt;", 1, true) ~= nil, "infobulle échappée")
+    assertTrue(tip:find("<RGB:1,0,0>", 1, true) == nil, "aucune balise du nom")
+    -- Dessin : texte brut (drawText n'interprète rien), dans le champ.
+    window:render()
+    local r = window.L.sectorName
+    local inField = drawnIn(drawn, r)
+    local name
+    for _, d in ipairs(inField) do
+        if d.text == sectors[1] then
+            name = d
+        end
+    end
+    assertTrue(name ~= nil, "nom dessiné tel quel")
+    assertTrue(name.x >= r.x and name.x + measure(name.text) <= r.x + r.w, "nom dans le champ")
+    -- Police large (nom démesuré à l'écran) : raccourci proprement dans le champ.
+    local WIDE = 40
+    local function wideMeasure(s)
+        local w = 0
+        for c in tostring(s):gmatch(".") do
+            w = w + (c == "M" and WIDE or CHAR_W)
+        end
+        return w
+    end
+    getTextManager = function()
+        return {
+            getFontHeight = function(_, font) return font == "Handwritten" and 40 or FONT_H end,
+            MeasureStringX = function(_, _, s) return wideMeasure(s) end,
+        }
+    end
+    local wide = string.rep("M", 30)
+    local wform = RW.newForm(zoneArgs({ wide, "Louisville" }), NOW)
+    RW.pickSector(wform, wide)
+    local w2, drawn2 = recordingWindow(wform)
+    local L2 = w2.L
+    checkLayout(L2, wform, "nom démesuré")
+    assertTrue(L2.sectorName.w < wideMeasure(wide), "le nom ne tient pas entier")
+    w2:render()
+    local cut
+    for _, d in ipairs(drawnIn(drawn2, L2.sectorName)) do
+        if d.text:sub(1, 1) == "M" then
+            cut = d
+        end
+    end
+    assertTrue(cut ~= nil and cut.text:sub(-3) == "...", "nom raccourci avec « ... »")
+    assertTrue(cut.x >= L2.sectorName.x and cut.x + wideMeasure(cut.text) <= L2.sectorName.x + L2.sectorName.w,
+        "nom raccourci dans le champ")
+    assertTrue(w2:tooltipFor("sectorName"):find(wide, 1, true) ~= nil, "nom complet dans l'infobulle")
+    -- Un seul secteur, long : imprimé raccourci dans la ligne.
+    local single = RW.newForm(zoneArgs({ wide }), NOW)
+    local w3, drawn3 = recordingWindow(single)
+    w3:render()
+    local info
+    for _, d in ipairs(drawnIn(drawn3, w3.L.sectorName)) do
+        if d.text:sub(1, 1) == "M" then
+            info = d
+        end
+    end
+    assertTrue(info ~= nil and info.x + wideMeasure(info.text) <= w3.L.sectorName.x + w3.L.sectorName.w,
+        "secteur imposé dans sa ligne")
 end
 
 return T
