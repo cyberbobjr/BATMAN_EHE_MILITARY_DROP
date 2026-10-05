@@ -1,7 +1,7 @@
 # Suivi de l'implémentation
 
 Tableau de bord de tout ce qui a été décidé pour Military Drop (Build 42.21) : où en est chaque élément, avec ses preuves.
-La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](PLAN-V2.md) (v1.1 à v1.5) et [analyses/](analyses/) (idées 3, 8, 10). Les tests en jeu sont dans [TEST-PROTOCOL.md](TEST-PROTOCOL.md).
+La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](PLAN-V2.md) (v1.1 à v1.5) et [analyses/](analyses/) (idées 3, 8, 10, 11, 12). Les tests en jeu sont dans [TEST-PROTOCOL.md](TEST-PROTOCOL.md).
 
 ## Règles de tenue
 
@@ -41,6 +41,8 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | Idée 3 | Balises, détecteur, chasses au trésor | mis de côté |
 | Idée 8 | Mayday, épave démontable | testé hors jeu, solo et MP à faire |
 | Idée 10 | Extraction, pont avec Opération Artemis | à décider |
+| Idée 11 | Zones de largage définies par l'admin (serveurs PvP) | conçu ([analyses/idee-11](analyses/idee-11-zones-de-largage.md)) |
+| Idée 12 | Extraction de butin par Fulton | à décider ([analyses/idee-12](analyses/idee-12-fulton.md)) |
 
 ## v1.0 — Parité B41 et code d'authentification
 
@@ -186,8 +188,25 @@ La conception et les décisions sont dans [PLAN.md](PLAN.md) (v1), [PLAN-V2.md](
 | EXT-01 | Extraction et pont avec Opération Artemis | analyses/idee-10 | à décider | — | Modèle MP d'Artemis à trancher ; coût en confiance de faction |
 | RADIO-06 | Module « Logistique » dans la fenêtre radio du jeu (radio militaire) : saisie du code, largage, rapport, matricules, reconnaissance, contrôle, dernière réponse de la base ; la feuille de réquisition s'ouvre collée à la fenêtre radio | Décision de l'utilisateur du 2026-10-01 | testé solo | test_radiomodule, test_client, test_requisitionwindow, `source/radio_module/preview.py`, B1, B2, K1-K4 (test solo du 2026-10-01, 3e passage) | K5 (manette, pas de manette pour le test) ; MP ; code saisi gardé d'une session à l'autre, par personnage (demande du 2026-10-01, en cours) |
 
+## Idées 11 et 12 — Zones de largage, extraction Fulton
+
+Demandes de deux admins de serveurs MP sur Discord (2026-10-04/05). Conception : [analyses/idee-11](analyses/idee-11-zones-de-largage.md) (décisions du 2026-10-05) ; note d'idée : [analyses/idee-12](analyses/idee-12-fulton.md).
+
+| ID | Élément | Réf. | État | Preuves | Reste |
+|---|---|---|---|---|---|
+| ZONE-01 | Option `DropPlacement` : proximité (défaut, inchangé), zones, zones si possible ; largage admin inchangé | analyses/idee-11 §2.1 | conçu | — | Code (étape 2) |
+| ZONE-02 | Secteurs (villes) et zones rectangulaires pondérées dans `Zomboid/Lua/MilitaryDrop/dropzones.txt`, carte attendue, rechargement admin | analyses/idee-11 §2.2 | conçu | — | Code (étape 1) |
+| ZONE-03 | Outil admin en jeu dès la première version : coins de la zone par clic droit, secteur et nom, liste, activation, suppression, contour chez l'admin ; droits revérifiés au serveur | analyses/idee-11 §2.3 | conçu | — | Code (étape 5) |
+| ZONE-04 | Choix du point : secteur le plus proche de la station (ou au hasard), zone pondérée, case de terre ferme dans le rectangle, distance minimale, refus en zone non-PvP ou refuge, jamais dans l'eau (4 cases revérifiées à la livraison, sinon autre zone puis `noSite`) ; leurre tiré dans une zone (secteur choisi au formulaire) | analyses/idee-11 §2.4 | conçu | — | Code (étapes 2 et 3) ; ⚠ `NonPvpZone` rempli sur serveur dédié |
+| ZONE-05 | Repli sans zone : villes vanilla (carte vanilla chargée), puis proximité avec avertissement | analyses/idee-11 §2.5 | conçu | — | Code (étape 2) ; test en jeu : Riverside au bord de l'Ohio, aucune caisse dans l'eau |
+| ZONE-06 | Annonce avec le nom de la zone (option), liste des zones jamais envoyée aux clients | analyses/idee-11 §2.6 | conçu | — | Code (étape 4) |
+| ZONE-07 | Option de pénalité de vol (−5 de CONF-04) en mode zones | analyses/idee-11 §2.7 | abandonné | — | Décision du 2026-10-05 : CONF-04 s'applique toujours, sans option |
+| ZONE-08 | Diagnostic des zones au chargement et à la création : surface, routes, bâtiments, chevauchement non-PvP ou refuge ; autre zone du secteur puis `noSite`, jamais hors zone | analyses/idee-11 §2.8 | conçu | — | Code (étape 1) |
+| FULTON-01 | Envoi d'objets de renseignement par ballon Fulton à usage unique (trouvé ou fabriqué), récupéré par un passage d'appareil, payé en confiance | analyses/idee-12 | à décider | — | Conception après l'idée 11 ; aucun hélium vanilla en 42.21 |
+
 ## Journal
 
+- **2026-10-05** — Retours Discord de deux admins MP : zones de largage contestables définies par l'admin (idée 11) et extraction de butin par Fulton (idée 12). Analyses `analyses/idee-11-zones-de-largage.md` et `analyses/idee-12-fulton.md`. Décisions : repli sur les villes vanilla puis la proximité, leurre tiré dans une zone, pénalité de vol CONF-04 toujours appliquée (ZONE-07 abandonné), outil admin dès la première version, caisse jamais dans l'eau. ZONE-01 à ZONE-08 conçus, FULTON-01 à décider.
 - **2026-10-05** — Suite PZPuppeteer supprimée à la demande de l'utilisateur : dossier `tests/puppeteer` (jamais commité) et copie installée `Zomboid/Lua/PZPuppet/scenarios/MilitaryDrop`. Restent les tests `lupa` (`tests/run_tests.py`) et le protocole en jeu (`dev/TEST-PROTOCOL.md`). `test_wreckmenu` réparé (table vanilla `ISCarMechanicsOverlay` absente du banc) ; guide serveur EN/FR à jour pour l'enregistreur de vol ; version 0.2.0.
 - **2026-10-05** — SRC-08 : enregistreur lu dès l'insertion après le passage à 10 minutes (lecture acquise gardée en heures : 36 % de 30 min = 11 min > 10). Corrigé : lecture gardée en fraction, valeurs d'avant converties une fois depuis 30 minutes ; une durée changée ne fait plus sauter la lecture. 670 tests `lupa`.
 - **2026-10-05** — SRC-08 : la barre restait à 99 % jusqu'au rafraîchissement suivant de la console (10 s réelles), le serveur seul pouvant déclarer la lecture finie. Corrigé : la console redemande l'état dès que son estimation atteint 100 % (au plus une fois par seconde) et à la réception du déclic de fin. 668 tests `lupa`.
