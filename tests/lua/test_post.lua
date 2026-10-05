@@ -120,6 +120,11 @@ local function makeInventory(items)
         end
         return nil
     end
+    function inventory.AddItem(self, item)
+        item.container = self
+        self.items[#self.items + 1] = item
+        return item
+    end
     function inventory.Remove(self, item)
         for i = #self.items, 1, -1 do
             if self.items[i] == item then
@@ -144,6 +149,7 @@ local function makePlayer(name, x, y, z, items)
     function player.getInventory(self) return self.inventory end
     function player.isEquipped(self, item) return self.equipped[item] == true end
     function player.isAttachedItem() return false end
+    function player.isDead() return false end
     function player.getDescriptor()
         return { getForename = function() return string.upper(string.sub(name, 1, 1)) .. string.sub(name, 2) end,
             getSurname = function() return "Smith" end }
@@ -1033,6 +1039,324 @@ function T.shared_post_shows_the_acting_characters_personal_standing()
     assertEq(aliceData.tier, 4, "Alice has high esteem")
     assertEq(bobData.tier, 1, "Bob has low standing")
     assertTrue(bobData.lineCut and not aliceData.lineCut, "only Bob is suspended")
+end
+
+-- ----------------------------------------------------------------------------
+-- Baie de lecture des enregistreurs de vol (SRC-08)
+-- ----------------------------------------------------------------------------
+
+local function makeRecorder(id, site, extra)
+    local item = { id = id, fullType = "MilitaryDrop.FlightRecorder", modData = { MilitaryDrop_crashSite = site } }
+    for name, value in pairs(extra or {}) do
+        item.modData[name] = value
+    end
+    function item.getID(self) return self.id end
+    function item.getFullType(self) return self.fullType end
+    function item.getModData(self) return self.modData end
+    function item.getContainer(self) return self.container end
+    function item.hasTag() return false end
+    function item.getDisplayName() return "Flight recorder" end
+    return item
+end
+
+local function insertRecorder(player, id)
+    command("PostRecorderInsert", player, { radio = ref(RADIO), item = id })
+    return lastSent("PostResult", player)
+end
+
+local function sysEntries(teamId, kind)
+    local found = {}
+    for _, entry in ipairs(log(teamId)) do
+        if entry.sys == kind then
+            found[#found + 1] = entry
+        end
+    end
+    return found
+end
+
+local function trustOf(player)
+    return MilitaryDrop.Trust.get(MilitaryDrop.Trust.idFor(player))
+end
+
+function T.recorder_is_read_while_powered_then_credited_once_out_of_the_daily_cap()
+    -- Plafond du jour déjà atteint : le gain de l'enregistreur passe quand même.
+    SandboxVars.MilitaryDrop.TrustDailyCap = 0
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3",
+        { MilitaryDrop_crashX = 1570, MilitaryDrop_crashY = 5941, MilitaryDrop_crashClock = CLOCK - 2 }) })
+    install(ALICE, RADIO)
+    assertEq(insertRecorder(ALICE, 7).status, "recorderIn", "insérée")
+    assertEq(#ALICE.inventory.items, 0, "retiré de l'inventaire par le serveur")
+    assertEq(sysEntries("SOLO", "recorderIn")[1].site, "W3", "journal : enregistreur inséré")
+    local bay = lastSent("PostData").bay
+    assertEq(bay.site, "W3", "baie envoyée à la console")
+    assertEq(bay.progress, 0, "lecture à zéro")
+    assertEq(bay.minutesLeft, math.ceil(Post.READ_HOURS * 60), "durée totale en minutes de jeu")
+    assertEq(bay.cx .. "/" .. bay.cy .. "/" .. bay.cc, "1570/5941/" .. (CLOCK - 2), "point et heure du crash")
+    command("PostRecorderTransmit", ALICE, { radio = ref(RADIO) })
+    assertEq(lastSent("PostResult").status, "notRead", "pas avant la fin de la lecture")
+    wait(Post.READ_HOURS / 2)
+    Post.refreshAll()
+    assertTrue(math.abs(Post.bayView("SOLO").progress - 0.5) < 1e-9, "la moitié à mi-temps")
+    wait(Post.READ_HOURS)
+    Post.refreshAll()
+    local view = Post.bayView("SOLO")
+    assertTrue(view.done and view.progress == 1 and view.minutesLeft == 0, "lu, sans dépassement")
+    assertEq(#sysEntries("SOLO", "recorderRead"), 1, "journal : lecture terminée, une fois")
+    Post.refreshAll()
+    assertEq(#sysEntries("SOLO", "recorderRead"), 1, "pas de doublon ensuite")
+    local before = trustOf(ALICE)
+    command("PostRecorderTransmit", ALICE, { radio = ref(RADIO) })
+    assertEq(lastSent("PostResult").status, "recorderSent", "transmis")
+    assertEq(trustOf(ALICE), before + 10, "+10 hors plafond quotidien")
+    assertEq(STATE.recordersUsed.W3, "C:alice", "crédit noté pour le site")
+    assertEq(Post.bayView("SOLO"), nil, "baie vide")
+    assertTrue(lastEntry("SOLO").t:find("IGUI_MilitaryDrop_Reply_Recorder", 1, true) ~= nil,
+        "réponse de la base au journal")
+    -- Même site une seconde fois : refusé, l'objet reste au joueur.
+    ALICE.inventory = makeInventory({ makeRecorder(8, "W3") })
+    assertEq(insertRecorder(ALICE, 8).status, "recorderUsed", "un crédit par site")
+    assertEq(#ALICE.inventory.items, 1, "gardé")
+end
+
+function T.recorder_reading_pauses_without_power_then_resumes()
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3") })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    RADIO.data.on = false
+    wait(Post.READ_HOURS * 0.4)
+    Post.refreshAll()
+    assertEq(Post.bayView("SOLO").progress, 0, "éteinte : rien de lu")
+    assertTrue(Post.bayView("SOLO").paused, "en pause")
+    assertEq(#sysEntries("SOLO", "recorderPaused"), 1, "coupure notée")
+    wait(Post.READ_HOURS * 0.2)
+    Post.refreshAll()
+    assertEq(#sysEntries("SOLO", "recorderPaused"), 1, "une seule fois")
+    RADIO.data.on = true
+    RADIO.data.channel = CHANNEL + 200
+    wait(Post.READ_HOURS * 0.2)
+    Post.refreshAll()
+    assertEq(#sysEntries("SOLO", "recorderResumed"), 1, "reprise notée")
+    assertTrue(math.abs(Post.bayView("SOLO").progress - 0.2) < 1e-9, "reprise où elle en était, canal indifférent")
+    assertTrue(not Post.bayView("SOLO").paused, "plus en pause")
+end
+
+function T.console_receives_the_exact_reading_between_two_game_minutes()
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3") })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    -- Aucun passage de minute : l'envoi fait avancer la lecture lui-même.
+    wait(Post.READ_HOURS * 0.2)
+    command("PostOpen", ALICE, { radio = ref(RADIO) })
+    assertTrue(math.abs(lastSent("PostData").bay.progress - 0.2) < 1e-9, "progression exacte à l'envoi")
+    Post.refreshAll()
+    assertTrue(math.abs(Post.bayView("SOLO").progress - 0.2) < 1e-9, "pas comptée deux fois")
+    RADIO.data.on = false
+    wait(Post.READ_HOURS * 0.2)
+    command("PostOpen", ALICE, { radio = ref(RADIO) })
+    local bay = lastSent("PostData").bay
+    assertTrue(bay.paused and math.abs(bay.progress - 0.2) < 1e-9, "coupure vue à l'envoi, lecture figée")
+    assertEq(#sysEntries("SOLO", "recorderPaused"), 1, "coupure notée une fois")
+end
+
+function T.unloaded_post_keeps_reading_on_its_snapshot()
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3") })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    LOADED = false
+    wait(Post.READ_HOURS)
+    Post.refreshAll()
+    assertTrue(Post.bayView("SOLO").done, "secteur toujours là : lecture finie hors chargement")
+    LOADED = true
+end
+
+function T.removed_recorder_comes_back_with_its_progress()
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3",
+        { MilitaryDrop_crashX = 10, MilitaryDrop_crashY = 20, MilitaryDrop_crashClock = 5 }) })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    wait(Post.READ_HOURS / 2)
+    Post.refreshAll()
+    local created = {}
+    instanceItem = function(fullType)
+        local item = makeRecorder(100 + #created, nil)
+        item.fullType = fullType
+        created[#created + 1] = item
+        return item
+    end
+    command("PostRecorderEject", ALICE, { radio = ref(RADIO) })
+    assertEq(lastSent("PostResult").status, "recorderOut", "retiré")
+    local back = ALICE.inventory.items[1]
+    assertEq(back:getFullType(), "MilitaryDrop.FlightRecorder", "rendu au joueur")
+    assertEq(back.modData.MilitaryDrop_crashSite, "W3", "même site")
+    assertEq(back.modData.MilitaryDrop_crashX .. "/" .. back.modData.MilitaryDrop_crashY, "10/20", "même point")
+    assertEq(Post.bayView("SOLO"), nil, "baie vide")
+    insertRecorder(ALICE, back.id)
+    assertTrue(math.abs(Post.bayView("SOLO").progress - 0.5) < 1e-9, "lecture acquise conservée")
+end
+
+function T.recorder_transmission_needs_the_channel_and_an_open_line()
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3") })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    wait(Post.READ_HOURS)
+    Post.refreshAll()
+    RADIO.data.channel = CHANNEL + 200
+    command("PostRecorderTransmit", ALICE, { radio = ref(RADIO) })
+    assertEq(lastSent("PostResult").status, "noAnswer", "autre canal : pas de réponse")
+    RADIO.data.channel = CHANNEL
+    RADIO.data.on = false
+    command("PostRecorderTransmit", ALICE, { radio = ref(RADIO) })
+    assertEq(lastSent("PostResult").status, "radioOff", "éteinte")
+    RADIO.data.on = true
+    STATE.characterTrust = STATE.characterTrust or {}
+    STATE.characterTrust["C:alice"] = { value = 10, lockedUntil = WORLD_HOURS + 72 }
+    command("PostRecorderTransmit", ALICE, { radio = ref(RADIO) })
+    assertEq(lastSent("PostResult").status, "lineCut", "ligne coupée")
+    assertTrue(Post.bayView("SOLO").done, "enregistreur gardé dans la baie")
+end
+
+function T.bay_refuses_other_objects_and_a_second_recorder()
+    local dogTag = makeItem(5, "John Doe")
+    function dogTag.getFullType() return "Base.Necklace_DogTag" end
+    function dogTag.getModData() return {} end
+    ALICE.inventory = makeInventory({ dogTag, makeRecorder(7, "W3"), makeRecorder(8, "W4"), makeRecorder(9, nil) })
+    install(ALICE, RADIO)
+    assertEq(insertRecorder(ALICE, 5).status, "notRecorder", "une plaque n'est pas un enregistreur")
+    assertEq(insertRecorder(ALICE, 9).status, "notRecorder", "enregistreur sans site")
+    assertEq(insertRecorder(ALICE, 99).status, "notRecorder", "objet absent")
+    assertEq(insertRecorder(ALICE, 7).status, "recorderIn", "le premier entre")
+    assertEq(insertRecorder(ALICE, 8).status, "bayBusy", "une baie, un enregistreur")
+    assertEq(#ALICE.inventory.items, 3, "les autres restent")
+    instanceItem = function(fullType)
+        local item = makeRecorder(50, nil)
+        item.fullType = fullType
+        return item
+    end
+    command("PostRecorderEject", ALICE, { radio = ref(RADIO) })
+    command("PostRecorderEject", ALICE, { radio = ref(RADIO) })
+    assertEq(lastSent("PostResult").status, "bayEmpty", "rien à retirer")
+end
+
+function T.recorder_keys_match_the_wreck_module()
+    local source = readModFile("server/MilitaryDrop/MilitaryDrop_Wreck.lua")
+    assertTrue(source:find('Wreck.SITE_KEY = "' .. Post.SITE_KEY .. '"', 1, true) ~= nil, "même clé de site")
+    for _, name in ipairs({ Post.CRASH_X_KEY, Post.CRASH_Y_KEY, Post.CRASH_CLOCK_KEY }) do
+        assertTrue(source:find("data." .. name, 1, true) ~= nil, name .. " posé par l'épave")
+    end
+    assertTrue(source:find('container:AddItem("' .. Post.RECORDER_TYPE .. '")', 1, true) ~= nil, "même objet")
+end
+
+-- ----------------------------------------------------------------------------
+-- Sons de la baie (SRC-10)
+-- ----------------------------------------------------------------------------
+
+local function baySounds(from)
+    local out = {}
+    for i = from or 1, #SENT do
+        if SENT[i].command == "BaySound" then
+            local a = SENT[i].args
+            out[#out + 1] = (a.event or "-") .. "/" .. tostring(a.reading)
+        end
+    end
+    return table.concat(out, " ")
+end
+
+function T.bay_sounds_follow_insertion_reading_pause_and_end()
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3") })
+    install(ALICE, RADIO)
+    local mark = #SENT + 1
+    insertRecorder(ALICE, 7)
+    assertEq(baySounds(mark), "insert/nil -/true", "déclic d'insertion puis boucle de lecture")
+    local args
+    for i = mark, #SENT do
+        if SENT[i].command == "BaySound" then args = SENT[i].args end
+    end
+    assertEq(args.x .. "," .. args.y .. "," .. args.z, "100,100,0", "case du poste")
+    mark = #SENT + 1
+    wait(Post.READ_HOURS * 0.2)
+    Post.refreshAll()
+    assertEq(baySounds(mark), "-/true", "rappel chaque minute de jeu (arrivants)")
+    mark = #SENT + 1
+    RADIO.data.on = false
+    wait(Post.READ_HOURS * 0.2)
+    Post.refreshAll()
+    assertEq(baySounds(mark), "-/false", "coupure : boucle arrêtée, pas de rappel en pause")
+    mark = #SENT + 1
+    RADIO.data.on = true
+    wait(Post.READ_HOURS * 0.2)
+    Post.refreshAll()
+    assertEq(baySounds(mark), "-/true -/true", "reprise, puis rappel")
+    mark = #SENT + 1
+    wait(Post.READ_HOURS)
+    Post.refreshAll()
+    assertEq(baySounds(mark), "done/false", "double déclic de fin, boucle arrêtée")
+    mark = #SENT + 1
+    Post.refreshAll()
+    assertEq(baySounds(mark), "", "plus rien une fois lu")
+end
+
+function T.bay_sounds_reach_only_players_near_the_post()
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3") })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    ALICE.x = 100 + Post.SOUND_RANGE + 2
+    local mark = #SENT + 1
+    Post.refreshAll()
+    assertEq(baySounds(mark), "", "trop loin : rien")
+    ALICE.x = 101
+    ALICE.z = 1
+    Post.refreshAll()
+    assertEq(baySounds(mark), "", "autre étage : rien")
+    ALICE.z = 0
+    Post.refreshAll()
+    assertEq(baySounds(mark), "-/true", "de retour à portée : la boucle reprend")
+end
+
+function T.removed_recorder_stops_the_loop_on_a_post_without_power()
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3") })
+    install(ALICE, RADIO)
+    RADIO.data.on = false
+    local mark = #SENT + 1
+    insertRecorder(ALICE, 7)
+    assertEq(baySounds(mark), "insert/nil -/false", "inséré sans courant : déclic, pas de boucle")
+    instanceItem = function(fullType)
+        local item = makeRecorder(50, nil)
+        item.fullType = fullType
+        return item
+    end
+    mark = #SENT + 1
+    command("PostRecorderEject", ALICE, { radio = ref(RADIO) })
+    assertEq(baySounds(mark), "-/false", "retrait : arrêt")
+end
+
+function T.reading_saved_in_hours_before_is_converted_once()
+    -- Sauvegarde d'avant : 0,18 h lues sur une lecture de 30 minutes (36 %).
+    STATE.recorderReads = { W1 = 0.18 }
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W1") })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    local view = Post.bayView("SOLO")
+    assertTrue(math.abs(view.progress - 0.36) < 1e-9 and not view.done, "reprend à 36 %, pas lu d'office")
+    assertEq(STATE.recorderReadsFraction, 1, "conversion notée")
+    wait(Post.READ_HOURS * 0.64)
+    Post.refreshAll()
+    assertTrue(Post.bayView("SOLO").done, "fini après le reste de la nouvelle durée")
+    STATE.recorderReads.W9 = 0.5
+    Post.refreshAll()
+    assertEq(STATE.recorderReads.W9, 0.5, "jamais reconvertie")
+end
+
+function T.changed_reading_length_keeps_the_part_already_read()
+    STATE.recorderReads, STATE.recorderReadsFraction = { W3 = 0.5 }, 1
+    local saved = Post.READ_HOURS
+    Post.READ_HOURS = 1
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W3") })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    local view = Post.bayView("SOLO")
+    Post.READ_HOURS = saved
+    assertTrue(view.progress == 0.5 and not view.done, "durée allongée : toujours à mi-lecture")
+    assertEq(view.minutesLeft, 30, "minutes restantes selon la nouvelle durée")
 end
 
 return T

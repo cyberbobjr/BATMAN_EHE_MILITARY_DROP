@@ -40,6 +40,8 @@ Luacheck, Lua syntax, translations, Steam descriptions (8,000-byte limit), `dev/
 
 MIT, see [LICENSE](LICENSE).
 
+Sounds of the liaison post reader bay come from Wikimedia Commons (public domain and CC0): see [source/sound/CREDITS.md](source/sound/CREDITS.md).
+
 ---
 
 ## Français

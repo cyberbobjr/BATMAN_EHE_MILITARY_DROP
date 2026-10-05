@@ -34,6 +34,20 @@
 -- le courrier » les crédite par MilitaryDrop.Missions.creditDogTag (fromPost :
 -- bonus du poste, POSTE-06) et la base cite les noms au journal.
 --
+-- Baie de lecture (SRC-08) : un membre y insère un enregistreur de vol récupéré
+-- sur le pilote d'une épave (retiré de son inventaire par le serveur). La
+-- lecture avance en temps de jeu, côté serveur, tant que la radio du poste est
+-- allumée et alimentée (canal indifférent), console ouverte ou non, poste
+-- chargé ou non (instantané) ; une coupure la met en pause, notée au journal.
+-- Au bout de READ_HOURS, « Transmettre à la base » (canal militaire exigé)
+-- crédite +10 hors plafond quotidien au personnage qui transmet, une fois par
+-- site d'épave, crashs admin compris. Une baie par équipe ; retirer
+-- l'enregistreur le rend au joueur, sa progression reste acquise (par site).
+-- Sons (SRC-10) : BaySound aux joueurs à SOUND_RANGE cases du poste, même
+-- étage : insertion, fin de lecture (event), lecture en cours ou arrêtée
+-- (reading), répété chaque minute de jeu pendant la lecture pour ceux qui
+-- arrivent ; chaque client joue les sons lui-même (MilitaryDrop_BaySound.lua).
+--
 -- La fréquence militaire ne se trahit pas : la console n'indique jamais si le
 -- poste est « sur la bonne fréquence », et une transmission sur un autre canal
 -- reçoit la même réponse qu'un appel sans réponse.
@@ -52,6 +66,11 @@
 --   postMail[teamId] = { { id, name, by, c } … } (id : identifiant d'objet de
 --                      la plaque, chaîne ; name : nom du soldat ; by : déposant)
 --   nextPostUid = compteur des uid
+--   postBays[teamId] = { site, by, c, lastH, paused, cx, cy, cc } (enregistreur
+--                      dans la baie ; cx, cy, cc : point et horloge du crash)
+--   recorderReads[site] = part de lecture acquise (0 à 1 : une durée changée
+--                      ne fait pas sauter la lecture) ; recorderReadsFraction = 1
+--   recordersUsed[site] = personnage crédité (enregistreur transmis)
 -- ModData d'objet : Post.UID_KEY sur la radio du poste.
 -- ============================================================================
 
@@ -100,11 +119,37 @@ Post.GENERATOR_LEVELS = 3
 -- (identifiant mal formé ou plaque déjà transmise) la consomment.
 Post.KEEP_MAIL = { dailyCap = true, full = true, lineCut = true, disabled = true }
 
+-- Enregistreur de vol (SRC-08) : objet, clés de ModData posées par
+-- MilitaryDrop_Wreck.lua (site, point et horloge du crash), durée de lecture.
+Post.RECORDER_TYPE = "MilitaryDrop.FlightRecorder"
+Post.SITE_KEY = "MilitaryDrop_crashSite"
+Post.CRASH_X_KEY = "MilitaryDrop_crashX"
+Post.CRASH_Y_KEY = "MilitaryDrop_crashY"
+Post.CRASH_CLOCK_KEY = "MilitaryDrop_crashClock"
+-- Durée de lecture : 10 minutes de jeu (30 au départ, jugé trop long à l'usage, 2026-10-05).
+Post.READ_HOURS = 1 / 6
+-- Fin arrondie à moins de 0,01 s de jeu près (1/6 d'heure n'est pas exact en flottant).
+Post.READ_EPSILON = 3e-6
+-- Durée des lectures enregistrées en heures avant le passage aux fractions.
+Post.LEGACY_READ_HOURS = 0.5
+-- Portée d'écoute des sons de la baie (cases autour du poste, même étage).
+Post.SOUND_RANGE = 12
+
 local function state()
     local s = MilitaryDrop.Secrets.privateState()
     s.posts = s.posts or {}
     s.postLogs = s.postLogs or {}
     s.postMail = s.postMail or {}
+    s.postBays = s.postBays or {}
+    s.recorderReads = s.recorderReads or {}
+    if s.recorderReadsFraction ~= 1 then
+        -- Avant le 2026-10-05 : heures acquises, pour une lecture de 30 minutes.
+        for site, hours in pairs(s.recorderReads) do
+            s.recorderReads[site] = math.min(1, (tonumber(hours) or 0) / Post.LEGACY_READ_HOURS)
+        end
+        s.recorderReadsFraction = 1
+    end
+    s.recordersUsed = s.recordersUsed or {}
     return s
 end
 
@@ -304,22 +349,30 @@ function Post.snapshot(object, previous)
     return snap
 end
 
---- Radio en état de recevoir la chaîne militaire (case chargée, état réel).
-function Post.deviceReceives(object)
+--- Radio allumée et alimentée, quel que soit son canal (case chargée).
+function Post.devicePowered(object)
     local data = object:getDeviceData()
-    if not data or not data:getIsTurnedOn() or data:getChannel() ~= Config.getChannel() then
-        return false
-    end
-    if not data:canBePoweredHere() then
+    if not data or not data:getIsTurnedOn() or not data:canBePoweredHere() then
         return false
     end
     -- canBePoweredHere est toujours vrai sur pile (DeviceData.java:506-509).
     return not data:getIsBatteryPowered() or data:getPower() > 0
 end
 
+--- Radio en état de recevoir la chaîne militaire (case chargée, état réel).
+function Post.deviceReceives(object)
+    local data = object:getDeviceData()
+    return data ~= nil and data:getChannel() == Config.getChannel() and Post.devicePowered(object)
+end
+
 --- Réception d'après l'instantané (case déchargée) à l'heure now.
 function Post.snapshotReceives(snap, now)
-    if type(snap) ~= "table" or not snap.on or snap.channel ~= Config.getChannel() then
+    return type(snap) == "table" and snap.channel == Config.getChannel() and Post.snapshotPowered(snap, now)
+end
+
+--- Allumé et alimenté d'après l'instantané (case déchargée), canal indifférent.
+function Post.snapshotPowered(snap, now)
+    if type(snap) ~= "table" or not snap.on then
         return false
     end
     if snap.source == "battery" then
@@ -357,9 +410,10 @@ local function push(lines, entry)
     end
 end
 
---- Entrée système du journal (installed, moved, lost), traduite par le client.
-local function addSystem(teamId, kind)
-    push(logOf(teamId), { c = clockNow(), sys = kind })
+--- Entrée système du journal (installed, moved, lost, recorder*), traduite par
+--- le client ; site : enregistreur concerné.
+local function addSystem(teamId, kind, site)
+    push(logOf(teamId), { c = clockNow(), sys = kind, site = site })
 end
 
 local function addLine(teamId, text, clock)
@@ -494,11 +548,152 @@ function Post.record(teamId, text)
     end
 end
 
---- Revérifie tous les postes chargés (chaque minute de jeu).
+--- Revérifie tous les postes chargés et avance les lectures (chaque minute de jeu).
 function Post.refreshAll()
     for _, teamId in ipairs(sortedKeys(state().posts)) do
         Post.refresh(teamId)
     end
+    Post.advanceBays()
+end
+
+-- ----------------------------------------------------------------------------
+-- Baie de lecture des enregistreurs de vol (SRC-08)
+-- ----------------------------------------------------------------------------
+
+--- Site d'épave d'un enregistreur de vol (chaîne), ou nil pour un autre objet.
+function Post.recorderSite(item)
+    if not item or item:getFullType() ~= Post.RECORDER_TYPE then
+        return nil
+    end
+    local site = item:getModData()[Post.SITE_KEY]
+    return type(site) == "string" and site ~= "" and site or nil
+end
+
+--- Joueurs vivants à SOUND_RANGE cases du poste, même étage (serveur MP : en
+--- ligne ; solo : joueurs locaux).
+function Post.listeners(post)
+    local list, candidates = {}, {}
+    if isServer() then
+        local players = getOnlinePlayers()
+        for i = 0, players:size() - 1 do
+            candidates[#candidates + 1] = players:get(i)
+        end
+    else
+        for i = 0, getNumActivePlayers() - 1 do
+            candidates[#candidates + 1] = getSpecificPlayer(i)
+        end
+    end
+    local range = Post.SOUND_RANGE
+    for _, player in ipairs(candidates) do
+        if player and not player:isDead() and math.floor(player:getZ()) == post.z then
+            local dx, dy = player:getX() - (post.x + 0.5), player:getY() - (post.y + 0.5)
+            if dx * dx + dy * dy <= range * range then
+                list[#list + 1] = player
+            end
+        end
+    end
+    return list
+end
+
+--- Son de la baie de l'équipe aux joueurs proches du poste : event (insert,
+--- done : son bref), reading (vrai : boucle de lecture, faux : arrêt).
+function Post.baySound(teamId, event, reading)
+    local post = state().posts[teamId]
+    if not post then
+        return
+    end
+    for _, player in ipairs(Post.listeners(post)) do
+        Net.toPlayer(player, "BaySound", { x = post.x, y = post.y, z = post.z, event = event, reading = reading })
+    end
+end
+
+--- Le poste de l'équipe est allumé et alimenté (canal indifférent).
+function Post.postPowered(teamId)
+    local object, where = Post.refresh(teamId)
+    if object then
+        return Post.devicePowered(object)
+    end
+    if where == "unloaded" then
+        return Post.snapshotPowered(state().posts[teamId].snapshot, hoursNow())
+    end
+    return false
+end
+
+--- Heures de lecture acquises pour un site.
+--- Part de lecture acquise pour un site (0 à 1).
+local function readFraction(site)
+    return math.max(0, math.min(1, tonumber(state().recorderReads[site]) or 0))
+end
+
+--- Avance la lecture de la baie de l'équipe jusqu'à maintenant : seulement si le
+--- poste est allumé et alimenté ; coupure et reprise notées au journal. Appelée
+--- chaque minute de jeu et juste avant chaque envoi à la console, pour que la
+--- console reçoive la progression exacte et non celle de la dernière minute.
+function Post.advanceBay(teamId)
+    local s = state()
+    local bay = s.postBays[teamId]
+    if not bay then
+        return
+    end
+    local now = hoursNow()
+    local last = tonumber(bay.lastH) or now
+    bay.lastH = now
+    if readFraction(bay.site) >= 1 then
+        return
+    end
+    if s.posts[teamId] ~= nil and Post.postPowered(teamId) then
+        if bay.paused then
+            bay.paused = nil
+            addSystem(teamId, "recorderResumed", bay.site)
+            Post.baySound(teamId, nil, true)
+        end
+        local fraction = math.min(1, readFraction(bay.site) + math.max(0, now - last) / Post.READ_HOURS)
+        if fraction >= 1 - Post.READ_EPSILON / Post.READ_HOURS then
+            fraction = 1
+        end
+        s.recorderReads[bay.site] = fraction
+        if fraction >= 1 then
+            addSystem(teamId, "recorderRead", bay.site)
+            Post.baySound(teamId, "done", false)
+        end
+    elseif not bay.paused then
+        bay.paused = true
+        addSystem(teamId, "recorderPaused", bay.site)
+        Post.baySound(teamId, nil, false)
+    end
+end
+
+--- Avance toutes les baies (chaque minute de jeu) ; la boucle de lecture est
+--- rappelée aux joueurs proches (arrivants, message perdu).
+function Post.advanceBays()
+    local s = state()
+    for _, teamId in ipairs(sortedKeys(s.postBays)) do
+        Post.advanceBay(teamId)
+        local bay = s.postBays[teamId]
+        if bay and not bay.paused and readFraction(bay.site) < 1 then
+            Post.baySound(teamId, nil, true)
+        end
+    end
+end
+
+--- Baie de l'équipe pour la console, ou nil : site, progression (0 à 1),
+--- durée totale (heures, interpolation du client), minutes de jeu restantes,
+--- lecture finie, en pause, point et horloge du crash.
+function Post.bayView(teamId)
+    local bay = state().postBays[teamId]
+    if not bay then
+        return nil
+    end
+    local fraction = readFraction(bay.site)
+    return {
+        site = bay.site,
+        progress = fraction,
+        total = Post.READ_HOURS,
+        minutesLeft = math.max(0, math.ceil((1 - fraction) * Post.READ_HOURS * 60 - 1e-6)),
+        done = fraction >= 1,
+        paused = bay.paused == true,
+        cx = tonumber(bay.cx), cy = tonumber(bay.cy), cc = tonumber(bay.cc),
+    }
 end
 
 --- Fin du chargement d'un chunk : revérifie les postes qui s'y trouvent.
@@ -598,12 +793,15 @@ function Post.consoleData(teamId, object, player)
     local characterId = MilitaryDrop.Trust.idFor(player)
     local post = state().posts[teamId]
     post.snapshot = Post.snapshot(object, post.snapshot)
+    -- Lecture mise à jour à l'instant de l'envoi (le journal la suit).
+    Post.advanceBay(teamId)
     local data = object:getDeviceData()
     local lines = {}
     local log = logOf(teamId)
     for i = math.max(1, #log - Post.LOG_SEND_MAX + 1), #log do
         local entry = log[i]
-        lines[#lines + 1] = { c = entry.c, c2 = entry.c2, t = entry.t, gap = entry.gap, sys = entry.sys }
+        lines[#lines + 1] = { c = entry.c, c2 = entry.c2, t = entry.t, gap = entry.gap, sys = entry.sys,
+            site = entry.site }
     end
     local mail = {}
     for i, entry in ipairs(mailOf(teamId)) do
@@ -624,6 +822,7 @@ function Post.consoleData(teamId, object, player)
         lines = lines,
         missions = Post.missions(characterId),
         mail = mail,
+        bay = Post.bayView(teamId),
     }
 end
 
@@ -823,6 +1022,121 @@ function Post.transmit(player, args)
     Post.sendConsole(player, teamId, object)
 end
 
+--- « Insérer dans la baie » : l'enregistreur (args.item : identifiant
+--- d'objet) quitte l'inventaire du joueur pour la baie de l'équipe.
+function Post.insertRecorder(player, args)
+    local teamId, object, reason = resolvePost(player, args)
+    if not teamId then
+        return reply(player, reason)
+    end
+    local s = state()
+    if s.postBays[teamId] then
+        return reply(player, "bayBusy")
+    end
+    local item = isInteger(args.item) and player:getInventory():getItemWithIDRecursiv(args.item) or nil
+    local site = Post.recorderSite(item)
+    if not site or player:isEquipped(item) or player:isAttachedItem(item) then
+        return reply(player, "notRecorder")
+    end
+    if s.recordersUsed[site] then
+        return reply(player, "recorderUsed")
+    end
+    local data = item:getModData()
+    local wreck = type(s.wrecks) == "table" and s.wrecks[site] or nil
+    local container = item:getContainer()
+    container:Remove(item)
+    if isServer() then
+        sendRemoveItemFromContainer(container, item)
+    end
+    s.postBays[teamId] = { site = site, by = tostring(player:getUsername()), c = clockNow(), lastH = hoursNow(),
+        cx = tonumber(data[Post.CRASH_X_KEY]) or (wreck and tonumber(wreck.x)),
+        cy = tonumber(data[Post.CRASH_Y_KEY]) or (wreck and tonumber(wreck.y)),
+        cc = tonumber(data[Post.CRASH_CLOCK_KEY]) or (wreck and tonumber(wreck.c)) }
+    addSystem(teamId, "recorderIn", site)
+    -- Déclic de l'insertion, puis la boucle si le poste est alimenté (sinon pause).
+    Post.baySound(teamId, "insert", nil)
+    Post.advanceBay(teamId)
+    if not s.postBays[teamId].paused and readFraction(site) < 1 then
+        Post.baySound(teamId, nil, true)
+    end
+    MilitaryDrop.log(string.format("team %s: recorder %s inserted by %s", tostring(teamId), site,
+        tostring(player:getUsername())))
+    reply(player, "recorderIn")
+    Post.sendConsole(player, teamId, object)
+end
+
+--- « Retirer de la baie » : l'enregistreur revient au joueur (même site, même
+--- point du crash) ; la lecture acquise reste attachée au site.
+function Post.ejectRecorder(player, args)
+    local teamId, object, reason = resolvePost(player, args)
+    if not teamId then
+        return reply(player, reason)
+    end
+    local s = state()
+    local bay = s.postBays[teamId]
+    if not bay then
+        return reply(player, "bayEmpty")
+    end
+    local item = instanceItem(Post.RECORDER_TYPE)
+    if not item then
+        return reply(player, "unavailable")
+    end
+    local data = item:getModData()
+    data[Post.SITE_KEY] = bay.site
+    data[Post.CRASH_X_KEY], data[Post.CRASH_Y_KEY], data[Post.CRASH_CLOCK_KEY] = bay.cx, bay.cy, bay.cc
+    local inventory = player:getInventory()
+    inventory:AddItem(item)
+    if isServer() then
+        sendAddItemToContainer(inventory, item)
+    end
+    s.postBays[teamId] = nil
+    addSystem(teamId, "recorderOut", bay.site)
+    Post.baySound(teamId, nil, false)
+    reply(player, "recorderOut")
+    Post.sendConsole(player, teamId, object)
+end
+
+--- « Transmettre à la base » : enregistreur lu, poste allumé sur la fréquence
+--- militaire ; +10 hors plafond au personnage qui transmet, une fois par site.
+function Post.transmitRecorder(player, args)
+    local teamId, object, reason = resolvePost(player, args)
+    if not teamId then
+        return reply(player, reason)
+    end
+    local s = state()
+    local bay = s.postBays[teamId]
+    if not bay then
+        return reply(player, "bayEmpty")
+    end
+    if readFraction(bay.site) < 1 then
+        return reply(player, "notRead")
+    end
+    local characterId = MilitaryDrop.Trust.idFor(player)
+    if MilitaryDrop.Trust.isLineCut(characterId) then
+        return reply(player, "lineCut")
+    end
+    if not Post.devicePowered(object) then
+        return reply(player, "radioOff")
+    end
+    -- Autre canal : pas de réponse, comme un appel de largage (fréquence non trahie).
+    if object:getDeviceData():getChannel() ~= Config.getChannel() then
+        return reply(player, "noAnswer")
+    end
+    s.postBays[teamId] = nil
+    s.recorderReads[bay.site] = nil
+    if s.recordersUsed[bay.site] then
+        reply(player, "recorderUsed")
+        return Post.sendConsole(player, teamId, object)
+    end
+    s.recordersUsed[bay.site] = characterId
+    local gain = MilitaryDrop.Trust.add(characterId, MilitaryDrop.Trust.RECORDER, "recorder")
+    Post.record(teamId, getText("IGUI_MilitaryDrop_Reply_Recorder", Teams.callsign(teamId) or "", bay.site))
+    MilitaryDrop.log(string.format("team %s: recorder %s transmitted by %s, trust +%d", tostring(teamId), bay.site,
+        tostring(characterId), gain))
+    reply(player, "recorderSent")
+    Post.sendConsole(player, teamId, object)
+end
+
 --- État d'une radio pour le bouton « Poste de liaison » de la fenêtre radio
 --- (client) : "own" (poste de l'équipe), "otherTeam" (poste d'une autre
 --- équipe), "elsewhere" (l'équipe a son poste sur une autre radio), "none"
@@ -878,6 +1192,9 @@ COMMANDS.PostDeposit = guarded("PostDeposit", Post.deposit, Post.COMMAND_INTERVA
 COMMANDS.PostTransmit = guarded("PostTransmit", Post.transmit, Post.TRANSMIT_INTERVAL_MS)
 COMMANDS.PostSync = Post.sync
 COMMANDS.PostQuery = guarded("PostQuery", Post.query, Post.COMMAND_INTERVAL_MS)
+COMMANDS.PostRecorderInsert = guarded("PostRecorderInsert", Post.insertRecorder, Post.COMMAND_INTERVAL_MS)
+COMMANDS.PostRecorderEject = guarded("PostRecorderEject", Post.ejectRecorder, Post.COMMAND_INTERVAL_MS)
+COMMANDS.PostRecorderTransmit = guarded("PostRecorderTransmit", Post.transmitRecorder, Post.TRANSMIT_INTERVAL_MS)
 
 Events.EveryOneMinute.Add(Post.refreshAll)
 Events.LoadChunk.Add(Post.onLoadChunk)

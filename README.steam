@@ -44,6 +44,10 @@ Reach the grid 150–400 tiles away; a horde guards the crate. Empty crates can 
 
 [b]Keep a radio on the military frequency.[/b] The grid and map marker arrive at landing and every 6 h until a case is opened. Off or on another channel: no announcement or marker. Save the frequency with [b]Add preset[/b].
 
+[h2]When a helicopter goes down[/h2]
+
+A supply helicopter can crash, more often in storms. Its MAYDAY gives a sector on the military frequency. At the wreck, the pilot carries a memo, a codebook and the [b]flight recorder[/b]; strip the wreck for parts, then cut it up. Supplies still land at the site.
+
 [h2]Earn the base's trust[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
@@ -62,6 +66,7 @@ Drop changes apply only to the requesting character; a different opener gets 0. 
 [tr][td]Another member of the calling faction opens first case[/td][td]+5[/td][/tr]
 [tr][td]Outsider opens first case[/td][td]−5[/td][/tr]
 [tr][td]No case opened within 48 h of delivery[/td][td]−10[/td][/tr]
+[tr][td]Flight recorder read and sent, once per crash site, no cap[/td][td]+10[/td][/tr]
 [tr][td]First daily situation report[/td][td]+1[/td][/tr]
 [tr][td]Each valid, unused named dog tag[/td][td]+2[/td][/tr]
 [tr][td]First recon confirmation within 25 tiles / 48 h[/td][td]+3[/td][/tr]
@@ -79,14 +84,14 @@ Daily cap: +8 per character, excluding drops. Liaison post bonus: report +2, tag
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-A fixed military ham radio becomes a shared station console: log, orders, tags and drops. Each faction has a call sign; standing is personal.
+A fixed military ham radio becomes a shared station console: tasks to handle (flight recorders, dog tags), orders, log and drops. Its reading bay reads a flight recorder in 10 minutes before you send it to the base. Each faction has a call sign; standing is personal.
 
 [h2]For server admins[/h2]
 
 [list]
-[*]45 sandbox options: wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy.
+[*]55 sandbox options: wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy, helicopter crashes.
 [*]Requisition lots can be edited, disabled or added in Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Server-authoritative multiplayer. Admins can force a drop and launch missions from a military radio.
+[*]Server-authoritative multiplayer. Admins can force a drop, crash the next helicopter and launch missions from a military radio.
 [/list]
 
 [h2]Compatibility[/h2]
@@ -95,6 +100,7 @@ A fixed military ham radio becomes a shared station console: log, orders, tags a
 [*]No other mod required.
 [*]Designed to coexist with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]With [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], green smoke marks the crate.
+[*]Works with Better Walkie Talkies: its push-to-talk, voice and battery rules are kept.
 [*]Items from your weapon and item mods appear in the crates.
 [/list]
 

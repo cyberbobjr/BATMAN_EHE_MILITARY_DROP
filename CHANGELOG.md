@@ -3,6 +3,28 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.2.0 — 2026-10-05
+
+### Mayday: supply helicopters can crash
+
+- A supply helicopter can now go down (5% per flight by default, +15 points during a thunderstorm). Its MAYDAY on the military frequency marks an approximate sector on the map of players who hear it.
+- The crash site holds two 3D wrecks (fuselage and tail), debris and the pilot's body, along with two zombie pilots in flight gear. The pilot carries a memo, a codebook and the **flight recorder**. Fire and smoke follow the game's fire rules; smoke is renewed for late arrivals.
+- The ordered supplies are still delivered at the crash site, and a crash never costs reputation.
+- Right-click a wreck to strip its parts step by step, then cut what remains with the game's usual rules. The server checks the required tools and skills. Each part yields a bundle drawn from the game's and mods' item categories.
+- Server options: crash chance, storm bonus, effects (none, smoke, or fire and smoke), smoke duration, supplies at the crash site, salvage bundle size, pilot outfits and documents. Shooting helicopters down is optional and off by default; the server checks weapon, distance and heading.
+- Admins can arm a crash for the next helicopter that takes off, including a forced drop or a decoy. The order is saved with the world and does not stack.
+
+### Flight recorder and liaison post
+
+- The liaison post console is now an affairs board. A list on the left shows what to process (flight recorders, dog tags), and the base's orders, with the game's item icons. The panel on the right shows the selected affair and its actions. Gamepad supported.
+- Put a recovered flight recorder in the post's reading bay. Reading takes 10 in-game minutes while the post radio is on and powered. It pauses on a power cut and resumes later, and an ejected recorder keeps its progress. Once read, transmit it to the base on the military frequency for **+10 reputation**. This bonus ignores the daily cap and goes to the character who transmits, once per crash site (admin crashes included).
+- Reading sounds: a tape-deck click on insertion, a quiet modem carrier while reading and a double click when done. Only players near the post hear them, zombies never do. They follow the sound effects volume and are adjustable in the game's advanced audio options.
+
+### Walkie-talkies
+
+- A walkie-talkie clipped to the belt now uses its battery while it is on, as it does in hand.
+- Compatible with Better Walkie Talkies. When it is active, it keeps control of push-to-talk, voice chat and belt battery drain, and the base still hears what you say into your radio.
+
 ## 0.1.2 — 2026-10-02
 
 ### Breaking changes

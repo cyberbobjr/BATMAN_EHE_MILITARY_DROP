@@ -79,14 +79,14 @@ All options are on the **Military Drop** page of the sandbox options. Hours and 
 | Storm bonus | `CrashStormBonus` | 15 | Added percentage points during a thunderstorm, capped at 100 %. |
 | Gunfire can down helicopters | `CrashGunfire` | false | Client signal checked on the server for weapon, ammunition, distance and heading. |
 | Chance per plausible shot (%) | `CrashGunfireChance` | 10 | Approach phase only ; admin drops and decoys excluded. |
-| Ground effects | `CrashFire` | Smoke | None / smoke / fire and smoke ; game fire rules apply. |
+| Ground effects | `CrashFire` | Fire and smoke | None / smoke / fire and smoke ; one initial fire beside the fuselage, game fire rules apply. Existing saves keep their setting. |
 | Smoke duration (minutes) | `CrashSmokeMinutes` | 60 | Game minutes ; repeated for late arrivals. Signal Smoke is not required. |
 | Supplies at crash site | `CrashCrates` | true | Supplies delivered at the site ; a crash has no reputation effect. |
 | Items per salvage bundle | `SalvageRolls` | 3 | Drawn from game and mod item categories/tags. |
-| Pilot outfits | `PilotOutfits` | `Army` | Words matched against outfit names, separated by `;`. |
+| Corpse outfits | `PilotOutfits` | `Army` | Words matched against outfit names, separated by `;`. The two additional zombie pilots wear their dedicated military flight outfit. |
 | Pilot documents | `PilotDocuments` | true | Memo and codebook on the body ; the flight recorder remains available. |
 
-The MAYDAY gives an approximate sector over the military frequency. Right-click the wreck to recover its parts ; after all parts are removed, final cutting follows vanilla rules. The flight recorder has no base exchange or reward yet.
+The MAYDAY gives an approximate sector over the military frequency. Right-click the wreck to recover its parts ; after all parts are removed, final cutting follows vanilla rules. The flight recorder is read in the liaison post's reading bay (10 in-game minutes, post radio on and powered; paused on a power cut), then transmitted to the base on the military frequency: +10 reputation to the transmitting character, outside the daily cap, once per crash site (admin crashes included).
 
 ### Debug
 

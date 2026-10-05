@@ -1,0 +1,41 @@
+/* Sons de la baie de lecture de la station de liaison (SRC-10).
+   Fichiers dans common/media/sound/MilitaryDrop, sources et licences dans
+   source/sound/CREDITS.md. Joués localement par chaque client depuis la case du
+   poste (MilitaryDrop_BaySound.lua) ; catégorie Object : réglables dans
+   Options > Audio > Avancé (GameSound_<nom>). */
+module Base
+{
+    sound MilitaryDropBayInsert
+    {
+        category = Object,
+        clip
+        {
+            file = media/sound/MilitaryDrop/MilitaryDrop_BayInsert.ogg,
+            distanceMax = 14,
+            volume = 0.8,
+        }
+    }
+
+    sound MilitaryDropBayRead
+    {
+        category = Object,
+        loop = true,
+        clip
+        {
+            file = media/sound/MilitaryDrop/MilitaryDrop_BayRead.ogg,
+            distanceMax = 12,
+            volume = 0.5,
+        }
+    }
+
+    sound MilitaryDropBayDone
+    {
+        category = Object,
+        clip
+        {
+            file = media/sound/MilitaryDrop/MilitaryDrop_BayDone.ogg,
+            distanceMax = 14,
+            volume = 0.9,
+        }
+    }
+}

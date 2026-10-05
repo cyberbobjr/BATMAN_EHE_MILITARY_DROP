@@ -44,6 +44,10 @@ Chegue à caixa a 150–400 quadrados; uma horda a guarda. Caixas vazias dão ma
 
 [b]Mantenha um rádio ligado na frequência militar.[/b] Quadrícula e marcador no pouso e a cada 6 h até abrir. Desligado ou noutro canal: sem anúncio nem marcador. Salve com [b]Adicionar predefinição[/b].
 
+[h2]Quando um helicóptero cai[/h2]
+
+Um helicóptero de suprimentos pode cair, com mais frequência em tempestades. O MAYDAY dele indica um setor na frequência militar. Nos destroços, o piloto leva um memorando, um livro de códigos e o [b]gravador de voo[/b]; recupere as peças dos destroços e depois desmonte o resto. Os suprimentos chegam ao local mesmo assim.
+
 [h2]Ganhe a confiança da base[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
@@ -62,6 +66,7 @@ Os lançamentos afetam só o personagem solicitante; outro que abra recebe 0. Os
 [tr][td]Outro membro da facção da chamada abre primeiro[/td][td]+5[/td][/tr]
 [tr][td]Alguém de fora abre primeiro[/td][td]−5[/td][/tr]
 [tr][td]Nenhuma caixa aberta em 48 h após entrega[/td][td]−10[/td][/tr]
+[tr][td]Gravador de voo lido e enviado, uma vez por queda, sem limite[/td][td]+10[/td][/tr]
 [tr][td]Primeiro relatório diário[/td][td]+1[/td][/tr]
 [tr][td]Cada placa com nome válida e inédita[/td][td]+2[/td][/tr]
 [tr][td]Primeiro reconhecimento: 25 quadrados / 48 h[/td][td]+3[/td][/tr]
@@ -79,14 +84,14 @@ Limite: +8/dia/personagem exceto lançamentos. Posto: relatório +2, placa +3, r
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Um rádio militar fixo vira console compartilhado: registro, ordens, placas e lançamentos. Cada facção tem indicativo; a confiança é pessoal.
+Um rádio militar fixo vira console compartilhado: tarefas pendentes (gravadores de voo, placas), ordens, registro e lançamentos. A baia de leitura lê um gravador de voo em 10 minutos antes do envio à base. Cada facção tem indicativo; a confiança é pessoal.
 
 [h2]Para administradores de servidor[/h2]
 
 [list]
-[*]45 opções de sandbox: espera entre lançamentos (uma semana por padrão, para todo o servidor), distância, horda, modo de código, confiança, missões, requisição, isca.
+[*]55 opções de sandbox: espera entre lançamentos (uma semana por padrão, para todo o servidor), distância, horda, modo de código, confiança, missões, requisição, isca, quedas de helicóptero.
 [*]Os lotes de requisição podem ser editados, desativados ou adicionados em Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Multijogador com autoridade do servidor. Os admins podem forçar um lançamento e lançar missões a partir de um rádio militar.
+[*]Multijogador com autoridade do servidor. Os admins podem forçar um lançamento, derrubar o próximo helicóptero e lançar missões a partir de um rádio militar.
 [/list]
 
 [h2]Compatibilidade[/h2]
@@ -95,6 +100,7 @@ Um rádio militar fixo vira console compartilhado: registro, ordens, placas e la
 [*]Nenhum outro mod necessário.
 [*]Feito para coexistir com o [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Com o [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], uma fumaça verde marca o caixote.
+[*]Funciona com Better Walkie Talkies: as regras de apertar para falar, voz e bateria dele são mantidas.
 [*]Os itens dos seus mods de armas e de itens aparecem nos caixotes.
 [/list]
 

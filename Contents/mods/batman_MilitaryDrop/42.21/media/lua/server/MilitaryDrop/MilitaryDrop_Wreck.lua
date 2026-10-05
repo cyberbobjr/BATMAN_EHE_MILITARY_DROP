@@ -4,12 +4,15 @@ require "MilitaryDrop/MilitaryDrop_Server"
 require "MilitaryDrop/MilitaryDrop_Crash"
 require "MilitaryDrop/MilitaryDrop_WreckParts"
 require "MilitaryDrop/MilitaryDrop_Notes"
+require "MilitaryDrop/MilitaryDrop_WreckSmoke"
 
 local Wreck = {}
 MilitaryDrop.Wreck = Wreck
 local Crash, Config = MilitaryDrop.Crash, MilitaryDrop.Config
 local Server, Net = MilitaryDrop.Server, MilitaryDrop.Net
 Wreck.SITE_KEY = "MilitaryDrop_crashSite"
+Wreck.PILOT_OUTFIT = "ArmyCamoGreen"
+Wreck.FIRE_ENERGY, Wreck.FIRE_LIFE = 40, 1800
 
 local function sites()
     local s = MilitaryDrop.Secrets.privateState()
@@ -103,7 +106,10 @@ function Wreck.pilot(site, square)
         local container = body:getContainer()
         local recorder = container:AddItem("MilitaryDrop.FlightRecorder")
         if recorder then
-            recorder:getModData()[Wreck.SITE_KEY] = site.id
+            -- Site, point et horloge du crash : la baie de lecture du poste les affiche.
+            local data = recorder:getModData()
+            data[Wreck.SITE_KEY] = site.id
+            data.MilitaryDrop_crashX, data.MilitaryDrop_crashY, data.MilitaryDrop_crashClock = site.x, site.y, site.c
             sendAddItemToContainer(container, recorder)
         end
         if site.documents then
@@ -118,6 +124,77 @@ function Wreck.pilot(site, square)
     end)
 end
 
+-- Deux pilotes vivants, séparés du cadavre et de la horde attirée par le bruit.
+-- Chaque pose est suivie individuellement pour ne pas doubler le premier si
+-- le second attend une case chargée ou si le moteur refuse sa création.
+function Wreck.pilotZombies(site)
+    if site.crewVersion ~= 1 then return true end -- Ne pas repeupler les anciens crashs.
+    if not site.done.main then return false end
+    if IsoWorld.getZombiesDisabled() and not isDebugEnabled() then
+        site.done.pilotZombie1 = site.done.pilotZombie1 or "skipped"
+        site.done.pilotZombie2 = site.done.pilotZombie2 or "skipped"
+        return true
+    end
+    local ready = true
+    local origin = site.positions.main or site
+    for i, across in ipairs({ -5, 5 }) do
+        local key = "pilotZombie" .. i
+        if not site.done[key] then
+            local x, y = Crash.offset({ x = origin.x, y = origin.y, dx = site.dx, dy = site.dy }, -2, across)
+            local square
+            for radius = 0, 3 do
+                for dx = -radius, radius do
+                    for dy = -radius, radius do
+                        local loaded, free = Wreck.footprint(x + dx, y + dy, 0)
+                        if loaded and free then
+                            square = getCell():getGridSquare(x + dx, y + dy, 0)
+                            break
+                        end
+                    end
+                    if square then break end
+                end
+                if square then break end
+            end
+            if square then
+                component(site, key, function()
+                    local zombies = addZombiesInOutfit(square:getX(), square:getY(), 0, 1, Wreck.PILOT_OUTFIT, 50)
+                    if not zombies or zombies:size() == 0 then return false end
+                    zombies:get(0):getModData()[Wreck.SITE_KEY] = site.id
+                    return true
+                end)
+            end
+        end
+        ready = ready and site.done[key] ~= nil
+    end
+    return ready
+end
+
+-- Les particules suivent le fuselage réellement posé, même si la recherche
+-- de place l'a déplacé. Deux cases distinctes : un feu bloque StartSmoke
+-- sur sa propre case via CanAddSmoke.
+function Wreck.effectSquare(site, across)
+    if not site.done.main then return nil end
+    local origin = site.positions.main or site
+    local x, y = Crash.offset({ x = origin.x, y = origin.y, dx = site.dx, dy = site.dy }, 0, across)
+    local square = getCell():getGridSquare(x, y, 0)
+    if square and square:isOutside() and not square:isWaterSquare() then return square end
+    return nil
+end
+
+function Wreck.smoke(site)
+    if site.fire < 2 or getGameTime():getWorldAgeHours() >= site.smokeUntil then return end
+    local square = Wreck.effectSquare(site, -2)
+    if not square then return end
+    local now = getTimestampMs()
+    if not site.lastSmoke or now - site.lastSmoke >= 10000 then
+        local args = { id = site.id, x = square:getX(), y = square:getY() }
+        -- StartSmoke MP empile des objets client à chaque paquet. Le helper
+        -- local garde une seule fumée et renouvelle aussi les arrivants.
+        if isServer() then Net.toAll("WreckSmoke", args) else MilitaryDrop.WreckSmoke.show(args) end
+        site.lastSmoke = now
+    end
+end
+
 function Wreck.effects(site, square)
     component(site, "horde", function()
         addSound(nil, square:getX(), square:getY(), 0, 200, 100)
@@ -127,16 +204,24 @@ function Wreck.effects(site, square)
         return true
     end)
     if site.fire == 3 then
+        local fireSquare = Wreck.effectSquare(site, 2)
+        if not site.done.fire and not fireSquare then return false end
         component(site, "fire", function()
-            -- Le moteur 42.21 respecte NoFire et les règles de propagation/safehouse.
-            IsoFireManager.StartFire(getCell(), square, true, 100, 1200)
+            -- Un seul petit foyer initial ; les règles NoFire, safehouse et
+            -- FireSpread restent appliquées par le moteur 42.21.
+            IsoFireManager.StartFire(getCell(), fireSquare, true, Wreck.FIRE_ENERGY, Wreck.FIRE_LIFE)
             return true
         end)
     end
+    return true
 end
 
 function Wreck.trySite(site)
-    local square = getCell():getGridSquare(site.x, site.y, 0)
+    -- OnInitGlobalModData (restore, Flights.restore -> add) précède la création
+    -- de la cellule : getCell() vaut nil, LoadChunk reprendra la pose.
+    local cell = getCell()
+    if not cell then return false end
+    local square = cell:getGridSquare(site.x, site.y, 0)
     if not square then return false end
     square = Server.findOpenGroundNear(site.x, site.y)
     if not square then return false end
@@ -146,7 +231,8 @@ function Wreck.trySite(site)
     local tx, ty = Crash.offset(site, 12, 2)
     local tail = Wreck.spawnVehicle(site, "tail", "Base.MilitaryDrop_HeliTailBurnt", tx, ty, 3)
     Wreck.pilot(site, square)
-    Wreck.effects(site, square)
+    local crewReady = Wreck.pilotZombies(site)
+    local effectsReady = Wreck.effects(site, square)
     for i, across in ipairs({ -4, 4, -7 }) do
         local dx, dy = Crash.offset(site, -i * 3, across)
         local debris = Server.findOpenGroundNear(dx, dy)
@@ -173,15 +259,8 @@ function Wreck.trySite(site)
             return Server.deliver(site.x, site.y, site.requester, site.dropId, { crash = true })
         end)
     end
-    -- La fumée est rejouée pour les arrivants, pendant une durée bornée en heures de jeu.
-    if site.fire >= 2 and getGameTime():getWorldAgeHours() < site.smokeUntil then
-        local now = getTimestampMs()
-        if not site.lastSmoke or now - site.lastSmoke >= 10000 then
-            site.lastSmoke = now
-            IsoFireManager.StartSmoke(getCell(), square, true, 20, 600)
-        end
-    end
-    site.complete = main and tail and fallbackReady and site.done.pilot and site.done.horde
+    Wreck.smoke(site)
+    site.complete = main and tail and fallbackReady and crewReady and effectsReady and site.done.pilot and site.done.horde
         and (not site.crates or site.done.supplies) and site.done.debris1 and site.done.debris2 and site.done.debris3
     return site.complete
 end
@@ -202,8 +281,9 @@ function Wreck.add(flight)
     end
     registry[id] = {
         id = id, x = math.floor(impact.x), y = math.floor(impact.y), dx = impact.dx, dy = impact.dy,
+        c = Server.clock(),
         requester = flight.requester, dropId = flight.dropId, cause = impact.cause,
-        done = {}, positions = {}, crates = Config.get("CrashCrates") == true,
+        done = {}, positions = {}, crewVersion = 1, crates = Config.get("CrashCrates") == true,
         fire = Config.get("CrashFire"), smokeUntil = getGameTime():getWorldAgeHours()
             + math.max(0, Config.get("CrashSmokeMinutes")) / 60,
         zombies = Server.hordeSize(), documents = Config.get("PilotDocuments") == true,

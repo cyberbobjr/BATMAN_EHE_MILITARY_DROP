@@ -299,7 +299,7 @@ option MilitaryDrop.CrashGunfireChance
 
 option MilitaryDrop.CrashFire
 {
-    type = enum, numValues = 3, default = 2,
+    type = enum, numValues = 3, default = 3,
     page = MilitaryDrop, translation = MilitaryDrop_CrashFire,
     valueTranslation = MilitaryDrop_CrashFire,
 }

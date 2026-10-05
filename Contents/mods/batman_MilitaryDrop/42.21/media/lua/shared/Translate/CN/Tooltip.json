@@ -6,5 +6,5 @@
     "Tooltip_MilitaryDrop_Codebook": "军用密码表。用于破译数字电台发送的每周认证码。",
     "Tooltip_MilitaryDrop_DecoyBeacon": "佯动。这次空投不含任何补给：它的警报器会把僵尸引向空投箱。",
     "Tooltip_MilitaryDrop_RequisitionCase": "军方根据你的申领送达。打开可获得所申领的物资。",
-    "Tooltip_MilitaryDrop_FlightRecorder": "从被击落的直升机回收的记录器。请保留：向基地交付的功能计划在后续更新中加入。"
+    "Tooltip_MilitaryDrop_FlightRecorder": "从被击落的直升机回收的记录器。在联络站的读取舱读取，然后把数据发送给后勤处。"
 }

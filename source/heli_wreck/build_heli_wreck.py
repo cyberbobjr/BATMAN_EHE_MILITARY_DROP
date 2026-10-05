@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 import bpy
+import bmesh
 from mathutils import Vector
 
 HERE = Path(__file__).resolve().parent
@@ -36,9 +37,13 @@ def mesh(name, verts, faces, region='olive'):
     layer = data.uv_layers.new(name='UVMap')
     for poly in data.polygons:
         u0, v0, u1, v1 = UV[region]
-        for k, index in enumerate(poly.loop_indices):
-            # Une cellule d'atlas entière par panneau : rivets lisibles aux petites tailles.
-            layer.data[index].uv = [(u0, v0), (u1, v0), (u1, v1), (u0, v1)][k % 4]
+        # Projection plane : les n-gones ne réutilisent plus quatre coins en boucle.
+        axes = sorted(range(3), key=lambda a: abs(poly.normal[a]))[:2]
+        points = [data.vertices[data.loops[li].vertex_index].co for li in poly.loop_indices]
+        bounds = [(min(p[a] for p in points), max(p[a] for p in points)) for a in axes]
+        for index, point in zip(poly.loop_indices, points):
+            u, v = [(point[a] - lo) / max(hi - lo, .0001) for a, (lo, hi) in zip(axes, bounds)]
+            layer.data[index].uv = (u0 + (u1-u0)*u, v0 + (v1-v0)*v)
     OBJECTS.append(obj)
     return obj
 
@@ -49,6 +54,11 @@ def box(name, center, size, region='olive', rot=(0, 0, 0)):
     verts = [(a * sx, b * sy, c * sz) for a in (-1, 1) for b in (-1, 1) for c in (-1, 1)]
     obj = mesh(name, verts, [(0, 2, 3, 1), (4, 5, 7, 6), (0, 1, 5, 4),
                             (2, 6, 7, 3), (0, 4, 6, 2), (1, 3, 7, 5)], region)
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(obj.data)
+    bm.free()
     obj.location = (x, y, z)
     obj.rotation_euler = rot
     return obj
@@ -93,8 +103,8 @@ def hull():
                 continue  # Porte du côté droit ouverte ; intérieur visible.
             if y < -2.1 and .4 < angle < 2.6:
                 continue  # Verrière cassée.
-            faces.append((i * segments + j, i * segments + (j + 1) % segments,
-                          (i + 1) * segments + (j + 1) % segments, (i + 1) * segments + j))
+            faces.append((i * segments + j, (i + 1) * segments + j,
+                          (i + 1) * segments + (j + 1) % segments, i * segments + (j + 1) % segments))
     obj = mesh('TornFuselage', verts, faces, 'olive')
     # Une texture continue sur la coque, pas une inscription répétée sur chaque face.
     u0, v0, u1, v1 = UV['olive']
@@ -104,10 +114,19 @@ def hull():
             vi = obj.data.loops[li].vertex_index
             ring, section = divmod(vi, segments)
             u = (sections[ring][0] + 2.9) / 5.7
-            v = section / segments
+            # La dernière facette reste près de v=1, sans traverser tout l'atlas.
+            v = (segments if section == 0 and vi % segments == 0
+                 and any(obj.data.loops[k].vertex_index % segments == segments-1 for k in poly.loop_indices)
+                 else section) / segments
             obj.data.uv_layers.active.data[li].uv = (u0 + (u1-u0)*u, v0 + (v1-v0)*v)
     solid = obj.modifiers.new('PanelThickness', 'SOLIDIFY')
     solid.thickness = .035
+    # Bords arrachés contrastés et nervures visibles dans la cabine.
+    for y in (-1.35, -.55, .35):
+        bar('CabinRib', (.92, y, .50), (1.01, y, 1.18), .022, 'metal')
+        bar('TornDoorEdge', (1.01, y, 1.18), (.77, y, 1.72), .018, 'metal')
+    for x in (-.35, .35):
+        bar('CockpitRoofFrame', (x, -2.42, 1.1), (x*2, -1.75, 1.88), .03, 'metal')
     # Plaque de marquage unique sur le flanc intact.
     plaque = mesh('ArmyStencil', [(-1.04, -.05, 1.3), (-1.04, .9, 1.3),
                                   (-.99, .9, 1.61), (-1.0, -.05, 1.61)], [(0, 1, 2, 3)], 'army')
@@ -162,8 +181,8 @@ def tail():
             tear = .08 * math.sin(j * 7) if i == 0 else 0
             verts.append((cx + width * math.cos(angle), -2.05 + 3.9 * t + tear,
                           cz + height * math.sin(angle)))
-    faces = [(i * segments + j, i * segments + (j+1) % segments,
-              (i+1) * segments + (j+1) % segments, (i+1) * segments + j)
+    faces = [(i * segments + j, (i+1) * segments + j,
+              (i+1) * segments + (j+1) % segments, i * segments + (j+1) % segments)
              for i in range(rings) for j in range(segments)]
     boom = mesh('SnappedTailBoom', verts, faces, 'olive')
     u0, v0, u1, v1 = UV['olive']
@@ -171,7 +190,9 @@ def tail():
         poly.use_smooth = True
         for li in poly.loop_indices:
             i, j = divmod(boom.data.loops[li].vertex_index, segments)
-            boom.data.uv_layers.active.data[li].uv = (u0+(u1-u0)*i/rings, v0+(v1-v0)*j/segments)
+            j_uv = segments if j == 0 and any(boom.data.loops[k].vertex_index % segments == segments-1
+                                             for k in poly.loop_indices) else j
+            boom.data.uv_layers.active.data[li].uv = (u0+(u1-u0)*i/rings, v0+(v1-v0)*j_uv/segments)
     thickness = boom.modifiers.new('TornTailSkin', 'SOLIDIFY')
     thickness.thickness = .025
     # Empennage avec profils affinés et arêtes arrondies, sans gros pavé rectangulaire.

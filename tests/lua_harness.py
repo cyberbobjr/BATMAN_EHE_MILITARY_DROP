@@ -116,6 +116,61 @@ end
 function listenerCount(name)
     return #Events[name].handlers
 end
+
+-- Émetteur de getWorld():getFreeEmitter(x, y, z), fidèle aux surcharges Java de
+-- FMODSoundEmitter (42.21, fmod/fmod/FMODSoundEmitter.java:380-490) telles que
+-- Kahlua les résout. À utiliser pour tout son joué par le mod : une simulation
+-- permissive avait laissé passer playSoundImpl(nom, nil), qui plante en jeu.
+-- emitter.played : { name, x, y, z, looped, relayed } par son lancé ;
+-- relayed = playSound*, renvoyé aux autres joueurs par un client MP.
+function newSoundEmitter(x, y, z)
+    local emitter = { x = x, y = y, z = z, played = {}, playing = {}, stopped = {}, nextId = 0 }
+    local function start(self, name, looped, relayed)
+        assert(type(name) == "string", "FMODSoundEmitter : nom de son attendu")
+        self.nextId = self.nextId + 1
+        self.played[#self.played + 1] = { name = name, x = self.x, y = self.y, z = self.z,
+            looped = looped, relayed = relayed }
+        self.playing[self.nextId] = name
+        return self.nextId
+    end
+    local function square(sq, method)
+        -- Un nil en second argument sélectionne la surcharge IsoGridSquare.
+        if sq == nil then
+            error(method .. "(String, IsoGridSquare) : square nil -> NullPointerException en jeu"
+                .. " (Kahlua choisit cette surcharge pour nil ; utiliser playSoundImpl(nom, false, nil))", 3)
+        end
+        if type(sq) == "table" and sq.getX then
+            return sq:getX() + 0.5, sq:getY() + 0.5, sq:getZ()
+        end
+    end
+    function emitter.setPos(self, px, py, pz) self.x, self.y, self.z = px, py, pz end
+    function emitter.isPlaying(self, id) return self.playing[id] ~= nil end
+    function emitter.stopSoundLocal(self, id) self.playing[id] = nil; self.stopped[#self.stopped + 1] = id end
+    emitter.volumes = {}
+    function emitter.setVolume(self, id, volume) self.volumes[id] = volume end
+    function emitter.playSoundImpl(self, name, ...)
+        local n, a = select("#", ...), ...
+        if n == 0 then error("playSoundImpl(String) n'existe pas (No implementation found en jeu)", 2) end
+        if n >= 2 and type(a) == "boolean" then
+            return start(self, name, false, false) -- (String, boolean, IsoObject)
+        end
+        local sx, sy, sz = square(a, "playSoundImpl")
+        if sx then self.x, self.y, self.z = sx, sy, sz end -- sinon (String, IsoObject)
+        return start(self, name, false, false)
+    end
+    function emitter.playSoundLoopedImpl(self, name) return start(self, name, true, false) end
+    function emitter.playSoundLooped(self, name) return start(self, name, true, true) end
+    function emitter.playSound(self, name, ...)
+        local n, a, b, c = select("#", ...), ...
+        if n >= 3 then self.x, self.y, self.z = a, b, c
+        elseif n >= 1 and type(a) ~= "boolean" then
+            local sx, sy, sz = square(a, "playSound")
+            if sx then self.x, self.y, self.z = sx, sy, sz end
+        end
+        return start(self, name, false, true)
+    end
+    return emitter
+end
 """
 
 

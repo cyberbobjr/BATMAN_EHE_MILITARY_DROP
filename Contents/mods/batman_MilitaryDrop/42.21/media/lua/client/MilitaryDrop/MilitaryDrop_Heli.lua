@@ -221,9 +221,13 @@ function Heli.onFlightCrash(args)
         if player then
             local dx, dy = player:getX() - args.x, player:getY() - args.y
             if dx * dx + dy * dy <= 1000000 then
+                -- Émetteur posé au point d'impact, son local (chaque client reçoit
+                -- FlightCrash). Jamais playSoundImpl(nom, nil) : Kahlua choisit alors
+                -- la surcharge (String, IsoGridSquare), qui lit la case nil (NPE,
+                -- FMODSoundEmitter.java:431). Ni playSound : relayé en MP, il doublerait.
                 local emitter = getWorld():getFreeEmitter(args.x, args.y, 0)
-                emitter:playSoundImpl("VehicleCrash", nil)
-                emitter:playSoundImpl("BurnedObjectExploded", nil)
+                emitter:playSoundImpl("VehicleCrash", false, nil)
+                emitter:playSoundImpl("BurnedObjectExploded", false, nil)
                 break
             end
         end

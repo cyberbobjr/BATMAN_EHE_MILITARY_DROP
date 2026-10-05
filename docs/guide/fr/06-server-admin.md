@@ -79,14 +79,14 @@ Toutes les options sont sur la page **Military Drop** des options du bac à sabl
 | Bonus d’orage | `CrashStormBonus` | 15 | Points de probabilité ajoutés pendant un orage, maximum total 100 %. |
 | Tirs pouvant abattre l’appareil | `CrashGunfire` | faux | Signal client revérifié pour plausibilité au serveur : arme chargée, distance et direction. |
 | Chance par tir plausible (%) | `CrashGunfireChance` | 10 | Approche seulement, largages admin et leurres exclus. |
-| Effets au sol | `CrashFire` | Fumée | Aucun / fumée / feu et fumée ; règles d’incendie du jeu appliquées. |
+| Effets au sol | `CrashFire` | Feu et fumée | Aucun / fumée / feu et fumée ; un seul foyer initial près du fuselage, règles d’incendie du jeu appliquées. Les sauvegardes conservent leur réglage existant. |
 | Durée de la fumée (minutes) | `CrashSmokeMinutes` | 60 | Minutes de jeu ; réémise pour les nouveaux arrivants. Aucun besoin de Signal Smoke. |
 | Ravitaillement au crash | `CrashCrates` | vrai | Livraison des caisses au site ; crash sans effet sur la réputation. |
 | Objets par lot récupéré | `SalvageRolls` | 3 | Tirages parmi les catégories/tags du jeu et des mods. |
-| Tenues du pilote | `PilotOutfits` | `Army` | Mots recherchés dans les noms de tenue, séparés par `;`. |
+| Tenues du cadavre | `PilotOutfits` | `Army` | Mots recherchés dans les noms de tenue, séparés par `;`. Les deux pilotes zombies supplémentaires portent leur combinaison de vol militaire dédiée. |
 | Documents du pilote | `PilotDocuments` | vrai | Note et carnet dans le corps ; l’enregistreur reste récupérable. |
 
-Le MAYDAY annonce un secteur approximatif sur la fréquence militaire. Le clic droit sur l’épave ouvre la récupération des pièces ; après retrait de toutes les pièces, la découpe finale suit les règles vanilla. L’enregistreur n’a pas encore d’échange ni de récompense à la base.
+Le MAYDAY annonce un secteur approximatif sur la fréquence militaire. Le clic droit sur l’épave ouvre la récupération des pièces ; après retrait de toutes les pièces, la découpe finale suit les règles vanilla. L’enregistreur de vol se lit dans la baie de lecture du poste de liaison (10 minutes de jeu, radio du poste allumée et alimentée ; pause en cas de coupure), puis se transmet à la base sur la fréquence militaire : +10 de réputation au personnage qui le transmet, hors plafond quotidien, une fois par site de crash (crashs admin compris).
 
 ### Débogage
 

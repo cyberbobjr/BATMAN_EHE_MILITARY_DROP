@@ -107,17 +107,41 @@ end
 function T.crash_removes_flight_visuals_and_plays_impact_only_within_range()
     start()
     tick(100)
-    local sounds = {}
-    EMITTER.playSoundImpl = function(_, name) sounds[#sounds+1]=name end
+    -- Émetteur fidèle aux surcharges Java : un nil passé comme case échouerait ici.
+    local emitters = {}
+    getWorld = function()
+        return { getFreeEmitter = function(_, x, y, z)
+            local emitter = newSoundEmitter(x, y, z)
+            emitters[#emitters + 1] = emitter
+            return emitter
+        end }
+    end
     MilitaryDrop.Heli.onFlightCrash({id=4,x=1000,y=2000})
     assertEq(MilitaryDrop.Heli.count(),0)
     assertEq(STOPPED,1)
     assertEq(MARKERS,0)
     assertEq(ARROWS,0)
-    assertEq(sounds[1],"VehicleCrash")
-    assertEq(sounds[2],"BurnedObjectExploded")
+    assertEq(#emitters,1)
+    local played = emitters[1].played
+    assertEq(#played,2)
+    assertEq(played[1].name,"VehicleCrash")
+    assertEq(played[2].name,"BurnedObjectExploded")
+    for _, sound in ipairs(played) do
+        assertEq(sound.x,1000,"son au point d'impact"); assertEq(sound.y,2000,"son au point d'impact")
+        assertEq(sound.relayed,false,"son local : chaque client reçoit FlightCrash")
+    end
     MilitaryDrop.Heli.onFlightCrash({id=5,x=3000,y=2000})
-    assertEq(#sounds,2,"impact lointain inaudible")
+    assertEq(#emitters,1,"impact lointain inaudible")
+end
+
+function T.sound_emitter_double_rejects_nil_square_like_the_game()
+    local emitter = newSoundEmitter(1, 2, 0)
+    local ok, err = pcall(function() emitter:playSoundImpl("VehicleCrash", nil) end)
+    assertTrue(not ok and tostring(err):find("IsoGridSquare", 1, true), "playSoundImpl(nom, nil) doit échouer")
+    assertTrue(emitter:playSoundImpl("VehicleCrash", false, nil) > 0, "surcharge (String, boolean, IsoObject)")
+    assertEq(emitter.played[1].relayed, false)
+    emitter:playSound("VehicleCrash")
+    assertEq(emitter.played[2].relayed, true, "playSound est relayé en MP")
 end
 
 function T.updated_flight_start_replaces_the_trajectory_with_the_crash()

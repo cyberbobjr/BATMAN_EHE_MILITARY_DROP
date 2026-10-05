@@ -2,17 +2,17 @@
   "Vehicle_MilitaryDrop_HeliWreck": {
     "dimensions_m": [
       7.853643894195557,
-      6.241176605224609,
+      6.216578006744385,
       2.555000066757202
     ],
-    "vertices": 2745,
-    "polygons": 2393,
+    "vertices": 2809,
+    "polygons": 2441,
     "uv_layers": 1
   },
   "Vehicle_MilitaryDrop_HeliTail": {
     "dimensions_m": [
       2.151622772216797,
-      4.5016703605651855,
+      4.502510070800781,
       1.7779293060302734
     ],
     "vertices": 2044,

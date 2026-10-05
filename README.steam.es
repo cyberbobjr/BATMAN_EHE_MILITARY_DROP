@@ -44,6 +44,10 @@ Alcanza la caja a 150–400 casillas; una horda la vigila. Las cajas vacías se 
 
 [b]Mantén una radio encendida en la frecuencia militar.[/b] Coordenadas y marcador al aterrizar y cada 6 h hasta abrir. Apagada u otro canal: no hay aviso ni marcador. Guarda con [b]Añadir frecuencia[/b].
 
+[h2]Cuando cae un helicóptero[/h2]
+
+Un helicóptero de suministros puede estrellarse, más a menudo con tormenta. Su MAYDAY da un sector en la frecuencia militar. En los restos, el piloto lleva un memorando, un libro de códigos y el [b]registrador de vuelo[/b]; recupera las piezas de los restos y luego desguázalos. Los suministros llegan igualmente al lugar.
+
 [h2]Gánate la confianza de la base[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
@@ -62,6 +66,7 @@ Los lanzamientos afectan solo al personaje solicitante; otro que abra recibe 0. 
 [tr][td]Otro miembro de la facción de la llamada abre primero[/td][td]+5[/td][/tr]
 [tr][td]Alguien ajeno abre primero[/td][td]−5[/td][/tr]
 [tr][td]Ninguna caja abierta en 48 h desde la entrega[/td][td]−10[/td][/tr]
+[tr][td]Registrador de vuelo leído y enviado, una vez por accidente, sin límite[/td][td]+10[/td][/tr]
 [tr][td]Primer informe diario[/td][td]+1[/td][/tr]
 [tr][td]Cada placa con nombre válida y nueva[/td][td]+2[/td][/tr]
 [tr][td]Primera confirmación de reconocimiento: 25 casillas / 48 h[/td][td]+3[/td][/tr]
@@ -79,14 +84,14 @@ Límite: +8/día/personaje salvo lanzamientos. Puesto: informe +2, placa +3, rec
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Una radio militar fija se convierte en consola compartida: registro, órdenes, placas y lanzamientos. Cada facción tiene indicativo; la confianza es personal.
+Una radio militar fija se convierte en consola compartida: asuntos pendientes (registradores de vuelo, placas), órdenes, registro y lanzamientos. Su bahía de lectura lee un registrador de vuelo en 10 minutos antes de enviarlo a la base. Cada facción tiene indicativo; la confianza es personal.
 
 [h2]Para administradores de servidor[/h2]
 
 [list]
-[*]45 opciones de mundo abierto: espera entre lanzamientos (una semana por defecto, para todo el servidor), distancia, horda, modo de código, confianza, misiones, requisición, señuelo.
+[*]55 opciones de mundo abierto: espera entre lanzamientos (una semana por defecto, para todo el servidor), distancia, horda, modo de código, confianza, misiones, requisición, señuelo, accidentes de helicóptero.
 [*]Los lotes de requisición se pueden editar, desactivar o añadir en Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Multijugador con autoridad del servidor. Los administradores pueden forzar un lanzamiento y lanzar misiones desde una radio militar.
+[*]Multijugador con autoridad del servidor. Los administradores pueden forzar un lanzamiento, estrellar el próximo helicóptero y lanzar misiones desde una radio militar.
 [/list]
 
 [h2]Compatibilidad[/h2]
@@ -95,6 +100,7 @@ Una radio militar fija se convierte en consola compartida: registro, órdenes, p
 [*]No requiere ningún otro mod.
 [*]Pensado para convivir con [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Con [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], un humo verde marca la caja.
+[*]Funciona con Better Walkie Talkies: se respetan sus reglas de pulsar para hablar, voz y batería.
 [*]Los objetos de tus mods de armas y de objetos aparecen en las cajas.
 [/list]
 

@@ -29,6 +29,16 @@
 --     après un rechargement aussi (MilitaryDrop.Client.rememberCode). Manette :
 --     Y saisit le code (clavier à l'écran) tant qu'il manque, puis appelle ;
 --     RB rouvre la saisie.
+-- Disposition « tableau des affaires » (maquette C validée le 2026-10-05,
+-- POSTE-08) : sous le journal, la liste des affaires à gauche (à traiter :
+-- enregistreur dans la baie, enregistreurs de l'inventaire, plaques ; ordres de
+-- la base : missions), chacune avec l'icône de l'objet du jeu, et à droite le
+-- volet de l'affaire choisie avec ses actions (deux boutons au plus) ; en bas,
+-- la bande de la confiance, du code et de l'appel. Une mission future ajoute
+-- une ligne à la liste et un volet, sans toucher à la disposition.
+-- Baie de lecture (SRC-08) : fiche du crash, enregistreur dans son logement,
+-- barre de lecture (avancée par le serveur en temps de jeu, interpolée entre
+-- deux rafraîchissements), retrait et « Transmettre à la base ».
 -- Tout est dessiné par la fenêtre (textures du mod, polices du jeu) ; les
 -- largeurs sont mesurées selon la langue et la taille de police.
 --
@@ -67,20 +77,27 @@ MilitaryDrop.PostWindow = PostWindow
 PostWindow.DEPOSIT_MAX = 50
 -- Rafraîchissement de la console ouverte (ms réelles).
 PostWindow.REFRESH_MS = 10000
+-- Rafraîchissement anticipé (lecture de la baie estimée finie, fin annoncée) :
+-- au plus une demande par intervalle, en ms réelles.
+PostWindow.EARLY_REFRESH_MS = 1000
 -- Fermeture quand le joueur s'éloigne : même portée que le serveur
 -- (Radio.isNear), sinon la console resterait ouverte sans pouvoir agir.
 PostWindow.CLOSE_DISTANCE = Radio.MAX_WORLD_DISTANCE + 0.5
 PostWindow.TIER_COUNT = 4
--- Hauteur de la colonne « Confiance », en lignes : phrase, demi-ligne, effet.
-PostWindow.STANDING_LINES = 7
 -- Lignes visibles du journal (moins si l'écran du joueur est petit).
-PostWindow.JOURNAL_LINES = 9
+PostWindow.JOURNAL_LINES = 6
 PostWindow.JOURNAL_MIN_LINES = 4
 -- Durée du clignotement du voyant de réception après une nouvelle ligne (ms).
 PostWindow.RX_FLASH_MS = 2500
 -- Textures du mod (common/media/textures/MilitaryDrop/PostConsole) ; préfixe
 -- distinctif : le jeu cherche d'abord le nom de base dans ses packs.
 PostWindow.TEXTURE_PATH = "media/textures/MilitaryDrop/PostConsole/MDPost_"
+-- Enregistreur de vol (MilitaryDrop_Post.lua) : objet et clés de ModData du crash.
+PostWindow.RECORDER_TYPE = "MilitaryDrop.FlightRecorder"
+PostWindow.DOG_TAG_TYPE = "Base.Necklace_DogTag"
+PostWindow.SITE_KEY = "MilitaryDrop_crashSite"
+-- Segments de la barre de lecture de la baie.
+PostWindow.BAY_SEGMENTS = 10
 -- Durée totale d'une mission par type, si le serveur ne l'envoie pas (heures).
 PostWindow.HOURS_OPTIONS = { recon = "ReconHours", cleanup = "CleanupHours", control = "ControlHours" }
 -- Langues dont l'alphabet tient dans la police à chasse fixe du jeu (Latin-1) :
@@ -113,6 +130,8 @@ PostWindow.RESULTS = {
     installed = true, moved = true, already = true, otherTeam = true, notEligible = true, notPost = true,
     tooFar = true, deposited = true, noTags = true, emptyMail = true, radioOff = true, noAnswer = true,
     unavailable = true, transmitted = true, held = true, lineCut = true,
+    recorderIn = true, recorderOut = true, recorderSent = true, bayBusy = true, bayEmpty = true,
+    recorderUsed = true, notRead = true, notRecorder = true,
 }
 
 -- Statuts qui ferment la console du joueur : poste qui n'est plus le sien
@@ -399,7 +418,8 @@ function PostWindow.journalText(lines)
         if entry.gap then
             text = rgb("gap") .. escape(getText("IGUI_MilitaryDrop_PostGap", tostring(entry.gap)))
         elseif entry.sys then
-            text = rgb("sys") .. escape(getText("IGUI_MilitaryDrop_PostSys_" .. tostring(entry.sys)))
+            text = rgb("sys") .. escape(getText("IGUI_MilitaryDrop_PostSys_" .. tostring(entry.sys),
+                tostring(entry.site or "")))
         else
             text = rgb("line") .. escape(entry.t)
         end
@@ -637,8 +657,11 @@ end
 local LAMP_KEYS = { "IGUI_MilitaryDrop_PostLampOn", "IGUI_MilitaryDrop_PostLampRx", "IGUI_MilitaryDrop_PostLampPower" }
 local POWER_KINDS = { "grid", "generator", "battery", "none" }
 
---- Disposition complète pour data (nil : avant les données) dans un écran de
---- maxWidth × maxHeight (nil : sans limite). Toutes les largeurs sont mesurées.
+--- Disposition complète (maquette C, POSTE-08) pour data (nil : avant les
+--- données) dans un écran de maxWidth × maxHeight (nil : sans limite) :
+--- en-tête, voyants, journal ; liste des affaires à gauche, volet de
+--- l'affaire choisie à droite ; bande de la confiance, du code et de l'appel.
+--- Toutes les largeurs sont mesurées.
 function PostWindow.computeLayout(data, maxWidth, maxHeight)
     local fh, fm = fontHeight(UIFont.Small), fontHeight(UIFont.Medium)
     local mono = PostWindow.monoFont()
@@ -647,6 +670,7 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     local L = { fh = fh, fm = fm, u = u, mono = mono, lh = lh }
     local frame = 2 * u + 2
     L.frame = frame
+    local half = math.floor(u / 2)
 
     -- En-tête : titre peint et bouton de fermeture.
     L.closeSize = fm + 6
@@ -674,51 +698,59 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     L.tapeW = math.max(measure(callsign), measure("Station Foxtrot-88")) + 3 * u
     local statusW = lampsW + 2 * u + L.tapeW + u + L.freqW
 
-    -- Colonnes du bas : ordres, casier, confiance.
     L.gap = 2 * u
     L.btnH = fh + 12
-    local btnW = 0
-    for _, text in ipairs({ getText("IGUI_MilitaryDrop_PostDeposit", "99"), getText("IGUI_MilitaryDrop_PostTransmit") }) do
-        btnW = math.max(btnW, measure(text) + 3 * u + fh)
+    L.labelH = fh + half
+    L.barH = math.max(6, math.floor(fh * 0.45))
+    L.cardH = 2 * fh + L.barH + 2 * u
+
+    -- Liste des affaires : en-têtes peints, lignes à icône (titre, état).
+    L.headH = fh + half
+    L.rowH = 2 * fh + u
+    L.rowGap = 2
+    L.iconSize = L.rowH - u
+    local listW = math.max(fh * 15, measure(getText("IGUI_MilitaryDrop_PostAffairs")) + 2 * u,
+        measure(getText("IGUI_MilitaryDrop_PostTodo")) + 3 * u, measure(getText("IGUI_MilitaryDrop_PostOrders")) + 3 * u)
+
+    -- Volet : ruban du titre, fiche, baie de lecture, consigne, deux boutons.
+    L.tapeH = fh + 6
+    local btnW = measure(getText("IGUI_MilitaryDrop_PostDeposit", "99")) + 3 * u + fh
+    for _, key in ipairs({ "IGUI_MilitaryDrop_PostRecorderEject", "IGUI_MilitaryDrop_PostRecorderSend",
+        "IGUI_MilitaryDrop_PostRecorderInsert", "IGUI_MilitaryDrop_PostTransmit" }) do
+        btnW = math.max(btnW, measure(getText(key)) + 3 * u + fh)
     end
-    L.tagW = math.max(fh * 5, measure("Xxxxxxx Xxxxxxx", mono) * 0.8 + 2 * u)
-    L.tagW = math.floor(L.tagW)
+    L.tagW = math.floor(math.max(fh * 5, measure("Xxxxxxx Xxxxxxx", mono) * 0.8 + 2 * u))
     L.tagH = fh + 10
-    local rackHeader = measure(getText("IGUI_MilitaryDrop_PostRack")) + measure(getText("IGUI_MilitaryDrop_PostRackCount", "99"))
-        + 3 * u
-    local rackW = math.max(2 * L.tagW + 3 * u, btnW + 2 * u, rackHeader)
-    -- Confiance en toutes lettres : phrase du commandement, puis effet sur
-    -- les largages, renvoyés à la ligne dans une colonne de largeur bornée.
-    -- Champ du code (option AuthCode) : libellé peint, champ d'au moins 6 « 8 ».
+    L.boxSize = math.max(48, 3 * fh)
+    L.wellH = L.boxSize + 2 * u
+    L.infoH = 3 * fh + u
+    local detailW = math.max(fh * 22, 2 * btnW + 3 * u, 2 * L.tagW + 3 * u,
+        measure(getText("IGUI_MilitaryDrop_PostRecorderTitle", "W999")) + 4 * u)
+    local detailH = half + L.tapeH + u + L.infoH + u + L.wellH + u + 2 * fh + u + L.btnH + u
+    local listH = L.labelH + 2 * L.headH + 4 * (L.rowH + L.rowGap) + u
+    L.contentH = math.max(detailH, listH)
+
+    -- Bande du bas : confiance, champ du code (option AuthCode), appel.
     L.codeShown = PostWindow.codeRequired()
     L.entryH = fh + 6
     L.codeLabel = getText("IGUI_MilitaryDrop_RadioModule_Code")
-    local codeRowW = measure(L.codeLabel) + u + measure("88888888") + 3 * u
-    local standW = math.max(fh * 9, measure(getText("IGUI_MilitaryDrop_PostStanding")) + 2 * u,
-        measure(getText("IGUI_MilitaryDrop_RequestDrop")) + 3 * u + fh, L.codeShown and codeRowW or 0)
-    local ordersMin = math.max(fh * 14, measure(getText("IGUI_MilitaryDrop_PostOrders")) + 2 * u)
-    local columnsW = ordersMin + rackW + standW + 2 * L.gap
+    L.stripH = math.max(L.btnH, L.entryH) + u
+    local requestW = measure(getText("IGUI_MilitaryDrop_RequestDrop")) + 3 * u + fh
+    local standLabelW = measure(getText("IGUI_MilitaryDrop_PostStanding"))
+    local codeEntryW = measure("888888888888") + 2 * u
+    local codeW = L.codeShown and (measure(L.codeLabel) + u + codeEntryW + u) or 0
+    local stripW = u + standLabelW + u + fh * 10 + u + codeW + requestW + u
 
-    local W = 2 * frame + math.max(columnsW, statusW, titleW)
+    local W = 2 * frame + math.max(listW + L.gap + detailW, statusW, titleW, stripW)
     if maxWidth and W > maxWidth then
-        W = math.max(2 * frame + rackW + standW + 2 * L.gap + fh * 8, maxWidth)
+        W = math.max(2 * frame + fh * 12 + L.gap + detailW, maxWidth)
     end
     W = math.floor(W)
 
-    -- Hauteurs.
-    L.barH = math.max(6, math.floor(fh * 0.45))
-    L.cardH = 2 * fh + L.barH + 2 * u
-    L.cardGap = math.floor(u / 2) + 1
-    local ordersH = 3 * L.cardH + 2 * L.cardGap
-    local rackH = 3 * (L.tagH + math.floor(u / 2)) + 2 * L.btnH + 2 * u
-    -- Confiance : texte, puis le bouton « Demander un largage » en bas.
-    L.codeRowH = L.codeShown and (L.entryH + math.floor(u / 2)) or 0
-    local standH = PostWindow.STANDING_LINES * fh + u + L.codeRowH + L.btnH + u
-    L.contentH = math.max(ordersH, rackH, standH)
-    L.labelH = fh + math.floor(u / 2)
+    -- Hauteurs : le journal s'adapte à l'écran.
     L.bezel = u
-    local fixed = frame + L.headerH + L.statusH + u + L.labelH + 2 * L.bezel + 2 * u + u + L.labelH + L.contentH + u
-        + frame
+    local fixed = frame + L.headerH + L.statusH + u + L.labelH + 2 * L.bezel + 2 * u + u + L.contentH + u
+        + L.stripH + frame
     local lines = PostWindow.JOURNAL_LINES
     if maxHeight then
         lines = math.max(PostWindow.JOURNAL_MIN_LINES, math.min(lines, math.floor((maxHeight - fixed) / lh)))
@@ -727,7 +759,7 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     local H = fixed + lines * lh
     L.W, L.H = W, H
 
-    -- Rectangles.
+    -- Rectangles : en-tête, voyants, journal.
     local x0, inner = frame, W - 2 * frame
     local y = frame
     L.header = rect(x0, y, inner, L.headerH)
@@ -743,53 +775,62 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     y = y + L.labelH
     L.bezelRect = rect(x0, y, inner, lines * lh + 2 * L.bezel + 2 * u)
     L.screen = rect(x0 + L.bezel, y + L.bezel, inner - 2 * L.bezel, lines * lh + 2 * u)
-    -- Journal : marge du verre à gauche, témoin de défilement à droite.
     L.journal = rect(L.screen.x + u, L.screen.y + u, L.screen.w - 3 * u, lines * lh)
     L.scrollTrack = rect(L.screen.x + L.screen.w - u - 3, L.screen.y + u, 3, lines * lh)
     y = L.bezelRect.y + L.bezelRect.h + u
-    L.columnsY = y
-    local standX = W - frame - standW
-    local rackX = standX - L.gap - rackW
-    local ordersW = rackX - L.gap - x0
-    L.orders = rect(x0, y, ordersW, L.labelH + L.contentH + u)
-    L.rack = rect(rackX, y, rackW, L.labelH + L.contentH + u)
-    L.standing = rect(standX, y, standW, L.labelH + L.contentH + u)
-    local contentY = y + L.labelH + math.floor(u / 2)
-    L.contentY = contentY
-    -- Ordres : cartes empilées.
-    L.cards = {}
-    local cardY = contentY
-    while cardY + L.cardH <= L.orders.y + L.orders.h - math.floor(u / 2) do
-        L.cards[#L.cards + 1] = rect(x0 + u, cardY, ordersW - 2 * u, L.cardH)
-        cardY = cardY + L.cardH + L.cardGap
-    end
-    -- Casier : boutons en bas, plaques sur deux colonnes au-dessus.
-    local bottom = L.rack.y + L.rack.h - u
-    L.transmit = rect(rackX + u, bottom - L.btnH, rackW - 2 * u, L.btnH)
-    L.deposit = rect(rackX + u, L.transmit.y - math.floor(u / 2) - L.btnH, rackW - 2 * u, L.btnH)
+
+    -- Liste des affaires.
+    listW = math.min(listW, inner - L.gap - fh * 18)
+    L.list = rect(x0, y, listW, L.contentH)
+    L.listArea = rect(x0 + half, y + L.labelH, listW - 2 * half, L.contentH - L.labelH - half)
+
+    -- Volet de l'affaire choisie.
+    L.detail = rect(x0 + listW + L.gap, y, inner - listW - L.gap, L.contentH)
+    local d = L.detail
+    local dx, dw = d.x + u, d.w - 2 * u
+    L.detailTape = rect(dx, d.y + half, dw, L.tapeH)
+    L.detailTop = L.detailTape.y + L.tapeH + u
+    L.btnB = rect(dx, d.y + d.h - u - L.btnH, math.floor((dw - u) / 2), L.btnH)
+    L.btnA = rect(L.btnB.x + L.btnB.w + u, L.btnB.y, dw - L.btnB.w - u, L.btnH)
+    -- Enregistreur : fiche du crash, baie (logement, barre, état), consigne.
+    L.info = rect(dx, L.detailTop, dw, L.infoH)
+    L.well = rect(dx, L.info.y + L.info.h + u, dw, L.wellH)
+    L.box = rect(L.well.x + u, L.well.y + u, L.boxSize, L.boxSize)
+    local barX = L.box.x + L.box.w + 2 * u
+    L.bayLabel = { x = barX, y = L.well.y + u }
+    L.progress = rect(barX, L.well.y + u + fh + half, L.well.x + L.well.w - u - barX, L.barH * 2)
+    L.bayState = { x = barX, y = L.progress.y + L.progress.h + half }
+    L.hint = rect(dx, L.well.y + L.well.h + half, dw, L.btnB.y - u - (L.well.y + L.well.h + half))
+    -- Plaques : alvéoles sur deux colonnes, consigne au-dessus des boutons.
     L.slots = {}
-    local slotW = math.floor((rackW - 3 * u) / 2)
-    local slotY = contentY
-    while slotY + L.tagH <= L.deposit.y - u do
+    local slotW = math.floor((dw - u) / 2)
+    local slotY = L.detailTop
+    while slotY + L.tagH <= L.btnB.y - u - fh do
         for column = 0, 1 do
-            L.slots[#L.slots + 1] = rect(rackX + u + column * (slotW + u), slotY, slotW, L.tagH)
+            L.slots[#L.slots + 1] = rect(dx + column * (slotW + u), slotY, slotW, L.tagH)
         end
-        slotY = slotY + L.tagH + math.floor(u / 2)
+        slotY = slotY + L.tagH + half
     end
-    -- Confiance : bouton d'appel en bas, texte au-dessus.
-    L.request = rect(standX + u, L.standing.y + L.standing.h - u - L.btnH, standW - 2 * u, L.btnH)
-    local textBottom = L.request.y
+    L.tagsHint = rect(dx, L.btnB.y - u - fh, dw, fh)
+    -- Mission : fiche de l'ordre, puis texte complet de la base.
+    L.missionCard = rect(dx, L.detailTop, dw, L.cardH)
+    L.missionText = rect(dx, L.missionCard.y + L.cardH + u, dw, d.y + d.h - u - (L.missionCard.y + L.cardH + u))
+
+    -- Bande du bas.
+    y = d.y + d.h + u
+    L.strip = rect(x0, y, inner, L.stripH)
+    L.standing = L.strip
+    L.request = rect(x0 + inner - u - requestW, y + (L.stripH - L.btnH) / 2, requestW, L.btnH)
+    local textRight = L.request.x - u
     if L.codeShown then
-        -- Libellé à gauche (40 % au plus), champ à droite, juste au-dessus du bouton.
-        local rowY = L.request.y - L.codeRowH
-        L.codeLabelW = math.min(measure(L.codeLabel), math.floor((standW - 2 * u) * 0.4))
-        L.codeLabelPos = { x = standX + u, y = rowY + math.floor((L.entryH - fh) / 2) }
-        local entryX = standX + u + L.codeLabelW + u
-        L.code = rect(entryX, rowY, standX + standW - u - entryX, L.entryH)
-        textBottom = rowY
+        L.code = rect(L.request.x - u - codeEntryW, y + (L.stripH - L.entryH) / 2, codeEntryW, L.entryH)
+        L.codeLabelW = measure(L.codeLabel)
+        L.codeLabelPos = { x = L.code.x - u - L.codeLabelW, y = y + math.floor((L.stripH - fh) / 2) }
+        textRight = L.codeLabelPos.x - u
     end
-    L.standText = rect(standX + u, contentY + math.floor(u / 2), standW - 2 * u,
-        textBottom - u - contentY - math.floor(u / 2))
+    L.standLabelPos = { x = x0 + u, y = y + math.floor((L.stripH - fh) / 2) }
+    local textX = L.standLabelPos.x + standLabelW + u
+    L.standText = rect(textX, y, math.max(0, textRight - textX), L.stripH)
     return L
 end
 
@@ -797,6 +838,118 @@ end
 function PostWindow.measureSize(data, maxWidth, maxHeight)
     local L = PostWindow.computeLayout(data, maxWidth, maxHeight)
     return L.W, L.H
+end
+
+-- ----------------------------------------------------------------------------
+-- Affaires de la console (fonctions pures, testées hors jeu)
+-- ----------------------------------------------------------------------------
+
+local icons = {}
+
+--- Icône d'un type d'objet du jeu, sans instance (Item.getNormalTexture), ou nil.
+function PostWindow.itemIcon(fullType)
+    local icon = icons[fullType]
+    if icon == nil then
+        local manager = getScriptManager and getScriptManager()
+        local script = manager and manager:getItem(fullType)
+        icon = script and script:getNormalTexture() or false
+        icons[fullType] = icon
+    end
+    return icon or nil
+end
+
+--- Site d'épave d'un enregistreur de vol, ou nil pour un autre objet.
+function PostWindow.recorderSite(item)
+    if not item or item:getFullType() ~= PostWindow.RECORDER_TYPE then
+        return nil
+    end
+    local site = item:getModData()[PostWindow.SITE_KEY]
+    return type(site) == "string" and site ~= "" and site or nil
+end
+
+--- Enregistreurs de vol de l'inventaire (sacs compris), ni en main ni
+--- accrochés, un par site.
+function PostWindow.recorders(player)
+    local found, seen = {}, {}
+    local items = player:getInventory():getAllEvalRecurse(function(item)
+        return PostWindow.recorderSite(item) ~= nil
+    end, ArrayList.new())
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        local site = PostWindow.recorderSite(item)
+        if not seen[site] and not player:isEquipped(item) and not player:isAttachedItem(item) then
+            seen[site] = true
+            found[#found + 1] = item
+        end
+    end
+    return found
+end
+
+--- État de la lecture en toutes lettres et couleur du voyant ; progress :
+--- progression affichée (PostWindow:bayProgress), sinon celle du serveur.
+function PostWindow.bayStatus(bay, progress)
+    if bay.done then
+        return getText("IGUI_MilitaryDrop_PostRecorderDone"), "green"
+    elseif bay.paused then
+        return getText("IGUI_MilitaryDrop_PostRecorderPaused"), "red"
+    end
+    local percent = math.floor(math.max(0, math.min(1, tonumber(progress or bay.progress) or 0)) * 100)
+    return getText("IGUI_MilitaryDrop_PostRecorderReading", tostring(percent)), "amber"
+end
+
+--- Liste des affaires : en-têtes, puis lignes sélectionnables { kind, key,
+--- title, sub, icon (type d'objet), lamp }. recorders : objets de
+--- l'inventaire (PostWindow.recorders) ; tagCount : plaques sur soi.
+function PostWindow.affairs(data, recorders, tagCount)
+    local list = { { kind = "header", text = getText("IGUI_MilitaryDrop_PostTodo") } }
+    local bay = data and data.bay
+    if type(bay) == "table" and bay.site then
+        local sub, lamp = PostWindow.bayStatus(bay)
+        list[#list + 1] = { kind = "bay", key = "bay", site = tostring(bay.site), icon = PostWindow.RECORDER_TYPE,
+            title = getText("IGUI_MilitaryDrop_PostRecorderName", tostring(bay.site)), sub = sub, lamp = lamp }
+    end
+    for _, item in ipairs(recorders or {}) do
+        local site = PostWindow.recorderSite(item)
+        if site and not (bay and bay.site == site) then
+            local modData = item:getModData()
+            list[#list + 1] = { kind = "recorder", key = "rec:" .. site, site = site, itemId = item:getID(),
+                icon = PostWindow.RECORDER_TYPE, title = getText("IGUI_MilitaryDrop_PostRecorderName", site),
+                sub = getText("IGUI_MilitaryDrop_PostRecorderInInventory"),
+                cx = tonumber(modData.MilitaryDrop_crashX), cy = tonumber(modData.MilitaryDrop_crashY),
+                cc = tonumber(modData.MilitaryDrop_crashClock) }
+        end
+    end
+    local mail = data and #(data.mail or {}) or 0
+    list[#list + 1] = { kind = "tags", key = "tags", icon = PostWindow.DOG_TAG_TYPE,
+        title = getText("IGUI_MilitaryDrop_PostTagsRow"),
+        sub = getText("IGUI_MilitaryDrop_PostTagsCount", tostring(mail), tostring(tagCount or 0)),
+        lamp = mail > 0 and "green" or nil }
+    list[#list + 1] = { kind = "header", text = getText("IGUI_MilitaryDrop_PostOrders") }
+    local missions = data and data.missions or {}
+    if #missions == 0 then
+        list[#list + 1] = { kind = "empty", text = getText("IGUI_MilitaryDrop_PostNoMission") }
+    end
+    for i, mission in ipairs(missions) do
+        local view = PostWindow.missionView(mission)
+        list[#list + 1] = { kind = "mission", key = "mission:" .. tostring(mission.kind or i), mission = mission,
+            title = view.title, sub = view.sub ~= "" and view.sub or view.due, due = view.due,
+            lamp = view.done and "green" or ((view.bar and view.bar.urgent) and "red" or nil) }
+    end
+    return list
+end
+
+--- Ligne sélectionnable de clé key, sinon la première.
+function PostWindow.pickAffair(list, key)
+    local first
+    for _, entry in ipairs(list) do
+        if entry.key then
+            if entry.key == key then
+                return entry
+            end
+            first = first or entry
+        end
+    end
+    return first
 end
 
 -- ----------------------------------------------------------------------------
@@ -814,9 +967,13 @@ function PostWindow:new(x, y, width, height, player, object)
     o.lastRefreshMs = getTimestampMs()
     o.rxFlashUntil = 0
     o.rackScroll = 0
-    o.ordersScroll = 0
+    o.listScroll = 0
     o.tagCount = 0
     o.tagLabels = {}
+    o.recorderItems = {}
+    o.affairList = {}
+    o.selectedKey = nil
+    o.dataHours = 0
     o.maxWidth = width
     o.maxHeight = height
     o:setWantKeyEvents(true)
@@ -951,6 +1108,12 @@ function PostWindow:setData(data)
     local first = self.data == nil
     local previous = self.data
     self.data = data
+    -- Heure de réception : la barre de lecture est interpolée jusqu'au prochain envoi.
+    self.dataHours = getGameTime():getWorldAgeHours()
+    -- Autre enregistreur (ou baie vidée) : l'affichage repart de sa propre valeur.
+    if not (type(data.bay) == "table" and self.bayShown and self.bayShown.site == data.bay.site) then
+        self.bayShown = nil
+    end
     self:layout()
     local journal = self.journal
     local stick = first or journalAtBottom(journal)
@@ -987,6 +1150,187 @@ function PostWindow:updateButtons()
     for i, item in ipairs(tags) do
         self.tagLabels[i] = PostWindow.dogTagLabel(item)
     end
+    self.recorderItems = PostWindow.recorders(self.player)
+    self:refreshAffairs()
+end
+
+--- Reconstruit la liste des affaires ; la sélection suit sa clé, sinon la
+--- première ligne (enregistreur dans la baie, puis de l'inventaire, plaques).
+function PostWindow:refreshAffairs()
+    self.affairList = PostWindow.affairs(self.data, self.recorderItems, self.tagCount)
+    local selected = PostWindow.pickAffair(self.affairList, self.selectedKey)
+    self.selectedKey = selected and selected.key or nil
+end
+
+--- Affaire choisie (ligne de la liste), ou nil.
+function PostWindow:selectedAffair()
+    for _, entry in ipairs(self.affairList or {}) do
+        if entry.key and entry.key == self.selectedKey then
+            return entry
+        end
+    end
+    return nil
+end
+
+function PostWindow:select(key)
+    if key and key ~= self.selectedKey then
+        self.selectedKey = key
+        self.rackScroll = 0
+        getSoundManager():playUISound("UISelectListItem")
+    end
+end
+
+--- Sélection précédente (-1) ou suivante (+1) dans la liste (manette).
+function PostWindow:moveSelection(delta)
+    local keys, current = {}, 1
+    for _, entry in ipairs(self.affairList or {}) do
+        if entry.key then
+            keys[#keys + 1] = entry.key
+            if entry.key == self.selectedKey then
+                current = #keys
+            end
+        end
+    end
+    if #keys > 0 then
+        self:select(keys[math.max(1, math.min(#keys, current + delta))])
+    end
+end
+
+--- Lecture de la baie affichée, seule valeur de la console (liste, barre,
+--- pour-cent, minutes restantes) : progression exacte reçue du serveur,
+--- avancée depuis sa réception tant qu'elle n'est ni finie ni en pause (sans
+--- jamais l'achever), et jamais en recul pour un même enregistreur (latence
+--- réseau, coupure survenue entre deux envois).
+function PostWindow:bayProgress()
+    local bay = self.data and self.data.bay
+    if type(bay) ~= "table" then
+        self.bayShown = nil
+        return 0
+    end
+    local progress = math.max(0, math.min(1, tonumber(bay.progress) or 0))
+    local total = tonumber(bay.total)
+    if bay.done then
+        progress = 1
+    elseif not bay.paused and total and total > 0 then
+        local elapsed = math.max(0, getGameTime():getWorldAgeHours() - (self.dataHours or 0))
+        local estimate = progress + elapsed / total
+        -- Estimée finie : seul le serveur l'achève, on lui redemande l'état
+        -- aussitôt plutôt que d'attendre le rafraîchissement suivant (10 s).
+        if estimate >= 1 then
+            self:refreshSoon()
+        end
+        progress = math.min(0.99, estimate)
+    end
+    local shown = self.bayShown
+    if shown and shown.site == bay.site and shown.value > progress then
+        progress = shown.value
+    end
+    self.bayShown = { site = bay.site, value = progress }
+    return progress
+end
+
+--- Redemande les données au serveur sans attendre REFRESH_MS (au plus une fois
+--- par EARLY_REFRESH_MS).
+function PostWindow:refreshSoon()
+    local now = getTimestampMs()
+    if self.earlyRefreshMs and now - self.earlyRefreshMs < PostWindow.EARLY_REFRESH_MS and now >= self.earlyRefreshMs then
+        return
+    end
+    if not self:objectValid() then
+        return
+    end
+    self.earlyRefreshMs = now
+    self.lastRefreshMs = now
+    sendToServer(self.player, "PostOpen", self.object)
+end
+
+--- Son de la baie reçu (MilitaryDrop_BaySound.lua) : la fin ou une coupure de
+--- la lecture sur ce poste rafraîchit tout de suite les consoles ouvertes dessus.
+function PostWindow.onBaySound(args)
+    if args.event ~= "done" and args.reading ~= false then
+        return
+    end
+    for _, window in pairs(PostWindow.instances) do
+        local square = window.object and window.object:getSquare()
+        if square and square:getX() == args.x and square:getY() == args.y and square:getZ() == args.z then
+            window:refreshSoon()
+        end
+    end
+end
+
+function PostWindow:canInsert()
+    return self.data ~= nil and self.data.bay == nil
+end
+
+function PostWindow:onInsert(entry)
+    if entry and entry.itemId and self:objectValid() then
+        sendToServer(self.player, "PostRecorderInsert", self.object, { item = entry.itemId })
+    end
+end
+
+function PostWindow:canEject()
+    return self.data ~= nil and self.data.bay ~= nil
+end
+
+function PostWindow:onEject()
+    if self:objectValid() then
+        sendToServer(self.player, "PostRecorderEject", self.object)
+    end
+end
+
+--- Raison de grisé de « Transmettre à la base » (clé de traduction), ou nil.
+function PostWindow:sendReason()
+    local bay = self.data and self.data.bay
+    if not bay then
+        return "IGUI_MilitaryDrop_PostResult_bayEmpty"
+    elseif not bay.done then
+        return "IGUI_MilitaryDrop_PostResult_notRead"
+    elseif not PostWindow.lamps(self.data).on then
+        return "IGUI_MilitaryDrop_TurnOn"
+    end
+    return nil
+end
+
+function PostWindow:canSendRecorder()
+    return self:sendReason() == nil
+end
+
+function PostWindow:onSendRecorder()
+    if not self:objectValid() then
+        return
+    end
+    local callsign = self.data and self.data.callsign
+    if callsign then
+        self.player:Say(getText("IGUI_MilitaryDrop_PostRecorderSendSay", tostring(callsign)))
+    end
+    sendToServer(self.player, "PostRecorderTransmit", self.object)
+end
+
+--- Actions du volet : principale (bouton de droite, A) et secondaire (bouton
+--- de gauche, X), chacune { text, enabled, reason, run } ou nil.
+function PostWindow:actions()
+    local entry = self:selectedAffair()
+    if not entry then
+        return nil, nil
+    end
+    if entry.kind == "bay" then
+        return { text = getText("IGUI_MilitaryDrop_PostRecorderSend"), enabled = self:canSendRecorder(),
+                reason = self:sendReason(), run = function() self:onSendRecorder() end },
+            { text = getText("IGUI_MilitaryDrop_PostRecorderEject"), enabled = self:canEject(),
+                run = function() self:onEject() end }
+    elseif entry.kind == "recorder" then
+        return { text = getText("IGUI_MilitaryDrop_PostRecorderInsert"), enabled = self:canInsert(),
+            reason = not self:canInsert() and "IGUI_MilitaryDrop_PostResult_bayBusy" or nil,
+            run = function() self:onInsert(entry) end }, nil
+    elseif entry.kind == "tags" then
+        return { text = getText("IGUI_MilitaryDrop_PostTransmit"), enabled = self:canTransmit(),
+                reason = not self:canTransmit() and "IGUI_MilitaryDrop_PostMailEmpty" or nil,
+                run = function() self:onTransmit() end },
+            { text = getText("IGUI_MilitaryDrop_PostDeposit", tostring(self.tagCount)), enabled = self:canDeposit(),
+                reason = not self:canDeposit() and "IGUI_MilitaryDrop_PostResult_noTags" or nil,
+                run = function() self:onDeposit() end }
+    end
+    return nil, nil
 end
 
 function PostWindow:canDeposit()
@@ -1071,18 +1415,39 @@ local function inside(r, x, y)
     return r ~= nil and x >= r.x and y >= r.y and x < r.x + r.w and y < r.y + r.h
 end
 
+--- Lignes de la liste visibles, avec leur rectangle : { entry, r }.
+function PostWindow:affairRows()
+    local L = self.L
+    local area = L.listArea
+    local rows, y = {}, area.y
+    local hidden = 0
+    for index, entry in ipairs(self.affairList or {}) do
+        if index > self.listScroll then
+            local h = entry.key and L.rowH or L.headH
+            if y + h > area.y + area.h then
+                hidden = hidden + (entry.key and 1 or 0)
+            else
+                rows[#rows + 1] = { entry = entry, r = rect(area.x, y, area.w, h) }
+                y = y + h + (entry.key and L.rowGap or 0)
+            end
+        end
+    end
+    return rows, hidden
+end
+
 --- Élément sous le point (x, y) de la fenêtre : nom, donnée.
 function PostWindow:hitTest(x, y)
     local L = self.L
     if not L then
         return nil
     end
+    local primary, secondary = self:actions()
     if inside(L.close, x, y) then
         return "close"
-    elseif inside(L.deposit, x, y) then
-        return "deposit"
-    elseif inside(L.transmit, x, y) then
-        return "transmit"
+    elseif primary and inside(L.btnA, x, y) then
+        return "primary"
+    elseif secondary and inside(L.btnB, x, y) then
+        return "secondary"
     elseif inside(L.request, x, y) then
         return "request"
     elseif inside(L.standText, x, y) then
@@ -1090,19 +1455,25 @@ function PostWindow:hitTest(x, y)
     elseif inside(L.lampsArea, x, y) or inside(L.tape, x, y) or inside(L.freq, x, y) then
         return "status"
     end
-    local missions = self.data and self.data.missions or {}
-    for i, card in ipairs(L.cards) do
-        local mission = missions[i + self.ordersScroll]
-        if mission and inside(card, x, y) then
-            return "mission", mission
+    if inside(L.listArea, x, y) then
+        for _, row in ipairs(self:affairRows()) do
+            if row.entry.key and inside(row.r, x, y) then
+                return "affair", row.entry
+            end
         end
+        return nil
     end
-    local mail = self.data and self.data.mail or {}
-    for i, slot in ipairs(L.slots) do
-        local entry = mail[i + self.rackScroll * 2]
-        if entry and inside(slot, x, y) then
-            return "tag", entry
+    local entry = self:selectedAffair()
+    if entry and entry.kind == "tags" then
+        local mail = self.data and self.data.mail or {}
+        for i, slot in ipairs(L.slots) do
+            local tag = mail[i + self.rackScroll * 2]
+            if tag and inside(slot, x, y) then
+                return "tag", tag
+            end
         end
+    elseif entry and entry.kind == "mission" and (inside(L.missionCard, x, y) or inside(L.missionText, x, y)) then
+        return "mission", entry.mission
     end
     return nil
 end
@@ -1119,10 +1490,10 @@ function PostWindow:mouseTarget()
 end
 
 function PostWindow:isEnabled(target)
-    if target == "deposit" then
-        return self:canDeposit()
-    elseif target == "transmit" then
-        return self:canTransmit()
+    if target == "primary" or target == "secondary" then
+        local primary, secondary = self:actions()
+        local action = target == "primary" and primary or secondary
+        return action ~= nil and action.enabled == true
     elseif target == "request" then
         return self:canRequest()
     end
@@ -1133,19 +1504,26 @@ function PostWindow:activate(target)
     getSoundManager():playUISound("UIActivateButton")
     if target == "close" then
         self:close("close button")
-    elseif target == "deposit" then
-        self:onDeposit()
-    elseif target == "transmit" then
-        self:onTransmit()
+    elseif target == "primary" or target == "secondary" then
+        local primary, secondary = self:actions()
+        local action = target == "primary" and primary or secondary
+        if action and action.enabled then
+            action.run()
+        end
     elseif target == "request" then
         self:onRequest()
     end
 end
 
+local BUTTONS = { close = true, primary = true, secondary = true, request = true }
+
 function PostWindow:onMouseDown(x, y)
-    local target = self:hitTest(x, y)
-    if target == "close" or target == "deposit" or target == "transmit" or target == "request" then
+    local target, payload = self:hitTest(x, y)
+    if BUTTONS[target] then
         self.pressed = self:isEnabled(target) and target or nil
+        return true
+    elseif target == "affair" then
+        self:select(payload.key)
         return true
     end
     return ISPanelJoypad.onMouseDown(self, x, y)
@@ -1171,13 +1549,17 @@ end
 function PostWindow:onMouseWheel(del)
     local L = self.L
     local x, y = self:getMouseX(), self:getMouseY()
-    if L and inside(L.rack, x, y) then
-        local rows = math.ceil(#(self.data and self.data.mail or {}) / 2) - math.floor(#L.slots / 2)
-        self.rackScroll = math.max(0, math.min(math.max(0, rows), self.rackScroll + (del > 0 and 1 or -1)))
+    local step = del > 0 and 1 or -1
+    if L and inside(L.listArea, x, y) then
+        local _, hidden = self:affairRows()
+        local maxScroll = math.max(0, self.listScroll + (step > 0 and (hidden > 0 and 1 or 0) or 0))
+        self.listScroll = math.max(0, math.min(maxScroll, self.listScroll + step))
         return true
-    elseif L and inside(L.orders, x, y) then
-        local extra = #(self.data and self.data.missions or {}) - #L.cards
-        self.ordersScroll = math.max(0, math.min(math.max(0, extra), self.ordersScroll + (del > 0 and 1 or -1)))
+    end
+    local entry = self:selectedAffair()
+    if L and entry and entry.kind == "tags" and inside(L.detail, x, y) then
+        local rows = math.ceil(#(self.data and self.data.mail or {}) / 2) - math.floor(#L.slots / 2)
+        self.rackScroll = math.max(0, math.min(math.max(0, rows), self.rackScroll + step))
         return true
     end
     return false
@@ -1191,18 +1573,33 @@ function PostWindow:tooltipFor(target, payload)
     end
     if target == "mission" then
         return PostWindow.missionTooltip(payload)
+    elseif target == "affair" then
+        if payload.kind == "mission" then
+            return PostWindow.missionTooltip(payload.mission)
+        end
+        return escape(payload.title) .. " <LINE> " .. escape(payload.sub or "")
     elseif target == "tag" then
         return escape(getText("IGUI_MilitaryDrop_PostTagTooltip", PostWindow.mailName(payload), tostring(payload.by or "?")))
     elseif target == "standing" then
-        return escape(getText("IGUI_MilitaryDrop_PostStandingTooltip"))
+        return escape(PostWindow.trustText(data)) .. " <LINE> " .. escape(PostWindow.effectText(data))
+            .. " <LINE> <LINE> " .. escape(getText("IGUI_MilitaryDrop_PostStandingTooltip"))
     elseif target == "status" then
         return escape(PostWindow.statusText(data))
-    elseif target == "deposit" and #self.tagLabels > 0 then
-        local names = {}
-        for i, label in ipairs(self.tagLabels) do
-            names[i] = escape(label)
+    elseif target == "primary" or target == "secondary" then
+        local primary, secondary = self:actions()
+        local action = target == "primary" and primary or secondary
+        if action and not action.enabled and action.reason then
+            return escape(getText(action.reason, "0"))
         end
-        return table.concat(names, " <LINE> ")
+        local entry = self:selectedAffair()
+        if target == "secondary" and entry and entry.kind == "tags" and #self.tagLabels > 0 then
+            local names = {}
+            for i, label in ipairs(self.tagLabels) do
+                names[i] = escape(label)
+            end
+            return table.concat(names, " <LINE> ")
+        end
+        return action and escape(action.text) or nil
     elseif target == "request" then
         return escape(getText(self:requestReason() or "IGUI_MilitaryDrop_RequestTooltip"))
     elseif target == "close" then
@@ -1584,28 +1981,6 @@ function PostWindow:drawOrder(r, mission, hover)
     end
 end
 
-function PostWindow:drawOrders(hover, payload)
-    local L, data = self.L, self.data
-    local missions = data.missions or {}
-    self:drawCompartment(L.orders, getText("IGUI_MilitaryDrop_PostOrders"))
-    if #missions == 0 then
-        self:drawText(PostWindow.fit(getText("IGUI_MilitaryDrop_PostNoMission"), UIFont.Small, L.orders.w - 2 * L.u),
-            L.orders.x + L.u, L.contentY + L.u, PAINT[1], PAINT[2], PAINT[3], 0.55, UIFont.Small)
-        return
-    end
-    for i, card in ipairs(L.cards) do
-        local mission = missions[i + self.ordersScroll]
-        if mission then
-            self:drawOrder(card, mission, hover == "mission" and payload == mission)
-        end
-    end
-    local hidden = #missions - #L.cards - self.ordersScroll
-    if hidden > 0 then
-        self:drawPaint("+" .. hidden, L.orders.x + L.orders.w - L.u, L.orders.y + L.orders.h - L.fh - 2, nil, 0.8,
-            "right")
-    end
-end
-
 --- Plaque d'identité gravée au nom du soldat.
 function PostWindow:drawTag(r, entry, hover)
     local L = self.L
@@ -1624,13 +1999,211 @@ function PostWindow:drawTag(r, entry, hover)
     self:drawText(name, textX, ty, 0.18, 0.19, 0.2, 1, L.mono)
 end
 
-function PostWindow:drawRack(hover, payload)
+local LAMP_COLORS = { green = GREEN, amber = AMBER, red = RED }
+
+--- Liste des affaires : en-têtes peints, lignes de papier avec l'icône de
+--- l'objet du jeu, titre, état et voyant ; la ligne choisie est cerclée d'ambre.
+function PostWindow:drawAffairs(hover, payload)
+    local L = self.L
+    local u = L.u
+    self:drawCompartment(L.list, getText("IGUI_MilitaryDrop_PostAffairs"))
+    local paper = tex("Paper")
+    local rows, hidden = self:affairRows()
+    for _, row in ipairs(rows) do
+        local entry, r = row.entry, row.r
+        if entry.kind == "header" then
+            self:drawText(PostWindow.fit(entry.text, UIFont.Small, r.w), r.x + 2, r.y + 1, AMBER[1], AMBER[2], AMBER[3], 0.9,
+                UIFont.Small)
+        elseif entry.kind == "empty" then
+            self:drawText(PostWindow.fit(entry.text, UIFont.Small, r.w), r.x + 2, r.y + 1, PAINT[1], PAINT[2], PAINT[3], 0.55,
+                UIFont.Small)
+        else
+            local selected = entry.key == self.selectedKey
+            self:drawRect(r.x + 2, r.y + 2, r.w, r.h, 0.4, 0, 0, 0)
+            if paper then
+                self:drawTextureTiled(paper, r.x, r.y, r.w, r.h, 1, 1, 1, 1)
+            else
+                self:drawRect(r.x, r.y, r.w, r.h, 1, 0.9, 0.87, 0.78)
+            end
+            if hover == "affair" and payload == entry then
+                self:drawRect(r.x, r.y, r.w, r.h, 0.12, 1, 1, 0.8)
+            end
+            if selected then
+                self:drawRectBorder(r.x - 1, r.y - 1, r.w + 2, r.h + 2, 1, AMBER[1], AMBER[2], AMBER[3])
+                self:drawRectBorder(r.x, r.y, r.w, r.h, 1, AMBER[1], AMBER[2], AMBER[3])
+            end
+            local tx = r.x + u
+            local icon = entry.icon and PostWindow.itemIcon(entry.icon)
+            if icon then
+                local s = L.iconSize
+                self:drawTextureScaled(icon, r.x + math.floor(u / 2), r.y + math.floor((r.h - s) / 2), s, s, 1)
+                tx = r.x + math.floor(u / 2) + s + math.floor(u / 2)
+            end
+            local lampD = math.floor(L.fh * 0.7)
+            local right = r.x + r.w - u
+            if entry.lamp then
+                self:drawLamp(right - lampD / 2, r.y + r.h / 2, lampD, true, LAMP_COLORS[entry.lamp] or AMBER, 0.8)
+                right = right - lampD - math.floor(u / 2)
+            end
+            local w = right - tx
+            if entry.kind == "mission" and entry.due ~= "" then
+                local dueW = measure(entry.due)
+                self:drawTextRight(entry.due, right, r.y + math.floor(u / 2), INK[1], INK[2], INK[3], 1, UIFont.Small)
+                self:drawText(PostWindow.fit(entry.title, UIFont.Small, w - dueW - u), tx, r.y + math.floor(u / 2),
+                    INK[1], INK[2], INK[3], 1, UIFont.Small)
+            else
+                self:drawText(PostWindow.fit(entry.title, UIFont.Small, w), tx, r.y + math.floor(u / 2), INK[1], INK[2],
+                    INK[3], 1, UIFont.Small)
+            end
+            local sub = entry.sub or ""
+            if entry.kind == "bay" and type(self.data.bay) == "table" then
+                -- Même valeur que la barre du volet, pas l'instantané de la liste.
+                sub = PostWindow.bayStatus(self.data.bay, self:bayProgress())
+            end
+            self:drawText(PostWindow.fit(sub, UIFont.Small, w), tx, r.y + math.floor(u / 2) + L.fh, 0.3, 0.28,
+                0.24, 1, UIFont.Small)
+        end
+    end
+    if hidden > 0 then
+        self:drawPaint("+" .. hidden, L.list.x + L.list.w - u, L.list.y + L.list.h - L.fh - 2, nil, 0.8, "right")
+    end
+end
+
+--- Ruban de l'étiqueteuse en tête du volet (titre de l'affaire).
+function PostWindow:drawDetailTape(text)
+    local L = self.L
+    local t = L.detailTape
+    local w = math.min(t.w, measure(text) + 3 * L.u)
+    local tape = tex("Tape")
+    if tape then
+        self:drawTextureScaled(tape, t.x, t.y, w, t.h, 1)
+    else
+        self:drawRect(t.x, t.y, w, t.h, 1, 0.08, 0.08, 0.09)
+    end
+    local label = PostWindow.fit(text, UIFont.Small, w - 2 * L.u)
+    local ty = t.y + (t.h - L.fh) / 2
+    self:drawText(label, t.x + L.u + 1, ty + 1, 0, 0, 0, 0.8, UIFont.Small)
+    self:drawText(label, t.x + L.u, ty, 0.93, 0.93, 0.9, 1, UIFont.Small)
+end
+
+--- Feuille de papier avec des lignes tapées (fiche du crash).
+function PostWindow:drawSheet(r, lines)
+    local L = self.L
+    local paper = tex("Paper")
+    self:drawRect(r.x + 2, r.y + 3, r.w, r.h, 0.45, 0, 0, 0)
+    if paper then
+        self:drawTextureTiled(paper, r.x, r.y, r.w, r.h, 1, 1, 1, 1)
+    else
+        self:drawRect(r.x, r.y, r.w, r.h, 1, 0.9, 0.87, 0.78)
+    end
+    self:drawRect(r.x + L.u, r.y, 1, r.h, 0.55, INK_RED[1], INK_RED[2], INK_RED[3])
+    local y = r.y + math.floor(L.u / 2)
+    for _, line in ipairs(lines) do
+        self:drawText(PostWindow.fit(line, UIFont.Small, r.w - 3 * L.u), r.x + 2 * L.u, y, INK[1], INK[2], INK[3], 1,
+            UIFont.Small)
+        y = y + L.fh
+    end
+end
+
+--- Volet d'un enregistreur : fiche du crash, baie de lecture, consigne.
+function PostWindow:drawRecorderDetail(entry)
+    local L, data = self.L, self.data
+    local u = L.u
+    local bay = data.bay
+    local inBay = entry.kind == "bay"
+    local source = inBay and bay or entry
+    self:drawDetailTape(getText("IGUI_MilitaryDrop_PostRecorderTitle", tostring(entry.site)))
+    local lines = {}
+    if tonumber(source.cc) then
+        lines[#lines + 1] = getText("IGUI_MilitaryDrop_PostRecorderCrash", PostWindow.stamp(source.cc))
+    end
+    if tonumber(source.cx) and tonumber(source.cy) then
+        lines[#lines + 1] = getText("IGUI_MilitaryDrop_PostGrid", tostring(math.floor(source.cx)),
+            tostring(math.floor(source.cy)))
+    end
+    lines[#lines + 1] = getText("IGUI_MilitaryDrop_PostRecorderOrigin")
+    self:drawSheet(L.info, lines)
+
+    -- Baie : creux de tôle, logement noir, enregistreur, barre segmentée.
+    local w = L.well
+    self:drawMetal(w.x, w.y, w.w, w.h, 0.62)
+    self:drawBevel(w.x, w.y, w.w, w.h, false, 1, 2)
+    local b = L.box
+    self:drawRect(b.x - 1, b.y - 1, b.w + 2, b.h + 2, 1, 0.02, 0.02, 0.015)
+    self:drawRect(b.x, b.y, b.w, b.h, 1, 0.07, 0.075, 0.05)
+    self:drawBevel(b.x, b.y, b.w, b.h, false, 1, 2)
+    local fraction, label, color = 0, getText("IGUI_MilitaryDrop_PostBayEmpty"), GREEN
+    local stateText
+    if bay then
+        local icon = PostWindow.itemIcon(PostWindow.RECORDER_TYPE)
+        if icon and inBay then
+            local s = math.floor(b.w * 0.8)
+            self:drawTextureScaled(icon, b.x + (b.w - s) / 2, b.y + (b.h - s) / 2, s, s, 1)
+        end
+        fraction = inBay and self:bayProgress() or 0
+        label = inBay and getText("IGUI_MilitaryDrop_PostBay")
+            or getText("IGUI_MilitaryDrop_PostBayBusy", tostring(bay.site))
+        if inBay then
+            stateText = PostWindow.bayStatus(bay, fraction)
+            if bay.paused then
+                color = RED
+            elseif not bay.done then
+                color = AMBER
+            end
+        end
+    end
+    self:drawPaint(PostWindow.fit(label, UIFont.Small, w.x + w.w - u - L.bayLabel.x), L.bayLabel.x, L.bayLabel.y)
+    local p = L.progress
+    local count = PostWindow.BAY_SEGMENTS
+    local percent = string.format("%d%%", math.floor(fraction * 100))
+    local percentW = measure("100%", L.mono) + u
+    local segW = math.max(3, math.floor((p.w - percentW - (count - 1)) / count))
+    local filled = math.floor(fraction * count + 0.0001)
+    for i = 1, count do
+        local sx = p.x + (i - 1) * (segW + 1)
+        self:drawRect(sx, p.y, segW, p.h, 1, 0.05, 0.07, 0.04)
+        if i <= filled then
+            self:drawRect(sx + 1, p.y + 1, segW - 2, p.h - 2, 0.95, color[1], color[2], color[3])
+        end
+    end
+    if inBay then
+        self:drawTextRight(percent, p.x + p.w, p.y + (p.h - L.lh) / 2, color[1], color[2], color[3], 1, L.mono)
+        self:drawText(PostWindow.fit(stateText, UIFont.Small, w.x + w.w - u - L.bayState.x), L.bayState.x, L.bayState.y,
+            PAINT[1], PAINT[2], PAINT[3], 0.85, UIFont.Small)
+    end
+
+    -- Consigne sous la baie.
+    local hint
+    if inBay and bay.done then
+        hint = getText("IGUI_MilitaryDrop_PostRecorderDoneHint")
+    elseif inBay and bay.paused then
+        hint = getText("IGUI_MilitaryDrop_PostRecorderPausedHint")
+    elseif inBay then
+        local left = tonumber(bay.minutesLeft) or 0
+        local total = tonumber(bay.total)
+        if total and total > 0 then
+            left = math.max(1, math.ceil((1 - self:bayProgress()) * total * 60))
+        end
+        hint = getText("IGUI_MilitaryDrop_PostRecorderLeft", tostring(left))
+    else
+        hint = getText("IGUI_MilitaryDrop_PostRecorderInsertHint")
+    end
+    local y = L.hint.y
+    for _, line in ipairs(PostWindow.wrap(hint, UIFont.Small, L.hint.w)) do
+        if y + L.fh > L.hint.y + L.hint.h then
+            break
+        end
+        self:drawText(line, L.hint.x, y, AMBER[1], AMBER[2], AMBER[3], 0.9, UIFont.Small)
+        y = y + L.fh
+    end
+end
+
+--- Volet des plaques : casier en alvéoles, consigne.
+function PostWindow:drawTagsDetail(hover, payload)
     local L, data = self.L, self.data
     local mail = data.mail or {}
-    local count = #mail > 0 and getText("IGUI_MilitaryDrop_PostRackCount", tostring(#mail)) or nil
-    self:drawCompartment(L.rack, getText("IGUI_MilitaryDrop_PostRack"), count)
+    self:drawDetailTape(getText("IGUI_MilitaryDrop_PostRack"))
     for i, slot in ipairs(L.slots) do
-        -- Alvéole du casier.
         self:drawRect(slot.x, slot.y, slot.w, slot.h, 0.45, 0.02, 0.03, 0.01)
         self:drawBevel(slot.x, slot.y, slot.w, slot.h, false, 0.7, 1)
         local entry = mail[i + self.rackScroll * 2]
@@ -1638,55 +2211,84 @@ function PostWindow:drawRack(hover, payload)
             self:drawTag(rect(slot.x + 2, slot.y + 1, slot.w - 4, slot.h - 2), entry, hover == "tag" and payload == entry)
         end
     end
-    if #mail == 0 and L.slots[1] then
-        local s = L.slots[1]
-        self:drawText(PostWindow.fit(getText("IGUI_MilitaryDrop_PostMailEmpty"), UIFont.Small, L.rack.w - 4 * L.u),
-            s.x + L.u, s.y + (s.h - L.fh) / 2, PAINT[1], PAINT[2], PAINT[3], 0.55, UIFont.Small)
-    end
     local hidden = #mail - #L.slots - self.rackScroll * 2
     if hidden > 0 then
         local last = L.slots[#L.slots]
         self:drawPaint("+" .. hidden, last.x + last.w, last.y + last.h + 1, nil, 0.8, "right")
     end
-    local joypad = self.drawJoypadFocus and Joypad and Joypad.Texture
-    self:drawButton(L.deposit, getText("IGUI_MilitaryDrop_PostDeposit", tostring(self.tagCount)), self:canDeposit(),
-        hover == "deposit", self.pressed == "deposit", false, joypad and Joypad.Texture.XButton or nil)
-    self:drawButton(L.transmit, getText("IGUI_MilitaryDrop_PostTransmit"), self:canTransmit(),
-        hover == "transmit", self.pressed == "transmit", true, joypad and Joypad.Texture.AButton or nil)
+    local hint = #mail == 0 and getText("IGUI_MilitaryDrop_PostMailEmpty") or getText("IGUI_MilitaryDrop_PostTagsHint")
+    self:drawText(PostWindow.fit(hint, UIFont.Small, L.tagsHint.w), L.tagsHint.x, L.tagsHint.y, PAINT[1], PAINT[2],
+        PAINT[3], 0.7, UIFont.Small)
 end
 
---- Confiance en toutes lettres : phrase du commandement (rouge si ligne
---- coupée), puis effet sur les largages, plus discret.
-function PostWindow:drawStanding(hover)
+--- Volet d'une mission : fiche de l'ordre, puis texte complet de la base.
+function PostWindow:drawMissionDetail(entry, hover)
+    local L = self.L
+    self:drawDetailTape(string.upper(tostring(entry.title or "")))
+    self:drawOrder(L.missionCard, entry.mission, hover == "mission")
+    local box = L.missionText
+    local y = box.y
+    for _, line in ipairs(PostWindow.wrap(tostring(entry.mission.text or ""), UIFont.Small, box.w)) do
+        if y + L.fh > box.y + box.h then
+            break
+        end
+        self:drawText(line, box.x, y, PAINT[1], PAINT[2], PAINT[3], 0.9, UIFont.Small)
+        y = y + L.fh
+    end
+end
+
+--- Volet de l'affaire choisie et ses boutons (A à droite, X à gauche).
+function PostWindow:drawDetail(hover, payload)
+    local L = self.L
+    self:drawMetal(L.detail.x, L.detail.y, L.detail.w, L.detail.h, 0.78)
+    self:drawBevel(L.detail.x, L.detail.y, L.detail.w, L.detail.h, false, 1, 2)
+    local entry = self:selectedAffair()
+    if not entry then
+        return
+    end
+    if entry.kind == "bay" or entry.kind == "recorder" then
+        self:drawRecorderDetail(entry)
+    elseif entry.kind == "tags" then
+        self:drawTagsDetail(hover, payload)
+    elseif entry.kind == "mission" then
+        self:drawMissionDetail(entry, hover)
+    end
+    local primary, secondary = self:actions()
+    local joypad = self.drawJoypadFocus and Joypad and Joypad.Texture
+    if secondary then
+        self:drawButton(L.btnB, secondary.text, secondary.enabled, hover == "secondary", self.pressed == "secondary",
+            false, joypad and Joypad.Texture.XButton or nil)
+    end
+    if primary then
+        self:drawButton(L.btnA, primary.text, primary.enabled, hover == "primary", self.pressed == "primary", true,
+            joypad and Joypad.Texture.AButton or nil)
+    end
+end
+
+--- Bande du bas : confiance en toutes lettres (sur une ligne, entière dans
+--- l'infobulle), libellé du code, bouton d'appel.
+function PostWindow:drawStrip(hover)
     local L, data = self.L, self.data
-    -- Compartiment dessiné dans prerender : le champ du code (enfant) passe
-    -- entre prerender et render, render le recouvrirait.
+    -- Creux dessiné dans prerender : le champ du code (enfant) passe entre les deux.
+    self:drawPaint(getText("IGUI_MilitaryDrop_PostStanding"), L.standLabelPos.x, L.standLabelPos.y)
+    local box = L.standText
+    local alpha = hover == "standing" and 1 or 0.92
+    local trust = PostWindow.trustText(data)
+    local effect = PostWindow.effectText(data)
+    local trustColor = data.lineCut and { 1, 0.45, 0.35 } or PAINT
+    local trustText = PostWindow.fit(trust, UIFont.Small, box.w)
+    self:drawText(trustText, box.x, L.standLabelPos.y, trustColor[1], trustColor[2], trustColor[3], alpha, UIFont.Small)
+    local used = measure(trustText) + L.u
+    if effect ~= "" and box.w - used > L.fh * 3 then
+        self:drawText(PostWindow.fit("- " .. effect, UIFont.Small, box.w - used), box.x + used, L.standLabelPos.y,
+            AMBER[1], AMBER[2], AMBER[3], alpha * 0.9, UIFont.Small)
+    end
+    if L.codeShown then
+        self:drawPaint(L.codeLabel, L.codeLabelPos.x, L.codeLabelPos.y)
+    end
     local joypad = self.drawJoypadFocus and Joypad and Joypad.Texture
     self:drawButton(L.request, getText("IGUI_MilitaryDrop_RequestDrop"), self:canRequest(), hover == "request",
         self.pressed == "request", false, joypad and Joypad.Texture.YButton or nil)
-    if L.codeShown then
-        self:drawPaint(PostWindow.fit(L.codeLabel, UIFont.Small, L.codeLabelW), L.codeLabelPos.x, L.codeLabelPos.y)
-    end
-    local box = L.standText
-    local alpha = hover == "standing" and 1 or 0.92
-    local y = box.y
-    local bottom = box.y + box.h - L.fh
-    local color = data.lineCut and { 1, 0.45, 0.35 } or PAINT
-    for _, line in ipairs(PostWindow.wrap(PostWindow.trustText(data), UIFont.Small, box.w)) do
-        if y > bottom then
-            return
-        end
-        self:drawText(line, box.x, y, color[1], color[2], color[3], alpha, UIFont.Small)
-        y = y + L.fh
-    end
-    y = y + math.floor(L.fh / 2)
-    for _, line in ipairs(PostWindow.wrap(PostWindow.effectText(data), UIFont.Small, box.w)) do
-        if y > bottom then
-            return
-        end
-        self:drawText(line, box.x, y, AMBER[1], AMBER[2], AMBER[3], alpha * 0.9, UIFont.Small)
-        y = y + L.fh
-    end
 end
 
 function PostWindow:prerender()
@@ -1696,7 +2298,9 @@ function PostWindow:prerender()
     self:drawFace()
     self:drawScreen()
     -- Sous le champ du code (enfant dessiné après prerender, avant render).
-    self:drawCompartment(self.L.standing, getText("IGUI_MilitaryDrop_PostStanding"))
+    local s = self.L.strip
+    self:drawMetal(s.x, s.y, s.w, s.h, 0.78)
+    self:drawBevel(s.x, s.y, s.w, s.h, false, 1, 2)
 end
 
 function PostWindow:render()
@@ -1707,9 +2311,9 @@ function PostWindow:render()
     self:drawScreenOverlay()
     self:drawHeader(hover)
     self:drawStatus()
-    self:drawOrders(hover, payload)
-    self:drawRack(hover, payload)
-    self:drawStanding(hover)
+    self:drawAffairs(hover, payload)
+    self:drawDetail(hover, payload)
+    self:drawStrip(hover)
     if self.drawJoypadFocus then
         self:drawRectBorder(0, 0, self.width, self.height, 0.9, AMBER[1], AMBER[2], AMBER[3])
     end
@@ -1740,9 +2344,10 @@ function PostWindow:onKeyRelease(key)
     end
 end
 
--- Manette : A transmet, X dépose, Y demande un largage (ou ouvre le clavier à
--- l'écran tant que le code manque), RB saisit le code, B ferme ; haut et bas
--- font défiler le journal.
+-- Manette : haut et bas choisissent l'affaire, A et X lancent ses actions
+-- (bouton de droite, de gauche), Y demande un largage (ou ouvre le clavier à
+-- l'écran tant que le code manque), RB saisit le code, LB fait défiler le
+-- journal (revient en bas une fois en haut), B ferme.
 function PostWindow:onGainJoypadFocus(joypadData)
     ISPanelJoypad.onGainJoypadFocus(self, joypadData)
     self.drawJoypadFocus = true
@@ -1755,12 +2360,12 @@ end
 
 function PostWindow:onJoypadDown(button)
     if button == Joypad.AButton then
-        if self:canTransmit() then
-            self:onTransmit()
+        if self:isEnabled("primary") then
+            self:activate("primary")
         end
     elseif button == Joypad.XButton then
-        if self:canDeposit() then
-            self:onDeposit()
+        if self:isEnabled("secondary") then
+            self:activate("secondary")
         end
     elseif button == Joypad.YButton then
         if self:requestReason() == "IGUI_MilitaryDrop_RadioModule_NeedCode" then
@@ -1770,25 +2375,34 @@ function PostWindow:onJoypadDown(button)
         end
     elseif button == Joypad.RBumper then
         self:openKeyboard()
+    elseif button == Joypad.LBumper then
+        local journal = self.journal
+        if journal:getYScroll() >= 0 then
+            PostWindow.scrollJournal(journal, -journal:getScrollHeight())
+        else
+            PostWindow.scrollJournal(journal, self.L.lh * 3)
+        end
     elseif button == Joypad.BButton then
         self:close("joypad B")
     end
 end
 
 function PostWindow:onJoypadDirUp()
-    PostWindow.scrollJournal(self.journal, self.L.lh * 3)
+    self:moveSelection(-1)
 end
 
 function PostWindow:onJoypadDirDown()
-    PostWindow.scrollJournal(self.journal, -self.L.lh * 3)
+    self:moveSelection(1)
 end
 
 function PostWindow:getAPrompt()
-    return getText("IGUI_MilitaryDrop_PostTransmit")
+    local primary = self:actions()
+    return primary and primary.text or nil
 end
 
 function PostWindow:getXPrompt()
-    return getText("IGUI_MilitaryDrop_PostDeposit", tostring(#PostWindow.dogTags(self.player)))
+    local _, secondary = self:actions()
+    return secondary and secondary.text or nil
 end
 
 function PostWindow:getYPrompt()

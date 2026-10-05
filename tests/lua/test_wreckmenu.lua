@@ -15,8 +15,11 @@ function T.setup()
             CALLS = CALLS + 1
             return "vanilla", arg
         end }
+    -- Table vanilla (ISCarMechanicsOverlay.lua) : une pièce partagée existe déjà.
+    VANILLA_PART = { img = "vanilla", vehicles = { vanilla_ = { x = 1 } } }
+    ISCarMechanicsOverlay = { CarList = {}, PartList = { SkinPanels = VANILLA_PART } }
     OPTIONS = {}
-    CUT = { toolTip={description="tools"} }
+    CUT ={ toolTip={description="tools"} }
     CONTEXT = { addOption=function(_, name, player, fn, vehicle)
         OPTIONS[#OPTIONS + 1] = {name=name, player=player, fn=fn, vehicle=vehicle}
     end, getOptionFromName=function(_, name)
@@ -47,6 +50,20 @@ function T.recovery_opens_mechanics_and_blocks_final_cut_until_parts_are_removed
     CUT, EMPTY = {toolTip={description="tools"}}, true
     ISVehicleMenu.FillMenuOutsideVehicle(0,CONTEXT,vehicle,false)
     assertEq(CUT.notAvailable,nil)
+end
+
+function T.mechanics_overlay_is_registered_without_replacing_shared_parts()
+    local Overlay = ISCarMechanicsOverlay
+    local wreck = Overlay.CarList["Base.MilitaryDrop_HeliWreckBurnt"]
+    local tail = Overlay.CarList["Base.MilitaryDrop_HeliTailBurnt"]
+    assertEq(wreck.imgPrefix, "militarydrop_heli_wreck_")
+    assertEq(tail.imgPrefix, "militarydrop_heli_tail_")
+    assertEq(wreck.PartList.Avionics.img, "avionics")
+    assertEq(Overlay.PartList.Avionics.vehicles.militarydrop_heli_wreck_.x2, 177)
+    assertTrue(Overlay.PartList.SkinPanels == VANILLA_PART, "pièce partagée conservée")
+    assertEq(VANILLA_PART.vehicles.vanilla_.x, 1, "zones des autres véhicules conservées")
+    assertEq(VANILLA_PART.vehicles.militarydrop_heli_tail_.y2, 504)
+    assertEq(VANILLA_PART.vehicles.militarydrop_heli_wreck_.y, 439)
 end
 
 function T.distant_player_gets_no_recovery_option_and_reload_does_not_stack()

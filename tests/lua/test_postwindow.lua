@@ -62,7 +62,7 @@ local function sampleData()
 end
 
 function T.layout_widths_follow_the_texts()
-    -- Libellés longs (autre langue, police plus grande) : colonnes élargies.
+    -- Libellés longs (autre langue, police plus grande) : volet élargi.
     getText = function(k, a)
         if k == "IGUI_MilitaryDrop_PostDeposit" then
             return "Deposit the identification tags of the fallen (" .. tostring(a) .. ")"
@@ -72,19 +72,31 @@ function T.layout_widths_follow_the_texts()
     local L = W.computeLayout(sampleData())
     local whole = { x = 0, y = 0, w = L.W, h = L.H }
     local label = getText("IGUI_MilitaryDrop_PostDeposit", "99")
-    assertTrue(measure(label) <= L.deposit.w - 2 * L.u, "le libellé du dépôt tient dans le bouton")
-    assertTrue(measure(getText("IGUI_MilitaryDrop_PostTransmit")) <= L.transmit.w - 2 * L.u, "transmettre tient")
-    for _, name in ipairs({ "header", "status", "bezelRect", "orders", "rack", "standing", "close", "deposit",
-        "transmit", "standText", "tape", "freq" }) do
+    assertTrue(measure(label) <= L.btnB.w - 2 * L.u, "le libellé du dépôt tient dans son bouton")
+    for _, key in ipairs({ "IGUI_MilitaryDrop_PostRecorderSend", "IGUI_MilitaryDrop_PostRecorderInsert",
+        "IGUI_MilitaryDrop_PostTransmit" }) do
+        assertTrue(measure(getText(key)) <= L.btnA.w - 2 * L.u, key .. " tient")
+    end
+    for _, name in ipairs({ "header", "status", "bezelRect", "list", "detail", "strip", "close", "btnA", "btnB",
+        "request", "standText", "tape", "freq" }) do
         assertTrue(within(L[name], whole), name .. " dans la fenêtre")
     end
-    assertTrue(disjoint(L.orders, L.rack) and disjoint(L.rack, L.standing), "colonnes sans chevauchement")
+    assertTrue(disjoint(L.list, L.detail) and disjoint(L.list, L.strip) and disjoint(L.detail, L.strip),
+        "liste, volet et bande sans chevauchement")
     assertTrue(disjoint(L.tape, L.freq) and disjoint(L.lampsArea, L.tape), "rangée d'état sans chevauchement")
-    assertTrue(#L.cards >= 3, "trois ordres visibles")
+    assertTrue(disjoint(L.btnA, L.btnB), "deux boutons côte à côte")
+    for _, name in ipairs({ "detailTape", "info", "well", "btnA", "btnB", "missionCard" }) do
+        assertTrue(within(L[name], L.detail), name .. " dans le volet")
+    end
+    assertTrue(L.well.y + L.well.h <= L.btnA.y and L.info.y + L.info.h <= L.well.y, "fiche, baie, puis boutons")
+    assertTrue(within(L.box, L.well) and within(L.progress, L.well) and disjoint(L.box, L.progress),
+        "logement et barre dans la baie")
     assertTrue(#L.slots >= 4, "au moins deux rangées de plaques")
     for _, slot in ipairs(L.slots) do
-        assertTrue(within(slot, L.rack) and slot.y + slot.h <= L.deposit.y, "plaques au-dessus des boutons")
+        assertTrue(within(slot, L.detail) and slot.y + slot.h <= L.tagsHint.y, "plaques au-dessus de la consigne")
     end
+    assertTrue(L.tagsHint.y + L.tagsHint.h <= L.btnA.y, "consigne au-dessus des boutons")
+    assertTrue(within(L.listArea, L.list) and L.listArea.h >= 4 * L.rowH, "au moins quatre affaires visibles")
     assertTrue(within(L.journal, L.screen), "journal sur le verre")
     -- Ruban : l'indicatif mesuré tient.
     local data = sampleData()
@@ -96,10 +108,10 @@ end
 function T.layout_shrinks_the_journal_on_a_small_screen()
     local big = W.computeLayout(sampleData())
     assertEq(big.journalLines, W.JOURNAL_LINES, "écran large : toutes les lignes")
-    local small = W.computeLayout(sampleData(), 960, big.H - 3 * FONT_H)
-    assertTrue(small.H <= big.H - 3 * FONT_H, "la console tient dans l'écran du joueur")
-    assertTrue(small.journalLines >= W.JOURNAL_MIN_LINES and small.journalLines < W.JOURNAL_LINES,
-        "journal raccourci")
+    local spare = (W.JOURNAL_LINES - W.JOURNAL_MIN_LINES) * FONT_H
+    local small = W.computeLayout(sampleData(), 960, big.H - spare)
+    assertTrue(small.H <= big.H - spare, "la console tient dans l'écran du joueur")
+    assertEq(small.journalLines, W.JOURNAL_MIN_LINES, "journal raccourci au minimum")
 end
 
 function T.lamps_never_reveal_the_frequency()
@@ -241,10 +253,11 @@ function T.request_button_calls_the_base_like_the_radio_menu()
         return k .. "|" .. tostring(a)
     end
     local L = W.computeLayout(sampleData())
-    assertTrue(within(L.request, L.standing), "bouton dans la colonne de confiance")
-    assertTrue(disjoint(L.request, L.standText), "sous le texte de confiance")
+    assertTrue(within(L.request, L.strip), "bouton dans la bande du bas")
+    assertTrue(disjoint(L.request, L.standText) and L.standText.x + L.standText.w <= L.request.x,
+        "confiance à gauche du bouton")
     assertTrue(measure(getText("IGUI_MilitaryDrop_RequestDrop")) <= L.request.w - 2 * L.u, "libellé entier")
-    assertTrue(L.standText.h >= 4 * FONT_H, "place pour la phrase et l'effet")
+    assertTrue(L.standText.w >= 10 * FONT_H, "place pour la confiance sur une ligne")
     -- Même appel que la fenêtre radio, par la radio du poste, avec le code du champ.
     local calls = {}
     MilitaryDrop.Client.call = function(player, device, code, force, opts)
@@ -295,12 +308,11 @@ function T.code_field_sits_above_the_request_button()
     end
     local L = W.computeLayout(sampleData())
     assertTrue(L.codeShown, "code exigé par défaut")
-    assertTrue(within(L.code, L.standing), "champ dans la colonne de confiance")
-    assertTrue(disjoint(L.code, L.request) and L.code.y + L.code.h <= L.request.y, "au-dessus du bouton")
-    assertTrue(disjoint(L.code, L.standText), "sous le texte de confiance")
+    assertTrue(within(L.code, L.strip), "champ dans la bande du bas")
+    assertTrue(disjoint(L.code, L.request) and L.code.x + L.code.w <= L.request.x, "à gauche du bouton")
+    assertTrue(L.standText.x + L.standText.w <= L.codeLabelPos.x, "confiance à gauche du libellé")
     assertTrue(L.code.w >= measure("888888"), "assez large pour un code")
     assertTrue(L.codeLabelPos.x + L.codeLabelW <= L.code.x, "libellé à gauche du champ")
-    assertTrue(L.standText.h >= 4 * FONT_H, "place pour la phrase et l'effet")
     SandboxVars.MilitaryDrop.AuthCode = MilitaryDrop.Codes.MODE_NONE
     local plain = W.computeLayout(sampleData())
     assertTrue(not plain.codeShown and plain.code == nil, "sans code exigé : pas de champ")
@@ -330,6 +342,236 @@ function T.console_code_is_kept_and_typed_with_the_joypad()
     assertTrue(JoypadState.players[2].focus.prevFocus == window, "retour à la console après la saisie")
     typed = "x-1"
     assertEq(window:getYPrompt(), "IGUI_MilitaryDrop_RequestDrop", "code saisi : Y appelle")
+end
+
+-- ----------------------------------------------------------------------------
+-- Tableau des affaires et baie de lecture (POSTE-08, SRC-08)
+-- ----------------------------------------------------------------------------
+
+local function recorderItem(id, site, extra)
+    local data = { MilitaryDrop_crashSite = site }
+    for name, value in pairs(extra or {}) do
+        data[name] = value
+    end
+    return { getID = function() return id end, getFullType = function() return "MilitaryDrop.FlightRecorder" end,
+        getModData = function() return data end }
+end
+
+local function keysOf(list)
+    local out = {}
+    for _, entry in ipairs(list) do
+        out[#out + 1] = entry.key or ("[" .. entry.kind .. "]")
+    end
+    return table.concat(out, " ")
+end
+
+function T.affairs_list_recorders_tags_then_orders()
+    local data = sampleData()
+    data.bay = { site = "W3", progress = 0.4 }
+    data.mail = { { id = "1", name = "John Doe", by = "alice" } }
+    data.missions = { { kind = "recon", title = "Recon", remaining = 40, hours = 48, x = 1711, y = 6016 },
+        { kind = "control", title = "Control", remaining = 2, hours = 4, progress = 0, quota = 1 } }
+    local list = W.affairs(data, { recorderItem(7, "W3"), recorderItem(8, "W5", { MilitaryDrop_crashX = 10 }) }, 2)
+    assertEq(keysOf(list), "[header] bay rec:W5 tags [header] mission:recon mission:control",
+        "à traiter (baie, inventaire, plaques), puis ordres")
+    assertEq(list[2].icon, "MilitaryDrop.FlightRecorder", "icône de l'enregistreur")
+    assertEq(list[2].sub, "IGUI_MilitaryDrop_PostRecorderReading|40|nil", "lecture en pour-cent")
+    assertEq(list[2].lamp, "amber", "voyant ambre pendant la lecture")
+    assertEq(list[3].itemId, 8, "objet à insérer")
+    assertEq(list[3].cx, 10, "point du crash lu sur l'objet")
+    assertEq(list[4].icon, "Base.Necklace_DogTag", "icône de la plaque vanilla")
+    assertEq(list[4].sub, "IGUI_MilitaryDrop_PostTagsCount|1|2", "au poste, sur moi")
+    assertEq(list[6].title, "Recon", "ordre de la base")
+    data.bay.paused = true
+    assertEq(W.affairs(data, {}, 0)[2].lamp, "red", "voyant rouge en pause")
+    data.bay.done = true
+    assertEq(W.affairs(data, {}, 0)[2].sub, "IGUI_MilitaryDrop_PostRecorderDone|nil|nil", "lu")
+    data.missions = {}
+    data.bay = nil
+    local empty = W.affairs(data, {}, 0)
+    assertEq(keysOf(empty), "[header] tags [header] [empty]", "sans mission : mention, plaques toujours là")
+    assertEq(W.pickAffair(list, "rec:W5").key, "rec:W5", "sélection gardée")
+    assertEq(W.pickAffair(list, "gone").key, "bay", "sinon la première ligne")
+end
+
+function T.inventory_recorders_are_one_per_site_and_not_worn()
+    local a, b, c = recorderItem(1, "W3"), recorderItem(2, "W3"), recorderItem(3, "W4")
+    local other = { getFullType = function() return "Base.Battery" end, getModData = function() return {} end }
+    local blank = recorderItem(4, nil)
+    local items = { a, b, c, other, blank }
+    ArrayList = { new = function() return {} end }
+    local player = {
+        getInventory = function()
+            return { getAllEvalRecurse = function(_, predicate)
+                local found = {}
+                for _, item in ipairs(items) do
+                    if predicate(item) then
+                        found[#found + 1] = item
+                    end
+                end
+                return arrayList(found)
+            end }
+        end,
+        isEquipped = function(_, item) return item == c end,
+        isAttachedItem = function() return false end,
+    }
+    local found = W.recorders(player)
+    assertEq(#found, 1, "un par site, ni objet porté, ni autre objet, ni enregistreur sans site")
+    assertEq(found[1], a, "le premier du site")
+end
+
+local function window(data, recorders, tags)
+    -- Radio posée du poste (référence envoyée au serveur : case et index).
+    instanceof = function(_, class) return class == "IsoWaveSignal" end
+    local sent = {}
+    MilitaryDrop.Net.toServer = function(_, name, args) sent[#sent + 1] = { name = name, args = args } end
+    local said = {}
+    local player = { getPlayerNum = function() return 0 end, isDead = function() return false end,
+        getX = function() return 10.5 end, getY = function() return 10.5 end, getZ = function() return 0 end,
+        Say = function(_, text) said[#said + 1] = text end }
+    local object = { getObjectIndex = function() return 0 end }
+    local square = { getX = function() return 10 end, getY = function() return 10 end,
+        getZ = function() return 0 end,
+        getObjects = function() return { indexOf = function(_, o) return o == object and 0 or -1 end } end }
+    object.getSquare = function() return square end
+    local w = setmetatable({ player = player, playerNum = 0, object = object, data = data,
+        L = W.computeLayout(data), tagCount = tags or 0, tagLabels = {}, recorderItems = recorders or {},
+        affairList = {}, rackScroll = 0, listScroll = 0 }, { __index = W })
+    w:refreshAffairs()
+    return w, sent, said
+end
+
+function T.each_affair_has_its_own_actions()
+    getSoundManager = function() return { playUISound = function() end } end
+    local data = sampleData()
+    data.bay = { site = "W3", progress = 0.5, total = 0.5 }
+    local w, sent, said = window(data, { recorderItem(8, "W5") }, 1)
+    assertEq(w.selectedKey, "bay", "la baie d'abord")
+    local primary, secondary = w:actions()
+    assertEq(primary.text, "IGUI_MilitaryDrop_PostRecorderSend|nil|nil", "transmettre à droite")
+    assertTrue(not primary.enabled and primary.reason == "IGUI_MilitaryDrop_PostResult_notRead",
+        "grisé tant que la lecture n'est pas finie")
+    assertTrue(secondary.enabled, "retirer, toujours possible")
+    data.bay.done = true
+    primary = w:actions()
+    assertTrue(primary.enabled, "lu, poste allumé : transmettre")
+    assertEq(w:hitTest(w.L.btnA.x + 1, w.L.btnA.y + 1), "primary", "bouton de droite")
+    w:activate("primary")
+    assertEq(sent[#sent].name, "PostRecorderTransmit", "commande envoyée")
+    assertEq(said[1], "IGUI_MilitaryDrop_PostRecorderSendSay|Station Kilo-7|nil", "le personnage parle")
+    data.power = "none"
+    assertEq(w:sendReason(), "IGUI_MilitaryDrop_TurnOn", "sans courant : grisé")
+    data.power = "grid"
+    w:activate("secondary")
+    assertEq(sent[#sent].name, "PostRecorderEject", "retirer de la baie")
+    -- Enregistreur de l'inventaire : baie occupée, puis libre.
+    w:select("rec:W5")
+    primary, secondary = w:actions()
+    assertTrue(secondary == nil, "une seule action")
+    assertTrue(not primary.enabled and primary.reason == "IGUI_MilitaryDrop_PostResult_bayBusy", "baie occupée")
+    data.bay = nil
+    w:refreshAffairs()
+    assertEq(w.selectedKey, "rec:W5", "sélection gardée après le rafraîchissement")
+    Joypad = { AButton = 0, BButton = 1, XButton = 2, YButton = 3, LBumper = 4, RBumper = 5 }
+    w:onJoypadDown(Joypad.AButton)
+    assertEq(sent[#sent].name, "PostRecorderInsert", "A : insérer")
+    assertEq(sent[#sent].args.item, 8, "l'objet choisi")
+    -- Plaques : déposer (X), annoncer (A).
+    w:moveSelection(1)
+    assertEq(w.selectedKey, "tags", "bas : affaire suivante")
+    primary, secondary = w:actions()
+    assertTrue(secondary.enabled and not primary.enabled, "une plaque sur soi, casier vide")
+    -- Mission : aucune action.
+    w:moveSelection(5)
+    assertEq(w:selectedAffair().kind, "tags", "dernière ligne sélectionnable")
+end
+
+function T.bay_progress_moves_between_two_refreshes_without_finishing()
+    local hours = 1000
+    getGameTime = function() return { getWorldAgeHours = function() return hours end } end
+    local data = sampleData()
+    data.bay = { site = "W3", progress = 0.5, total = 0.5 }
+    local w = window(data)
+    w.dataHours = 1000
+    hours = 1000.1
+    assertTrue(math.abs(w:bayProgress() - 0.7) < 1e-9, "avancée en temps de jeu depuis la réception")
+    assertEq(W.bayStatus(data.bay, w:bayProgress()), "IGUI_MilitaryDrop_PostRecorderReading|70|nil",
+        "même valeur dans la liste et sous la barre")
+    hours = 1002
+    assertEq(w:bayProgress(), 0.99, "jamais finie avant le serveur")
+    data.bay.done = true
+    assertEq(w:bayProgress(), 1, "finie quand le serveur le dit")
+    -- En pause : figée sur la valeur du serveur.
+    local paused = sampleData()
+    paused.bay = { site = "W4", progress = 0.3, total = 0.5, paused = true }
+    local w2 = window(paused)
+    w2.dataHours = 1000
+    assertEq(w2:bayProgress(), 0.3, "en pause : figée")
+end
+
+function T.bay_progress_never_goes_back_for_the_same_recorder()
+    local hours = 1000
+    getGameTime = function() return { getWorldAgeHours = function() return hours end } end
+    local data = sampleData()
+    data.bay = { site = "W3", progress = 0.5, total = 0.5 }
+    local w = window(data)
+    w.dataHours = 1000
+    hours = 1000.1
+    assertTrue(math.abs(w:bayProgress() - 0.7) < 1e-9, "estimation à 70 %")
+    -- Envoi suivant un peu en retard (réseau) : 60 %, reçu maintenant.
+    w.data = sampleData()
+    w.data.bay = { site = "W3", progress = 0.6, total = 0.5 }
+    w.dataHours = hours
+    assertTrue(math.abs(w:bayProgress() - 0.7) < 1e-9, "pas de recul de la barre")
+    hours = 1000.15
+    assertTrue(math.abs(w:bayProgress() - 0.7) < 1e-9, "tient tant que le serveur n'a pas rattrapé")
+    hours = 1000.2
+    assertTrue(math.abs(w:bayProgress() - 0.8) < 1e-9, "puis reprend sa course")
+    -- Autre enregistreur : repart de sa propre valeur.
+    w.data.bay = { site = "W5", progress = 0.1, total = 0.5 }
+    w.dataHours = hours
+    assertTrue(math.abs(w:bayProgress() - 0.1) < 1e-9, "valeur du nouvel enregistreur")
+end
+
+function T.journal_names_the_recorder_of_a_bay_event()
+    local text = W.journalText({ { c = 100, sys = "recorderRead", site = "W3" }, { c = 100, sys = "installed" } })
+    assertTrue(text:find("IGUI_MilitaryDrop_PostSys_recorderRead|W3", 1, true) ~= nil, "site cité")
+    assertTrue(text:find("IGUI_MilitaryDrop_PostSys_installed|", 1, true) ~= nil, "autres entrées inchangées")
+end
+
+function T.estimated_end_asks_the_server_at_once_instead_of_waiting()
+    local hours, now = 1000, 0
+    getGameTime = function() return { getWorldAgeHours = function() return hours end } end
+    getTimestampMs = function() return now end
+    local data = sampleData()
+    data.bay = { site = "W3", progress = 0.9, total = 1 / 6 }
+    local w, sent = window(data)
+    w.dataHours = 1000
+    w:bayProgress()
+    assertEq(#sent, 0, "lecture en cours : pas de demande")
+    hours = 1000 + 0.2 / 6
+    assertEq(w:bayProgress(), 0.99, "estimée finie : 99 % en attendant le serveur")
+    assertEq(#sent, 1, "état redemandé aussitôt")
+    assertEq(sent[1].name, "PostOpen", "rafraîchissement de la console")
+    now = 500
+    w:bayProgress()
+    assertEq(#sent, 1, "au plus une demande par seconde")
+    now = 1200
+    w:bayProgress()
+    assertEq(#sent, 2, "nouvelle demande si la réponse tarde")
+end
+
+function T.end_click_refreshes_the_console_open_on_that_post()
+    getTimestampMs = function() return 0 end
+    local w, sent = window(sampleData())
+    W.instances = { [0] = w }
+    W.onBaySound({ x = 10, y = 10, z = 0, reading = true })
+    assertEq(#sent, 0, "lecture en cours : rien")
+    W.onBaySound({ x = 50, y = 10, z = 0, event = "done", reading = false })
+    assertEq(#sent, 0, "autre poste : rien")
+    W.onBaySound({ x = 10, y = 10, z = 0, event = "done", reading = false })
+    assertEq(#sent, 1, "fin sur ce poste : console rafraîchie")
+    W.instances = {}
 end
 
 return T

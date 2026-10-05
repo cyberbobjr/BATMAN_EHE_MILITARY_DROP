@@ -5,7 +5,7 @@ local Crash = {}
 MilitaryDrop.Crash = Crash
 MilitaryDrop.Config.addDefaults({ CrashChance = 5, CrashStormBonus = 15, CrashGunfire = false,
     CrashGunfireChance = 10,
-    CrashFire = 2, CrashSmokeMinutes = 60, CrashCrates = true, SalvageRolls = 3,
+    CrashFire = 3, CrashSmokeMinutes = 60, CrashCrates = true, SalvageRolls = 3,
     PilotOutfits = "Army", PilotDocuments = true })
 Crash.WARNING_SECONDS = 5
 

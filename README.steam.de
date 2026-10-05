@@ -44,6 +44,10 @@ Erreiche die Kiste 150–400 Kacheln entfernt; eine Horde bewacht sie. Leere Kis
 
 [b]Lass ein Funkgerät auf der Militärfrequenz eingeschaltet.[/b] Planquadrat und Marker kommen bei Landung und alle 6 h bis zur Öffnung. Aus oder anderer Kanal: keine Meldung, kein Marker. Speichere mit [b]Voreinstellung hinzufügen[/b].
 
+[h2]Wenn ein Hubschrauber abstürzt[/h2]
+
+Ein Versorgungshubschrauber kann abstürzen, bei Gewitter häufiger. Sein MAYDAY nennt einen Sektor auf der Militärfrequenz. Am Wrack trägt der Pilot eine Mitteilung, ein Codebuch und den [b]Flugschreiber[/b]; birg die Wrackteile und zerlege dann den Rest. Der Nachschub landet trotzdem an der Absturzstelle.
+
 [h2]Das Vertrauen der Basis gewinnen[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
@@ -62,6 +66,7 @@ Abwürfe ändern nur den Ruf des anfordernden Charakters; andere Öffner erhalte
 [tr][td]Anderes Mitglied der Fraktion beim Anruf öffnet zuerst[/td][td]+5[/td][/tr]
 [tr][td]Außenstehender öffnet zuerst[/td][td]−5[/td][/tr]
 [tr][td]Kein Koffer binnen 48 h nach Lieferung geöffnet[/td][td]−10[/td][/tr]
+[tr][td]Flugschreiber gelesen und gesendet, einmal pro Absturz, ohne Limit[/td][td]+10[/td][/tr]
 [tr][td]Erste tägliche Lagemeldung[/td][td]+1[/td][/tr]
 [tr][td]Jede gültige, neue Namens-Hundemarke[/td][td]+2[/td][/tr]
 [tr][td]Erste Aufklärungsbestätigung: 25 Kacheln / 48 h[/td][td]+3[/td][/tr]
@@ -79,14 +84,14 @@ Tageslimit: +8 je Charakter außer Abwürfen. Postenbonus: Meldung +2, Marke +3,
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Ein festes Militärfunkgerät wird zur gemeinsamen Stationskonsole: Protokoll, Befehle, Marken, Abwürfe. Jede Fraktion hat ein Rufzeichen; Vertrauen ist persönlich.
+Ein festes Militärfunkgerät wird zur gemeinsamen Stationskonsole: offene Aufgaben (Flugschreiber, Marken), Befehle, Protokoll, Abwürfe. Sein Leseschacht liest einen Flugschreiber in 10 Minuten, danach geht er an die Basis. Jede Fraktion hat ein Rufzeichen; Vertrauen ist persönlich.
 
 [h2]Für Server-Admins[/h2]
 
 [list]
-[*]45 Sandbox-Optionen: Wartezeit zwischen Abwürfen (standardmäßig eine Woche, für den ganzen Server), Entfernung, Horde, Code-Modus, Vertrauen, Einsätze, Anforderung, Köder.
+[*]55 Sandbox-Optionen: Wartezeit zwischen Abwürfen (standardmäßig eine Woche, für den ganzen Server), Entfernung, Horde, Code-Modus, Vertrauen, Einsätze, Anforderung, Köder, Hubschrauberabstürze.
 [*]Anforderungsposten lassen sich in Zomboid/Lua/MilitaryDrop/requisition.txt bearbeiten, deaktivieren oder ergänzen.
-[*]Serverautoritativer Mehrspieler. Admins können von einem Militärfunkgerät aus einen Abwurf erzwingen und Einsätze starten.
+[*]Serverautoritativer Mehrspieler. Admins können von einem Militärfunkgerät aus einen Abwurf erzwingen, den nächsten Hubschrauber abstürzen lassen und Einsätze starten.
 [/list]
 
 [h2]Kompatibilität[/h2]
@@ -95,6 +100,7 @@ Ein festes Militärfunkgerät wird zur gemeinsamen Stationskonsole: Protokoll, B
 [*]Kein anderer Mod erforderlich.
 [*]Für das Zusammenspiel mit [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url] ausgelegt.
 [*]Mit [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] markiert grüner Rauch die Kiste.
+[*]Funktioniert mit Better Walkie Talkies: dessen Push-to-Talk-, Sprach- und Batterieregeln bleiben erhalten.
 [*]Gegenstände aus deinen Waffen- und Gegenstandsmods erscheinen in den Kisten.
 [/list]
 

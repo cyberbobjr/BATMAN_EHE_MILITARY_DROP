@@ -44,6 +44,10 @@ Rejoignez la grille à 150–400 cases ; une horde garde la caisse. La caisse vi
 
 [b]Gardez une radio allumée sur la fréquence militaire.[/b] Grille et repère arrivent au largage puis toutes les 6 h jusqu’à ouverture. Radio éteinte ou autre chaîne : aucune annonce ni repère. Sauvegardez avec [b]Ajouter un préréglage[/b].
 
+[h2]Quand un hélicoptère s’écrase[/h2]
+
+Un hélicoptère de ravitaillement peut s’écraser, plus souvent par orage. Son MAYDAY donne un secteur sur la fréquence militaire. Sur l’épave, le pilote porte une note, un carnet de codes et l’[b]enregistreur de vol[/b] ; récupérez les pièces de l’épave, puis découpez-la. Le ravitaillement arrive quand même sur le site.
+
 [h2]Gagner la confiance de la base[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
@@ -62,6 +66,7 @@ Pour un largage, seul le personnage demandeur gagne ou perd ; un autre ouvreur r
 [tr][td]Un autre membre de la faction de l’appel ouvre la première caisse[/td][td]+5[/td][/tr]
 [tr][td]Un personnage extérieur ouvre la première caisse[/td][td]−5[/td][/tr]
 [tr][td]Aucune caisse ouverte dans les 48 h après livraison[/td][td]−10[/td][/tr]
+[tr][td]Enregistreur de vol lu et transmis, une fois par crash, hors plafond[/td][td]+10[/td][/tr]
 [tr][td]Premier rapport de situation du jour[/td][td]+1[/td][/tr]
 [tr][td]Chaque plaque nominative valide et inédite[/td][td]+2[/td][/tr]
 [tr][td]Première reconnaissance confirmée à 25 cases / sous 48 h[/td][td]+3[/td][/tr]
@@ -79,14 +84,14 @@ Plafond : +8/jour/personnage hors largages. Bonus du poste : rapport +2, plaque 
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Une radioamateur militaire fixe devient la console partagée de la station : journal, ordres, plaques et largages. La faction garde son indicatif ; la confiance est personnelle.
+Une radioamateur militaire fixe devient la console partagée de la station : affaires à traiter (enregistreurs de vol, plaques), ordres, journal et largages. Sa baie de lecture lit un enregistreur de vol en 10 minutes avant l’envoi à la base. La faction garde son indicatif ; la confiance est personnelle.
 
 [h2]Pour les admins[/h2]
 
 [list]
-[*]45 options du bac à sable : attente entre deux largages (une semaine par défaut, pour tout le serveur), distance, horde, mode du code, confiance, missions, réquisition, leurre.
+[*]55 options du bac à sable : attente entre deux largages (une semaine par défaut, pour tout le serveur), distance, horde, mode du code, confiance, missions, réquisition, leurre, crashs d’hélicoptère.
 [*]Lots de réquisition modifiables, désactivables ou à ajouter dans Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Multijoueur où le serveur décide de tout. Les admins peuvent forcer un largage et lancer des missions depuis une radio militaire.
+[*]Multijoueur où le serveur décide de tout. Les admins peuvent forcer un largage, faire s’écraser le prochain hélicoptère et lancer des missions depuis une radio militaire.
 [/list]
 
 [h2]Compatibilité[/h2]
@@ -95,6 +100,7 @@ Une radioamateur militaire fixe devient la console partagée de la station : jou
 [*]Aucun autre mod requis.
 [*]Conçu pour cohabiter avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], une fumée verte signale la caisse.
+[*]Fonctionne avec Better Walkie Talkies : ses règles d’appui pour parler, de voix et de pile sont conservées.
 [*]Les objets de vos mods d'armes et d'objets apparaissent dans les caisses.
 [/list]
 

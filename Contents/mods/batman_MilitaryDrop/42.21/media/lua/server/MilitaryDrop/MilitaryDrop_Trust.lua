@@ -25,6 +25,8 @@ Trust.DROP_RECOVERED = 10
 Trust.DROP_RECOVERED_BY_FACTION = 5
 Trust.DROP_TAKEN = -5
 Trust.DROP_LOST = -10
+-- Enregistreur de vol lu et transmis depuis le poste (SRC-08), hors plafond quotidien.
+Trust.RECORDER = 10
 Trust.FAILED_CODE_PENALTY = -2
 Trust.FAILED_CODE_LIMIT = 3
 Trust.FAILED_CODE_WINDOW_HOURS = 1
@@ -194,7 +196,7 @@ local function cutLine(characterId, e)
     MilitaryDrop.log("character " .. tostring(characterId) .. ": trust " .. e.value .. ", line cut for " .. days .. " days", true)
 end
 
---- Ajoute amount à la note (négatif : perte). source "drop" : hors plafond ;
+--- Ajoute amount à la note (négatif : perte). source "drop" ou "recorder" : hors plafond ;
 --- "code" : perte ; autres sources : gains plafonnés par jour, opts.fromPost
 --- applique le bonus du poste. Renvoie la variation réellement appliquée.
 function Trust.add(characterId, amount, source, opts)
@@ -207,7 +209,7 @@ function Trust.add(characterId, amount, source, opts)
         return 0
     end
     local e = entry(characterId)
-    local capped = amount > 0 and source ~= "drop"
+    local capped = amount > 0 and source ~= "drop" and source ~= "recorder"
     if capped then
         if type(opts) == "table" and opts.fromPost then
             local bonus = math.max(0, tonumber(Config.get("TrustPostBonus")) or 0)

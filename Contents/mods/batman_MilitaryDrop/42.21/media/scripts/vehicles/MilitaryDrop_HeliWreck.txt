@@ -18,12 +18,15 @@ module Base
         model { file = Vehicle_MilitaryDrop_HeliWreck, scale = 1.0, offset = 0.0 0.0 0.0, }
         skin { texture = Vehicles/MilitaryDrop/Vehicle_MilitaryDrop_HeliWreck, }
         textureMask = Vehicles/MilitaryDrop/Vehicle_MilitaryDrop_HeliWreck_mask,
+        textureShadow = Vehicles/MilitaryDrop/Vehicle_MilitaryDrop_HeliWreck_shadow,
+        shadowExtents = 8.21364 6.57658,
+        shadowOffset = 0.54944 -0.20829,
         textureDamage1Overlay = Vehicles/Veh_Blood_Mask,
         textureDamage2Overlay = Vehicles/Veh_Blood_Hvy,
         textureDamage1Shell = Vehicles/Veh_Damage1,
         textureDamage2Shell = Vehicles/Veh_Damage2,
         textureRust = Vehicles/Veh_Rust,
-        extents = 7.86 2.56 6.24,
+        extents = 2.8 2.56 5.8,
         physicsChassisShape = 2.2 0.7 5.8,
         centerOfMassOffset = 0.0 0.8 0.0,
         physics box { offset = 0 1.1 0, extents = 2.2 1.5 4.5, rotate = 0 0 0, }
@@ -175,6 +178,9 @@ module Base
         model { file = Vehicle_MilitaryDrop_HeliTail, scale = 1.0, offset = 0.0 0.0 0.0, }
         skin { texture = Vehicles/MilitaryDrop/Vehicle_MilitaryDrop_HeliTail, }
         textureMask = Vehicles/MilitaryDrop/Vehicle_MilitaryDrop_HeliTail_mask,
+        textureShadow = Vehicles/MilitaryDrop/Vehicle_MilitaryDrop_HeliTail_shadow,
+        shadowExtents = 2.51162 4.86251,
+        shadowOffset = 0.00028 -0.12064,
         textureDamage1Overlay = Vehicles/Veh_Blood_Mask,
         textureDamage2Overlay = Vehicles/Veh_Blood_Hvy,
         textureDamage1Shell = Vehicles/Veh_Damage1,

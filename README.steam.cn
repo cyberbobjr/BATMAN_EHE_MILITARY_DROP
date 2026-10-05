@@ -44,6 +44,10 @@
 
 [b]无线电须开启并调到军用频率。[/b]落地及每6小时播报坐标和地图标记，直到开箱。关闭或其他频道：无播报也无标记。用[b]添加频道[/b]保存频率。
 
+[h2]直升机坠毁[/h2]
+
+补给直升机可能坠毁，雷暴天更常见。它的 MAYDAY 会在军用频率上报出大致区域。飞行员身上有备忘录、密码本和[b]飞行记录器[/b]；回收残骸零件后再拆解残骸。补给仍会送达坠毁地点。
+
 [h2]赢得基地的信任[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
@@ -62,6 +66,7 @@
 [tr][td]呼叫时所属派系的另一成员先打开[/td][td]+5[/td][/tr]
 [tr][td]派系外角色先打开[/td][td]−5[/td][/tr]
 [tr][td]落地后48小时内无人打开[/td][td]−10[/td][/tr]
+[tr][td]读取并发送飞行记录器，每个坠毁点一次，不计上限[/td][td]+10[/td][/tr]
 [tr][td]每天首次情况报告[/td][td]+1[/td][/tr]
 [tr][td]每个有效且未上报的实名狗牌[/td][td]+2[/td][/tr]
 [tr][td]首次侦察确认：25格内 / 48小时[/td][td]+3[/td][/tr]
@@ -79,14 +84,14 @@
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-固定军用无线电成为共享控制台：记录、命令、狗牌和空投。每个派系有自己的呼号，信任归个人。
+固定军用无线电成为共享控制台：待办事项（飞行记录器、狗牌）、命令、记录和空投。读取舱用 10 分钟读取飞行记录器，然后发送给基地。每个派系有自己的呼号，信任归个人。
 
 [h2]服务器管理员[/h2]
 
 [list]
-[*]45 个沙盒选项：空投间隔（默认一周，对整个服务器生效）、距离、僵尸群、认证码模式、信任度、任务、申领、诱饵。
+[*]55 个沙盒选项：空投间隔（默认一周，对整个服务器生效）、距离、僵尸群、认证码模式、信任度、任务、申领、诱饵、直升机坠毁。
 [*]可以在 Zomboid/Lua/MilitaryDrop/requisition.txt 中修改、禁用或添加申领物资。
-[*]多人模式由服务器做主。管理员可以用军用无线电强制空投和发起任务。
+[*]多人模式由服务器做主。管理员可以用军用无线电强制空投、让下一架直升机坠毁和发起任务。
 [/list]
 
 [h2]兼容性[/h2]
@@ -95,6 +100,7 @@
 [*]不需要其他模组。
 [*]设计上可与 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url] 共存。
 [*]搭配 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] 时，绿色烟雾会标出空投箱。
+[*]兼容 Better Walkie Talkies：保留其按键通话、语音和电池规则。
 [*]你的武器和物品模组中的物品也会出现在补给箱里。
 [/list]
 

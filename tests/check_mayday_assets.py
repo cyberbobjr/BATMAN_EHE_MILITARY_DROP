@@ -105,8 +105,42 @@ def main():
         assert Image.open(mask).convert('RGB').getextrema() == ((0,0),(0,0),(0,0))
         print(f'{name}: {len(data)//3} exported vertices, cm/Y up, identity nodes, one UV layer')
     vehicle = (SCRIPTS / 'vehicles/MilitaryDrop_HeliWreck.txt').read_text(encoding='utf-8')
-    for kind, ref in re.findall(r'\b(mesh|texture|textureMask)\s*=\s*([\w/]+)',vehicle):
+    for kind, ref in re.findall(r'\b(mesh|texture|textureMask|textureShadow)\s*=\s*([\w/]+)',vehicle):
         exact(COMMON / (f'models_X/{ref}.fbx' if kind == 'mesh' else f'textures/{ref}.png'))
+    shadows = json.loads((ROOT/'source/heli_wreck/shadows.json').read_text())
+    for name, details in shadows.items():
+        image = Image.open(COMMON/f'textures/Vehicles/MilitaryDrop/{name}_shadow.png')
+        assert image.mode == 'RGBA' and image.size == (1024,1024)
+        alpha = image.getchannel('A')
+        assert alpha.getbbox() == tuple(details['alpha_bbox'])
+        assert alpha.getextrema() == (0,210)
+        assert 0.08 < sum(alpha.histogram()[64:])/1024**2 < .65, 'Silhouette, not a rectangle'
+        ext = ' '.join(f'{v:.5f}' for v in details['extents_m'])
+        off = ' '.join(f'{v:.5f}' for v in details['offset_m'])
+        assert re.search(rf'textureShadow = Vehicles/MilitaryDrop/{name}_shadow,\s*'
+                         rf'shadowExtents = {re.escape(ext)},\s*shadowOffset = {re.escape(off)},', vehicle)
+        nodes = list(walk(read_fbx(COMMON/f'models_X/vehicles/{name}.fbx')))
+        raw = next(v[0] for n,v,_ in nodes if n == 'Vertices')
+        width,length = details['extents_m']
+        ox,oz = details['offset_m']
+        # Contrôle de l'orientation (+X,+Z au coin haut-gauche), sur les FBX livrés.
+        polygon_indices = next(v[0] for n,v,_ in nodes if n == 'PolygonVertexIndex')
+        used_vertices = {-v-1 if v < 0 else v for v in polygon_indices}
+        for index in used_vertices:
+            i = index*3
+            px = round((ox+width/2-raw[i]/100)/width*1024)
+            py = round((oz+length/2-raw[i+2]/100)/length*1024)
+            assert alpha.getpixel((px,py)) > 10, 'Projected vertex outside the shadow'
+        print(f'{name}: fitted shadow silhouette, bounds, offset and UV orientation verified')
+    import os
+    vanilla = Path(os.environ.get('PZ_MEDIA', r'D:\SteamLibrary\steamapps\common\ProjectZomboid\media'))
+    if vanilla.is_dir():
+        outfit_xml = ET.parse(vanilla/'clothing/clothing.xml').getroot()
+        for gender in ('m_MaleOutfits','m_FemaleOutfits'):
+            assert any(entry.findtext('m_Name') == 'ArmyCamoGreen' for entry in outfit_xml.findall(gender))
+        script = (SCRIPTS/'vehicles/MilitaryDrop_HeliWreck.txt').read_text(encoding='utf-8')
+        assert re.search(r'extents\s*=\s*2\.8\s+2\.56\s+5\.8\s*,',script)
+        print('Pilot outfit exists in both vanilla clothing registries; vehicle obstruction bounds follow the fuselage')
     for icon in re.findall(r'Icon\s*=\s*(\w+)',(SCRIPTS/'MilitaryDrop_salvage.txt').read_text()):
         p = exact(COMMON/f'textures/Item_{icon}.png')
         im = Image.open(p)

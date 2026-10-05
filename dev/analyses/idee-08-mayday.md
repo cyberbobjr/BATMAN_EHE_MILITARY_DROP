@@ -17,6 +17,21 @@ Autorisée par l’utilisateur, sur `feature/mayday-wreck`. Les sections suivant
 
 Validation hors jeu : `tests/run_tests.py --require-luacheck`, `tests/check_mayday_assets.py`, aperçus Blender. Source installée : `projectzomboid.jar` SHA256 `E1A69EB743EDE60B213A0FE7F8B83D4FCAB773036D256CC4543A336F3B058A33`, identique au relevé des sources décompilées 42.21.0 ; journal `console.txt` : `version=42.21.0 4a0e9546ec`. Cela confirme la version inspectée, pas une exécution du nouveau code en jeu. Protocole M1-M8 dans [TEST-PROTOCOL.md](../TEST-PROTOCOL.md).
 
+## Révision du 2026-10-04
+
+- Visuels de l'épave corrigés : normales extérieures, UV, peinture usée et ombres transparentes projetées depuis les deux FBX livrés ; voir [sources des modèles](../../source/heli_wreck/README.md).
+- Cadavre conservé avec les documents et l'enregistreur ; deux pilotes militaires zombies ajoutés aux **nouveaux** crashs, chacun suivi indépendamment. La première tenue mod, `MilitaryDrop_ArmyPilot`, préfixait ses GUID vanilla par l'id du mod : aucune pièce n'était résolue, les zombies apparaissaient en sous-vêtements. Ils utilisent désormais la tenue vanilla `ArmyCamoGreen`, inscrite pour homme et femme dans les sources installées. Le démembrage du cadavre n'est pas réalisé : aucune API native de cadavre démembré confirmée dans les sources installées, représentation spécifique nécessaire.
+- Navigation corrigée : le `VehiclePoly` vanilla bloque un rectangle dérivé de `extents.x/z`, indépendamment des formes physiques ; l'ancienne boîte 7,86 × 6,24 m incluait l'envergure entière des pales. Les extents de collision passent à 2,8 × 5,8 m, autour du fuselage et des patins ; le FBX et l'ombre gardent leurs dimensions visuelles.
+- Un seul petit foyer initial et la fumée sont placés près du fuselage **réellement posé**, après la recherche d'une zone libre, et non au point annoncé si l'épave a été déplacée. Les cases du feu et de la fumée sont distinctes : `CanAddSmoke` refuse une case déjà en feu. Le foyer n'est pas rallumé après extinction.
+- `CrashFire` passe par défaut à « Feu et fumée » (3) pour les nouveaux réglages. Un monde existant à « Fumée » (2) garde ce choix : sélectionner « Feu et fumée » avant de provoquer un nouveau crash. NoFire/safehouses/FireSpread restent appliqués ; « petit » décrit le foyer initial, pas une garantie d'absence de propagation.
+- Fumée durable en solo et MP : helper local, un seul objet par case, renouvelé avant le stade invisible. Commande serveur `WreckSmoke`, réémise pendant la durée sandbox pour les arrivants ; ne pas empiler les paquets natifs `StartSmoke` côté client et ne pas supprimer les feux d'autres systèmes.
+- Vérifications hors jeu : suite Lua simulée, luacheck, assets et tenues XML. Journal et empreinte des sources toujours 42.21.0. Les visuels, le feu, la fumée et les pilotes de cette révision restent à confirmer en jeu et en MP. Les sons sont traités dans une autre session.
+
+## Révision du 2026-10-05
+
+- L'interface de mécanique vanilla n'affichait aucune carcasse : le script n'avait pas d'entrée dans `ISCarMechanicsOverlay.CarList` et aucun masque par pièce. `MilitaryDrop_WreckMenu.lua` enregistre désormais le fuselage et la queue, avec des images et zones de survol dédiées pour les composants de récupération.
+- Les huit masques 263 × 600 sont générés par `source/heli_wreck/make_mechanics_overlays.py` sous `common/media/ui/vehicles/mechanic overlay/`. La passe de finition ajoute des panneaux et détails de coque et étend la hitbox de la queue aux stabilisateurs. Les PNG ont été inspectés statiquement ; aucun affichage après cette passe n'a encore été vérifié en jeu.
+
 ## 1. Faisabilité
 
 **La carcasse est un véhicule sans roues, dans la continuité de la caisse.**
