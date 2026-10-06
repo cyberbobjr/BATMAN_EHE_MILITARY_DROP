@@ -1,175 +1,216 @@
--- Visual-only prototype on prototype/fulton-ascent. No inventory/world writes.
--- Right-click the world, or MilitaryDrop.FultonPrototype.start(0) in debug Lua.
-require "MilitaryDrop/MilitaryDrop_Core"
-
+-- Visual-only prototype; MP trajectories come exclusively from the server.
+require "MilitaryDrop/MilitaryDrop_FultonPrototypeFlight"
+local Flight = MilitaryDrop.FultonPrototypeFlight
 local previous = MilitaryDrop.FultonPrototype
 if previous then previous.dispose() end
-
 local Prototype = {}
 MilitaryDrop.FultonPrototype = Prototype
-local active
+Prototype.pose = Flight.pose
+local entries, active = {}, nil
 local modes = { auto = true, world = true, post = true }
+local mode, cable, selectedPlayerNum = "auto", true, 0
+local ticking, revision = false, -1
+local worldFrames, postFrames, lastRenderer = 0, 0, nil
+local drewInWorld = {}
 
-local function bounded(value, default, low, high)
-    if type(value) ~= "number" or value ~= value then return default end
-    return math.max(low, math.min(high, value))
-end
-
-local function smooth(t)
-    t = math.max(0, math.min(1, t))
-    return t * t * (3 - 2 * t)
-end
-
--- Pure position calculation; heights are world levels, not metres.
-function Prototype.pose(elapsed, config)
-    local rise = config.duration
-    local departure = rise + config.hold
-    local height = config.height * smooth(elapsed / rise)
-    local lift = elapsed > departure and smooth((elapsed - departure) / 4) or 0
-    local phase = elapsed < rise and "rise" or elapsed < departure and "hold" or "pickup"
-    if elapsed >= departure + 4 then phase = "done" end
-    return {
-        phase = phase,
-        x = config.x + lift * 4,
-        y = config.y + lift * 4,
-        bagZ = config.z + lift * 2.5,
-        balloonZ = config.z + 0.2 + height + lift * 2.5,
-        alpha = 1 - smooth((lift - 0.7) / 0.3),
-    }
-end
-
-function Prototype.stop()
-    if active then print("[MilitaryDrop Fulton prototype] stopped") end
-    active = nil
+local function clear()
+    entries, active, drewInWorld = {}, nil, {}
+    ticking = false
     Events.OnTick.Remove(Prototype.onTick)
     Events.RenderOpaqueObjectsInWorld.Remove(Prototype.onWorldRender)
     Events.OnPostRender.Remove(Prototype.onPostRender)
 end
 
-function Prototype.onTick()
-    if not active then return end
-    local player = getSpecificPlayer(active.playerNum)
-    local square = getCell():getGridSquare(math.floor(active.x), math.floor(active.y), active.z)
-    if not player or player:isDead() or not square then
-        Prototype.stop()
-        return
-    end
-    -- Engine delta avoids a jump after a long pause. Keep real-time test speed.
-    if not active.paused and getGameSpeed() ~= 0 then
-        local dt = bounded(getGameTime():getRealworldSecondsSinceLastUpdate(), 0, 0, 0.1)
-        active.elapsed = active.elapsed + dt
-    end
-    local pose = Prototype.pose(active.elapsed, active)
-    if pose.phase ~= active.phase then
-        active.phase = pose.phase
-        print("[MilitaryDrop Fulton prototype] " .. pose.phase)
-    end
-    if pose.phase == "done" then Prototype.stop() end
-end
-
-local function draw(playerNum, source)
-    if not active or playerNum ~= active.playerNum then return false end
-    -- Reacquire the loaded source square; no cached square after chunk unload.
-    local square = getCell():getGridSquare(math.floor(active.x), math.floor(active.y), active.z)
-    if not square then return false end
-    local pose = Prototype.pose(active.elapsed, active)
-    active.balloon:setWorldAlpha(pose.alpha)
-    active.bag:setWorldAlpha(pose.alpha)
-    Render3DItem(active.bag, square, pose.x, pose.y, pose.bagZ, 0)
-    Render3DItem(active.balloon, square, pose.x, pose.y, pose.balloonZ, 0)
-    if active.cable then
-        -- Screen line for this experiment; cable occlusion isn't a 3D guarantee.
-        renderIsoLine(pose.x, pose.y, pose.bagZ + 0.25,
-            pose.x, pose.y, pose.balloonZ + 0.015, 1, 0.25, 0.28, 0.25, pose.alpha)
-    end
-    active.lastRenderer = source
-    if source == "world" then
-        active.worldFrames = active.worldFrames + 1
-    else
-        active.postFrames = active.postFrames + 1
-    end
-    return true
-end
-
-function Prototype.onWorldRender(playerNum)
-    if active and active.mode ~= "post" then
-        active.drewInWorld = draw(playerNum, "world")
-    end
-end
-
-function Prototype.onPostRender()
-    if not active or IsoPlayer.getPlayerIndex() ~= active.playerNum then return end
-    if active.mode == "post" or (active.mode == "auto" and not active.drewInWorld) then
-        draw(active.playerNum, "post")
-    end
-    active.drewInWorld = false
-end
-
-function Prototype.start(playerNum, options)
-    playerNum = playerNum or 0
-    options = options or {}
-    local player = getSpecificPlayer(playerNum)
-    if not player or player:isDead() then return false, "no living local player" end
-    local x, y, z = player:getX() + 1.5, player:getY() + 1.5, math.floor(player:getZ())
-    if not getCell():getGridSquare(math.floor(x), math.floor(y), z) then
-        return false, "source square not loaded"
-    end
-    local balloon = instanceItem(options.vanilla and "Base.Bobber" or "MilitaryDrop.FultonPrototypeBalloon")
-    local bag = instanceItem("MilitaryDrop.FultonPrototypeBag")
-    if not balloon or not bag then
-        print("[MilitaryDrop Fulton prototype] missing item scripts; restart the game")
-        return false, "missing item scripts"
-    end
-    if options.vanilla then balloon:setWorldScale(8) end
-    Prototype.stop()
-    active = {
-        playerNum = playerNum, x = x, y = y, z = z,
-        balloon = balloon, bag = bag, elapsed = 0, phase = "rise",
-        height = bounded(options.height, 2.5, 0.1, 8),
-        duration = bounded(options.duration, 10, 1, 60),
-        hold = bounded(options.hold, 20, 0, 300),
-        mode = modes[options.mode] and options.mode or "auto",
-        cable = true, paused = false, drewInWorld = false,
-        worldFrames = 0, postFrames = 0,
-    }
+local function startTicking()
+    if ticking then return end
+    ticking = true
     Events.OnTick.Add(Prototype.onTick)
     Events.RenderOpaqueObjectsInWorld.Add(Prototype.onWorldRender)
     Events.OnPostRender.Add(Prototype.onPostRender)
-    print("[MilitaryDrop Fulton prototype] start; mode=" .. active.mode .. "; height=" .. active.height)
+end
+
+local function request(command, args)
+    local player = getSpecificPlayer(selectedPlayerNum)
+    if not player then return false end
+    MilitaryDrop.FultonPrototypeRequest = (MilitaryDrop.FultonPrototypeRequest or 0) + 1
+    args = args or {}
+    args.request = MilitaryDrop.FultonPrototypeRequest
+    sendClientCommand(player, Flight.MODULE, command, args)
+    return true
+end
+
+function Prototype.stop()
+    if isClient() then return request("Stop") end
+    clear()
+end
+
+local function items(vanilla)
+    local balloon = instanceItem(vanilla and "Base.Bobber" or "MilitaryDrop.FultonPrototypeBalloon")
+    local bag = instanceItem("MilitaryDrop.FultonPrototypeBag")
+    if balloon and vanilla then balloon:setWorldScale(8) end
+    return balloon, bag
+end
+
+function Prototype.onServerCommand(module, command, args)
+    if module ~= Flight.MODULE or command ~= "Snapshot" or type(args) ~= "table" then return end
+    if type(args.revision) ~= "number" or args.revision <= revision or type(args.flights) ~= "table" then return end
+    revision = args.revision
+    local updated = {}
+    local ownPlayer = getSpecificPlayer(selectedPlayerNum)
+    active = nil
+    for _, row in ipairs(args.flights) do
+        local e = entries[row.id] or {}
+        if not e.balloon then e.balloon, e.bag = items(row.vanilla) end
+        if e.balloon and e.bag then
+            for _, key in ipairs({ "id", "owner", "x", "y", "z", "height", "duration", "hold", "pickup",
+                "elapsed", "paused", "vanilla" }) do e[key] = row[key] end
+            e.shared, e.serverAt, e.serverElapsed = true, args.sentAt or 0, row.elapsed
+            updated[e.id] = e
+            if ownPlayer and e.owner == ownPlayer:getOnlineID() then active = e end
+        end
+    end
+    entries = updated
+    if #args.flights == 0 then clear() else startTicking() end
+end
+
+function Prototype.onTick()
+    local dt = Flight.bounded(getGameTime():getRealworldSecondsSinceLastUpdate(), 0, 0, 0.25)
+    local now = isClient() and Flight.clock() or 0
+    local finished = {}
+    for id, e in pairs(entries) do
+        if e.shared then
+            -- Server clock also accounts for packet transit time.
+            if e.paused then e.elapsed = e.serverElapsed
+            elseif now > 0 and e.serverAt > 0 then
+                e.elapsed = e.serverElapsed + math.max(0, (now - e.serverAt) / 1000)
+            else e.elapsed = e.elapsed + dt end
+        else
+            local player = getSpecificPlayer(e.playerNum)
+            local square = getCell():getGridSquare(math.floor(e.x), math.floor(e.y), e.z)
+            if not player or player:isDead() or not square then finished[#finished + 1] = id
+            elseif not e.paused and getGameSpeed() ~= 0 then e.elapsed = e.elapsed + dt end
+        end
+        local pose = Flight.pose(e.elapsed, e)
+        if pose.phase ~= e.phase then
+            e.phase = pose.phase
+            print("[MilitaryDrop Fulton prototype] " .. tostring(id) .. " " .. pose.phase)
+        end
+        if pose.phase == "done" then finished[#finished + 1] = id end
+    end
+    for _, id in ipairs(finished) do
+        if entries[id] == active then active = nil end
+        entries[id] = nil
+    end
+    if Prototype.count() == 0 then clear() end
+end
+
+function Prototype.count()
+    local n = 0
+    for _ in pairs(entries) do n = n + 1 end
+    return n
+end
+
+local function draw(playerNum, source)
+    local player = getSpecificPlayer(playerNum)
+    if not player or player:isDead() then return false end
+    local drawn = false
+    for _, e in pairs(entries) do
+        local dx, dy = player:getX() - e.x, player:getY() - e.y
+        local square = dx * dx + dy * dy <= 120 * 120
+            and getCell():getGridSquare(math.floor(e.x), math.floor(e.y), e.z) or nil
+        -- Unloaded squares hide MP visuals without cancelling the shared flight.
+        if square then
+            local pose = Flight.pose(e.elapsed, e)
+            e.balloon:setWorldAlpha(pose.alpha)
+            e.bag:setWorldAlpha(pose.alpha)
+            Render3DItem(e.bag, square, pose.x, pose.y, pose.bagZ, 0)
+            Render3DItem(e.balloon, square, pose.x, pose.y, pose.balloonZ, 0)
+            if cable then
+                renderIsoLine(pose.x, pose.y, pose.bagZ + 0.25,
+                    pose.x, pose.y, pose.balloonZ + 0.015, 1, 0.25, 0.28, 0.25, pose.alpha)
+            end
+            drawn = true
+        end
+    end
+    if drawn then
+        lastRenderer = source
+        if source == "world" then worldFrames = worldFrames + 1 else postFrames = postFrames + 1 end
+    end
+    return drawn
+end
+
+function Prototype.onWorldRender(playerNum)
+    if mode ~= "post" then drewInWorld[playerNum] = draw(playerNum, "world") end
+end
+
+function Prototype.onPostRender()
+    local playerNum = IsoPlayer.getPlayerIndex()
+    if mode == "post" or (mode == "auto" and not drewInWorld[playerNum]) then draw(playerNum, "post") end
+    drewInWorld[playerNum] = nil
+end
+
+function Prototype.start(playerNum, options)
+    playerNum, options = playerNum or 0, options or {}
+    local player = getSpecificPlayer(playerNum)
+    if not player or player:isDead() then return false, "no living local player" end
+    selectedPlayerNum = playerNum
+    mode = modes[options.mode] and options.mode or "auto"
+    if isClient() then
+        return request("Start", { height = options.height, duration = options.duration,
+            hold = options.hold, vanilla = options.vanilla == true })
+    end
+    local x, y, z = player:getX() + 1.5, player:getY() + 1.5, math.floor(player:getZ())
+    if not getCell():getGridSquare(math.floor(x), math.floor(y), z) then return false, "source square not loaded" end
+    local balloon, bag = items(options.vanilla)
+    if not balloon or not bag then return false, "missing item scripts; restart game" end
+    clear()
+    active = { id = 0, playerNum = playerNum, x = x, y = y, z = z,
+        balloon = balloon, bag = bag, elapsed = 0, phase = "rise", paused = false,
+        height = Flight.bounded(options.height, 2.5, 0.1, 8),
+        duration = Flight.bounded(options.duration, Flight.RISE_SECONDS, 1, 60),
+        hold = Flight.bounded(options.hold, 20, 0, 300), pickup = Flight.PICKUP_SECONDS }
+    entries[0] = active
+    worldFrames, postFrames, lastRenderer = 0, 0, nil
+    startTicking()
     return true
 end
 
 function Prototype.togglePause()
-    if active then active.paused = not active.paused end
+    if not active then return end
+    if isClient() then return request("Pause", { id = active.id, paused = not active.paused }) end
+    active.paused = not active.paused
 end
 
-function Prototype.toggleCable()
-    if active then active.cable = not active.cable end
-end
+function Prototype.toggleCable() cable = not cable end
 
-function Prototype.setMode(mode)
-    if not active or not modes[mode] then return false end
-    active.mode, active.drewInWorld = mode, false
-    print("[MilitaryDrop Fulton prototype] renderer=" .. mode)
+function Prototype.setMode(value)
+    if not modes[value] then return false end
+    mode, drewInWorld = value, {}
     return true
 end
 
 function Prototype.status()
-    if not active then return { running = false } end
-    local pose = Prototype.pose(active.elapsed, active)
-    return {
-        running = true, phase = pose.phase, height = pose.balloonZ - active.z,
-        elapsed = active.elapsed, paused = active.paused, mode = active.mode,
-        lastRenderer = active.lastRenderer, worldFrames = active.worldFrames, postFrames = active.postFrames,
-    }
+    local s = { running = active ~= nil, count = Prototype.count(), mode = mode, revision = revision,
+        worldFrames = worldFrames, postFrames = postFrames, lastRenderer = lastRenderer }
+    if active then
+        local pose = Flight.pose(active.elapsed, active)
+        s.phase, s.height = pose.phase, pose.balloonZ - active.z
+        s.elapsed, s.paused = active.elapsed, active.paused
+    end
+    return s
 end
 
-local function startFromMenu(playerNum, vanilla)
-    Prototype.start(playerNum, { vanilla = vanilla })
-end
+local function startFromMenu(playerNum, vanilla) Prototype.start(playerNum, { vanilla = vanilla }) end
 
 function Prototype.onContext(playerNum, context, worldObjects, test)
     if test or not getSpecificPlayer(playerNum) then return end
+    selectedPlayerNum = playerNum
+    if isClient() then
+        active = nil
+        for _, e in pairs(entries) do
+            if e.owner == getSpecificPlayer(playerNum):getOnlineID() then active = e end
+        end
+    end
     local option = context:addOption("Fulton - prototype visuel")
     local sub = ISContextMenu:getNew(context)
     context:addSubMenu(option, sub)
@@ -178,6 +219,8 @@ function Prototype.onContext(playerNum, context, worldObjects, test)
     if active then
         sub:addOption(active.paused and "Reprendre l'animation" or "Figer l'animation", nil, Prototype.togglePause)
         sub:addOption("Arreter le prototype", nil, Prototype.stop)
+    end
+    if Prototype.count() > 0 then
         sub:addOption("Afficher / masquer le cable", nil, Prototype.toggleCable)
         sub:addOption("Rendu automatique (avec secours)", "auto", Prototype.setMode)
         sub:addOption("Rendu monde uniquement (flotteur vanilla)", "world", Prototype.setMode)
@@ -185,12 +228,26 @@ function Prototype.onContext(playerNum, context, worldObjects, test)
     end
 end
 
-function Prototype.dispose()
-    Prototype.stop()
-    Events.OnFillWorldObjectContextMenu.Remove(Prototype.onContext)
-    Events.OnGameStart.Remove(Prototype.stop)
+function Prototype.onGameStart()
+    clear()
+    revision = -1
+    if isClient() then request("Sync") end
 end
 
--- Menu intentionally available without -debug on this development branch.
+function Prototype.onDisconnect()
+    clear()
+    revision = -1
+end
+
+function Prototype.dispose()
+    clear() -- A local Lua reload mustn't stop the shared server flight.
+    Events.OnFillWorldObjectContextMenu.Remove(Prototype.onContext)
+    Events.OnGameStart.Remove(Prototype.onGameStart)
+    Events.OnDisconnect.Remove(Prototype.onDisconnect)
+    Events.OnServerCommand.Remove(Prototype.onServerCommand)
+end
+
 Events.OnFillWorldObjectContextMenu.Add(Prototype.onContext)
-Events.OnGameStart.Add(Prototype.stop)
+Events.OnGameStart.Add(Prototype.onGameStart)
+Events.OnDisconnect.Add(Prototype.onDisconnect)
+Events.OnServerCommand.Add(Prototype.onServerCommand)

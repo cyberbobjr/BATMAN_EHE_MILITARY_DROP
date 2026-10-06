@@ -9,7 +9,8 @@
    mêmes liens et images que l'anglais, description de workshop.txt identique à README.steam ;
 5. suivi de l'implémentation (dev/SUIVI.md) : identifiants uniques, états connus,
    preuve exigée pour un état « testé », commits cités présents dans git ;
-6. tests Lua (tests/lua/test_*.lua) sous lupa, avec l'API du jeu simulée.
+6. tests Lua (tests/lua/test_*.lua) sous lupa, avec l'API du jeu simulée ;
+7. protocole Fulton : serveur et deux clients Lua isolés, transport simulé.
 
 Dépendances : pip install lupa ; luacheck facultatif en local, exigé par la CI.
 Les tests qui lisent les fichiers vanilla sont ignorés si le jeu est absent
@@ -26,6 +27,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lua_harness  # noqa: E402
+from check_fulton_multiplayer import run_checks as fulton_multiplayer_checks  # noqa: E402
 
 REPO = lua_harness.REPO
 MOD_LUA = lua_harness.MOD_LUA
@@ -407,6 +409,12 @@ def main():
     check_steam_descriptions(report)
     check_tracking(report)
     check_lua_tests(report)
+    report.section("Fulton : serveur et deux clients Lua isolés (réseau simulé)")
+    for name, error in fulton_multiplayer_checks():
+        if error:
+            report.fail(f"{name}: {error}")
+        else:
+            report.ok(name)
     print()
     if report.failures:
         print(f"{report.failures} échec(s)")

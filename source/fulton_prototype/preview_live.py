@@ -4,12 +4,33 @@ Run from the interactive Blender MCP. Preserves all pre-existing scenes.
 Writes only the new scene to fulton_ascent_preview.blend, not the open file.
 """
 from pathlib import Path
-import math
 
 import bpy
 from mathutils import Vector
 
 HERE = Path(__file__).resolve().parent
+
+
+def animate(scene):
+    """Match the Lua prototype: 3 s rise, 20 s hold, 1.5 s pickup."""
+    balloon = next(o for o in scene.objects if o.name.startswith("md_fulton_balloon"))
+    bag = next(o for o in scene.objects if o.name.startswith("md_fulton_bag"))
+    for obj in (balloon, bag):
+        obj.animation_data_clear()
+    scene.frame_start, scene.frame_end = 1, 589
+    scene.render.fps = 24
+    # A world Z level is sqrt(6) metres; origin offset is .2 level in Lua.
+    unit = 2.44949
+    for frame in range(1, scene.frame_end + 1):
+        elapsed = (frame - 1) / 24
+        t = max(0, min(1, (elapsed - 23) / 1.5))
+        lift = t * t * (3 - 2 * t)
+        bag.location = (4 * lift, 4 * lift, 2.5 * unit * lift)
+        balloon.location = (4 * lift, 4 * lift,
+                            .2 * unit + 2.5 * unit * min(1, elapsed / 3) + 2.5 * unit * lift)
+        for obj in (balloon, bag):
+            obj.keyframe_insert(data_path="location", frame=frame)
+    scene.frame_set(1)
 
 
 def main():
@@ -20,16 +41,7 @@ def main():
     bpy.context.window.scene = scene
     balloon = next(o for o in scene.objects if o.name.startswith("md_fulton_balloon"))
     bag = next(o for o in scene.objects if o.name.startswith("md_fulton_bag"))
-    scene.frame_start, scene.frame_end = 1, 817
-    scene.render.fps = 24
-    height = 2.5 * 2.44949
-    for frame, pos in [(1, (0, 0, .5)), (241, (0, 0, .5 + height)),
-                       (721, (0, 0, .5 + height)), (817, (4, 4, .5 + height + 6))]:
-        balloon.location = pos
-        balloon.keyframe_insert(data_path="location", frame=frame)
-    for frame, pos in [(1, (0, 0, 0)), (721, (0, 0, 0)), (817, (4, 4, 6))]:
-        bag.location = pos
-        bag.keyframe_insert(data_path="location", frame=frame)
+    animate(scene)
     curve = bpy.data.curves.new("Fulton preview tether", "CURVE")
     curve.dimensions = "3D"
     curve.bevel_depth = .009
@@ -80,7 +92,7 @@ def main():
                              path_remap="RELATIVE_ALL", fake_user=True, compress=True)
     if not bpy.context.screen.is_animation_playing:
         bpy.ops.screen.animation_play()
-    return {"scene": scene.name, "frames": [1, 817], "height_metres": height}
+    return {"scene": scene.name, "frames": [1, 589], "rise_seconds": 3, "pickup_seconds": 1.5}
 
 
 if __name__ == "__main__":
