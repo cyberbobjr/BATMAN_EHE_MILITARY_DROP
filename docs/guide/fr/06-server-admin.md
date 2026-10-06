@@ -186,7 +186,7 @@ Qui le voit : en multijoueur, les rôles qui peuvent modifier et recharger les o
 Où l'ouvrir :
 
 - **Multijoueur** : bouton **Zones de largage** du panneau d'admin du jeu.
-- **Solo, mode debug** : **Zones de largage** dans le menu de debug du jeu (onglet **Main**), ou depuis la console de débogage : `MilitaryDrop.ZonesWindow.open(getPlayer())`.
+- **Solo, mode debug** : clic droit au sol › **Debug** › **Main** › **Zones de largage** ; aussi dans la fenêtre de debug (icône en forme d'insecte en bas de la barre d'icônes à gauche, onglet **Main**), ou depuis la console de débogage : `MilitaryDrop.ZonesWindow.open(getPlayer())`.
 
 La fenêtre **Zones de largage (admin)** reprend le panneau des zones d'animaux du jeu. En tête : la carte attendue, le mode de placement et le nombre de zones utilisables. La liste montre les zones groupées par secteur, avec leur état (active, désactivée, carte non chargée), leurs coins, leur taille, leur poids et leurs avertissements, puis les premiers problèmes du fichier. La zone sélectionnée est surlignée au sol, sur votre écran seulement et seulement fenêtre ouverte : vert active, gris désactivée, orange carte non chargée. Les messages de l'outil (zone ajoutée, refus, fichier rechargé) s'affichent dans la fenêtre, jamais au-dessus de votre personnage : les joueurs proches ne voient rien.
 

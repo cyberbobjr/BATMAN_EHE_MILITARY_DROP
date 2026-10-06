@@ -186,7 +186,7 @@ Who sees it: in multiplayer, the roles allowed to change and reload the server o
 Where to open it:
 
 - **Multiplayer**: the **Military Drop Zones** button of the game's admin panel.
-- **Single player, debug mode**: **Military Drop Zones** in the game's debug menu (**Main** tab), or from the debug console: `MilitaryDrop.ZonesWindow.open(getPlayer())`.
+- **Single player, debug mode**: right-click the ground › **Debug** › **Main** › **Military Drop Zones**; also in the debug window (bug icon at the bottom of the left icon bar, **Main** tab), or from the debug console: `MilitaryDrop.ZonesWindow.open(getPlayer())`.
 
 The **Drop zones (admin)** window is modelled on the game's animal zones panel. At the top: the expected map, the placement mode and the count of usable zones. The list shows the zones grouped by sector, with their state (active, disabled, map not loaded), corners, size, weight and warnings, then the first problems of the file. The selected zone is outlined on the ground, on your screen only and only while the window is open: green active, grey disabled, orange map not loaded. The tool's messages (zone added, refusal, file reloaded) appear in the window, never above your character, so nearby players see nothing.
 

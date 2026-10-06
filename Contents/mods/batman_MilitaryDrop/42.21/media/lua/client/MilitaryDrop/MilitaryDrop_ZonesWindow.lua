@@ -13,7 +13,9 @@
 -- se perd. Le panneau d'admin vanilla n'existe qu'en MP (bouton du HUD créé
 -- sous isClient(), ISEquippedItem.lua:904-948) ; en solo avec le mode debug,
 -- la même entrée est ajoutée au menu de debug vanilla (ISDebugMenu, onglet
--- « Main », voir installDebugMenuButton plus bas).
+-- « Main », voir installDebugMenuButton plus bas). Elle figure aussi dans le
+-- sous-menu « Debug › Main » du clic droit sur le monde (DebugContextMenu,
+-- voir installDebugContextMenu), pour tout joueur qui a ce menu et le droit.
 --
 -- Fenêtre calquée sur ISDesignationZonePanel (zones d'animaux) et
 -- ISPvpZonePanel : liste groupée par secteur (nom, identifiant, état, coins,
@@ -781,6 +783,94 @@ function Window.installDebugMenuButton()
     return true
 end
 
+-- ----------------------------------------------------------------------------
+-- Entrée du menu contextuel de debug (clic droit sur le monde, « Debug › Main »)
+-- ----------------------------------------------------------------------------
+--
+-- Le sous-menu est construit par DebugContextMenu.doDebugMenu
+-- (DebugUIs/DebugContextMenu.lua:22-188) : refus sans droit (:26-32, client
+-- MP sans Capability.UseDebugContextMenu, solo hors mode debug), option
+-- « Debug » (:54-56, addDebugOption, retirée si UI.HideDebugContextMenuOptions,
+-- ISContextMenu.lua:904-912), sous-menu « Main » en variable locale (:58-60,
+-- Téléporter, Gestionnaire de hordes, Points d'apparition... : outils du monde
+-- qui ouvrent une fenêtre), « UIs » (:80-95, fenêtres de diagnostic de
+-- développement). Aucun événement ni table d'options : Java l'appelle par son
+-- nom à chaque menu du monde (ISWorldObjectContextMenuLogic.java:555,
+-- LuaHelpers.callLuaClass → LuaManager.getFunctionObject, cache vidé à chaque
+-- chargement d'un fichier Lua, LuaManager.java:1358). L'enveloppe appelle
+-- l'original puis retrouve « Debug » et « Main » par leurs libellés et leurs
+-- sous-menus (ISContextMenu:getSubMenu, :1226) et y ajoute l'entrée à la fin.
+-- Pendant un tracé de zone, ISWorldObjectContextMenu.disableWorldMenu
+-- (posé par l'éditeur) arrête createMenu avant tout (ISWorldObjectContextMenu.
+-- lua:146-148) ; l'enveloppe le vérifie aussi.
+
+--- Sous-menu de l'option de libellé name (la dernière qui en a un).
+local function subMenuOf(menu, name)
+    if type(menu) ~= "table" or type(menu.options) ~= "table" or type(menu.getSubMenu) ~= "function" then
+        return nil
+    end
+    local found
+    for _, option in ipairs(menu.options) do
+        if option.name == name and option.subOption then
+            found = menu:getSubMenu(option.subOption)
+        end
+    end
+    return found
+end
+
+--- Clic sur l'entrée : ISContextMenu appelle onSelect(target), ici le numéro
+--- du joueur ; le droit est revérifié sur le personnage courant.
+function Window.onDebugContextOption(playerNum)
+    local player = ZonesAdmin.livePlayer(playerNum)
+    if player and ZonesAdmin.canUse(player) then
+        Window.open(player)
+    end
+end
+
+--- Ajoute l'entrée au sous-menu « Debug › Main » s'il existe (une seule
+--- fois) ; renvoie l'option ou nil.
+function Window.addDebugContextOption(playerNum, context)
+    local worldMenu = ISWorldObjectContextMenu
+    if worldMenu and worldMenu.disableWorldMenu then
+        return nil
+    end
+    local player = ZonesAdmin.livePlayer(playerNum)
+    if not player or not ZonesAdmin.canUse(player) then
+        return nil
+    end
+    local mainMenu = subMenuOf(subMenuOf(context, getText("ContextMenu_Debug")), getText("IGUI_DebugContext_Main"))
+    if not mainMenu then
+        return nil
+    end
+    for _, option in ipairs(mainMenu.options) do
+        if option.onSelect == Window.onDebugContextOption then
+            return option
+        end
+    end
+    return mainMenu:addOption(getText("IGUI_MilitaryDrop_AdminPanelZones"), playerNum, Window.onDebugContextOption)
+end
+
+--- Enveloppe DebugContextMenu.doDebugMenu une seule fois (sur l'original
+--- courant ; reposée si DebugContextMenu.lua a été rechargé). Arguments et
+--- retour de l'original conservés ; une erreur de l'original remonte telle
+--- quelle (aucun pcall).
+function Window.installDebugContextMenu()
+    local Menu = DebugContextMenu
+    if type(Menu) ~= "table" or type(Menu.doDebugMenu) ~= "function" then
+        return false
+    end
+    if Menu.doDebugMenu ~= Window.debugContextWrapper then
+        local originalMenu = Menu.doDebugMenu
+        Window.debugContextWrapper = function(player, context, ...)
+            local result = originalMenu(player, context, ...)
+            Window.addDebugContextOption(player, context)
+            return result
+        end
+        Menu.doDebugMenu = Window.debugContextWrapper
+    end
+    return true
+end
+
 --- Mort d'un joueur local (OnPlayerDeath, IsoPlayer.OnDeath : joueurs
 --- locaux seulement) : sa liste et son éditeur se ferment, comme
 --- ISBuildWindow.OnPlayerDeath.
@@ -801,6 +891,7 @@ end
 
 Window.installAdminButton()
 Window.installDebugMenuButton()
+Window.installDebugContextMenu()
 -- Rechargement de ce fichier : un seul abonné (Events.X.Add ne dédoublonne pas).
 if Window.registered then
     Events.OnGameStart.Remove(Window.registered)
@@ -808,6 +899,7 @@ end
 Window.registered = function()
     Window.installAdminButton()
     Window.installDebugMenuButton()
+    Window.installDebugContextMenu()
 end
 Events.OnGameStart.Add(Window.registered)
 if Window.deathHandler then

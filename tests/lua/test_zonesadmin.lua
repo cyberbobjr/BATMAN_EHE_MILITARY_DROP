@@ -292,6 +292,104 @@ local function openDebugMenu()
     return menu, index, nil
 end
 
+--- Menu contextuel du monde : ISContextMenu réduit (options numérotées
+--- depuis 1, sous-menus rangés par numéro sur le menu racine comme
+--- getNew/addSubMenu/getSubMenu, addDebugOption retirée si HIDE_DEBUG) et
+--- DebugContextMenu.doDebugMenu calqué sur DebugContextMenu.lua:22-95 42.21
+--- (droits, « Debug », sous-menus « Main » et « UIs »).
+local function setupDebugContextMenu()
+    Capability.UseDebugContextMenu = "debugmenu"
+    HIDE_DEBUG = false
+    local Menu = {}
+    Menu.__index = Menu
+    function Menu.newRoot()
+        local menu = setmetatable({ options = {}, numOptions = 1, instanceMap = {}, subOptionNums = 0 }, Menu)
+        menu.root = menu
+        return menu
+    end
+    function Menu:addOption(name, target, onSelect, param1)
+        local option = { id = self.numOptions, name = name, target = target, onSelect = onSelect, param1 = param1 }
+        self.options[self.numOptions] = option
+        self.numOptions = self.numOptions + 1
+        return option
+    end
+    function Menu:addDebugOption(name, target, onSelect, param1)
+        local option = self:addOption(name, target, onSelect, param1)
+        if HIDE_DEBUG then
+            self.options[self.numOptions - 1] = nil
+            self.numOptions = self.numOptions - 1
+        end
+        return option
+    end
+    -- Appelé comme ISContextMenu:getNew(parent) : self est la classe.
+    function Menu:getNew(parent)
+        local root = parent.root
+        root.subOptionNums = root.subOptionNums + 1
+        local sub = setmetatable({ options = {}, numOptions = 1, root = root, subOptionNums = root.subOptionNums }, Menu)
+        root.instanceMap[root.subOptionNums] = sub
+        return sub
+    end
+    function Menu:addSubMenu(option, menu) option.subOption = menu.subOptionNums end
+    function Menu:getSubMenu(num) return self.root.instanceMap[num] end
+    ISContextMenu = Menu
+
+    local noop = function() end
+    DebugContextMenu = {}
+    DebugContextMenu.doDebugMenu = function(player, context, worldobjects, test)
+        local playerObj = getSpecificPlayer(player)
+        if isClient() then
+            if not playerObj:getRole():hasCapability(Capability.UseDebugContextMenu) then
+                return true
+            end
+        elseif not isDebugEnabled() then
+            return true
+        end
+        if test and ISWorldObjectContextMenu.Test then return true end
+        local debugOption = context:addDebugOption(getText("ContextMenu_Debug"), worldobjects, nil)
+        local debugMenu = ISContextMenu:getNew(context)
+        context:addSubMenu(debugOption, debugMenu)
+        local mainOption = debugMenu:addOption(getText("IGUI_DebugContext_Main"), worldobjects, nil)
+        local mainMenu = ISContextMenu:getNew(debugMenu)
+        debugMenu:addSubMenu(mainOption, mainMenu)
+        mainMenu:addOption(getText("IGUI_GameStats_Teleport"), playerObj, noop)
+        mainMenu:addOption(getText("IGUI_DebugContext_HordeManager"), nil, noop, playerObj)
+        local uiOption = debugMenu:addOption(getText("IGUI_DebugContext_UIs"), worldobjects, nil)
+        local uiMenu = ISContextMenu:getNew(debugMenu)
+        debugMenu:addSubMenu(uiOption, uiMenu)
+        uiMenu:addOption(getText("IGUI_DebugContext_TilePicker"), playerObj, noop)
+    end
+end
+
+--- Clic droit sur le monde du joueur 0 : comme ISWorldObjectContextMenu.
+--- createMenu (:146-148, rien si disableWorldMenu) puis l'appel Java par nom
+--- (ISWorldObjectContextMenuLogic.java:555). Renvoie le menu racine, le
+--- sous-menu « Debug › Main » (ou nil) et les entrées du mod qu'il contient.
+local function rightClick(force)
+    if ISWorldObjectContextMenu.disableWorldMenu and not force then
+        return nil, nil, {}
+    end
+    local context = ISContextMenu.newRoot()
+    DebugContextMenu.doDebugMenu(0, context, {}, false)
+    local mainMenu
+    for _, option in ipairs(context.options) do
+        if option.name == "ContextMenu_Debug" then
+            local debugMenu = context:getSubMenu(option.subOption)
+            for _, sub in ipairs(debugMenu.options) do
+                if sub.name == "IGUI_DebugContext_Main" then
+                    mainMenu = context:getSubMenu(sub.subOption)
+                end
+            end
+        end
+    end
+    local entries = {}
+    for _, option in ipairs(mainMenu and mainMenu.options or {}) do
+        if option.name == "IGUI_MilitaryDrop_AdminPanelZones" then
+            entries[#entries + 1] = option
+        end
+    end
+    return context, mainMenu, entries
+end
+
 -- ----------------------------------------------------------------------------
 -- Mise en place
 -- ----------------------------------------------------------------------------
@@ -372,6 +470,7 @@ function T.setup()
     instanceof = function() return false end
     setupUI()
     setupDebugMenu()
+    setupDebugContextMenu()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
@@ -583,6 +682,117 @@ function T.debug_menu_entry_is_added_once_after_reloads_and_other_wrappers()
     assertEq(count, 1, "une seule entrée")
     assertEq(menu.buttons[index + 1].title, getText("IGUI_DebugMenu_Close"), "remise avant « Fermer »")
     assertEq(menu.buttons[index + 1].tab, "MAIN", "« Fermer » de l'onglet principal")
+end
+
+-- ----------------------------------------------------------------------------
+-- Entrée du menu contextuel de debug (clic droit, « Debug › Main »)
+-- ----------------------------------------------------------------------------
+
+function T.debug_context_menu_entry_opens_the_list_in_solo_debug()
+    CLIENT, DEBUG = false, true
+    local context, mainMenu, entries = rightClick()
+    assertTrue(mainMenu ~= nil, "sous-menu « Debug › Main » construit")
+    assertEq(#entries, 1, "solo en mode debug : entrée présente")
+    local option = entries[1]
+    assertEq(mainMenu.options[1].name, "IGUI_GameStats_Teleport", "entrées vanilla conservées en tête")
+    assertEq(mainMenu.options[mainMenu.numOptions - 1], option, "entrée ajoutée à la fin de « Main »")
+    assertEq(option.id, mainMenu.numOptions - 1, "numérotée comme une option vanilla")
+    assertEq(#context.options, 1, "menu racine inchangé (seule l'option « Debug »)")
+    for _, menu in pairs(context.instanceMap) do
+        if menu ~= mainMenu then
+            for _, other in ipairs(menu.options) do
+                assertTrue(other.name ~= "IGUI_MilitaryDrop_AdminPanelZones", "absente des autres sous-menus")
+            end
+        end
+    end
+    -- ISContextMenu appelle onSelect(target, param1…).
+    option.onSelect(option.target, option.param1)
+    assertTrue(MilitaryDrop.ZonesWindow.instance ~= nil, "liste ouverte")
+    assertEq(lastSent().command, "ZoneList", "liste demandée")
+end
+
+function T.debug_context_menu_entry_is_absent_without_the_right()
+    CLIENT, DEBUG = false, false
+    local _, mainMenu, entries = rightClick()
+    assertEq(mainMenu, nil, "solo hors debug : pas de menu Debug (vanilla)")
+    assertEq(#entries, 0, "solo hors debug : pas d'entrée")
+    CLIENT, CAPS = true, { debugmenu = true }
+    _, mainMenu, entries = rightClick()
+    assertTrue(mainMenu ~= nil, "client MP avec UseDebugContextMenu : menu Debug")
+    assertEq(#entries, 0, "sans ChangeAndReloadServerOptions : pas d'entrée")
+    CAPS = { debugmenu = true, reload = true }
+    _, _, entries = rightClick()
+    assertEq(#entries, 1, "admin MP avec le menu Debug : entrée")
+    CLIENT, DEBUG = false, true
+    HIDE_DEBUG = true
+    _, mainMenu, entries = rightClick()
+    assertEq(mainMenu, nil, "option Debug masquée (UI.HideDebugContextMenuOptions)")
+    assertEq(#entries, 0, "rien d'ajouté ailleurs")
+    HIDE_DEBUG = false
+    -- Droit perdu entre l'ouverture du menu et le clic.
+    _, _, entries = rightClick()
+    DEBUG = false
+    entries[1].onSelect(entries[1].target)
+    assertEq(MilitaryDrop.ZonesWindow.instance, nil, "clic sans droit : rien ne s'ouvre")
+end
+
+function T.debug_context_menu_entry_is_added_once_after_reloads()
+    CLIENT, DEBUG = false, true
+    loadMod("client/MilitaryDrop/MilitaryDrop_ZonesWindow.lua")
+    triggerEvent("OnGameStart")
+    local context, mainMenu, entries = rightClick()
+    assertEq(#entries, 1, "rechargement du mod : une seule entrée")
+    MilitaryDrop.ZonesWindow.addDebugContextOption(0, context)
+    _, _, entries = rightClick()
+    assertEq(#entries, 1, "nouveau menu : toujours une entrée")
+    local count = 0
+    for _, option in ipairs(mainMenu.options) do
+        if option.name == "IGUI_MilitaryDrop_AdminPanelZones" then
+            count = count + 1
+        end
+    end
+    assertEq(count, 1, "ajout répété sur le même menu : pas de doublon")
+    -- DebugContextMenu.lua rechargé (table recréée), puis un autre mod qui
+    -- enveloppe doDebugMenu après le nôtre.
+    local wrapped = MilitaryDrop.ZonesWindow.debugContextWrapper
+    setupDebugContextMenu()
+    triggerEvent("OnGameStart")
+    assertTrue(DebugContextMenu.doDebugMenu ~= wrapped, "enveloppe reposée sur le nouvel original")
+    local otherCalls = 0
+    local previous = DebugContextMenu.doDebugMenu
+    DebugContextMenu.doDebugMenu = function(...)
+        otherCalls = otherCalls + 1
+        return previous(...)
+    end
+    triggerEvent("OnGameStart")
+    _, _, entries = rightClick()
+    assertEq(#entries, 1, "une seule entrée après rechargement du vanilla")
+    assertEq(otherCalls, 1, "enveloppe de l'autre mod gardée")
+    CLIENT, DEBUG = false, false
+    assertEq(DebugContextMenu.doDebugMenu(0, ISContextMenu.newRoot(), {}, false), true,
+        "retour vanilla conservé (refus sans droit)")
+end
+
+function T.debug_context_menu_entry_is_absent_during_a_trace()
+    CAPS = { reload = true, teleport = true, debugmenu = true }
+    local window = openWindow()
+    window.addBtn:forceClick()
+    local e = editor()
+    assertTrue(e.layer ~= nil, "tracé en cours")
+    local context, _, entries = rightClick()
+    assertEq(context, nil, "menu du monde coupé : aucun menu")
+    assertEq(#entries, 0, "pas d'entrée")
+    -- Appel direct (autre chemin) : le vanilla construit son menu, sans l'entrée.
+    local _, mainMenu
+    _, mainMenu, entries = rightClick(true)
+    assertTrue(mainMenu ~= nil, "menu Debug vanilla intact")
+    assertEq(#entries, 0, "pas d'entrée pendant le tracé")
+    assertTrue(e.trace ~= nil, "tracé toujours en cours")
+    press(10, 10)
+    release(12, 14)
+    assertEq(e.layer, nil, "tracé terminé")
+    _, _, entries = rightClick()
+    assertEq(#entries, 1, "entrée de retour après le tracé")
 end
 
 -- ----------------------------------------------------------------------------
