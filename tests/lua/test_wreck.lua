@@ -48,9 +48,11 @@ function T.setup()
     IsoDirections = { N = "N", E = "E", S = "S", W = "W", getRandom = function() return "N" end }
     instanceItem = item
     addVehicleDebug = function(script, _, _, sq)
-        VEHICLES[#VEHICLES+1] = { script = script, x = sq:getX(), y = sq:getY() }
+        local vehicleData = {}
+        VEHICLES[#VEHICLES+1] = { script = script, x = sq:getX(), y = sq:getY(), modData = vehicleData }
         local data = {}
         return { getSqlId = function() return SPAWN_FAIL and -1 or #VEHICLES end,
+            getModData = function() return vehicleData end,
             getPartByIndex = function() return { getModData = function() return data end } end,
             transmitPartModData = function() end }
     end
@@ -125,6 +127,16 @@ function T.site_waits_for_loading_then_places_once()
     assertEq(DELIVERED,1)
     assertEq(HORDES,1)
     assertEq(#PILOTS,2)
+end
+--- Épaves marquées contre les mods qui re-remplissent les véhicules de mod
+--- (resetedContainers, Crate.protect).
+function T.wrecks_carry_the_refill_marker()
+    MilitaryDrop.Crate = { protect = function(vehicle) vehicle:getModData().resetedContainers = true end }
+    MilitaryDrop.Wreck.add(FLIGHT)
+    MilitaryDrop.Wreck.update()
+    assertEq(#VEHICLES,2)
+    assertEq(VEHICLES[1].modData.resetedContainers,true,"fuselage")
+    assertEq(VEHICLES[2].modData.resetedContainers,true,"queue")
 end
 function T.footprint_waits_for_every_square_including_the_next_chunk()
     UNLOADED = function(x,y) return x==105 and y==105 end

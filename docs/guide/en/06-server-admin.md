@@ -294,6 +294,21 @@ Drop zones have their own tool, in the game's admin panel: see [In-game tool](#i
 
 Never share or delete the seed file during a game: memos and codebooks already found would no longer match. Trust, stations, missions and posts are saved with the world, in data that clients cannot read.
 
+## Crate with unexpected contents
+
+The server always writes these lines, even with the debug log off, to `Zomboid/console.txt` (single player), `Zomboid/server-console.txt` (dedicated server) or `Zomboid/coop-console.txt` (hosted game). Search for `crate contents`:
+
+| Line | Meaning |
+|---|---|
+| `crate contents at start: entry MilitaryDrop_SupplyCrate present, … unchanged since this mod declared it` | Normal. `CHANGED by another mod (…)` or `missing`: another mod changed or removed the crate trunk distribution. |
+| `crate contents for drop <id> at x,y (<order>): … , as ordered, our OnFillContainer fill: once` | One line per crate: trunk contents right after landing. |
+| `crate contents differ from the order: drop <id>, expected …, found …` | The trunk does not match the order on landing: the extra item types usually point to the mod involved. |
+| `crate container refilled by another mod (forceVehicleDistribution?) for drop <id>` | Another mod refilled the crate later; the order is given back once (`order restored`), never after the crate was emptied. |
+| `crate contents changed for drop <id> …, trunk also holds …` | The trunk holds items that are not from the drop: a player stored them there, or another mod refilled it. |
+| `crate contents: supply crate trunk … filled without a drop id` | The trunk of an unknown crate was filled outside a drop: random supply cases. |
+
+The list of active mods is already in the same file (`loading <id>` lines). Crates and wrecks carry the `resetedContainers` marker that Specific Loot (KI5) respects; a mod that ignores it shows up in the lines above.
+
 ## Debug console (single player or host)
 
 ```lua

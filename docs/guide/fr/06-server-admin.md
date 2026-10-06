@@ -294,6 +294,21 @@ Les zones de largage ont leur propre outil, dans le panneau d'admin du jeu : voi
 
 Ne partagez ni ne supprimez jamais la graine en cours de partie : les notes et carnets déjà trouvés ne correspondraient plus. Confiance, stations, missions et postes sont sauvegardés avec le monde, dans des données que les clients ne peuvent pas lire.
 
+## Caisse au contenu inattendu
+
+Le serveur écrit toujours ces lignes, même sans le journal de débogage, dans `Zomboid/console.txt` (solo), `Zomboid/server-console.txt` (serveur dédié) ou `Zomboid/coop-console.txt` (partie hébergée). Cherchez `crate contents` :
+
+| Ligne | Sens |
+|---|---|
+| `crate contents at start: entry MilitaryDrop_SupplyCrate present, … unchanged since this mod declared it` | Normal. `CHANGED by another mod (…)` ou `missing` : un autre mod a modifié ou retiré la distribution du coffre de la caisse. |
+| `crate contents for drop <id> at x,y (<commande>): … , as ordered, our OnFillContainer fill: once` | Une ligne par caisse posée : contenu du coffre juste après l'atterrissage. |
+| `crate contents differ from the order: drop <id>, expected …, found …` | Le coffre ne correspond pas à la commande dès l'atterrissage : les types en trop désignent souvent le mod en cause. |
+| `crate container refilled by another mod (forceVehicleDistribution?) for drop <id>` | Un autre mod a re-rempli la caisse plus tard ; la commande est rendue une fois (`order restored`), jamais après un vidage. |
+| `crate contents changed for drop <id> …, trunk also holds …` | Le coffre contient d'autres objets que ceux du largage : un joueur y a rangé ses affaires, ou un autre mod l'a re-rempli. |
+| `crate contents: supply crate trunk … filled without a drop id` | Coffre d'une caisse inconnue rempli hors d'un largage : caisses au hasard. |
+
+La liste des mods actifs figure déjà dans le même fichier (lignes `loading <id>`). Les caisses et épaves portent le marqueur `resetedContainers` respecté par Specific Loot (KI5) ; un mod qui l'ignore est signalé par les lignes ci-dessus.
+
 ## Console de débogage (solo ou hôte)
 
 ```lua

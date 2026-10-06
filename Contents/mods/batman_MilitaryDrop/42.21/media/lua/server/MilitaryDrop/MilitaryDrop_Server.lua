@@ -711,7 +711,9 @@ Server.COLLECT_RADIUS = 2
 Server.COLLECT_GRACE_MS = 20000
 local shortSince = {}
 
-local function countTagged(items, dropId)
+--- others (facultatif) : { counts = { [type] = n }, total } des objets non
+--- marqués du largage, pour le journal « crate contents changed ».
+local function countTagged(items, dropId, others)
     local count = 0
     if not items then
         return 0
@@ -720,6 +722,10 @@ local function countTagged(items, dropId)
         local item = items:get(i)
         if item and item:getModData()[MilitaryDrop.Crate.DROP_KEY] == dropId then
             count = count + 1
+        elseif item and others then
+            local fullType = item.getFullType and item:getFullType() or "?"
+            others.counts[fullType] = (others.counts[fullType] or 0) + 1
+            others.total = others.total + 1
         end
     end
     return count
@@ -732,10 +738,10 @@ local function isCrate(vehicle)
 end
 
 --- Objets marqués du largage dropId dans le coffre de la caisse vehicle.
-function Server.trunkCount(vehicle, dropId)
+function Server.trunkCount(vehicle, dropId, others)
     local part = vehicle and vehicle:getPartById(MilitaryDrop.Crate.TRUNK)
     local container = part and part:getItemContainer()
-    return countTagged(container and container:getItems(), dropId)
+    return countTagged(container and container:getItems(), dropId, others)
 end
 
 --- Objets marqués du largage dropId autour de (x, y) : dans le coffre d'une
@@ -743,7 +749,8 @@ end
 --- cases sondées sont chargées. Serveur : en MP, les transferts sont des
 --- transactions exécutées par le serveur (TransactionManager), son coffre
 --- est donc à jour sans événement Lua (pz-knowledge combat-and-xp.md).
-function Server.countDropItems(x, y, dropId)
+--- others (facultatif) : reçoit les objets non marqués des coffres (countTagged).
+function Server.countDropItems(x, y, dropId, others)
     local cell = getCell()
     local r = Server.COLLECT_RADIUS
     local count, complete, seen = 0, true, {}
@@ -756,7 +763,7 @@ function Server.countDropItems(x, y, dropId)
                 local vehicle = square:getVehicleContainer()
                 if vehicle and not seen[vehicle] and isCrate(vehicle) then
                     seen[vehicle] = true
-                    count = count + Server.trunkCount(vehicle, dropId)
+                    count = count + Server.trunkCount(vehicle, dropId, others)
                 end
                 local objects = square:getWorldObjects()
                 for i = 0, (objects and objects:size() or 0) - 1 do
@@ -770,6 +777,21 @@ function Server.countDropItems(x, y, dropId)
         end
     end
     return count, complete
+end
+
+--- Premier manque constaté d'un largage (Server.pollCollected). Un coffre qui
+--- ne contient plus les objets marqués mais d'autres objets signale un
+--- re-remplissage par un autre mod (ou un joueur qui y a rangé ses affaires) :
+--- toujours journalisé. Simple prise par un joueur : journal de débogage.
+function Server.reportContentsChanged(dropId, count, placed, others)
+    local text = string.format("crate contents changed for drop %s at %d,%d: %d of %d marked item(s) left",
+        tostring(dropId), placed.x, placed.y, count, tonumber(placed.cases) or 0)
+    if others.total > 0 then
+        MilitaryDrop.log(text .. ", trunk also holds " .. MilitaryDrop.Crate.formatCounts(others.counts, others.total)
+            .. " without the drop id — a player put them there, or another mod refilled the crate", true)
+    else
+        MilitaryDrop.log(text .. " (taken by a player)")
+    end
 end
 
 --- Retour joueur du 2026-10-06 : la base rappelait la grille d'une caisse
@@ -787,12 +809,16 @@ function Server.pollCollected(nowMs)
     for _, entry in ipairs(MilitaryDrop.Trust.announcedDrops()) do
         local placed = entry.drop.placed
         if type(placed) == "table" and type(placed.x) == "number" and type(placed.y) == "number" then
-            local count, complete = Server.countDropItems(placed.x, placed.y, entry.id)
+            local others = { counts = {}, total = 0 }
+            local count, complete = Server.countDropItems(placed.x, placed.y, entry.id, others)
             if not complete or count >= (tonumber(placed.cases) or 0) then
                 shortSince[entry.id] = nil
             else
                 nowMs = nowMs or getTimestampMs()
                 local since = shortSince[entry.id]
+                if not since then
+                    Server.reportContentsChanged(entry.id, count, placed, others)
+                end
                 if not since or nowMs < since then
                     shortSince[entry.id] = nowMs
                 elseif nowMs - since >= Server.COLLECT_GRACE_MS then

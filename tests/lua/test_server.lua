@@ -692,7 +692,8 @@ local function collectWorld(withCrate)
         function trunk.getItems(self) return javaList(self.items) end
         local crate = { x = sq:getX(), y = sq:getY(), trunk = trunk,
             getSqlId = function() return 9 end, isRemovedFromWorld = function() return false end,
-            getScriptName = function() return "Base.MilitaryDrop_SupplyCrate" end }
+            getScriptName = function() return "Base.MilitaryDrop_SupplyCrate" end, modData = {} }
+        function crate.getModData(this) return this.modData end
         function crate.getPartById(_, id)
             return id == "TrailerTrunk" and { getItemContainer = function() return trunk end } or nil
         end
@@ -727,6 +728,39 @@ function T.taking_a_case_from_the_crate_trunk_stops_the_grid_reminders()
     assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 12), 0, "plus de rappel")
     assertEq(drop.outcome, nil, "issue inchangée (CONF-04 : seule l'ouverture compte)")
     assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Trust.idFor(PLAYER)), note, "confiance inchangée")
+end
+
+--- Coffre re-rempli par un autre mod (objets marqués remplacés) : ligne
+--- « crate contents changed » toujours écrite au premier manque ; simple prise
+--- par un joueur : rien hors du journal de débogage.
+function T.case_taken_by_a_player_is_not_an_always_written_line()
+    local world = collectWorld(true)
+    dropOnce()
+    local trunk = world.crate.trunk
+    local logged = {}
+    print = function(text) logged[#logged + 1] = text end
+    table.remove(trunk.items, 1)
+    triggerEvent("EveryOneMinute")
+    for _, line in ipairs(logged) do
+        assertTrue(line:find("crate contents changed", 1, true) == nil, "prise par un joueur : pas de ligne toujours écrite")
+    end
+end
+
+function T.trunk_refilled_with_other_items_is_always_logged()
+    local world = collectWorld(true)
+    dropOnce()
+    local trunk = world.crate.trunk
+    local logged = {}
+    print = function(text) logged[#logged + 1] = text end
+    trunk.items = { { modData = {}, getModData = function(this) return this.modData end,
+        getFullType = function() return "Base.Axe" end } }
+    triggerEvent("EveryOneMinute")
+    local found = nil
+    for _, line in ipairs(logged) do
+        found = found or (line:find("crate contents changed for drop", 1, true) and line)
+    end
+    assertTrue(found ~= nil and found:find("0 of 2 marked item(s) left, trunk also holds 1 item(s): Base.Axe x1", 1, true) ~= nil,
+        "re-remplissage : " .. tostring(found))
 end
 
 function T.picking_up_ground_cases_stops_the_grid_reminders()

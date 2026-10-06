@@ -76,6 +76,13 @@ function Wreck.spawnVehicle(site, key, script, x, y, radius)
         if not vehicle or vehicle:getSqlId() == -1 then
             return false
         end
+        -- Marqueur contre les mods qui re-remplissent les véhicules de mod
+        -- (Crate.protect, MilitaryDrop_Crate.lua ; aussi posé par
+        -- Crate.onSpawnVehicleEnd à chaque chargement). Les épaves n'ont aucun
+        -- conteneur (scripts/vehicles/MilitaryDrop_HeliWreck.txt) : précaution.
+        if MilitaryDrop.Crate and MilitaryDrop.Crate.protect then
+            MilitaryDrop.Crate.protect(vehicle)
+        end
         local part = vehicle:getPartByIndex(0)
         if part then
             part:getModData()[Wreck.SITE_KEY] = site.id

@@ -586,7 +586,8 @@ function T.trunk_receives_the_ordered_cases()
         self.items[#self.items + 1] = item
         return item
     end
-    local vehicle = { getSqlId = function() return 5 end }
+    local vehicleData = {}
+    local vehicle = { getSqlId = function() return 5 end, getModData = function() return vehicleData end }
     -- Coffre relu à la livraison (Server.trunkCount : objets marqués posés).
     function vehicle.getPartById(_, id)
         return id == "TrailerTrunk" and { getItemContainer = function()
@@ -1029,7 +1030,8 @@ local function crateWorld()
         end
         local vehicle = { container = container, x = x, y = y, getSqlId = function() return #world.crates + 1 end,
             getScriptName = function() return "Base.MilitaryDrop_SupplyCrate" end,
-            isRemovedFromWorld = function() return false end }
+            isRemovedFromWorld = function() return false end, modData = {} }
+        function vehicle.getModData(this) return this.modData end
         function vehicle.getPartById(_, id)
             return id == "TrailerTrunk" and { getItemContainer = function()
                 return { getItems = function() return list(container.items) end }
