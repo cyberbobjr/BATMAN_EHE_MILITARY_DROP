@@ -894,8 +894,9 @@ function T.form_carries_the_drop_sectors_and_the_order_its_sector()
     local drop = MilitaryDrop.Secrets.privateState().drops[flights()[1].dropId]
     assertEq(drop.order.lots.rations, 1, "commande de lots")
     assertEq(drop.zone.sector, "Bravo", "zone rangée dans l'état privé")
-    -- Feuille admin et choix 1 ou 2 : aucun champ.
-    assertEq(MilitaryDrop.Requisition.offer("C:tester", true, PLAYER).drop, nil, "feuille admin")
+    -- Feuille admin (décision du 2026-10-06) : même champ ; choix 1 ou 2 : aucun.
+    local adminOffer = MilitaryDrop.Requisition.offer("C:tester", true, PLAYER)
+    assertEq(table.concat(adminOffer.drop.sectors, ","), "Alpha,Bravo", "feuille admin : même champ")
     stubZones(nil)
     assertEq(MilitaryDrop.Requisition.offer("C:tester", nil, PLAYER).drop, nil, "choix 1 ou 2")
     stubZones({})

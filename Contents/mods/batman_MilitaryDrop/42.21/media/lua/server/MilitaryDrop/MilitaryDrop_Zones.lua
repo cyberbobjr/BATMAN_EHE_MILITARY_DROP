@@ -7,10 +7,9 @@
 -- MilitaryDrop_ZonesFile.lua), 3 zones si l'une d'elles est à moins de
 -- DropZoneMaxDistance du demandeur (seules ces zones proches sont alors
 -- candidates), sinon proximité. Le largage forcé de l'admin (APPEL-05 :
--- direct, ou feuille admin, leurre compris) n'est pas concerné (décision de
--- l'analyse §2.1) : il garde le placement par proximité, quel que soit
--- DropPlacement (Server.chooseDropPoint, argument proximity), et son leurre
--- propose les secteurs N/E/S/O.
+-- direct, ou feuille admin, leurre compris) suit les mêmes règles que celui
+-- d'un joueur, distances calculées depuis l'admin (décision de l'utilisateur
+-- du 2026-10-06, qui remplace celle de l'analyse §2.1 : « non concerné »).
 --
 -- Choix du point (Server.chooseDropPoint → Zones.choosePoint) :
 --   1. secteur : le plus proche du demandeur (distance au bord de sa zone la

@@ -65,10 +65,12 @@
 -- Zones.pointInZone) ; la proximité garde la route ou le pied d'un bâtiment
 -- (pickDropPoint) : l'eau d'une cellule jamais approchée reste inconnue de la
 -- métagrille, et sans rectangle borné un point tiré sur un grand lac
--- bloquerait la livraison (aucune case sèche à RELOCATE_RADIUS). Le largage forcé de l'admin (direct ou
--- feuille admin, leurre compris) n'est pas concerné (analyse §2.1) : il
--- garde la proximité (chooseDropPoint, argument proximity). Les fournitures
--- d'un crash (opts.crash) tombent près de l'épave, sans borne de zone.
+-- bloquerait la livraison (aucune case sèche à RELOCATE_RADIUS). Le largage
+-- forcé de l'admin (direct ou feuille admin, leurre compris) suit les mêmes
+-- règles qu'un joueur (décision de l'utilisateur du 2026-10-06, qui remplace
+-- l'analyse §2.1) : DropPlacement, DropZoneChoice, distances depuis l'admin.
+-- Les fournitures d'un crash (opts.crash) tombent près de l'épave, sans
+-- borne de zone.
 -- ============================================================================
 
 if isClient() then
@@ -727,14 +729,13 @@ end
 --- formulaire (ZONE-09) ; aucune case : nil, jamais hors zone. info =
 --- { zoneId, zoneName, sector, source = "zone"|"town", x1, y1, x2, y2 }, ou
 --- { source = "proximity" } au repli du mode 2 ; nil en proximité classique
---- (mode 1). proximity vrai : largage forcé de l'admin
---- (APPEL-05, hors zones, analyse §2.1), proximité quel que soit le mode,
---- sector étant alors N/E/S/W.
-function Server.chooseDropPoint(player, sector, proximity)
+--- (mode 1). Largage forcé de l'admin (APPEL-05) compris : mêmes règles
+--- (décision du 2026-10-06).
+function Server.chooseDropPoint(player, sector)
     local px, py = math.floor(player:getX()), math.floor(player:getY())
     local info = nil
     local Zones = MilitaryDrop.Zones
-    if Zones and not proximity then
+    if Zones then
         local handled, zx, zy, zoneInfo = Zones.choosePoint(px, py, sector)
         if handled then
             if not zx then
@@ -762,7 +763,7 @@ end
 --- (hors suivi de confiance), order et decoy (rangés dans l'état privé du
 --- largage). La zone tirée (idée 11) est rangée dans l'état privé du largage
 --- (drops[dropId].zone), jamais dans la ModData publique. Largage forcé
---- (forced) : point par proximité, hors zones (analyse §2.1).
+--- (forced) : point choisi comme pour un joueur (zones comprises).
 --- Renvoie le dropId, ou nil (réponse « noSite », rien de consommé).
 function Server.launchDrop(player, requestId, forced, opts)
     opts = opts or {}
@@ -772,7 +773,7 @@ function Server.launchDrop(player, requestId, forced, opts)
     if opts.point then
         x, y, info = opts.point.x, opts.point.y, opts.point.info
     else
-        x, y, info = Server.chooseDropPoint(player, opts.sector, forced == true)
+        x, y, info = Server.chooseDropPoint(player, opts.sector)
     end
     if not x then
         MilitaryDrop.log("request from " .. name .. ": no landing square", true)

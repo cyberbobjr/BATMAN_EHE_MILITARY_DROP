@@ -1082,15 +1082,20 @@ function T.drop_sector_single_is_preselected_and_drawn()
     end
 end
 
-function T.admin_sheet_and_classic_form_have_no_drop_field()
+function T.admin_sheet_gets_the_drop_field_and_classic_form_none()
+    -- Feuille admin (décision du 2026-10-06) : même champ que pour un joueur.
     local args = dropArgs(SECTORS)
     args.forced = true
     local admin = RW.newForm(args, NOW)
-    assertEq(admin.drop, nil, "feuille admin : jamais de champ")
-    assertEq(RW.computeLayout(admin, 1920, 1080).dropField, nil, "pas de champ dessiné")
+    assertEq(admin.forced, true, "feuille admin")
+    assertEq(#admin.drop.sectors, 3, "feuille admin : champ du secteur de largage")
+    assertTrue(RW.computeLayout(admin, 1920, 1080).dropField ~= nil, "champ dessiné")
     RW.add(admin, "rations")
-    assertEq(RW.blocker(admin, NOW), nil, "lots seuls")
-    assertEq(RW.buildOrder(admin).sector, nil, "aucun secteur envoyé")
+    assertEq(RW.blocker(admin, NOW), "sector", "lots sans secteur : bloqué")
+    assertTrue(RW.pickSector(admin, "Riverside"), "secteur choisi")
+    assertEq(RW.blocker(admin, NOW), nil, "transmissible")
+    assertEq(RW.buildOrder(admin).sector, "Riverside", "secteur envoyé")
+    assertEq(RW.stampKey(admin), "IGUI_MilitaryDrop_ReqStampAdmin", "tampon ADMIN gardé")
     local classic = RW.newForm(formArgs(3, 12), NOW)
     assertEq(classic.drop, nil, "choix 1 ou 2 : pas de champ")
     RW.add(classic, "rations")

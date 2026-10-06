@@ -39,7 +39,8 @@
 -- chaque page d'une feuille paginée. La transmission attend un secteur
 -- (motif « choisir un secteur ») ; la commande envoie sector = "<secteur>"
 -- avec les lots, ou decoy = "<secteur>" seul pour le leurre. Feuille admin
--- (forced) : jamais de champ, même si la réponse en portait un.
+-- (forced) comprise : mêmes champ et secteurs que pour un joueur (décision
+-- du 2026-10-06).
 --
 -- Le client ne décide rien : il compose la commande (budget, paliers) pour
 -- l'affichage, puis MilitaryDrop.Client l'envoie (RequisitionOrder) ou
@@ -244,10 +245,10 @@ function RW.newForm(args, nowMs)
             form.decoy.reason = "empty"
         end
     end
-    -- Secteur de largage choisi par le joueur (ZONE-09) : jamais sur la
-    -- feuille admin. Le leurre partage la liste et le sélecteur du champ.
+    -- Secteur de largage choisi par le joueur (ZONE-09), feuille admin
+    -- comprise. Le leurre partage la liste et le sélecteur du champ.
     local drop = args.drop
-    if type(drop) == "table" and drop.zones == true and not form.forced then
+    if type(drop) == "table" and drop.zones == true then
         form.drop = { sectors = RW.zoneSectors(drop.sectors) }
         if form.decoy then
             form.decoy.sectors = form.drop.sectors

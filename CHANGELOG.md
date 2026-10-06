@@ -14,12 +14,12 @@ Not published yet. This heading has no version number, so it is not read as a ch
 - Zones are kept in Zomboid/Lua/MilitaryDrop/dropzones.txt (created empty, with a notice) and can be managed in game: a "Military Drop Zones" button in the game's admin panel (debug menu in single player) opens a zone list modelled on the game's animal zones panel. Add a zone by drawing its rectangle on the ground with the left mouse button (drag, or two clicks; clicks do nothing else meanwhile), then give its name, sector and weight. Zones can also be edited (name, sector, weight, redraw), removed, enabled or disabled, and you can teleport to them. A "Highlight" box lights up the border of every zone on the ground, steadily and on the admin's screen only, the tool's messages stay in its window, and the zone list is never sent to players.
 - The radio announcement and its reminders name the zone: "LZ Central Park, grid ...". An option turns this off.
 - In zone mode, the siren decoy falls in a zone too: the requisition form offers the sectors instead of N, E, S and W.
-- Admin drops (Force a supply drop) ignore drop zones: they still fall near the admin, whatever the placement, and the decoy of the admin form keeps N, E, S and W.
+- Admin drops (Force a supply drop) follow drop zones like a player's call, with distances measured from the admin: drop placement, sector choice, and the sectors of the admin form's decoy.
 - In a zone, the crate can land anywhere: grass, field, beach, path, road, parking lot. It never lands inside a building, in water or outside its zone; a zone needs no road. A zone with no usable spot gives no drop, and the caller is asked to try again. Zones overlapping a non-PvP zone or a safehouse are refused by the tool and never get a crate in the protected part.
 - Without any usable zone, drops use the vanilla towns (vanilla map only), then fall near the caller with a warning to the admins.
 - The zone tool shows its remarks (no open ground, overlap, map not loaded) on the zone's line only; the red "problems" section lists real errors of the file only.
 - New sandbox options: drop zone sector (nearest, random, or chosen by the player), minimum distance, range of "zones if one is near", zone name in the announcement.
-- With "Drop zone sector" set to "Chosen by the player", the requisition form gets a "Drop sector" field: the player picks the town (sectors too close are not offered when a minimum distance is set), and the exact zone and spot are still drawn inside it. The siren decoy uses the same field. Admin forms never show it.
+- With "Drop zone sector" set to "Chosen by the player", the requisition form gets a "Drop sector" field: the player picks the town (sectors too close are not offered when a minimum distance is set), and the exact zone and spot are still drawn inside it. The siren decoy uses the same field. The admin form shows it too.
 
 ### Sandbox options without restarting
 

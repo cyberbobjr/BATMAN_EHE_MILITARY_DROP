@@ -60,6 +60,8 @@ Nouvelle option sandbox `DropPlacement` :
 
 Le largage forcé de l'admin (APPEL-05) n'est pas concerné.
 
+> **Remplacé le 2026-10-06** (décision de l'utilisateur, `dev/SUIVI.md`) : le largage forcé de l'admin suit exactement les règles des joueurs (placement, choix du secteur, leurre par secteur nommé, distances depuis l'admin).
+
 ### 2.2 Modèle et stockage (ZONE-02)
 
 - **Secteur** : un nom libre (`Louisville`, `Raven Creek`) qui regroupe des zones.
