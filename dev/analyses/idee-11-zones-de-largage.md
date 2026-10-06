@@ -75,6 +75,8 @@ Le largage forcé de l'admin (APPEL-05) n'est pas concerné.
 
 ### 2.3 Outil d'admin en jeu (ZONE-03), dès la première version
 
+> **Remplacé le 2026-10-06** (demande de l'utilisateur après test en jeu) : le menu contextuel ci-dessous est supprimé au profit d'un bouton du panneau d'admin vanilla (menu de debug en solo), d'une fenêtre calquée sur les zones d'animaux et d'un tracé au clic gauche. Parcours actuel : `docs/guide/fr/06-server-admin.md`, « Outil en jeu » ; suivi : `dev/SUIVI.md`, ZONE-03.
+
 - Clic droit sur une case, puis « Military Drop (admin) », puis « Zones de largage ».
 - **Coin 1 ici**, puis **Coin 2 ici**. Une fenêtre `ISTextBox` demande ensuite le secteur et le nom. Un secteur déjà connu peut être choisi dans une liste.
 - **Liste** des zones par secteur, avec activation, désactivation et suppression. Un raccourci « Aller à » sert à vérifier une zone.

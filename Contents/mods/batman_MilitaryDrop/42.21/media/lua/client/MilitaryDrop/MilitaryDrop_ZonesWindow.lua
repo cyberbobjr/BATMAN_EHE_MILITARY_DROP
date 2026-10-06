@@ -1,27 +1,55 @@
 -- ============================================================================
--- Military Drop — fenêtre « Zones de largage » de l'admin (ZONE-03)
+-- Military Drop — « Zones de largage » dans le panneau d'admin vanilla
+-- (ZONE-03) : bouton du panneau, fenêtre de liste
 --
--- Liste de la dernière ZoneListReply (MilitaryDrop_ZonesAdmin.lua), groupée
--- par secteur : nom, identifiant, état (active, désactivée, carte non
--- chargée), coins, taille, poids et avertissements traduits ; en bas, les
--- problèmes du fichier relevés par le serveur (textes anglais du journal).
--- Boutons : Activer / Désactiver, Supprimer (second clic de confirmation
--- dans les DELETE_CONFIRM_MS, sans boîte modale), Aller à (téléportation
--- d'admin), Recharger, Fermer. La liste est redemandée à chaque ouverture ;
--- chaque réponse du serveur la remplace en gardant la zone sélectionnée.
+-- Bouton : ISAdminPanelUI:create (ISAdminPanelUI.lua:24-192) crée ses
+-- boutons, puis les range tous par titre en deux colonnes à partir de
+-- self:getChildren() (:157-178) et place « Fermer » dessous. L'enveloppe
+-- ajoute le bouton du mod AVANT l'original : il est rangé avec les boutons
+-- vanilla, sans rien remplacer, et une autre enveloppe d'un autre mod reste
+-- appelée. Il n'est créé que pour un joueur qui a le droit à l'ouverture
+-- (ZonesAdmin.canUse) ; ISAdminPanelUI:updateButtons (:194-240, rappelée par
+-- RefreshCheats et OnRolesReceived) est enveloppée pour le griser si le droit
+-- se perd. Le panneau d'admin vanilla n'existe qu'en MP (bouton du HUD créé
+-- sous isClient(), ISEquippedItem.lua:904-948) ; en solo avec le mode debug,
+-- la même entrée est ajoutée au menu de debug vanilla (ISDebugMenu, onglet
+-- « Main », voir installDebugMenuButton plus bas).
+--
+-- Fenêtre calquée sur ISDesignationZonePanel (zones d'animaux) et
+-- ISPvpZonePanel : liste groupée par secteur (nom, identifiant, état, coins,
+-- taille, poids, avertissements traduits), en tête la carte attendue et le
+-- mode de placement, en bas les problèmes de dropzones.txt relevés par le
+-- serveur (textes anglais du journal). Boutons aux libellés vanilla :
+-- « Ajouter une zone », « Modifier », « Retirer » (confirmation
+-- ISModalDialog, IGUI_Designation_RemoveConfirm), « Activer / Désactiver »,
+-- « Se téléporter sur la zone », « Rafraîchir » (relit dropzones.txt),
+-- « Fermer ». Ajouter et Modifier ouvrent l'éditeur
+-- (MilitaryDrop_ZoneEditor.lua) et masquent la liste, comme le vanilla
+-- (ISDesignationZonePanel:onClick:205-214). La zone sélectionnée est
+-- surlignée au sol dans prerender, fenêtre ouverte seulement.
+-- Retour de l'éditeur : la zone ajoutée ou modifiée n'est resélectionnée
+-- par la liste suivante (pendingSelect) qu'après un succès, seul cas où une
+-- ZoneListReply suit à coup sûr ; l'annulation la sélectionne tout de suite,
+-- et un changement de sélection par l'admin efface pendingSelect.
+-- Mort du joueur (OnPlayerDeath, ou personnage mort ou remplacé vu dans
+-- prerender) : liste et éditeur fermés ; les actions visent toujours le
+-- personnage courant (ZonesAdmin.livePlayer), jamais l'IsoPlayer gardé.
 --
 -- Textes : drawText ne lit aucune balise ; les noms viennent déjà nettoyés
 -- (ZonesAdmin.normalizeList) et chaque ligne est coupée à la largeur de la
--- liste (Window.fit), avec une marge pour AngelCodeFont.getWidth.
--- Clavier : Échap ferme (seule la fenêtre la plus haute qui consomme la
--- touche la reçoit, UIManager.java:1357-1363). Manette : la liste prend le
--- focus ; A active ou désactive, X va à la zone, Y recharge, B ferme (la
--- suppression reste à la souris).
+-- liste (Window.fit). Largeurs des boutons mesurées sur leurs libellés
+-- (pz-knowledge ui-windows.md, largeurs selon la langue). Clavier : Échap
+-- ferme (seule la fenêtre la plus haute qui consomme la touche la reçoit,
+-- UIManager.java:1357-1363). Manette (comme ISDesignationZonePanel:
+-- onGainJoypadFocus:248-253) : croix haut/bas = liste, A modifier, X activer
+-- ou désactiver, Y ajouter, B fermer.
 -- ============================================================================
 
-require "ISUI/ISCollapsableWindow"
+require "ISUI/ISCollapsableWindowJoypad"
 require "ISUI/ISScrollingListBox"
 require "ISUI/ISButton"
+require "ISUI/ISModalDialog"
+require "ISUI/AdminPanel/ISAdminPanelUI"
 require "MilitaryDrop/MilitaryDrop_ZonesAdmin"
 
 local ZonesAdmin = MilitaryDrop.ZonesAdmin
@@ -30,11 +58,11 @@ local Window = MilitaryDrop.ZonesWindow or {}
 MilitaryDrop.ZonesWindow = Window
 
 Window.WIDTH = 580
-Window.HEIGHT = 460
-Window.PAD = 8
-Window.DELETE_CONFIRM_MS = 4000
+Window.HEIGHT = 480
+Window.PAD = 10
+Window.ADMIN_BUTTON = "MILITARYDROP_ZONES"
 
-local ZW = ISCollapsableWindow:derive("MilitaryDropZonesWindow")
+local ZW = ISCollapsableWindowJoypad:derive("MilitaryDropZonesWindow")
 Window.class = ZW
 
 local COLOR_SECTOR = { 1.0, 0.8, 0.4 }
@@ -63,6 +91,15 @@ function Window.fit(text, width)
         cut = MilitaryDrop.dropLastChar(cut)
     end
     return cut .. "..."
+end
+
+--- Largeur d'un bouton qui doit afficher chacun des textes donnés.
+function Window.buttonWidth(texts, minimum)
+    local width = minimum or 60
+    for _, text in ipairs(texts) do
+        width = math.max(width, measure(text) + 20)
+    end
+    return width
 end
 
 -- ----------------------------------------------------------------------------
@@ -126,7 +163,7 @@ function Window.buildRows(list, width)
         rows[#rows + 1] = row
     end
     if #zones == 0 then
-        rows[#rows + 1] = { kind = "note", lines = { Window.fit(getText("IGUI_MilitaryDrop_ZoneEmpty"), width) },
+        rows[#rows + 1] = { kind = "note", lines = { Window.fit(getText("IGUI_MilitaryDrop_ZoneNone"), width) },
             colors = { COLOR_DIM } }
     end
     if #list.problems > 0 then
@@ -139,7 +176,8 @@ function Window.buildRows(list, width)
     return rows
 end
 
---- Dessin d'une ligne (remplace ISScrollingListBox.doDrawItem).
+--- Dessin d'une ligne (remplace ISScrollingListBox.doDrawItem ; hauteur
+--- variable : ISScrollingListBox:prerender relit la hauteur rendue).
 local function drawItem(list, y, item, alt)
     local row = item.item
     local lineH = fontHeight()
@@ -149,7 +187,8 @@ local function drawItem(list, y, item, alt)
         return y + height
     end
     if row.kind == "zone" and list.selected == item.index then
-        list:drawSelection(0, y, list:getWidth(), height - 1)
+        -- Couleur de sélection de ISDesignationZonePanel:drawList:115.
+        list:drawRect(0, y, list:getWidth(), height - 1, 0.3, 0.7, 0.35, 0.15)
     elseif row.kind == "zone" and list.mouseoverselected == item.index and list:isMouseOver() then
         list:drawMouseOverHighlight(0, y, list:getWidth(), height - 1)
     end
@@ -170,52 +209,65 @@ end
 -- Fenêtre
 -- ----------------------------------------------------------------------------
 
-local function buttonWidth(keys)
-    local width = 60
-    for _, key in ipairs(keys) do
-        width = math.max(width, measure(getText(key)) + 20)
-    end
-    return width
-end
+-- Boutons : champ, libellés possibles (le premier est affiché), action, rangée.
+local BUTTONS = {
+    { "addBtn", { "IGUI_PvpZone_AddZone" }, "onAdd", 1 },
+    { "editBtn", { "IGUI_MilitaryDrop_ZoneEdit" }, "onEdit", 1 },
+    { "removeBtn", { "ContextMenu_Remove" }, "onRemove", 1 },
+    { "toggleBtn", { "IGUI_MilitaryDrop_ZoneEnable", "IGUI_MilitaryDrop_ZoneDisable" }, "onToggle", 2 },
+    { "teleportBtn", { "IGUI_PvpZone_TeleportToZone" }, "onTeleport", 2 },
+    { "reloadBtn", { "UI_Reload" }, "onReload", 2 },
+    { "closeBtn", { "IGUI_CraftUI_Close" }, "close", 2 },
+}
 
 function ZW:createChildren()
-    ISCollapsableWindow.createChildren(self)
     local pad = Window.PAD
     local lineH = fontHeight()
     local buttonH = lineH + 6
+    -- Largeur : la plus longue rangée de boutons, au moins WIDTH ; fixée
+    -- avant la barre de titre (bouton de fermeture placé à droite).
+    local widths, rowWidth = {}, { 0, 0 }
+    for _, spec in ipairs(BUTTONS) do
+        local texts = {}
+        for i, key in ipairs(spec[2]) do
+            texts[i] = getText(key)
+        end
+        widths[spec[1]] = Window.buttonWidth(texts, 80)
+        rowWidth[spec[4]] = rowWidth[spec[4]] + widths[spec[1]] + pad
+    end
+    self:setWidth(math.max(self.width, math.max(rowWidth[1], rowWidth[2]) + pad))
+    ISCollapsableWindowJoypad.createChildren(self)
     self.headerY = self:titleBarHeight() + pad
     local listY = self.headerY + 2 * lineH + pad
-    local buttonsY = self.height - pad - buttonH - self:resizeWidgetHeight()
-    self.statusY = buttonsY - lineH - pad
+    local row2Y = self.height - pad - buttonH
+    local row1Y = row2Y - pad - buttonH
+    self.statusY = row1Y - lineH - pad
     self.list = ISScrollingListBox:new(pad, listY, self.width - 2 * pad, self.statusY - pad - listY)
     self.list:initialise()
     self.list:instantiate()
     self.list:setFont(UIFont.Small, 3)
     self.list.drawBorder = true
+    self.list.joypadParent = self
     self.list.doDrawItem = drawItem
-    local window = self
-    self.list.onJoypadDown = function(_, button)
-        window:onJoypadButton(button)
-    end
     self:addChild(self.list)
 
-    local specs = {
-        { "toggle", { "IGUI_MilitaryDrop_ZoneEnable", "IGUI_MilitaryDrop_ZoneDisable" }, self.onToggle },
-        { "delete", { "IGUI_MilitaryDrop_ZoneDelete", "IGUI_MilitaryDrop_ZoneDeleteConfirm" }, self.onDelete },
-        { "goTo", { "IGUI_MilitaryDrop_ZoneGoTo" }, self.onGoTo },
-        { "reload", { "IGUI_MilitaryDrop_ZoneReload" }, self.onReload },
-        { "closeBtn", { "IGUI_MilitaryDrop_ZoneClose" }, self.close },
-    }
-    local x = pad
-    for _, spec in ipairs(specs) do
-        local width = buttonWidth(spec[2])
-        local button = ISButton:new(x, buttonsY, width, buttonH, getText(spec[2][1]), self, spec[3])
+    local x = { pad, pad }
+    for _, spec in ipairs(BUTTONS) do
+        local width = widths[spec[1]]
+        local y = spec[4] == 1 and row1Y or row2Y
+        local bx = x[spec[4]]
+        if spec[1] == "closeBtn" then
+            bx = self.width - pad - width
+        end
+        local button = ISButton:new(bx, y, width, buttonH, getText(spec[2][1]), self, ZW[spec[3]])
         button:initialise()
         button:instantiate()
+        button.borderColor = { r = 0.7, g = 0.7, b = 0.7, a = 0.5 }
         self:addChild(button)
         self[spec[1]] = button
-        x = x + width + pad
+        x[spec[4]] = x[spec[4]] + width + pad
     end
+    self.closeBtn:enableCancelColor()
     self:updateButtons()
 end
 
@@ -225,20 +277,56 @@ function ZW:selectedZone()
     return row and row.kind == "zone" and row.zone or nil
 end
 
---- Boutons selon la sélection ; titre de Supprimer pendant la confirmation.
+--- Personnage courant et vivant du joueur de la fenêtre (gardé dans
+--- self.player), ou nil.
+function ZW:currentPlayer()
+    local player = ZonesAdmin.livePlayer(self.playerNum)
+    if player then
+        self.player = player
+    end
+    return player
+end
+
+--- Sélection changée par l'admin depuis le retour de l'éditeur : la zone
+--- en attente n'est plus resélectionnée.
+function ZW:dropPendingIfMoved()
+    if self.pendingSelect and self.list.selected ~= self.pendingFrom then
+        self.pendingSelect, self.pendingFrom = nil, nil
+    end
+end
+
+--- Boutons selon la sélection et les droits.
 function ZW:updateButtons()
     local zone = self:selectedZone()
-    self.toggle:setEnable(zone ~= nil)
-    self.toggle:setTitle(getText((zone and zone.enabled) and "IGUI_MilitaryDrop_ZoneDisable"
+    self.editBtn:setEnable(zone ~= nil)
+    self.removeBtn:setEnable(zone ~= nil)
+    self.toggleBtn:setEnable(zone ~= nil)
+    self.toggleBtn:setTitle(getText((zone and zone.enabled) and "IGUI_MilitaryDrop_ZoneDisable"
         or "IGUI_MilitaryDrop_ZoneEnable"))
-    self.delete:setEnable(zone ~= nil)
-    local confirming = zone ~= nil and self.confirmId == zone.id and getTimestampMs() < (self.confirmUntil or 0)
-    self.delete:setTitle(getText(confirming and "IGUI_MilitaryDrop_ZoneDeleteConfirm" or "IGUI_MilitaryDrop_ZoneDelete"))
-    self.goTo:setEnable(zone ~= nil and ZonesAdmin.canTeleport(self.player))
+    self.teleportBtn:setEnable(zone ~= nil and ZonesAdmin.canTeleport(self.player))
+end
+
+--- Sélectionne la zone d'identifiant id (ou garde la sélection, ou la
+--- première zone) après un remplissage de la liste.
+function ZW:selectZone(id)
+    self.list.selected = -1
+    for i, item in ipairs(self.list.items) do
+        local row = item.item
+        if row.kind == "zone" then
+            if self.list.selected == -1 or row.zone.id == id then
+                self.list.selected = i
+            end
+            if row.zone.id == id then
+                break
+            end
+        end
+    end
 end
 
 function ZW:refresh(list)
-    local keep = self:selectedZone()
+    self:dropPendingIfMoved()
+    local keep = self.pendingSelect or (self:selectedZone() and self:selectedZone().id)
+    self.pendingSelect, self.pendingFrom = nil, nil
     self.data = list
     self:fitHeader()
     self.list:clear()
@@ -246,62 +334,80 @@ function ZW:refresh(list)
     for _, row in ipairs(Window.buildRows(list, width)) do
         self.list:addItem(row.lines[1], row)
     end
-    self.list.selected = -1
-    for i, item in ipairs(self.list.items) do
-        local row = item.item
-        if row.kind == "zone" and (self.list.selected == -1 or (keep and row.zone.id == keep.id)) then
-            self.list.selected = i
-            if keep and row.zone.id == keep.id then
-                break
-            end
-        end
+    self:selectZone(keep)
+    if self.list.selected > 0 then
+        self.list:ensureVisible(self.list.selected)
     end
     self:updateButtons()
 end
 
-function ZW:onToggle()
-    local zone = self:selectedZone()
-    if zone then
-        ZonesAdmin.setEnabled(self.player, zone.id, not zone.enabled)
+function ZW:onAdd()
+    local Editor = MilitaryDrop.ZoneEditor
+    local player = self:currentPlayer()
+    if Editor and player then
+        self.status = nil
+        Editor.open(player, nil)
     end
 end
 
-function ZW:onDelete()
+function ZW:onEdit()
+    local zone = self:selectedZone()
+    local Editor = MilitaryDrop.ZoneEditor
+    local player = self:currentPlayer()
+    if zone and Editor and player then
+        self.status = nil
+        Editor.open(player, zone)
+    end
+end
+
+function ZW:onRemove()
     local zone = self:selectedZone()
     if not zone then
         return
     end
-    local now = getTimestampMs()
-    if self.confirmId == zone.id and now < (self.confirmUntil or 0) then
-        self.confirmId = nil
-        ZonesAdmin.delete(self.player, zone.id)
-    else
-        self.confirmId = zone.id
-        self.confirmUntil = now + Window.DELETE_CONFIRM_MS
+    local text = getText("IGUI_Designation_RemoveConfirm", zone.name .. " (" .. zone.id .. ")")
+    local w, h = 350, 150
+    local x = getPlayerScreenLeft(self.playerNum) + math.floor((getPlayerScreenWidth(self.playerNum) - w) / 2)
+    local y = getPlayerScreenTop(self.playerNum) + math.floor((getPlayerScreenHeight(self.playerNum) - h) / 2)
+    local modal = ISModalDialog:new(x, y, w, h, text, true, self, ZW.onRemoveConfirmed, self.playerNum, zone.id)
+    modal:initialise()
+    modal:addToUIManager()
+    modal.moveWithMouse = true
+    self.removeModal = modal
+    if JoypadState and JoypadState.players[self.playerNum + 1] then
+        modal.prevFocus = self
+        setJoypadFocus(self.playerNum, modal)
     end
-    self:updateButtons()
 end
 
-function ZW:onGoTo()
+function ZW:onRemoveConfirmed(button, id)
+    self.removeModal = nil
+    local player = self:currentPlayer()
+    if button.internal == "YES" and id and player then
+        ZonesAdmin.delete(player, id)
+    end
+end
+
+function ZW:onToggle()
     local zone = self:selectedZone()
-    if zone and ZonesAdmin.canTeleport(self.player) then
-        ZonesAdmin.goTo(self.player, zone)
+    local player = self:currentPlayer()
+    if zone and player then
+        ZonesAdmin.setEnabled(player, zone.id, not zone.enabled)
+    end
+end
+
+function ZW:onTeleport()
+    local zone = self:selectedZone()
+    local player = self:currentPlayer()
+    if zone and player and ZonesAdmin.canTeleport(player) then
+        ZonesAdmin.goTo(player, zone)
     end
 end
 
 function ZW:onReload()
-    ZonesAdmin.reload(self.player)
-end
-
-function ZW:onJoypadButton(button)
-    if button == Joypad.AButton then
-        self:onToggle()
-    elseif button == Joypad.XButton then
-        self:onGoTo()
-    elseif button == Joypad.YButton then
-        self:onReload()
-    elseif button == Joypad.BButton then
-        self:close()
+    local player = self:currentPlayer()
+    if player then
+        ZonesAdmin.reload(player)
     end
 end
 
@@ -335,14 +441,27 @@ function ZW:fitHeader()
 end
 
 function ZW:prerender()
-    ISCollapsableWindow.prerender(self)
-    if not self.isCollapsed then
-        self:updateButtons()
+    ISCollapsableWindowJoypad.prerender(self)
+    -- Droit perdu (rôle changé), personnage mort ou remplacé : fermeture,
+    -- comme ISPvpZonePanel:prerender:101.
+    local player = ZonesAdmin.livePlayer(self.playerNum)
+    if player ~= self.player or not ZonesAdmin.canUse(player) then
+        self:close()
+        return
+    end
+    if self.isCollapsed then
+        return
+    end
+    self:dropPendingIfMoved()
+    self:updateButtons()
+    local zone = self:selectedZone()
+    if zone then
+        ZonesAdmin.highlight(self.playerNum, zone, ZonesAdmin.zoneColor(zone))
     end
 end
 
 function ZW:render()
-    ISCollapsableWindow.render(self)
+    ISCollapsableWindowJoypad.render(self)
     if self.isCollapsed then
         return
     end
@@ -366,7 +485,7 @@ function ZW:setStatus(text, ok)
 end
 
 function ZW:isKeyConsumed(key)
-    return key == Keyboard.KEY_ESCAPE
+    return key == Keyboard.KEY_ESCAPE and self:isReallyVisible()
 end
 
 function ZW:onKeyRelease(key)
@@ -375,8 +494,55 @@ function ZW:onKeyRelease(key)
     end
 end
 
+-- Manette : liste à la croix, boutons sur A, B, X, Y (ISDesignationZonePanel).
+function ZW:onGainJoypadFocus(joypadData)
+    ISCollapsableWindowJoypad.onGainJoypadFocus(self, joypadData)
+    self:setISButtonForA(self.editBtn)
+    self:setISButtonForB(self.closeBtn)
+    self:setISButtonForX(self.toggleBtn)
+    self:setISButtonForY(self.addBtn)
+end
+
+function ZW:onLoseJoypadFocus(joypadData)
+    ISCollapsableWindowJoypad.onLoseJoypadFocus(self, joypadData)
+    self:clearISButtons()
+end
+
+--- Croix haut / bas : zone précédente ou suivante (les en-têtes de secteur
+--- et les notes sont sautés).
+function ZW:moveSelection(step)
+    local items = self.list.items
+    local i = self.list.selected
+    for _ = 1, #items do
+        i = i + step
+        if i < 1 then
+            i = #items
+        elseif i > #items then
+            i = 1
+        end
+        if items[i] and items[i].item.kind == "zone" then
+            self.pendingSelect, self.pendingFrom = nil, nil
+            self.list.selected = i
+            self.list:ensureVisible(i)
+            return
+        end
+    end
+end
+
+function ZW:onJoypadDirUp()
+    self:moveSelection(-1)
+end
+
+function ZW:onJoypadDirDown()
+    self:moveSelection(1)
+end
+
 --- Fermeture réelle (ISCollapsableWindow:close ne fait que masquer).
 function ZW:close()
+    if self.removeModal then
+        self.removeModal:destroy()
+        self.removeModal = nil
+    end
     if JoypadState and JoypadState.players[self.playerNum + 1] then
         setJoypadFocus(self.playerNum, nil)
     end
@@ -385,34 +551,39 @@ function ZW:close()
     if Window.instance == self then
         Window.instance = nil
     end
+    local Editor = MilitaryDrop.ZoneEditor
+    if Editor and Editor.closeFor then
+        Editor.closeFor(self.playerNum)
+    end
 end
 
 function ZW:new(x, y, player)
-    local o = ISCollapsableWindow.new(self, x, y, Window.WIDTH, Window.HEIGHT)
-    setmetatable(o, self)
-    self.__index = self
+    local o = ISCollapsableWindowJoypad.new(self, x, y, Window.WIDTH, Window.HEIGHT)
     o.player = player
     o.playerNum = player:getPlayerNum()
     o.title = getText("IGUI_MilitaryDrop_ZonesWindowTitle")
-    o.resizable = false
+    o:setResizable(false)
+    o.moveWithMouse = true
     o:setWantKeyEvents(true)
     return o
 end
 
 -- ----------------------------------------------------------------------------
--- Entrées (ZonesAdmin)
+-- Entrées (bouton du panneau d'admin, ZonesAdmin, éditeur)
 -- ----------------------------------------------------------------------------
 
---- Ouvre la fenêtre (ou la remet au premier plan) ; la liste est demandée
---- par l'appelant (ZonesAdmin.openList).
+--- Ouvre la fenêtre (ou la remet au premier plan) et demande la liste.
 function Window.open(player)
+    if not ZonesAdmin.canUse(player) or player:isDead() then
+        return nil
+    end
     local window = Window.instance
-    if window and window.playerNum ~= player:getPlayerNum() then
+    if window and (window.playerNum ~= player:getPlayerNum() or window.player ~= player) then
         window:close()
         window = nil
     end
+    local playerNum = player:getPlayerNum()
     if not window then
-        local playerNum = player:getPlayerNum()
         local x = getPlayerScreenLeft(playerNum) + math.floor((getPlayerScreenWidth(playerNum) - Window.WIDTH) / 2)
         local y = getPlayerScreenTop(playerNum) + math.floor((getPlayerScreenHeight(playerNum) - Window.HEIGHT) / 2)
         window = ZW:new(math.max(0, x), math.max(0, y), player)
@@ -422,13 +593,14 @@ function Window.open(player)
         if ZonesAdmin.list then
             window:refresh(ZonesAdmin.list)
         end
-        if JoypadState and JoypadState.players[playerNum + 1] then
-            setJoypadFocus(playerNum, window.list)
-        end
     else
         window:setVisible(true)
         window:bringToTop()
     end
+    if JoypadState and JoypadState.players[playerNum + 1] then
+        setJoypadFocus(playerNum, window)
+    end
+    ZonesAdmin.requestList(player)
     return window
 end
 
@@ -443,5 +615,205 @@ function Window.setStatus(text, ok)
         Window.instance:setStatus(text, ok)
     end
 end
+
+--- Liste masquée pendant l'édition (ISDesignationZonePanel:onClick:210).
+function Window.hide()
+    if Window.instance then
+        Window.instance:setVisible(false)
+    end
+end
+
+--- Retour de l'éditeur : liste de nouveau visible, zoneId sélectionné.
+--- ok vrai (succès : une ZoneListReply suit) : zoneId (zone ajoutée ou
+--- modifiée, peut-être absente de la liste affichée) est aussi resélectionné
+--- par cette liste, sauf si l'admin change de sélection d'ici là. Sinon
+--- (annulation : aucune liste ne suit) rien n'est mis en attente.
+function Window.show(zoneId, statusText, ok)
+    local window = Window.instance
+    if not window then
+        return
+    end
+    window:setVisible(true)
+    window:bringToTop()
+    window.pendingSelect, window.pendingFrom = nil, nil
+    if zoneId then
+        window:selectZone(zoneId)
+        if ok == true then
+            window.pendingSelect, window.pendingFrom = zoneId, window.list.selected
+        end
+    end
+    if statusText then
+        window:setStatus(statusText, ok)
+    end
+    if JoypadState and JoypadState.players[window.playerNum + 1] then
+        setJoypadFocus(window.playerNum, window)
+    end
+end
+
+-- ----------------------------------------------------------------------------
+-- Bouton du panneau d'admin vanilla
+-- ----------------------------------------------------------------------------
+
+--- Clic sur le bouton : ouvre la liste (le panneau d'admin reste ouvert).
+function Window.onAdminButton(panel, button)
+    local player = getPlayer()
+    if ZonesAdmin.canUse(player) then
+        Window.open(player)
+    end
+end
+
+--- Ajoute le bouton au panneau avant que ISAdminPanelUI:create range ses
+--- enfants ; seulement pour un joueur qui a le droit.
+function Window.addAdminButton(panel)
+    if panel.militaryDropZonesBtn or not ZonesAdmin.canUse(getPlayer()) then
+        return nil
+    end
+    local height = getTextManager():getFontHeight(UIFont.Small) + 6
+    local button = ISButton:new(0, 0, 200, height, getText("IGUI_MilitaryDrop_AdminPanelZones"), panel,
+        Window.onAdminButton)
+    button.internal = Window.ADMIN_BUTTON
+    button:initialise()
+    button:instantiate()
+    button.borderColor = panel.buttonBorderColor
+    button.tooltip = getText("IGUI_MilitaryDrop_AdminPanelZonesTip")
+    panel:addChild(button)
+    panel.militaryDropZonesBtn = button
+    return button
+end
+
+--- Enveloppe ISAdminPanelUI.create et .updateButtons une seule fois (sur
+--- l'original courant ; reposée si ISAdminPanelUI.lua a été rechargé).
+function Window.installAdminButton()
+    local Panel = ISAdminPanelUI
+    if not Panel or type(Panel.create) ~= "function" or type(Panel.updateButtons) ~= "function" then
+        return false
+    end
+    if Panel.create ~= Window.createWrapper then
+        local originalCreate = Panel.create
+        Window.createWrapper = function(self, ...)
+            Window.addAdminButton(self)
+            return originalCreate(self, ...)
+        end
+        Panel.create = Window.createWrapper
+    end
+    if Panel.updateButtons ~= Window.updateWrapper then
+        local originalUpdate = Panel.updateButtons
+        Window.updateWrapper = function(self, ...)
+            local result = originalUpdate(self, ...)
+            if self.militaryDropZonesBtn then
+                self.militaryDropZonesBtn.enable = ZonesAdmin.canUse(getPlayer())
+            end
+            return result
+        end
+        Panel.updateButtons = Window.updateWrapper
+    end
+    return true
+end
+
+-- ----------------------------------------------------------------------------
+-- Entrée du menu de debug vanilla (solo en mode debug)
+-- ----------------------------------------------------------------------------
+
+--- Vrai en solo, mode debug actif : seule situation sans panneau d'admin
+--- (en MP, un client en -debug a aussi ISDebugMenu ; il garde le panneau).
+function Window.debugMenuAllowed(player)
+    return not isClient() and isDebugEnabled() == true and ZonesAdmin.canUse(player)
+end
+
+--- Clic dans le menu de debug : ISDebugMenu:onClick appelle func() sans
+--- argument (ISDebugMenu.lua:208-214) ; le menu reste ouvert.
+function Window.onDebugMenuButton()
+    local player = getPlayer()
+    if Window.debugMenuAllowed(player) then
+        Window.open(player)
+    end
+end
+
+--- Ajoute l'entrée à la liste du menu. ISDebugMenu n'offre aucun point
+--- d'extension : createChildren vide self.buttons puis appelle setupButtons
+--- (ISDebugMenu.lua:104-108), qui empile des { title, func, tab, marginTop }
+--- par addButtonInfo (:60-66), les trie par titre (:53), puis ajoute les deux
+--- « Fermer » (:56-57). L'entrée est posée AVANT l'original pour être triée
+--- avec les boutons vanilla ; si l'original (ou une enveloppe d'un autre mod)
+--- l'a perdue, elle est remise juste avant le « Fermer » de l'onglet MAIN.
+function Window.addDebugMenuButton(menu, before)
+    if not Window.debugMenuAllowed(getPlayer()) then
+        return nil
+    end
+    menu.buttons = menu.buttons or {}
+    for _, info in ipairs(menu.buttons) do
+        if info.militaryDropZones then
+            return info
+        end
+    end
+    local info = { title = getText("IGUI_MilitaryDrop_AdminPanelZones"), func = Window.onDebugMenuButton,
+        tab = "MAIN", marginTop = 0, militaryDropZones = true }
+    local at = #menu.buttons + 1
+    if not before then
+        for i, entry in ipairs(menu.buttons) do
+            if entry.tab == "MAIN" and entry.func == nil then
+                at = i
+                break
+            end
+        end
+    end
+    table.insert(menu.buttons, at, info)
+    return info
+end
+
+--- Enveloppe ISDebugMenu.setupButtons une seule fois (sur l'original
+--- courant ; reposée si ISDebugMenu.lua a été rechargé).
+function Window.installDebugMenuButton()
+    local Menu = ISDebugMenu
+    if not Menu or type(Menu.setupButtons) ~= "function" then
+        return false
+    end
+    if Menu.setupButtons ~= Window.debugMenuWrapper then
+        local originalSetup = Menu.setupButtons
+        Window.debugMenuWrapper = function(self, ...)
+            Window.addDebugMenuButton(self, true)
+            local result = originalSetup(self, ...)
+            Window.addDebugMenuButton(self, false)
+            return result
+        end
+        Menu.setupButtons = Window.debugMenuWrapper
+    end
+    return true
+end
+
+--- Mort d'un joueur local (OnPlayerDeath, IsoPlayer.OnDeath : joueurs
+--- locaux seulement) : sa liste et son éditeur se ferment, comme
+--- ISBuildWindow.OnPlayerDeath.
+function Window.onPlayerDeath(player)
+    local playerNum = player and player:getPlayerNum()
+    if playerNum == nil then
+        return
+    end
+    local window = Window.instance
+    if window and window.playerNum == playerNum then
+        window:close()
+    end
+    local Editor = MilitaryDrop.ZoneEditor
+    if Editor and Editor.closeFor then
+        Editor.closeFor(playerNum)
+    end
+end
+
+Window.installAdminButton()
+Window.installDebugMenuButton()
+-- Rechargement de ce fichier : un seul abonné (Events.X.Add ne dédoublonne pas).
+if Window.registered then
+    Events.OnGameStart.Remove(Window.registered)
+end
+Window.registered = function()
+    Window.installAdminButton()
+    Window.installDebugMenuButton()
+end
+Events.OnGameStart.Add(Window.registered)
+if Window.deathHandler then
+    Events.OnPlayerDeath.Remove(Window.deathHandler)
+end
+Window.deathHandler = function(player) Window.onPlayerDeath(player) end
+Events.OnPlayerDeath.Add(Window.deathHandler)
 
 return Window

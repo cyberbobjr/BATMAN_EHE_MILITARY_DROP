@@ -42,7 +42,8 @@
 -- (bâtiments seulement), risk (ni route ni bâtiment : la métagrille ne
 -- connaît pas l'eau), nonPvp, safehouse.
 --
--- Écriture (outil d'admin, MilitaryDrop_Zones.lua) : le serveur RELIT le
+-- Écriture (outil d'admin, MilitaryDrop_Zones.lua : ZoneAdd, ZoneUpdate,
+-- ZoneSetEnabled, ZoneDelete) : le serveur RELIT le
 -- fichier avant chaque modification (une édition manuelle faite pendant que
 -- le serveur tourne est la base de la réécriture), réécrit tout le fichier
 -- (notice, puis la table formatée ; ids, champs inconnus simples et zones
@@ -640,8 +641,8 @@ ZonesFile.NOTICE = [[
 -- skipped. Problems are written to the server console (console.txt),
 -- "[MilitaryDrop]".
 --
--- The admin tool in game (right click, Military Drop (admin), Drop zones)
--- adds, enables, disables and deletes zones, then rewrites this whole file:
+-- The admin tool in game (admin panel, "Military Drop zones" button) adds,
+-- edits, enables, disables and deletes zones, then rewrites this whole file:
 -- other comments are lost. It reads this file again before each change, and
 -- refuses to write while the file has an error or anything it cannot write
 -- back as it is (other top-level fields, tables inside a zone, numbers such

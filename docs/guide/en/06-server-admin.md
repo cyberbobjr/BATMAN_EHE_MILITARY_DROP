@@ -159,7 +159,7 @@ return {
 }
 ```
 
-The coordinates above are examples: read yours in game (the tool shows the square under the cursor).
+The coordinates above are examples: read yours in game, or draw the zones with the tool (it shows the corners and the size).
 
 | Field | Content |
 |---|---|
@@ -175,32 +175,51 @@ The coordinates above are examples: read yours in game (the tool shows the squar
 - Only data is read, never code. A syntax error disables **every** zone (see [Fallback](#fallback)); the line number is written to `console.txt`. An invalid zone is skipped (`zone #3 (z3): ...`). 200 zones at most.
 - On each load the server checks every zone and writes its warnings to `console.txt` and to the tool's list: **no road** (crates land next to buildings only), **no road nor building** (no crate can land there: the map data does not know water), **overlaps a non-PvP zone** or **a safehouse** (no crate in that part), **outside the map**, **map not loaded**.
 
-Reload without restarting: **Reload dropzones.txt** in the tool, the **Reload** button of its list, or from an admin's debug console: `sendClientCommand(getPlayer(), "MilitaryDrop", "ZoneReload", {})`.
+Reload without restarting: the **Reload** button of the tool, or from an admin's debug console: `sendClientCommand(getPlayer(), "MilitaryDrop", "ZoneReload", {})`.
 
 > After a manual edit, **reload before using the tool**. The tool rewrites the whole file from the version it last read: unreloaded edits would be lost, and so are your own comments. It refuses to write while the file has a syntax error, so that a manual edit is never overwritten.
 
 ### In-game tool
 
-Who sees it: in single player, debug mode only. In multiplayer, the roles allowed to change and reload the server options (admin, and any role with the `ChangeAndReloadServerOptions` capability). The server checks again: a command from anyone else is refused and logged.
+Who sees it: in multiplayer, the roles allowed to change and reload the server options (admin, and any role with the `ChangeAndReloadServerOptions` capability; the host of a co-op game too). In single player, debug mode only. The server checks again: a command from anyone else is refused and logged.
 
-1. Stand on the ground floor and right-click the first corner: **Military Drop (admin)** > **Drop zones** > **Corner 1 here (x, y)**.
-2. Move to the opposite corner. A blue outline follows the cursor; it turns red beyond 300 tiles on a side.
-3. Right-click the opposite corner: **Drop zones** > **Corner 2 here (W x H squares)**, then choose a known sector or **New sector...** and type its name, then type the zone name.
-4. The server checks the zone and answers in a message: **Drop zone ... added**, with its warnings, or a refusal (too large, off the map, overlapping a non-PvP zone or a safehouse, 200 zones already). It writes `dropzones.txt` and reloads it.
+Where to open it:
 
-Other entries of the **Drop zones** menu:
+- **Multiplayer**: the **Military Drop Zones** button of the game's admin panel.
+- **Single player, debug mode**: **Military Drop Zones** in the game's debug menu (**Main** tab), or from the debug console: `MilitaryDrop.ZonesWindow.open(getPlayer())`.
 
-- **Zone list...**: zones grouped by sector, with state (active, disabled, map not loaded), corners, size, weight and warnings, then the expected map, the placement mode, the count of usable zones and the first problems of the file. Buttons: **Enable** / **Disable**, **Delete** (click again within 4 seconds to confirm), **Go to** (teleports you to the centre of the zone; needs the teleport right), **Reload**, **Close**. Gamepad: A enables or disables, X goes to the zone, Y reloads, B closes.
-- **Reload dropzones.txt**.
-- **Show / hide outlines**: zones drawn on the ground, on your screen only: green active, grey disabled, orange map not loaded.
-- **Cancel the outline in progress**.
+The **Drop zones (admin)** window is modelled on the game's animal zones panel. At the top: the expected map, the placement mode and the count of usable zones. The list shows the zones grouped by sector, with their state (active, disabled, map not loaded), corners, size, weight and warnings, then the first problems of the file. The selected zone is outlined on the ground, on your screen only and only while the window is open: green active, grey disabled, orange map not loaded. The tool's messages (zone added, refusal, file reloaded) appear in the window, never above your character, so nearby players see nothing.
 
-The tool does not set weights and does not rename: edit the file, then reload it.
+Buttons:
+
+- **Add Zone**: draw a new zone (below).
+- **Edit**: change the name, sector or weight of the selected zone, or redraw it (below).
+- **Remove**: asks "Do you really want to remove ...?" first.
+- **Enable** / **Disable**.
+- **Teleport to Zone**: to the centre of the zone, on ground level. Needs the teleport right (`TeleportToCoordinates` capability in multiplayer).
+- **Reload**: reads `dropzones.txt` again.
+- **Close** (or Esc).
+
+Gamepad: D-pad up and down selects a zone, A edits, X enables or disables, Y adds, B closes.
+
+#### Adding a zone
+
+1. Press **Add Zone**. The list hides and an editor opens in the top-left corner of the screen.
+2. Draw the rectangle with the **left mouse button** on the ground: press, drag and release, or click one corner and then the opposite one. While you draw, clicks only draw: no attack, no walking, no door opened, no context menu. Squares are taken on ground level, whatever floor you are on. The editor shows the corners, the **Width** and the **Length**, in red beyond 300 squares.
+3. After the second corner, the rectangle is fixed. Right-click or Esc cancels the outline in progress; Esc again closes the editor.
+4. Fill in **Zone Name**, **Sector** (a known sector, or **New sector...** and its name in **New sector**) and **Weight (1-100)**, then press **Add Zone**.
+5. The server checks the zone and answers in the editor: "Drop zone z4 added.", with its warnings, or a refusal (too large, off the map, overlapping a non-PvP zone or a safehouse, 200 zones already, file with a syntax error). It writes `dropzones.txt` and reloads it. On success the editor closes and the new zone is selected in the list. **Cancel** returns to the list.
+
+Gamepad: the D-pad moves the target square (starting from yours), A sets the first corner then the second one, B cancels the outline. Once the rectangle is drawn, the D-pad moves through the form and B cancels.
+
+#### Editing a zone
+
+Select the zone and press **Edit**. Change its **Zone Name**, **Sector** or **Weight**, or press **Redraw** and draw it again: the old rectangle stays outlined in grey until the new one is drawn, and comes back if you cancel. **Save** sends only the changed fields, with the same checks as a new zone ("Nothing to save." if nothing changed). While `dropzones.txt` has a syntax error, the change is refused and nothing is written.
 
 ### What players see
 
 - The announcement and its reminders name the zone: "Supply crate delivered at LZ Central Park, grid 12937 / 2125." With **Announce the drop zone name** off, they give the grid only. The map marker does not change.
-- The list of zones is never sent to players, and outlines are drawn on the admin's screen only. Players learn the zones from the announcements.
+- The list of zones is never sent to players, and zone outlines are drawn on the admin's screen only, while the tool is open. Players learn the zones from the announcements.
 - **Decoy**: in zone mode, the form offers a sector selector ("< Louisville >", arrows or gamepad left and right) instead of N, E, S and W. With a single sector, it is selected and shown, without choice. The decoy falls in a zone of that sector, like a real drop, and gets the same announcement. Near the caller, and on the admin form, the decoy keeps N, E, S and W.
 - Trust does not change: an outsider who opens the crate still costs the requester 5 points.
 
@@ -238,7 +257,7 @@ Right-click a military radio (in the inventory or placed):
 
 Who sees them: in single player, debug mode only. In multiplayer, the roles allowed to trigger events (admin, and any role with the `MakeEventsAlarmGunshot` capability). The server checks again.
 
-Drop zones have their own tool, on a right-click on the ground: see [In-game tool](#in-game-tool).
+Drop zones have their own tool, in the game's admin panel: see [In-game tool](#in-game-tool).
 
 ## Files kept by the mod
 

@@ -918,6 +918,151 @@ function T.admin_add_checks_the_zone_read_back()
     assertTrue(logged("drop zone z3 is not usable once read back"), "journal")
 end
 
+-- ----------------------------------------------------------------------------
+-- Outil d'admin : modification (ZoneUpdate)
+-- ----------------------------------------------------------------------------
+
+function T.zone_update_from_a_non_admin_is_refused()
+    twoSectors()
+    ADMIN = false
+    local before = FILES[PATH]
+    local replies = admin("ZoneUpdate", { id = "z1", name = "Mine" })
+    assertEq(replies.ZoneReply.ok, false, "refusé")
+    assertEq(replies.ZoneReply.action, "update", "action")
+    assertEq(replies.ZoneReply.error, "denied", "droit")
+    assertEq(replies.ZoneListReply, nil, "aucune liste envoyée")
+    assertEq(FILES[PATH], before, "fichier intact")
+end
+
+function T.zone_replies_echo_a_bounded_integer_request_id_only()
+    twoSectors()
+    local replies = admin("ZoneSetEnabled", { id = "z2", enabled = false, requestId = 42 })
+    assertEq(replies.ZoneReply.requestId, 42, "numéro renvoyé dans ZoneReply")
+    assertEq(replies.ZoneListReply.requestId, 42, "et dans la ZoneListReply qui suit")
+    replies = admin("ZoneList", { requestId = 2147483647 })
+    assertEq(replies.ZoneListReply.requestId, 2147483647, "borne haute acceptée")
+    for _, bad in ipairs({ "42", 1.5, 0, -3, 2147483648, 0 / 0, math.huge, { 1 }, true }) do
+        replies = admin("ZoneUpdate", { id = "z9", name = "N", requestId = bad })
+        assertEq(replies.ZoneReply.error, "unknownZone", "commande traitée : " .. tostring(bad))
+        assertEq(replies.ZoneReply.requestId, nil, "numéro ignoré : " .. tostring(bad))
+        assertEq(replies.ZoneListReply.requestId, nil, "liste sans numéro : " .. tostring(bad))
+    end
+    -- Refus : le numéro accompagne aussi « busy » et « denied ».
+    MilitaryDrop.Server.onClientCommand("MilitaryDrop", "ZoneReload", PLAYER, { requestId = 7 })
+    MilitaryDrop.Server.onClientCommand("MilitaryDrop", "ZoneReload", PLAYER, { requestId = 8 })
+    assertEq(SENT[#SENT].args.error, "busy", "cadence")
+    assertEq(SENT[#SENT].args.requestId, 8, "numéro du refus « busy »")
+    ADMIN = false
+    replies = admin("ZoneDelete", { id = "z1", requestId = 9 })
+    assertEq(replies.ZoneReply.error, "denied", "droit")
+    assertEq(replies.ZoneReply.requestId, 9, "numéro du refus « denied »")
+end
+
+function T.zone_update_renames_and_keeps_the_rest()
+    twoSectors()
+    zonesFile({
+        zone("z1", "Alpha", "Alpha Park", 1000, 200, 1050, 250, ", weight = 4, enabled = false"),
+        zone("z2", "Bravo", "Bravo Mall", 3000, 200, 3050, 250),
+    })
+    local replies = admin("ZoneUpdate", { id = "z1", name = " North  Park ", sector = "Charlie", weight = 7 })
+    assertEq(replies.ZoneReply.ok, true, "modifiée")
+    assertEq(replies.ZoneReply.action, "update", "action")
+    assertEq(replies.ZoneReply.id, "z1", "id")
+    local data = MilitaryDrop.LotsFile.parse(FILES[PATH])
+    local z1 = data.zones[1]
+    assertEq(z1.id, "z1", "id conservé, même place")
+    assertEq(z1.name, "North Park", "nom nettoyé")
+    assertEq(z1.sector, "Charlie", "secteur")
+    assertEq(z1.weight, 7, "poids")
+    assertEq(z1.x1 .. "," .. z1.y1 .. "," .. z1.x2 .. "," .. z1.y2, "1000,200,1050,250", "rectangle inchangé")
+    assertEq(z1.enabled, false, "état gardé")
+    assertEq(data.zones[2].name, "Bravo Mall", "autre zone intacte")
+    assertEq(replies.ZoneListReply.zones[1].name, "North Park", "liste à jour")
+    assertTrue(logged("drop zone z1 updated by tester"), "journal")
+end
+
+function T.zone_update_retraces_with_the_same_checks_as_add()
+    twoSectors()
+    NONPVP = { { x = 7000, y = 7000, x2 = 7100, y2 = 7100 } }
+    SAFEHOUSES = { { x = 8000, y = 8000, w = 10, h = 10 } }
+    local before = FILES[PATH]
+    local cases = {
+        { { id = "z1", x1 = 19990, y1 = 10, x2 = 20010, y2 = 20 }, "offMap", "hors carte" },
+        { { id = "z1", x1 = 10, y1 = 10, x2 = 320, y2 = 20 }, "tooBig", "plus de 300 cases" },
+        { { id = "z1", x1 = 7050, y1 = 7050, x2 = 7200, y2 = 7200 }, "overlapNonPvp", "zone non-PvP" },
+        { { id = "z1", x1 = 7900, y1 = 7900, x2 = 8000, y2 = 8000 }, "overlapSafehouse", "refuge" },
+        { { id = "z1", x1 = 10, y1 = 10 }, "invalid", "rectangle incomplet" },
+        { { id = "z1", x1 = 0 / 0, y1 = 10, x2 = 20, y2 = 20 }, "invalid", "NaN" },
+        { { id = "z1" }, "invalid", "rien à changer" },
+        { { id = "z1", weight = 0 }, "invalid", "poids" },
+        { { id = "z1", name = "" }, "badName", "nom vide" },
+        { { id = "z1", sector = string.rep("s", 33) }, "badSector", "secteur trop long" },
+        { { id = "bad id", name = "N" }, "invalid", "id illisible" },
+        { { id = "z9", name = "N" }, "unknownZone", "zone inconnue" },
+    }
+    for _, case in ipairs(cases) do
+        local replies = admin("ZoneUpdate", case[1])
+        assertEq(replies.ZoneReply.ok, false, case[3])
+        assertEq(replies.ZoneReply.error, case[2], case[3])
+    end
+    assertEq(FILES[PATH], before, "fichier jamais écrit")
+    local replies = admin("ZoneUpdate", { id = "z2", x1 = 3050, y1 = 320, x2 = 3000, y2 = 300 })
+    assertEq(replies.ZoneReply.ok, true, "retracée")
+    assertEq(replies.ZoneReply.id, "z2", "id conservé")
+    local data = MilitaryDrop.LotsFile.parse(FILES[PATH])
+    local z2 = data.zones[2]
+    assertEq(z2.id, "z2", "même id")
+    assertEq(z2.x1 .. "," .. z2.y1 .. "," .. z2.x2 .. "," .. z2.y2, "3000,300,3050,320", "rectangle normalisé")
+    assertEq(z2.name, "Bravo Mall", "nom gardé")
+    assertEq(#data.zones, 2, "aucune zone ajoutée")
+end
+
+function T.zone_update_never_overwrites_an_unreadable_file()
+    twoSectors()
+    FILES[PATH] = "return { zones = { { id = \"z1\" } }"
+    local broken = FILES[PATH]
+    local replies = admin("ZoneUpdate", { id = "z1", name = "N" })
+    assertEq(replies.ZoneReply.ok, false, "refusé")
+    assertEq(replies.ZoneReply.error, "syntaxError", "fichier illisible")
+    assertEq(FILES[PATH], broken, "édition manuelle jamais écrasée")
+end
+
+function T.zone_update_checks_the_zone_read_back()
+    twoSectors()
+    local before = FILES[PATH]
+    local build = MilitaryDrop.ZonesFile.build
+    MilitaryDrop.ZonesFile.build = function(data)
+        local report = build(data)
+        for _, z in ipairs(report.zones) do
+            if z.id == "z1" and z.name == "Gate" then
+                z.name = "Other"
+            end
+        end
+        return report
+    end
+    local replies = admin("ZoneUpdate", { id = "z1", name = "Gate" })
+    assertEq(replies.ZoneReply.ok, false, "valeur relue différente")
+    assertEq(replies.ZoneReply.error, "invalid", "code")
+    assertEq((FILES[PATH]:gsub("\n+$", "")), (before:gsub("\n+$", "")), "fichier remis tel qu'il était")
+    assertTrue(logged("drop zone z1 does not read back as written"), "journal")
+end
+
+function T.zone_update_retrace_moves_a_zone_to_the_current_map()
+    twoSectors()
+    FILES[PATH] = FILES[PATH]:gsub("version = 1,\n", 'version = 1,\n    map = "RavenCreek",\n')
+    MilitaryDrop.ZonesFile.reset()
+    local replies = admin("ZoneUpdate", { id = "z1", name = "Renamed" })
+    assertEq(replies.ZoneReply.ok, true, "renommage d'une zone d'une autre carte accepté")
+    assertEq(MilitaryDrop.LotsFile.parse(FILES[PATH]).zones[1].map, nil, "carte inchangée sans retracé")
+    replies = admin("ZoneUpdate", { id = "z1", x1 = 1000, y1 = 300, x2 = 1010, y2 = 310 })
+    assertEq(replies.ZoneReply.ok, true, "retracée")
+    local data = MilitaryDrop.LotsFile.parse(FILES[PATH])
+    assertEq(data.zones[1].map, "Muldraugh, KY", "zone retracée sur la carte de la partie")
+    assertEq(data.zones[2].map, nil, "autre zone inchangée")
+    assertEq(replies.ZoneListReply.zones[1].active, true, "zone retracée utilisable")
+    assertEq(replies.ZoneListReply.zones[2].active, false, "autre zone toujours sur l'ancienne carte")
+end
+
 function T.vanilla_map_included_by_a_mod_map_keeps_the_town_fallback()
     placement(2)
     ROADS = { { x = 0, y = 0, w = 100000, h = 100000 } }

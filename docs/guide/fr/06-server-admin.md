@@ -159,7 +159,7 @@ return {
 }
 ```
 
-Les coordonnées ci-dessus sont des exemples : relevez les vôtres en jeu (l'outil affiche la case sous le curseur).
+Les coordonnées ci-dessus sont des exemples : relevez les vôtres en jeu, ou tracez les zones avec l'outil (il affiche les coins et la taille).
 
 | Champ | Contenu |
 |---|---|
@@ -175,32 +175,51 @@ Les coordonnées ci-dessus sont des exemples : relevez les vôtres en jeu (l'out
 - Seules des données sont lues, jamais du code. Une erreur de syntaxe désactive **toutes** les zones (voir [Repli](#repli)) ; le numéro de ligne est écrit dans `console.txt`. Une zone invalide est écartée (`zone #3 (z3): ...`). 200 zones au plus.
 - À chaque chargement, le serveur contrôle chaque zone et écrit ses avertissements dans `console.txt` et dans la liste de l'outil : **aucune route** (les caisses tombent seulement au pied des bâtiments), **ni route ni bâtiment** (aucune caisse ne peut y tomber : les données de la carte ne connaissent pas l'eau), **chevauche une zone non-PvP** ou **un refuge** (aucune caisse dans cette partie), **hors de la carte**, **carte non chargée**.
 
-Recharger sans redémarrer : **Recharger dropzones.txt** dans l'outil, le bouton **Recharger** de sa liste, ou depuis la console de débogage d'un admin : `sendClientCommand(getPlayer(), "MilitaryDrop", "ZoneReload", {})`.
+Recharger sans redémarrer : le bouton **Rafraîchir** de l'outil, ou depuis la console de débogage d'un admin : `sendClientCommand(getPlayer(), "MilitaryDrop", "ZoneReload", {})`.
 
 > Après une modification à la main, **rechargez avant d'utiliser l'outil**. L'outil réécrit tout le fichier à partir de la dernière version lue : les modifications non rechargées seraient perdues, de même que vos propres commentaires. Il refuse d'écrire tant que le fichier contient une erreur de syntaxe, pour ne jamais écraser une modification à la main.
 
 ### Outil en jeu
 
-Qui le voit : en solo, le mode debug seulement. En multijoueur, les rôles qui peuvent modifier et recharger les options du serveur (admin, et tout rôle doté de la capacité `ChangeAndReloadServerOptions`). Le serveur revérifie : la commande de tout autre joueur est refusée et notée au journal.
+Qui le voit : en multijoueur, les rôles qui peuvent modifier et recharger les options du serveur (admin, et tout rôle doté de la capacité `ChangeAndReloadServerOptions` ; l'hôte d'une partie coop aussi). En solo, le mode debug seulement. Le serveur revérifie : la commande de tout autre joueur est refusée et notée au journal.
 
-1. Au rez-de-chaussée, clic droit sur le premier coin : **Military Drop (admin)** > **Zones de largage** > **Coin 1 ici (x, y)**.
-2. Allez au coin opposé. Un contour bleu suit le curseur ; il passe au rouge au-delà de 300 cases de côté.
-3. Clic droit sur le coin opposé : **Zones de largage** > **Coin 2 ici (L x H cases)**, puis choisissez un secteur connu ou **Nouveau secteur...** et tapez son nom, puis tapez le nom de la zone.
-4. Le serveur contrôle la zone et répond par un message : **Zone de largage ... ajoutée**, avec ses avertissements, ou un refus (trop grande, hors de la carte, chevauchement d'une zone non-PvP ou d'un refuge, déjà 200 zones). Il écrit `dropzones.txt` et le recharge.
+Où l'ouvrir :
 
-Autres entrées du menu **Zones de largage** :
+- **Multijoueur** : bouton **Zones de largage** du panneau d'admin du jeu.
+- **Solo, mode debug** : **Zones de largage** dans le menu de debug du jeu (onglet **Main**), ou depuis la console de débogage : `MilitaryDrop.ZonesWindow.open(getPlayer())`.
 
-- **Liste des zones...** : zones groupées par secteur, avec leur état (active, désactivée, carte non chargée), leurs coins, leur taille, leur poids et leurs avertissements, puis la carte attendue, le mode de placement, le nombre de zones utilisables et les premiers problèmes du fichier. Boutons : **Activer** / **Désactiver**, **Supprimer** (recliquer dans les 4 secondes pour confirmer), **Aller à** (vous téléporte au centre de la zone ; demande le droit de téléportation), **Recharger**, **Fermer**. Manette : A active ou désactive, X va à la zone, Y recharge, B ferme.
-- **Recharger dropzones.txt**.
-- **Afficher / masquer les contours** : zones dessinées au sol, sur votre écran seulement : vert active, gris désactivée, orange carte non chargée.
-- **Annuler le tracé en cours**.
+La fenêtre **Zones de largage (admin)** reprend le panneau des zones d'animaux du jeu. En tête : la carte attendue, le mode de placement et le nombre de zones utilisables. La liste montre les zones groupées par secteur, avec leur état (active, désactivée, carte non chargée), leurs coins, leur taille, leur poids et leurs avertissements, puis les premiers problèmes du fichier. La zone sélectionnée est surlignée au sol, sur votre écran seulement et seulement fenêtre ouverte : vert active, gris désactivée, orange carte non chargée. Les messages de l'outil (zone ajoutée, refus, fichier rechargé) s'affichent dans la fenêtre, jamais au-dessus de votre personnage : les joueurs proches ne voient rien.
 
-L'outil ne règle pas les poids et ne renomme pas : modifiez le fichier, puis rechargez-le.
+Boutons :
+
+- **Ajouter une zone** : tracer une nouvelle zone (ci-dessous).
+- **Modifier** : changer le nom, le secteur ou le poids de la zone sélectionnée, ou la retracer (ci-dessous).
+- **Retirer** : demande d'abord « Voulez-vous vraiment retirer ... ? ».
+- **Activer** / **Désactiver**.
+- **Se téléporter sur la zone** : au centre de la zone, au rez-de-chaussée. Demande le droit de téléportation (capacité `TeleportToCoordinates` en multijoueur).
+- **Rafraîchir** : relit `dropzones.txt`.
+- **Fermer** (ou Échap).
+
+Manette : croix haut et bas pour choisir une zone, A modifie, X active ou désactive, Y ajoute, B ferme.
+
+#### Ajouter une zone
+
+1. Appuyez sur **Ajouter une zone**. La liste se masque et un éditeur s'ouvre en haut à gauche de l'écran.
+2. Tracez le rectangle au sol avec le **clic gauche** : appuyez, faites glisser et relâchez, ou cliquez un coin puis le coin opposé. Pendant le tracé, les clics ne servent qu'à tracer : ni attaque, ni déplacement, ni porte ouverte, ni menu contextuel. Les cases sont prises au rez-de-chaussée, quel que soit votre étage. L'éditeur affiche les coins, la **Largeur** et la **Longueur**, en rouge au-delà de 300 cases.
+3. Après le second coin, le rectangle est figé. Clic droit ou Échap annule le tracé en cours ; un second Échap ferme l'éditeur.
+4. Remplissez **Nom de la zone**, **Secteur** (un secteur connu, ou **Nouveau secteur...** et son nom dans **Nouveau secteur**) et **Poids (1-100)**, puis appuyez sur **Ajouter une zone**.
+5. Le serveur contrôle la zone et répond dans l'éditeur : « Zone de largage z4 ajoutée. », avec ses avertissements, ou un refus (trop grande, hors de la carte, chevauchement d'une zone non-PvP ou d'un refuge, déjà 200 zones, fichier avec une erreur de syntaxe). Il écrit `dropzones.txt` et le recharge. En cas de succès, l'éditeur se ferme et la nouvelle zone est sélectionnée dans la liste. **Annuler** revient à la liste.
+
+Manette : la croix déplace la case visée (en partant de la vôtre), A fixe le premier coin puis le second, B annule le tracé. Une fois le rectangle tracé, la croix parcourt le formulaire et B annule.
+
+#### Modifier une zone
+
+Sélectionnez la zone et appuyez sur **Modifier**. Changez son **Nom de la zone**, son **Secteur** ou son **Poids**, ou appuyez sur **Retracer** et tracez-la de nouveau : l'ancien rectangle reste surligné en gris jusqu'au nouveau tracé, et revient si vous annulez. **Enregistrer** n'envoie que les champs modifiés, avec les mêmes contrôles qu'une nouvelle zone (« Rien à enregistrer. » si rien n'a changé). Tant que `dropzones.txt` contient une erreur de syntaxe, la modification est refusée et rien n'est écrit.
 
 ### Ce que voient les joueurs
 
 - L'annonce et ses rappels nomment la zone : « Caisse de ravitaillement livrée sur la zone Central Park, grille 12937 / 2125. » Avec **Annoncer le nom de la zone** désactivé, ils donnent la grille seule. Le repère de carte ne change pas.
-- La liste des zones n'est jamais envoyée aux joueurs, et les contours ne s'affichent que sur l'écran de l'admin. Les joueurs découvrent les zones par les annonces.
+- La liste des zones n'est jamais envoyée aux joueurs, et les contours des zones ne s'affichent que sur l'écran de l'admin, outil ouvert. Les joueurs découvrent les zones par les annonces.
 - **Leurre** : en mode zones, le formulaire propose un sélecteur de secteur (« < Louisville > », flèches, ou gauche et droite à la manette) au lieu de N, E, S et O. Avec un seul secteur, il est sélectionné d'office et affiché, sans choix. Le leurre tombe dans une zone de ce secteur, comme un vrai largage, avec la même annonce. Près du demandeur, et sur le formulaire admin, le leurre garde N, E, S et O.
 - La confiance ne change pas : un joueur extérieur qui ouvre la caisse coûte toujours 5 points au demandeur.
 
@@ -238,7 +257,7 @@ Clic droit sur une radio militaire (dans l'inventaire ou posée) :
 
 Qui les voit : en solo, le mode debug seulement. En multijoueur, les rôles qui peuvent déclencher des événements (admin, et tout rôle doté de la capacité `MakeEventsAlarmGunshot`). Le serveur revérifie.
 
-Les zones de largage ont leur propre outil, par clic droit au sol : voir [Outil en jeu](#outil-en-jeu).
+Les zones de largage ont leur propre outil, dans le panneau d'admin du jeu : voir [Outil en jeu](#outil-en-jeu).
 
 ## Fichiers gardés par le mod
 

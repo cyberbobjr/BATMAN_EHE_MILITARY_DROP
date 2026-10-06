@@ -36,6 +36,9 @@ REFERENCE_LANGUAGE = "EN"
 BARE_NEXT = re.compile(r"(?<![.:\w])next\s*\(")
 TOKEN = re.compile(r"%\d|%%|<LINE>|<RGB:[^>]*>")
 LONE_PERCENT = re.compile(r"%(?!\d)")
+# Préfixes des clés propres au mod ; les autres clés citées sont vanilla.
+MOD_KEY_PREFIXES = ("IGUI_MilitaryDrop_", "Sandbox_MilitaryDrop_", "Tooltip_MilitaryDrop_")
+VANILLA_KEY = re.compile(r'^\s*"(\w+)"\s*:', re.M)
 # Limite de Steam pour la description d'un objet du Workshop, en octets UTF-8 (envoi
 # vérifié : 7 978 octets acceptés, 8 027 refusés avec EResult 8).
 STEAM_DESCRIPTION_MAX_BYTES = 8000
@@ -139,11 +142,26 @@ def check_lone_percent(report, path, data):
             report.fail(f"{path.relative_to(REPO)} {key} : % seul (écrire %%)")
 
 
+def vanilla_keys():
+    """Clés des traductions anglaises du jeu (media/lua/shared/Translate/EN), ou
+    None si le jeu est absent (CI)."""
+    folder = lua_harness.VANILLA_LUA / "shared" / "Translate" / REFERENCE_LANGUAGE
+    if not folder.is_dir():
+        return None
+    found = set()
+    for path in folder.glob("*.json"):
+        found.update(VANILLA_KEY.findall(path.read_text(encoding="utf-8-sig", errors="replace")))
+    return found
+
+
 def check_references(report):
     """Clés et options citées en toutes lettres dans le Lua : présentes dans les
-    traductions anglaises et dans sandbox-options.txt. Les clés composées à
+    traductions anglaises et dans sandbox-options.txt. Une clé sans le préfixe
+    du mod (libellé vanilla réutilisé, IGUI_PvpZone_AddZone…) est cherchée dans
+    les traductions du jeu, ignorée si le jeu est absent. Les clés composées à
     l'exécution (préfixe .. numéro) ne sont pas vérifiées ici."""
     report.section("Clés de traduction et options citées par le Lua")
+    game_keys = vanilla_keys()
     keys = set()
     for path in (TRANSLATE / REFERENCE_LANGUAGE).glob("*.json"):
         try:
@@ -159,6 +177,12 @@ def check_references(report):
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             code = strip_comments(line)
             for key in text_key.findall(code):
+                if key not in keys and not key.startswith(MOD_KEY_PREFIXES):
+                    if game_keys is None:
+                        report.skip(f"{path.relative_to(REPO)}:{number} : clé vanilla {key} non vérifiée (jeu absent)")
+                        continue
+                    if key in game_keys:
+                        continue
                 if key not in keys:
                     missing += 1
                     report.fail(f"{path.relative_to(REPO)}:{number} : clé {key} absente de {REFERENCE_LANGUAGE}")

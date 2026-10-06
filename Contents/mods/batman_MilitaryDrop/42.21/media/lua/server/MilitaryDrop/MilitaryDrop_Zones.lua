@@ -43,13 +43,35 @@
 -- Secret : la liste des zones ne part qu'à un admin qui la demande ; le nom
 -- de la zone tirée reste dans l'état privé du largage jusqu'à l'annonce.
 --
--- Outil d'admin (ZONE-03) : commandes ZoneList, ZoneAdd, ZoneSetEnabled,
--- ZoneDelete, ZoneReload ; droit Requisition.canReload (capacité
--- ChangeAndReloadServerOptions, vrai en solo), cadence Guard « Zone ».
--- Réponses ZoneReply { ok, action, id, error, warnings } puis ZoneListReply.
--- Chaque modification relit d'abord le fichier (ZonesFile.editableData) ;
--- ZoneAdd revérifie la zone relue (valide et utilisable, sinon le fichier
--- est remis en l'état et l'outil répond « invalid »).
+-- Outil d'admin (ZONE-03 ; panneau d'admin vanilla, client
+-- MilitaryDrop_ZonesWindow.lua) : droit Requisition.canReload (capacité
+-- ChangeAndReloadServerOptions, vrai en solo), cadence Guard « Zone »
+-- (500 ms, réponse « busy »). Protocole, client → serveur (chaque commande
+-- porte en plus requestId?) :
+--   ZoneList {}                                        → ZoneListReply
+--   ZoneAdd { sector, name, x1, y1, x2, y2, weight? }  → ZoneReply "add"
+--   ZoneUpdate { id, sector?, name?, weight?, x1?, y1?, x2?, y2? }
+--                                                      → ZoneReply "update"
+--   ZoneSetEnabled { id, enabled }                     → ZoneReply "enable"
+--   ZoneDelete { id }                                  → ZoneReply "delete"
+--   ZoneReload {}                                      → ZoneReply "reload"
+-- Chaque ZoneReply { ok, action, id, error, warnings, requestId } est
+-- suivie d'une ZoneListReply { ..., requestId }, à l'appelant seulement
+-- (refus « denied » ou « busy » : ZoneReply seule, action "list" pour
+-- ZoneList). requestId : numéro choisi par le client, renvoyé tel quel dans
+-- les deux réponses s'il est un entier de 1 à MAX_REQUEST_ID, sinon ignoré
+-- (réponses sans numéro) ; il ne sert qu'au client (Zones.requestIdOf).
+-- ZoneUpdate : champs absents
+-- inchangés, rectangle complet (4 coordonnées) ou absent, au moins un champ ;
+-- mêmes contrôles que ZoneAdd sur les champs fournis (textes, poids,
+-- taille, carte, chevauchement non-PvP ou refuge pour un rectangle retracé),
+-- id conservé, champs enabled et inconnus gardés ; un rectangle retracé
+-- passe sur la carte de la partie si celle de la zone n'est pas chargée.
+-- Chaque modification relit d'abord le fichier (ZonesFile.editableData :
+-- fichier illisible → « syntaxError », rien n'est écrit) ; ZoneAdd et
+-- ZoneUpdate revérifient la zone relue après écriture (valide, champs
+-- écrits retrouvés, carte chargée ; sinon le fichier est remis en l'état et
+-- l'outil répond « invalid »).
 -- ============================================================================
 
 if isClient() then
@@ -97,6 +119,7 @@ Zones.TOWNS = {
     { name = "Rosewood", x = 8159, y = 11661 },
 }
 Zones.COMMAND_INTERVAL_MS = 500
+Zones.MAX_REQUEST_ID = 2147483647
 Zones.MAX_REPLY_PROBLEMS = 10
 Zones.FALLBACK_NOTICE = "IGUI_MilitaryDrop_ZoneFallbackProximity"
 
@@ -459,21 +482,34 @@ function Zones.listReply()
         mapLoaded = report.mapLoaded ~= false, placement = Zones.placement(), problems = problems }
 end
 
-function Zones.sendList(player)
-    Net.toPlayer(player, "ZoneListReply", Zones.listReply())
+--- Liste à l'appelant, avec le numéro de sa commande (ou sans).
+function Zones.sendList(player, requestId)
+    local list = Zones.listReply()
+    list.requestId = requestId
+    Net.toPlayer(player, "ZoneListReply", list)
+end
+
+--- Numéro de requête du client : entier de 1 à MAX_REQUEST_ID, sinon nil
+--- (texte, fraction, NaN, infini, hors bornes : ignoré, jamais une erreur).
+function Zones.requestIdOf(args)
+    local id = type(args) == "table" and args.requestId or nil
+    if type(id) ~= "number" or id ~= id or id < 1 or id > Zones.MAX_REQUEST_ID or id ~= math.floor(id) then
+        return nil
+    end
+    return id
 end
 
 --- Droit et cadence d'une commande de l'outil ; réponse « denied » ou
 --- « busy » envoyée en cas de refus.
-local function admitted(player, action)
+local function admitted(player, action, requestId)
     if not MilitaryDrop.Requisition.canReload(player) then
         MilitaryDrop.log("drop zone command " .. action .. " refused for " .. tostring(player:getUsername())
             .. ": not an admin", true)
-        sendReply(player, { ok = false, action = action, error = "denied" })
+        sendReply(player, { ok = false, action = action, error = "denied", requestId = requestId })
         return false
     end
     if MilitaryDrop.Guard.throttled(player, "Zone", Zones.COMMAND_INTERVAL_MS) then
-        sendReply(player, { ok = false, action = action, error = "busy" })
+        sendReply(player, { ok = false, action = action, error = "busy", requestId = requestId })
         return false
     end
     return true
@@ -492,6 +528,52 @@ local function finite(value)
     return type(value) == "number" and value == value and value > -math.huge and value < math.huge
 end
 
+local RECT_KEYS = { "x1", "y1", "x2", "y2" }
+
+--- Rectangle demandé par l'outil (coins entiers, sur la carte, hors zone
+--- non-PvP et refuge) : rect normalisé, ou nil et le code d'erreur.
+local function checkedRect(args)
+    for _, key in ipairs(RECT_KEYS) do
+        if not finite(args[key]) then
+            return nil, "invalid"
+        end
+    end
+    local rect, code = ZonesFile.normalizeRect(math.floor(args.x1), math.floor(args.y1), math.floor(args.x2),
+        math.floor(args.y2))
+    if not rect then
+        return nil, code
+    end
+    if not ZonesFile.isOnGrid(getWorld():getMetaGrid(), rect) then
+        return nil, "offMap"
+    end
+    if ZonesFile.overlapsNonPvp(rect) then
+        return nil, "overlapNonPvp"
+    end
+    if ZonesFile.overlapsSafehouse(rect) then
+        return nil, "overlapSafehouse"
+    end
+    return rect
+end
+
+--- Poids demandé : nil (absent), l'entier 1..MAX_WEIGHT, ou false (refusé).
+local function checkedWeight(weight)
+    if weight == nil then
+        return nil
+    end
+    if not finite(weight) or weight ~= math.floor(weight) or weight < 1 or weight > ZonesFile.MAX_WEIGHT then
+        return false
+    end
+    return weight
+end
+
+--- Remet le texte lu avant l'écriture (zone refusée à la relecture) et
+--- recharge le fichier ; le texte vient de editableData (ZonesFile.load).
+local function restore(original)
+    if original and ZonesFile.writeText(original .. "\n") then
+        ZonesFile.load()
+    end
+end
+
 --- Nouvelle zone de l'outil : { ok, id, warnings } ou { ok = false, error }.
 function Zones.add(args, by)
     local sector = ZonesFile.cleanText(args.sector)
@@ -502,29 +584,18 @@ function Zones.add(args, by)
     if not name then
         return { ok = false, error = "badName" }
     end
-    for _, key in ipairs({ "x1", "y1", "x2", "y2" }) do
+    for _, key in ipairs(RECT_KEYS) do
         if not finite(args[key]) then
             return { ok = false, error = "invalid" }
         end
     end
-    local weight = args.weight
-    if weight ~= nil and (not finite(weight) or weight ~= math.floor(weight) or weight < 1
-        or weight > ZonesFile.MAX_WEIGHT) then
+    local weight = checkedWeight(args.weight)
+    if weight == false then
         return { ok = false, error = "invalid" }
     end
-    local rect, code = ZonesFile.normalizeRect(math.floor(args.x1), math.floor(args.y1), math.floor(args.x2),
-        math.floor(args.y2))
+    local rect, code = checkedRect(args)
     if not rect then
         return { ok = false, error = code }
-    end
-    if not ZonesFile.isOnGrid(getWorld():getMetaGrid(), rect) then
-        return { ok = false, error = "offMap" }
-    end
-    if ZonesFile.overlapsNonPvp(rect) then
-        return { ok = false, error = "overlapNonPvp" }
-    end
-    if ZonesFile.overlapsSafehouse(rect) then
-        return { ok = false, error = "overlapSafehouse" }
     end
     local raw, err = ZonesFile.editableData()
     if not raw then
@@ -559,13 +630,109 @@ function Zones.add(args, by)
     local added = ZonesFile.get(id)
     if not added or not added.active then
         MilitaryDrop.log("drop zone " .. id .. " is not usable once read back: not added", true)
-        if original and ZonesFile.writeText(original .. "\n") then
-            ZonesFile.load()
-        end
+        restore(original)
         return { ok = false, error = "invalid" }
     end
     MilitaryDrop.log(string.format("drop zone %s added by %s: %s / %s, %d,%d - %d,%d", id, tostring(by), sector, name,
         rect.x1, rect.y1, rect.x2, rect.y2), true)
+    return { ok = true, id = id, warnings = warningsOf(id) }
+end
+
+--- Modification d'une zone du fichier (renommage, secteur, poids,
+--- rectangle retracé) : { ok, id, warnings } ou { ok = false, error, id }.
+--- Seuls les champs fournis changent ; l'id, enabled et les champs inconnus
+--- de l'entrée sont gardés.
+function Zones.update(args, by)
+    local id = args.id
+    if not ZonesFile.isId(id) then
+        return { ok = false, error = "invalid" }
+    end
+    local changes = {}
+    if args.sector ~= nil then
+        changes.sector = ZonesFile.cleanText(args.sector)
+        if not changes.sector then
+            return { ok = false, error = "badSector", id = id }
+        end
+    end
+    if args.name ~= nil then
+        changes.name = ZonesFile.cleanText(args.name)
+        if not changes.name then
+            return { ok = false, error = "badName", id = id }
+        end
+    end
+    local weight = checkedWeight(args.weight)
+    if weight == false then
+        return { ok = false, error = "invalid", id = id }
+    end
+    changes.weight = weight
+    local given = 0
+    for _, key in ipairs(RECT_KEYS) do
+        if args[key] ~= nil then
+            given = given + 1
+        end
+    end
+    local rect
+    if given > 0 then
+        if given < #RECT_KEYS then
+            return { ok = false, error = "invalid", id = id }
+        end
+        local code
+        rect, code = checkedRect(args)
+        if not rect then
+            return { ok = false, error = code, id = id }
+        end
+    end
+    if not changes.sector and not changes.name and not changes.weight and not rect then
+        return { ok = false, error = "invalid", id = id }
+    end
+    local raw, err = ZonesFile.editableData()
+    if not raw then
+        return { ok = false, error = err, id = id }
+    end
+    local entry = ZonesFile.findEntry(raw, id)
+    if not entry then
+        return { ok = false, error = "unknownZone", id = id }
+    end
+    for key, value in pairs(changes) do
+        entry[key] = value
+    end
+    if rect then
+        for _, key in ipairs(RECT_KEYS) do
+            entry[key] = rect[key]
+        end
+        -- Rectangle tracé sur la carte de la partie : une zone liée à une
+        -- carte absente (la sienne ou celle du fichier) prend celle-ci.
+        local spec = entry.map or raw.map
+        if type(spec) == "string" and #ZonesFile.missingMaps(spec) > 0 then
+            entry.map = ZonesFile.mapSpec()
+        end
+    end
+    local original = ZonesFile.report().text
+    local report, saveError = ZonesFile.save(raw)
+    if not report then
+        return { ok = false, error = saveError or "writeFailed", id = id }
+    end
+    -- Relue, la zone doit être valide, porter les valeurs écrites et, pour un
+    -- rectangle retracé, être sur une carte chargée ; sinon le fichier est
+    -- remis en l'état.
+    local zone = ZonesFile.get(id)
+    local same = zone ~= nil
+    for key, value in pairs(changes) do
+        same = same and zone[key] == value
+    end
+    if same and rect then
+        for _, key in ipairs(RECT_KEYS) do
+            same = same and zone[key] == rect[key]
+        end
+        same = same and zone.mapLoaded ~= false
+    end
+    if not same then
+        MilitaryDrop.log("drop zone " .. id .. " does not read back as written: not updated", true)
+        restore(original)
+        return { ok = false, error = "invalid", id = id }
+    end
+    MilitaryDrop.log(string.format("drop zone %s updated by %s: %s / %s, %d,%d - %d,%d, weight %d", id, tostring(by),
+        zone.sector, zone.name, zone.x1, zone.y1, zone.x2, zone.y2, zone.weight), true)
     return { ok = true, id = id, warnings = warningsOf(id) }
 end
 
@@ -625,6 +792,7 @@ end
 
 Zones.ACTIONS = {
     ZoneAdd = { action = "add", run = Zones.add },
+    ZoneUpdate = { action = "update", run = Zones.update },
     ZoneSetEnabled = { action = "enable", run = Zones.setEnabled },
     ZoneDelete = { action = "delete", run = Zones.delete },
     ZoneReload = { action = "reload", run = Zones.reload },
@@ -634,20 +802,22 @@ Zones.ACTIONS = {
 --- ZoneReply et ZoneListReply à l'appelant seulement.
 function Zones.handleCommand(player, command, args)
     args = type(args) == "table" and args or {}
+    local requestId = Zones.requestIdOf(args)
     if command == "ZoneList" then
-        if admitted(player, "list") then
-            Zones.sendList(player)
+        if admitted(player, "list", requestId) then
+            Zones.sendList(player, requestId)
         end
         return
     end
     local spec = Zones.ACTIONS[command]
-    if not spec or not admitted(player, spec.action) then
+    if not spec or not admitted(player, spec.action, requestId) then
         return
     end
     local result = spec.run(args, tostring(player:getUsername()))
     result.action = spec.action
+    result.requestId = requestId
     sendReply(player, result)
-    Zones.sendList(player)
+    Zones.sendList(player, requestId)
 end
 
 local function register(command)
@@ -655,6 +825,7 @@ local function register(command)
 end
 register("ZoneList")
 register("ZoneAdd")
+register("ZoneUpdate")
 register("ZoneSetEnabled")
 register("ZoneDelete")
 register("ZoneReload")
