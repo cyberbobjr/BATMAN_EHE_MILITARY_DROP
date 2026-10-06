@@ -12,18 +12,18 @@ HERE = Path(__file__).resolve().parent
 
 
 def animate(scene):
-    """Match the Lua prototype: 3 s rise, 20 s hold, 1.5 s pickup."""
+    """Match the Lua prototype: 3 s rise, immediate 1.5 s pickup."""
     balloon = next(o for o in scene.objects if o.name.startswith("md_fulton_balloon"))
     bag = next(o for o in scene.objects if o.name.startswith("md_fulton_bag"))
     for obj in (balloon, bag):
         obj.animation_data_clear()
-    scene.frame_start, scene.frame_end = 1, 589
+    scene.frame_start, scene.frame_end = 1, 109
     scene.render.fps = 24
     # A world Z level is sqrt(6) metres; origin offset is .2 level in Lua.
     unit = 2.44949
     for frame in range(1, scene.frame_end + 1):
         elapsed = (frame - 1) / 24
-        t = max(0, min(1, (elapsed - 23) / 1.5))
+        t = max(0, min(1, (elapsed - 3) / 1.5))
         lift = t * t * (3 - 2 * t)
         bag.location = (4 * lift, 4 * lift, 2.5 * unit * lift)
         balloon.location = (4 * lift, 4 * lift,
@@ -92,7 +92,7 @@ def main():
                              path_remap="RELATIVE_ALL", fake_user=True, compress=True)
     if not bpy.context.screen.is_animation_playing:
         bpy.ops.screen.animation_play()
-    return {"scene": scene.name, "frames": [1, 589], "rise_seconds": 3, "pickup_seconds": 1.5}
+    return {"scene": scene.name, "frames": [1, 109], "rise_seconds": 3, "pickup_seconds": 1.5}
 
 
 if __name__ == "__main__":

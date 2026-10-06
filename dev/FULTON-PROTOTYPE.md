@@ -14,8 +14,10 @@ objet persistant, extraction serveur ou gain de confiance n'est implémenté.
 
 Le dispositif apparaît à environ deux cases devant le personnage dans la projection.
 Le ballon monte dès le lâcher, à vitesse constante pendant **3 secondes** jusqu'à
-2,5 niveaux (environ 6,12 m d'élévation), reste en attente 20 secondes, puis sac et
-ballon partent ensemble pendant **1,5 seconde**. L'ancienne montée durait 10 secondes
+2,5 niveaux (environ 6,12 m d'élévation), puis sac et ballon partent ensemble
+**immédiatement**, pendant **1,5 seconde**. Aucune attente au sommet : cycle complet
+de **4,5 secondes**. L'attente précédente de 20 secondes est supprimée.
+L'ancienne montée durait 10 secondes
 avec une accélération progressive ; l'ancien départ final durait 4 secondes.
 Le rendu est retiré automatiquement à la fin. Le câble est un tracé écran expérimental.
 
@@ -62,7 +64,7 @@ Test réel à réaliser avec deux clients, sans publier la branche :
 1. Installer **la même version de cette branche** sur le serveur et les deux clients,
    activer `batman_MilitaryDrop`, puis redémarrer complètement serveur et clients.
 2. A et B se placent côte à côte dehors. A lance le ballon ; B vérifie une montée
-   continue en 3 secondes, la même hauteur et le départ final après l'attente.
+   continue en 3 secondes, la même hauteur et le départ immédiat du sac au sommet.
 3. A fige/reprend/arrête le vol ; B doit voir les mêmes transitions. B lance aussi
    son ballon : chacun doit voir les deux, et arrêter seulement le sien.
 4. Relancer avec une attente longue (`hold=60`). B se reconnecte pendant le vol et
@@ -86,6 +88,8 @@ MilitaryDrop.FultonPrototype.stop()
 ```
 
 `height` est en niveaux du monde, `duration` et `hold` en secondes réelles.
+`hold` vaut **0 par défaut** ; une attente explicite reste disponible en console
+uniquement pour faciliter l'inspection et les tests de reconnexion.
 `status()` fournit les compteurs des deux crochets ; les changements de phase sont
 journalisés avec le préfixe `[MilitaryDrop Fulton prototype]`.
 
@@ -122,6 +126,6 @@ Vérifié le 2026-10-06 : `python tests/run_tests.py` passe (luacheck, Lua 5.1,
 scripts, traductions et tests). Les deux FBX ont un seul canal UV et une échelle
 de nœud 100, compensée par `scale = 0.01`. Les icônes et l'aperçu ont les mêmes
 pixels après régénération sans interface. La scène animée a été observée dans
-Blender 5.2.2, puis accélérée en direct (589 images à 24 fps, soit 24,5 secondes).
+Blender 5.2.2, puis accélérée en direct (109 images à 24 fps, soit 4,5 secondes).
 Sources Java 42.21.0 et journal du jeu 42.21.0 contrôlés ; aucun test MP réel
 à deux clients n'est revendiqué.

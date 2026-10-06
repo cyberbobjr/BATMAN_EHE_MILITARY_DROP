@@ -123,6 +123,7 @@ def check_shared_ascent_and_packet_delay():
     n.clients[0].eval("MilitaryDrop.FultonPrototype.start(0)")
     assert n.count(0) == n.count(1) == 0, "no speculative private flight before server acceptance"
     n.command()
+    assert n.packets[0][3]["flights"][1]["hold"] == 0, "server has no default waiting phase"
     n.tick(.9)  # delayed start snapshot; server also emits an updated snapshot
     n.deliver()
     n.tick(0, server=False)
@@ -132,6 +133,14 @@ def check_shared_ascent_and_packet_delay():
     n.tick(2.1)
     n.deliver()
     assert math.isclose(n.height(0), 2.7) and math.isclose(n.height(1), 2.7)
+    n.tick(.1)
+    assert n.clients[0].eval("MilitaryDrop.FultonPrototype.status().phase") == "pickup"
+    for vm in n.clients:
+        vm.execute('DRAWS={}; triggerEvent("OnPostRender")')
+        assert vm.globals().DRAWS[1].z > 0, "both clients immediately see the bag rising"
+    n.tick(1.4)
+    n.deliver()
+    assert n.count(0) == n.count(1) == 0, "full cycle ends at 4.5s on server and clients"
 
 
 def check_late_join_unloaded_square_and_reload():

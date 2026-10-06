@@ -168,7 +168,7 @@ function Prototype.start(playerNum, options)
         balloon = balloon, bag = bag, elapsed = 0, phase = "rise", paused = false,
         height = Flight.bounded(options.height, 2.5, 0.1, 8),
         duration = Flight.bounded(options.duration, Flight.RISE_SECONDS, 1, 60),
-        hold = Flight.bounded(options.hold, 20, 0, 300), pickup = Flight.PICKUP_SECONDS }
+        hold = Flight.bounded(options.hold, Flight.HOLD_SECONDS, 0, 300), pickup = Flight.PICKUP_SECONDS }
     entries[0] = active
     worldFrames, postFrames, lastRenderer = 0, 0, nil
     startTicking()

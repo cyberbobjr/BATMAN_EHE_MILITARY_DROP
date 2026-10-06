@@ -4,6 +4,7 @@ local Flight = {}
 MilitaryDrop.FultonPrototypeFlight = Flight
 Flight.MODULE = "MilitaryDropFultonPrototype"
 Flight.RISE_SECONDS = 3
+Flight.HOLD_SECONDS = 0
 Flight.PICKUP_SECONDS = 1.5
 Flight.MAX_FLIGHTS = 8
 Flight.SYNC_SECONDS = 0.5

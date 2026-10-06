@@ -68,9 +68,14 @@ function T.default_ascent_reaches_full_height_in_three_seconds()
     for _ = 1, 15 do triggerEvent("OnTick") end
     assertTrue(math.abs(P.status().height - 1.45) < 0.000001, "linear ascent halfway at 1.5s")
     for _ = 1, 16 do triggerEvent("OnTick") end
-    assertEq(P.status().phase, "hold")
-    assertEq(P.status().height, 2.7)
+    assertEq(P.status().phase, "pickup", "pickup immediately follows ascent")
+    DRAWS = {}
+    triggerEvent("OnPostRender")
+    assertTrue(DRAWS[1].z > 0, "bag already rises at 3.1s without an idle hold")
+    assertEq(MilitaryDrop.FultonPrototypeFlight.HOLD_SECONDS, 0)
     assertEq(MilitaryDrop.FultonPrototypeFlight.PICKUP_SECONDS, 1.5)
+    for _ = 1, 15 do triggerEvent("OnTick") end
+    assertEq(P.status().running, false, "complete cycle finishes after 4.5s")
 end
 
 function T.pause_restart_and_unloaded_square_are_clean()

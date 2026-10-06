@@ -97,7 +97,7 @@ function Server.onClientCommand(module, command, player, args)
             x = player:getX() + 1.5, y = player:getY() + 1.5, z = math.floor(player:getZ()),
             height = Flight.bounded(args.height, 2.5, 0.1, 8),
             duration = Flight.bounded(args.duration, Flight.RISE_SECONDS, 1, 60),
-            hold = Flight.bounded(args.hold, 20, 0, 300), pickup = Flight.PICKUP_SECONDS,
+            hold = Flight.bounded(args.hold, Flight.HOLD_SECONDS, 0, 300), pickup = Flight.PICKUP_SECONDS,
             elapsed = 0, paused = false, vanilla = args.vanilla == true }
         if not ticking then
             lastClock = Flight.clock()
