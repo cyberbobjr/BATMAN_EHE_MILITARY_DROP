@@ -4,11 +4,11 @@
 
 [b]Build 42.21 · Um jogador e multijogador · Autónomo[/b]
 
-[i]Multijogador: o mod foi concebido para servidores dedicados (o servidor decide tudo), mas até agora só foi testado em modo de um jogador. Por favor, comunica qualquer problema em multijogador.[/i]
+[i]Multijogador: concebido para servidores dedicados (o servidor decide tudo), mas até agora só testado em modo de um jogador. Comunica qualquer problema.[/i]
 
-Sintoniza um rádio militar na frequência certa, indica o código da semana e requisita abastecimentos militares. Um helicóptero larga um caixote ao longe e anuncia a quadrícula a todos os que estão à escuta... e o barulho atrai os mortos.
+Sintoniza um rádio militar na frequência certa, indica o código da semana e requisita abastecimentos. Um helicóptero larga um caixote ao longe e anuncia a quadrícula a todos os que estão à escuta... e o barulho atrai os mortos.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Reputação por personagem, independente da conta e fação. Notas coletivas não são transferidas: personagens existentes começam com 25. Lançamentos anteriores não afetam as novas notas.
+[b]BREAKING CHANGE — 0.1.2:[/b] Reputação por personagem. Notas coletivas não são transferidas: personagens existentes começam com 25.
 
 [h2]Encontrar a frequência e o código[/h2]
 
@@ -24,7 +24,7 @@ Memorandos militares e policiais revelam a frequência. À segunda-feira, o livr
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
-Clica com o botão direito num rádio militar, [b]Opções do Dispositivo[/b], secção [b]Logística[/b]: escreve o código e prime [b]Pedir abastecimento aéreo[/b]. Walkie-talkie na mão, à cintura ou num saco, ou um rádio pousado.
+Botão direito num rádio militar, [b]Opções do Dispositivo[/b], secção [b]Logística[/b]: escreve o código e prime [b]Pedir abastecimento aéreo[/b]. Walkie-talkie na mão, à cintura ou num saco, ou um rádio pousado.
 
 [h2]Preencher a requisição[/h2]
 
@@ -46,7 +46,7 @@ Chega ao caixote a 150–400 quadrados; uma horda guarda-o. Caixotes vazios dão
 
 [h2]Quando um helicóptero cai[/h2]
 
-Um helicóptero de abastecimento pode despenhar-se, mais vezes com trovoada. O seu MAYDAY indica um setor na frequência militar. Nos destroços, o piloto leva um memorando, um livro de códigos e o [b]registador de voo[/b]; recupera as peças dos destroços e depois desmancha-os. Os mantimentos chegam na mesma ao local.
+Um helicóptero de abastecimento pode despenhar-se, mais vezes com trovoada. O seu MAYDAY indica um setor. O piloto leva um memorando, um livro de códigos e o [b]registador de voo[/b]; recupera as peças dos destroços e depois desmancha-os. Os mantimentos chegam na mesma.
 
 [h2]Ganhar a confiança da base[/h2]
 
@@ -54,11 +54,11 @@ Um helicóptero de abastecimento pode despenhar-se, mais vezes com trovoada. O s
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
-Confiança pessoal reduz a espera e aumenta requisições. Uma nova personagem começa com 25; guardar, reconectar ou mudar de fação mantém a nota.
+Confiança pessoal reduz a espera e aumenta requisições. Começa com 25; guardar, reconectar ou mudar de fação mantém a nota.
 
 [h3]Reputação: ganhos e perdas[/h3]
 
-Os lançamentos afetam apenas a personagem requerente; outra que abra recebe 0. As restantes recompensas vão para quem age. Tempo de jogo e valores predefinidos.
+Os lançamentos afetam apenas o requerente; outro que abra recebe 0. As restantes recompensas vão para quem age. Tempo de jogo, valores predefinidos.
 
 [table]
 [tr][td][b]Causa[/b][/td][td][b]Variação[/b][/td][/tr]
@@ -84,15 +84,22 @@ Limite: +8/dia/personagem exceto lançamentos. Posto: relatório +2, placa +3, r
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Um rádio militar fixo torna-se consola partilhada: assuntos a tratar (registadores de voo, placas), ordens, registo e lançamentos. A sua baía de leitura lê um registador de voo em 10 minutos antes do envio à base. Cada fação tem indicativo; a confiança é pessoal.
+Um rádio militar fixo torna-se consola partilhada: assuntos a tratar (registadores de voo, placas), ordens, registo e lançamentos. A sua baía de leitura lê um registador de voo em 10 minutos antes do envio à base. Indicativo por fação, confiança pessoal.
+
+[h2]Zonas de lançamento disputadas (PvP)[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
+
+Em servidores PvP, o administrador escolhe onde caem os caixotes: zonas agrupadas em setores (parque, centro comercial, prédios em Louisville). Cada lançamento usa o setor mais próximo ou um ao acaso e depois uma zona pelo peso: ninguém pode acampar no ponto. O anúncio nomeia-a («zona Central Park, quadrícula...»); opcionalmente, o jogador escolhe o setor, isco incluído. Nunca na água, num edifício, numa zona sem JvJ ou num asilo.
+
+Painel de administração no jogo ([b]Zonas de lançamento[/b]): desenha zonas com o rato, setor e peso, [b]Destacar[/b] no chão, editar, desativar, teletransportar. Desligado por predefinição.
 
 [h2]Para administradores de servidores[/h2]
 
 [list]
-[*]60 opções sandbox: espera entre lançamentos (uma semana por predefinição, para todo o servidor), distância, horda, modo do código, confiança, missões, requisição, isco, quedas de helicóptero.
+[*]60 opções sandbox, aplicadas sem reiniciar (exceto frequências): espera entre lançamentos (uma semana por predefinição, para todo o servidor), distância, horda, modo do código, confiança, missões, requisição, isco, quedas, zonas.
 [*]Os lotes de requisição podem ser editados, desativados ou acrescentados em Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Servidores PvP: zonas de lançamento escolhidas pelo administrador (dropzones.txt ou ferramenta no jogo), para que cada caixa caia numa zona disputada.
-[*]Multijogador com autoridade do servidor. Os administradores podem forçar um lançamento, fazer cair o próximo helicóptero e iniciar missões a partir de um rádio militar.
+[*]Os administradores podem forçar um lançamento, fazer cair o próximo helicóptero e iniciar missões a partir de um rádio militar.
 [/list]
 
 [h2]Compatibilidade[/h2]
@@ -102,16 +109,16 @@ Um rádio militar fixo torna-se consola partilhada: assuntos a tratar (registado
 [*]Concebido para coexistir com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], fumo verde assinala o caixote.
 [*]Funciona com Better Walkie Talkies: as suas regras de premir para falar, voz e bateria mantêm-se.
-[*]Os itens dos teus mods de armas e de itens aparecem nos caixotes.
+[*]Os itens dos teus mods aparecem nos caixotes.
 [/list]
 
 [h2]Guia[/h2]
 
-Tudo em pormenor, com capturas de ecrã: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
+Tudo em pormenor, com capturas: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
 
 [h2]Apoiar o projeto[/h2]
 
-Gostas do mod? Um café ajuda a financiar novas funcionalidades e traduções.
+Um café ajuda a financiar novas funcionalidades e traduções.
 [url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
 
 [h2]Créditos[/h2]

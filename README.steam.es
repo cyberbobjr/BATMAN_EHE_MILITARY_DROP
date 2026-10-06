@@ -4,11 +4,11 @@
 
 [b]Build 42.21 · Un jugador y multijugador · Independiente[/b]
 
-[i]Multijugador: el mod está pensado para servidores dedicados (el servidor lo decide todo), pero de momento solo se ha probado en un jugador. Por favor, informa de cualquier problema en multijugador.[/i]
+[i]Multijugador: pensado para servidores dedicados (el servidor lo decide todo), pero de momento solo probado en un jugador. Informa de cualquier problema.[/i]
 
-Sintoniza una radio militar en la frecuencia correcta, da el código de la semana y pide suministros militares. Un helicóptero lanza una caja lejos y anuncia la cuadrícula a todos los que escuchan... y el ruido atrae a los muertos.
+Sintoniza una radio militar en la frecuencia correcta, da el código de la semana y pide suministros. Un helicóptero lanza una caja lejos y anuncia la cuadrícula a todos los que escuchan... y el ruido atrae a los muertos.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Reputación por personaje, independiente de cuenta y facción. Las notas colectivas no se transfieren: los personajes existentes empiezan en 25. Los lanzamientos anteriores no afectan las nuevas notas.
+[b]BREAKING CHANGE — 0.1.2:[/b] Reputación por personaje. Las notas colectivas no se transfieren: los personajes existentes empiezan en 25.
 
 [h2]Encuentra la frecuencia y el código[/h2]
 
@@ -24,7 +24,7 @@ Las notas militares y policiales revelan la frecuencia. Cada lunes, descifra la 
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
-Haz clic derecho en una radio militar, [b]Opciones del dispositivo[/b], sección [b]Logística[/b]: escribe el código y pulsa [b]Solicitar un lanzamiento[/b]. Walkie talkie en la mano, en el cinturón o en una bolsa, o una radio colocada.
+Clic derecho en una radio militar, [b]Opciones del dispositivo[/b], sección [b]Logística[/b]: escribe el código y luego [b]Solicitar un lanzamiento[/b]. Walkie talkie en la mano, en el cinturón o en una bolsa, o una radio colocada.
 
 [h2]Rellena la requisición[/h2]
 
@@ -46,7 +46,7 @@ Alcanza la caja a 150–400 casillas; una horda la vigila. Las cajas vacías se 
 
 [h2]Cuando cae un helicóptero[/h2]
 
-Un helicóptero de suministros puede estrellarse, más a menudo con tormenta. Su MAYDAY da un sector en la frecuencia militar. En los restos, el piloto lleva un memorando, un libro de códigos y el [b]registrador de vuelo[/b]; recupera las piezas de los restos y luego desguázalos. Los suministros llegan igualmente al lugar.
+Un helicóptero de suministros puede estrellarse, más a menudo con tormenta. Su MAYDAY da un sector. El piloto lleva un memorando, un libro de códigos y el [b]registrador de vuelo[/b]; recupera las piezas de los restos y luego desguázalos. Los suministros llegan igualmente.
 
 [h2]Gánate la confianza de la base[/h2]
 
@@ -54,16 +54,16 @@ Un helicóptero de suministros puede estrellarse, más a menudo con tormenta. Su
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
-La confianza personal reduce la espera y amplía las solicitudes. Un personaje nuevo empieza en 25; guardar, reconectar o cambiar de facción conserva su nota.
+La confianza personal reduce la espera y amplía las solicitudes. Empieza en 25; la nota resiste a guardar, reconectar o cambiar de facción.
 
 [h3]Reputación: ganancias y pérdidas[/h3]
 
-Los lanzamientos afectan solo al personaje solicitante; otro que abra recibe 0. Los demás premios van al personaje que actúa. Tiempo de juego y valores predeterminados.
+Los lanzamientos afectan solo al solicitante; otro que abra recibe 0. Los demás premios van a quien actúa. Tiempo de juego, valores predeterminados.
 
 [table]
 [tr][td][b]Causa[/b][/td][td][b]Cambio[/b][/td][/tr]
 [tr][td]Solicitante abre la primera caja[/td][td]+10[/td][/tr]
-[tr][td]Otro miembro de la facción de la llamada abre primero[/td][td]+5[/td][/tr]
+[tr][td]Otro miembro de su facción abre primero[/td][td]+5[/td][/tr]
 [tr][td]Alguien ajeno abre primero[/td][td]−5[/td][/tr]
 [tr][td]Ninguna caja abierta en 48 h desde la entrega[/td][td]−10[/td][/tr]
 [tr][td]Registrador de vuelo leído y enviado, una vez por accidente, sin límite[/td][td]+10[/td][/tr]
@@ -72,7 +72,7 @@ Los lanzamientos afectan solo al personaje solicitante; otro que abra recibe 0. 
 [tr][td]Primera confirmación de reconocimiento: 25 casillas / 48 h[/td][td]+3[/td][/tr]
 [tr][td]Más bajas de la horda, 90% muerta[/td][td]+5[/td][/tr]
 [tr][td]Control de radio en 4 h, una vez por personaje[/td][td]+1[/td][/tr]
-[tr][td]3 códigos erróneos / llamadas en frecuencia incorrecta en 1 h[/td][td]−2[/td][/tr]
+[tr][td]3 códigos / frecuencias erróneos en 1 h[/td][td]−2[/td][/tr]
 [tr][td]Erosión opcional tras 24 h sin contacto[/td][td]−1 / +1[/td][/tr]
 [/table]
 
@@ -84,15 +84,22 @@ Límite: +8/día/personaje salvo lanzamientos. Puesto: informe +2, placa +3, rec
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Una radio militar fija se convierte en consola compartida: asuntos pendientes (registradores de vuelo, placas), órdenes, registro y lanzamientos. Su bahía de lectura lee un registrador de vuelo en 10 minutos antes de enviarlo a la base. Cada facción tiene indicativo; la confianza es personal.
+Una radio militar fija se convierte en consola compartida: asuntos pendientes (registradores de vuelo, placas), órdenes, registro y lanzamientos. Su bahía de lectura lee un registrador de vuelo en 10 minutos antes de enviarlo a la base. Indicativo por facción, confianza personal.
+
+[h2]Zonas de lanzamiento disputadas (PvP)[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
+
+En servidores PvP, el administrador elige dónde caen las cajas: zonas agrupadas en sectores (parque, centro comercial, bloques de pisos en Louisville). Cada lanzamiento toma el sector más cercano o uno al azar y luego una zona según su peso: nadie puede acampar en el punto. El anuncio la nombra («zona Central Park, cuadrícula...»); opcionalmente, el jugador elige el sector, señuelo incluido. Nunca en el agua, en un edificio, en una zona sin PvP ni en un refugio.
+
+Panel de administración en el juego ([b]Zonas de lanzamiento[/b]): dibuja zonas con el ratón, sector y peso, [b]Resaltar[/b] en el suelo, editar, desactivar, teletransportarse. Desactivado por defecto.
 
 [h2]Para administradores de servidor[/h2]
 
 [list]
-[*]60 opciones de mundo abierto: espera entre lanzamientos (una semana por defecto, para todo el servidor), distancia, horda, modo de código, confianza, misiones, requisición, señuelo, accidentes de helicóptero.
+[*]60 opciones de mundo abierto, aplicadas sin reiniciar (salvo frecuencias): espera entre lanzamientos (una semana por defecto, para todo el servidor), distancia, horda, modo de código, confianza, misiones, requisición, señuelo, accidentes, zonas.
 [*]Los lotes de requisición se pueden editar, desactivar o añadir en Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Servidores PvP: zonas de lanzamiento elegidas por el administrador (dropzones.txt o herramienta en el juego), para que cada caja caiga en zona disputada.
-[*]Multijugador con autoridad del servidor. Los administradores pueden forzar un lanzamiento, estrellar el próximo helicóptero y lanzar misiones desde una radio militar.
+[*]Los administradores pueden forzar un lanzamiento, estrellar el próximo helicóptero y lanzar misiones desde una radio militar.
 [/list]
 
 [h2]Compatibilidad[/h2]
@@ -101,17 +108,17 @@ Una radio militar fija se convierte en consola compartida: asuntos pendientes (r
 [*]No requiere ningún otro mod.
 [*]Pensado para convivir con [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Con [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], un humo verde marca la caja.
-[*]Funciona con Better Walkie Talkies: se respetan sus reglas de pulsar para hablar, voz y batería.
-[*]Los objetos de tus mods de armas y de objetos aparecen en las cajas.
+[*]Funciona con Better Walkie Talkies: respeta su pulsar para hablar, voz y batería.
+[*]Los objetos de tus mods aparecen en las cajas.
 [/list]
 
 [h2]Guía[/h2]
 
-Todo en detalle, con capturas de pantalla: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]guía completa (inglés)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guía completa (francés)[/url].
+Todo en detalle, con capturas: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]guía completa (inglés)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guía completa (francés)[/url].
 
 [h2]Apoya el proyecto[/h2]
 
-¿Te gusta el mod? Un café ayuda a financiar nuevas funciones y traducciones.
+Un café ayuda a financiar nuevas funciones y traducciones.
 [url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
 
 [h2]Créditos[/h2]

@@ -208,6 +208,8 @@ Where to open it:
 
 The **Drop zones (admin)** window is modelled on the game's animal zones panel. At the top: the expected map, the placement mode and the count of usable zones. The list shows the zones grouped by sector, with their state (active, disabled, map not loaded), corners, size, weight and warnings, then the first problems of the file. Tick **Highlight** (top right of the buttons, unticked at first, remembered until you quit the game) to light up the border squares of every zone on the ground, steadily: green active, grey disabled, orange map not loaded, the selected zone in a stronger shade. Only the squares around you that the game has loaded are lit, and new ones as you move; only you see them, and they are removed when you untick the box or close the window (they stay while the editor is open). The tool's messages (zone added, refusal, file reloaded) appear in the window, never above your character, so nearby players see nothing.
 
+![The Drop zones (admin) window, opened from the single-player debug menu: zones grouped by sector, with their state, corners, size and weight](../images/ingame-zones-list.png)
+
 Buttons:
 
 - **Add Zone**: draw a new zone (below).
@@ -227,6 +229,8 @@ Gamepad: D-pad up and down selects a zone, A edits, X enables or disables, Y add
 3. After the second corner, the rectangle is fixed. Right-click or Esc cancels the outline in progress; Esc again closes the editor.
 4. Fill in **Zone Name**, **Sector** (a known sector, or **New sector...** and its name in **New sector**) and **Weight (1-100)**, then press **Add Zone**.
 5. The server checks the zone and answers in the editor: "Drop zone z4 added.", with its warnings, or a refusal (too large, off the map, overlapping a non-PvP zone or a safehouse, 200 zones already, file with a syntax error). It writes `dropzones.txt` and reloads it. On success the editor closes and the new zone is selected in the list. **Cancel** returns to the list.
+
+![Adding a zone: the editor shows the corners and the size, and the drawn rectangle lights up on the ground](../images/ingame-zones-add.png)
 
 Gamepad: the D-pad moves the target square (starting from yours), A sets the first corner then the second one, B cancels the outline. Once the rectangle is drawn, the D-pad moves through the form and B cancels.
 

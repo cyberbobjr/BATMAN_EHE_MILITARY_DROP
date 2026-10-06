@@ -4,11 +4,11 @@
 
 [b]Build 42.21 · Einzelspieler & Mehrspieler · Eigenständig[/b]
 
-[i]Mehrspieler: Der Mod ist für dedizierte Server gebaut (der Server entscheidet alles), wurde bisher aber nur im Einzelspieler getestet. Bitte meldet jedes Mehrspieler-Problem.[/i]
+[i]Mehrspieler: für dedizierte Server gebaut (der Server entscheidet alles), bisher nur im Einzelspieler getestet. Bitte meldet jedes Problem.[/i]
 
-Stell ein Militärfunkgerät auf die richtige Frequenz ein, nenne den Code dieser Woche und fordere militärischen Nachschub an. Ein Hubschrauber wirft weit entfernt eine Kiste ab und gibt das Planquadrat an alle durch, die mithören... und der Lärm lockt die Toten an.
+Stell ein Militärfunkgerät auf die richtige Frequenz ein, nenne den Code dieser Woche und fordere Nachschub an. Ein Hubschrauber wirft weit entfernt eine Kiste ab und gibt das Planquadrat an alle durch, die mithören... und der Lärm lockt die Toten an.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Ruf gehört dem Charakter, nicht Konto oder Fraktion. Alte Gruppenwerte werden nicht übertragen: bestehende Charaktere starten bei 25. Frühere Abwürfe ändern die neuen Werte nicht.
+[b]BREAKING CHANGE — 0.1.2:[/b] Ruf gehört dem Charakter. Alte Gruppenwerte werden nicht übertragen: bestehende Charaktere starten bei 25.
 
 [h2]Frequenz und Code finden[/h2]
 
@@ -24,7 +24,7 @@ Militär- und Polizeimitteilungen verraten die Frequenz. Jeden Montag entschlüs
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
-Rechtsklick auf ein Militärfunkgerät, [b]Geräteeinstellung[/b], Abschnitt [b]Logistik[/b]: Code eingeben und [b]Versorgungsabwurf anfordern[/b] drücken. Walkie-Talkie in der Hand, am Gürtel oder in einer Tasche, oder ein aufgestelltes Funkgerät.
+Rechtsklick auf ein Militärfunkgerät, [b]Geräteeinstellung[/b], Abschnitt [b]Logistik[/b]: Code eingeben, dann [b]Versorgungsabwurf anfordern[/b]. Walkie-Talkie in der Hand, am Gürtel oder in einer Tasche, oder ein aufgestelltes Funkgerät.
 
 [h2]Den Anforderungsschein ausfüllen[/h2]
 
@@ -46,7 +46,7 @@ Erreiche die Kiste 150–400 Kacheln entfernt; eine Horde bewacht sie. Leere Kis
 
 [h2]Wenn ein Hubschrauber abstürzt[/h2]
 
-Ein Versorgungshubschrauber kann abstürzen, bei Gewitter häufiger. Sein MAYDAY nennt einen Sektor auf der Militärfrequenz. Am Wrack trägt der Pilot eine Mitteilung, ein Codebuch und den [b]Flugschreiber[/b]; birg die Wrackteile und zerlege dann den Rest. Der Nachschub landet trotzdem an der Absturzstelle.
+Ein Versorgungshubschrauber kann abstürzen, bei Gewitter häufiger; sein MAYDAY nennt einen Sektor. Der Pilot trägt eine Mitteilung, ein Codebuch und den [b]Flugschreiber[/b]; birg die Wrackteile und zerlege dann den Rest. Der Nachschub landet trotzdem.
 
 [h2]Das Vertrauen der Basis gewinnen[/h2]
 
@@ -54,16 +54,16 @@ Ein Versorgungshubschrauber kann abstürzen, bei Gewitter häufiger. Sein MAYDAY
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
-Persönliches Vertrauen verkürzt die Wartezeit und erhöht Anforderungen. Neue Charaktere starten bei 25; Speichern, Wiederverbinden und Fraktionswechsel behalten den Ruf.
+Persönliches Vertrauen verkürzt die Wartezeit und erhöht Anforderungen. Start bei 25; der Ruf übersteht Speichern, Wiederverbinden und Fraktionswechsel.
 
 [h3]Ruf: Gewinne und Verluste[/h3]
 
-Abwürfe ändern nur den Ruf des anfordernden Charakters; andere Öffner erhalten 0. Sonstige Belohnungen gehen an den handelnden Charakter. Spielzeit und Standardwerte.
+Abwürfe ändern nur den Ruf des Anfordernden; andere Öffner erhalten 0. Sonstige Belohnungen gehen an den Handelnden. Spielzeit, Standardwerte.
 
 [table]
 [tr][td][b]Ursache[/b][/td][td][b]Änderung[/b][/td][/tr]
 [tr][td]Anforderer öffnet ersten Koffer[/td][td]+10[/td][/tr]
-[tr][td]Anderes Mitglied der Fraktion beim Anruf öffnet zuerst[/td][td]+5[/td][/tr]
+[tr][td]Anderes Fraktionsmitglied öffnet zuerst[/td][td]+5[/td][/tr]
 [tr][td]Außenstehender öffnet zuerst[/td][td]−5[/td][/tr]
 [tr][td]Kein Koffer binnen 48 h nach Lieferung geöffnet[/td][td]−10[/td][/tr]
 [tr][td]Flugschreiber gelesen und gesendet, einmal pro Absturz, ohne Limit[/td][td]+10[/td][/tr]
@@ -72,11 +72,11 @@ Abwürfe ändern nur den Ruf des anfordernden Charakters; andere Öffner erhalte
 [tr][td]Erste Aufklärungsbestätigung: 25 Kacheln / 48 h[/td][td]+3[/td][/tr]
 [tr][td]Meiste Abschüsse der Horde, 90% tot[/td][td]+5[/td][/tr]
 [tr][td]Funkprobe binnen 4 h, einmal je Charakter[/td][td]+1[/td][/tr]
-[tr][td]3 falsche Codes / Anrufe auf falscher Frequenz in 1 h[/td][td]−2[/td][/tr]
+[tr][td]3 falsche Codes / Frequenzen in 1 h[/td][td]−2[/td][/tr]
 [tr][td]Optionaler Verfall nach 24 h ohne Kontakt[/td][td]−1 / +1[/td][/tr]
 [/table]
 
-Tageslimit: +8 je Charakter außer Abwürfen. Postenbonus: Meldung +2, Marke +3, Aufklärung +5, Funkprobe +2; Säuberung +5. Ruf: 0–100; Verlust unter 15 sperrt 3 Tage. Abgelaufene Einsätze, Admin-Abwürfe, Köder: 0. Verfall standardmäßig aus, bewegt den Ruf zu 25.
+Tageslimit: +8 je Charakter außer Abwürfen. Postenbonus: Meldung +2, Marke +3, Aufklärung +5, Funkprobe +2; Säuberung +5. Ruf: 0–100; Verlust unter 15 sperrt 3 Tage. Abgelaufene Einsätze, Admin-Abwürfe, Köder: 0. Verfall (standardmäßig aus) führt zu 25.
 
 [h2]Einen Verbindungsposten halten[/h2]
 
@@ -84,15 +84,22 @@ Tageslimit: +8 je Charakter außer Abwürfen. Postenbonus: Meldung +2, Marke +3,
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Ein festes Militärfunkgerät wird zur gemeinsamen Stationskonsole: offene Aufgaben (Flugschreiber, Marken), Befehle, Protokoll, Abwürfe. Sein Leseschacht liest einen Flugschreiber in 10 Minuten, danach geht er an die Basis. Jede Fraktion hat ein Rufzeichen; Vertrauen ist persönlich.
+Ein festes Militärfunkgerät wird zur gemeinsamen Stationskonsole: offene Aufgaben (Flugschreiber, Marken), Befehle, Protokoll, Abwürfe. Sein Leseschacht liest einen Flugschreiber in 10 Minuten vor dem Senden an die Basis. Rufzeichen pro Fraktion, Vertrauen persönlich.
+
+[h2]Umkämpfte Abwurfzonen (PvP)[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
+
+Auf PvP-Servern bestimmt der Admin, wo Kisten fallen: Zonen in Sektoren (Park, Einkaufszentrum, Wohnblocks in Louisville). Jeder Abwurf nimmt den nächsten oder einen zufälligen Sektor, dann eine Zone nach Gewicht: niemand kann den Punkt campen. Die Durchsage nennt sie („Abwurfzone Central Park, Planquadrat...“); optional wählt der Spieler den Sektor, Köder inklusive. Nie im Wasser, in Gebäuden, Nicht-PvP-Zonen oder Safehouses.
+
+Admin-Panel im Spiel ([b]Abwurfzonen[/b]): Zonen mit der Maus zeichnen, Sektor und Gewicht, [b]Hervorheben[/b] am Boden, bearbeiten, deaktivieren, teleportieren. Standardmäßig aus.
 
 [h2]Für Server-Admins[/h2]
 
 [list]
-[*]60 Sandbox-Optionen: Wartezeit zwischen Abwürfen (standardmäßig eine Woche, für den ganzen Server), Entfernung, Horde, Code-Modus, Vertrauen, Einsätze, Anforderung, Köder, Hubschrauberabstürze.
+[*]60 Sandbox-Optionen, ohne Neustart wirksam (außer Frequenzen): Wartezeit zwischen Abwürfen (standardmäßig eine Woche, für den ganzen Server), Entfernung, Horde, Code-Modus, Vertrauen, Einsätze, Anforderung, Köder, Abstürze, Abwurfzonen.
 [*]Anforderungsposten lassen sich in Zomboid/Lua/MilitaryDrop/requisition.txt bearbeiten, deaktivieren oder ergänzen.
-[*]PvP-Server: vom Admin festgelegte Abwurfzonen (dropzones.txt oder Werkzeug im Spiel), damit jede Kiste in umkämpftem Gebiet landet.
-[*]Serverautoritativer Mehrspieler. Admins können von einem Militärfunkgerät aus einen Abwurf erzwingen, den nächsten Hubschrauber abstürzen lassen und Einsätze starten.
+[*]Admins können von einem Militärfunkgerät aus einen Abwurf erzwingen, den nächsten Hubschrauber abstürzen lassen und Einsätze starten.
 [/list]
 
 [h2]Kompatibilität[/h2]
@@ -101,17 +108,17 @@ Ein festes Militärfunkgerät wird zur gemeinsamen Stationskonsole: offene Aufga
 [*]Kein anderer Mod erforderlich.
 [*]Für das Zusammenspiel mit [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url] ausgelegt.
 [*]Mit [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] markiert grüner Rauch die Kiste.
-[*]Funktioniert mit Better Walkie Talkies: dessen Push-to-Talk-, Sprach- und Batterieregeln bleiben erhalten.
-[*]Gegenstände aus deinen Waffen- und Gegenstandsmods erscheinen in den Kisten.
+[*]Funktioniert mit Better Walkie Talkies (dessen Push-to-Talk-, Sprach- und Batterieregeln bleiben).
+[*]Gegenstände aus deinen Mods erscheinen in den Kisten.
 [/list]
 
 [h2]Anleitung[/h2]
 
-Alles im Detail, mit Screenshots: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]vollständige Anleitung (Englisch)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]vollständige Anleitung (Französisch)[/url].
+Alles im Detail, mit Screenshots: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]Anleitung (Englisch)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]Anleitung (Französisch)[/url].
 
 [h2]Das Projekt unterstützen[/h2]
 
-Gefällt dir der Mod? Ein Kaffee hilft, neue Funktionen und Übersetzungen zu finanzieren.
+Ein Kaffee hilft, neue Funktionen und Übersetzungen zu finanzieren.
 [url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
 
 [h2]Credits[/h2]

@@ -3,28 +3,31 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
-## Unreleased
-
-Not published yet. This heading has no version number, so it is not read as a change note: give it a version and a date, and the same `modversion=` in `mod.info`, at the next release.
+## 0.3.0 — 2026-10-06
 
 ### Drop zones for PvP servers
 
-- Server admins can now choose where supply crates fall. New sandbox option "Drop placement": near the caller (default, unchanged), in drop zones, or in drop zones only when one is near.
-- Drop zones are rectangles grouped into sectors, usually towns, for example a park, a mall and a block of flats in Louisville. The nearest sector is used (or one at random), then one of its zones is drawn by weight, so nobody can camp the exact spot.
-- Zones are kept in Zomboid/Lua/MilitaryDrop/dropzones.txt (created empty, with a notice) and can be managed in game: a "Military Drop Zones" button in the game's admin panel (debug menu in single player) opens a zone list modelled on the game's animal zones panel. Add a zone by drawing its rectangle on the ground with the left mouse button (drag, or two clicks; clicks do nothing else meanwhile), then give its name, sector and weight. Zones can also be edited (name, sector, weight, redraw), removed, enabled or disabled, and you can teleport to them. A "Highlight" box lights up the border of every zone on the ground, steadily and on the admin's screen only, the tool's messages stay in its window, and the zone list is never sent to players.
+- Server admins can now choose where supply crates fall, so that every drop lands in a contested area. New sandbox option **Drop placement**: near the caller (default, unchanged), drop zones, or zones only when one is near.
+- Drop zones are rectangles grouped into sectors, usually towns: for example a park, a mall and a block of flats in Louisville. The nearest sector is used (or one at random), then one of its zones is drawn by weight, so nobody can camp the exact spot.
 - The radio announcement and its reminders name the zone: "LZ Central Park, grid ...". An option turns this off.
-- In zone mode, the siren decoy falls in a zone too: the requisition form offers the sectors instead of N, E, S and W.
-- Admin drops (Force a supply drop) follow drop zones like a player's call, with distances measured from the admin: drop placement, sector choice, and the sectors of the admin form's decoy.
-- In a zone, the crate can land anywhere: grass, field, beach, path, road, parking lot. It never lands inside a building, in water or outside its zone; a zone needs no road. A zone with no usable spot gives no drop, and the caller is asked to try again. Zones overlapping a non-PvP zone or a safehouse are refused by the tool and never get a crate in the protected part.
+- Players can pick the town: with **Drop zone sector** set to "Chosen by the player", the requisition form gets a **Drop sector** field. The exact zone and spot are still drawn inside that sector.
+- In zone mode, the siren decoy falls in a zone too: the form offers the sectors instead of N, E, S and W.
+- In a zone, the crate can land anywhere: grass, field, beach, path, road, parking lot. Never inside a building, in water, outside its zone, in a non-PvP zone or in a safehouse. A zone with no usable spot gives no drop, and the caller is asked to try again.
 - Without any usable zone, drops use the vanilla towns (vanilla map only), then fall near the caller with a warning to the admins.
-- The zone tool shows its remarks (no open ground, overlap, map not loaded) on the zone's line only; the red "problems" section lists real errors of the file only.
-- New sandbox options: drop zone sector (nearest, random, or chosen by the player), minimum distance, range of "zones if one is near", zone name in the announcement.
-- With "Drop zone sector" set to "Chosen by the player", the requisition form gets a "Drop sector" field: the player picks the town (sectors too close are not offered when a minimum distance is set), and the exact zone and spot are still drawn inside it. The siren decoy uses the same field. The admin form shows it too.
+- Admin drops (**Force a supply drop**) follow the same rules as a player's call, with distances measured from the admin.
+- Other new options: minimum distance to a zone, range of "zones if one is near", zone name in the announcement.
+
+### Zone panel for admins
+
+- Zones are kept in Zomboid/Lua/MilitaryDrop/dropzones.txt (created empty, with a notice) and can be managed in game: a **Military Drop Zones** button in the game's admin panel (debug menu in single player) opens a zone list modelled on the game's animal zones panel.
+- Draw a zone on the ground with the left mouse button (drag, or two clicks), then give its name, sector and weight. Zones can be edited, redrawn, removed, enabled or disabled, and you can teleport to them.
+- **Highlight** lights up the border of every zone on the ground, on the admin's screen only. The tool's messages stay in its window, and the zone list is never sent to players.
+- Each zone's line shows its remarks (no open ground, overlap with a non-PvP zone or a safehouse, map not loaded); the red "problems" section lists only real errors of the file.
 
 ### Sandbox options without restarting
 
-- Military Drop options changed during a game now apply right away, in single player (debug menu › Sandbox Settings) as on servers (admin panel › Sandbox Options): drop placement and zones, cooldown, distances, horde, requisition form, budget and costs, trust, missions, crashes and the others. Before, a single player change waited for the next load.
-- Switching to the encrypted weekly code during a game starts the numbers station and puts the codebook in army storage; the codebook drop rate is updated in army storage as well.
+- Military Drop options changed during a game now apply right away, in single player (debug menu › Sandbox Settings) as on servers (admin panel › Sandbox Options). Before, a single-player change waited for the next load.
+- Switching to the encrypted weekly code during a game starts the numbers station and puts the codebook in army storage.
 - The two frequencies (military and numbers station) still need a restart: their tooltip now says so.
 
 ## 0.2.0 — 2026-10-05

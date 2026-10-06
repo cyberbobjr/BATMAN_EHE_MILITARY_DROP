@@ -8,7 +8,7 @@
 
 Tune a military radio to the right frequency, give this week's code and requisition military supplies. A helicopter drops a crate far away and announces the grid to everyone listening... and the noise draws the dead.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Reputation belongs to each character, not the account or faction. Existing collective scores are not transferred: existing characters start at 25. Earlier drops do not affect the new scores.
+[b]BREAKING CHANGE — 0.1.2:[/b] Reputation belongs to each character. Old collective scores were not transferred: existing characters start at 25.
 
 [h2]Find the frequency and the code[/h2]
 
@@ -86,12 +86,19 @@ Daily cap: +8 per character, excluding drops. Liaison post bonus: report +2, tag
 
 A fixed military ham radio becomes a shared station console: tasks to handle (flight recorders, dog tags), orders, log and drops. Its reading bay reads a flight recorder in 10 minutes before you send it to the base. Each faction has a call sign; standing is personal.
 
+[h2]Contested drop zones (PvP)[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
+
+On PvP servers, the admin picks where crates fall: zones grouped into sectors (a park, a mall, flats in Louisville). Each drop takes the nearest or a random sector, then a zone by weight: nobody can camp the spot. The announcement names it ("LZ Central Park, grid..."); players can optionally choose the sector in the form, decoy included. The crate never lands in water, inside a building, in a non-PvP zone or a safehouse.
+
+Admin panel in game ([b]Military Drop Zones[/b]): draw zones with the mouse, set sector and weight, [b]Highlight[/b] them on the ground, edit, disable, teleport. Off by default.
+
 [h2]For server admins[/h2]
 
 [list]
-[*]60 sandbox options: wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy, helicopter crashes.
+[*]60 sandbox options, applied without restarting (except frequencies): wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy, crashes, drop zones.
 [*]Requisition lots can be edited, disabled or added in Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]PvP servers: drop zones chosen by the admin (dropzones.txt or an in-game tool), so every crate lands in a contested area.
 [*]Server-authoritative multiplayer. Admins can force a drop, crash the next helicopter and launch missions from a military radio.
 [/list]
 

@@ -208,6 +208,8 @@ Où l'ouvrir :
 
 La fenêtre **Zones de largage (admin)** reprend le panneau des zones d'animaux du jeu. En tête : la carte attendue, le mode de placement et le nombre de zones utilisables. La liste montre les zones groupées par secteur, avec leur état (active, désactivée, carte non chargée), leurs coins, leur taille, leur poids et leurs avertissements, puis les premiers problèmes du fichier. Cochez **Surbrillance** (en haut à droite des boutons, décochée au départ, retenue jusqu'à ce que vous quittiez la partie) pour éclairer au sol, en continu, les cases du pourtour de chaque zone : vert active, gris désactivée, orange carte non chargée, la zone sélectionnée plus marquée. Seules les cases chargées autour de vous s'éclairent, puis les nouvelles à mesure que vous vous déplacez ; vous seul les voyez, et elles disparaissent quand vous décochez la case ou fermez la fenêtre (elles restent pendant l'édition). Les messages de l'outil (zone ajoutée, refus, fichier rechargé) s'affichent dans la fenêtre, jamais au-dessus de votre personnage : les joueurs proches ne voient rien.
 
+![La fenêtre Zones de largage (admin), ouverte depuis le menu de debug en solo (jeu en anglais) : zones groupées par secteur, avec leur état, leurs coins, leur taille et leur poids](../images/ingame-zones-list.png)
+
 Boutons :
 
 - **Ajouter une zone** : tracer une nouvelle zone (ci-dessous).
@@ -227,6 +229,8 @@ Manette : croix haut et bas pour choisir une zone, A modifie, X active ou désac
 3. Après le second coin, le rectangle est figé. Clic droit ou Échap annule le tracé en cours ; un second Échap ferme l'éditeur.
 4. Remplissez **Nom de la zone**, **Secteur** (un secteur connu, ou **Nouveau secteur...** et son nom dans **Nouveau secteur**) et **Poids (1-100)**, puis appuyez sur **Ajouter une zone**.
 5. Le serveur contrôle la zone et répond dans l'éditeur : « Zone de largage z4 ajoutée. », avec ses avertissements, ou un refus (trop grande, hors de la carte, chevauchement d'une zone non-PvP ou d'un refuge, déjà 200 zones, fichier avec une erreur de syntaxe). Il écrit `dropzones.txt` et le recharge. En cas de succès, l'éditeur se ferme et la nouvelle zone est sélectionnée dans la liste. **Annuler** revient à la liste.
+
+![Ajout d'une zone (jeu en anglais) : l'éditeur affiche les coins et la taille, et le rectangle tracé s'éclaire au sol](../images/ingame-zones-add.png)
 
 Manette : la croix déplace la case visée (en partant de la vôtre), A fixe le premier coin puis le second, B annule le tracé. Une fois le rectangle tracé, la croix parcourt le formulaire et B annule.
 

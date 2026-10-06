@@ -2,15 +2,15 @@
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
-[b]Build 42.21 · Одиночная и сетевая игра · Без зависимостей[/b]
+[b]Build 42.21 · Соло и сеть · Без зависимостей[/b]
 
-[i]Для выделенных серверов; проверен пока только соло. Сообщайте о сетевых ошибках.[/i]
+[i]Для выделенных серверов; проверено только соло. Пишите о сетевых ошибках.[/i]
 
-Военная рация и код недели вызывают снабжение. Координаты слышат все в эфире; шум притягивает мертвецов.
+Военная рация и код недели вызывают снабжение. Координаты слышат все; шум манит мертвецов.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Репутация теперь личная; старые оценки не переносятся, все начинают с 25.
+[b]BREAKING CHANGE — 0.1.2:[/b] репутация личная, старые оценки не переносятся (старт 25).
 
-[h2]Найдите частоту и код[/h2]
+[h2]Частота и код[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
 
@@ -26,15 +26,15 @@
 
 ПКМ по военной рации → [b]Настроить устройство[/b] → [b]Снабжение[/b] → код → [b]Запросить сброс груза[/b].
 
-[h2]Заполните заявку[/h2]
+[h2]Заявка[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
 
-18 позиций добычи, включая моды, на бюджет очков. Или приманка с сиреной для отвода орд.
+18 позиций добычи (и из модов) на очки. Или приманка с сиреной для отвода орд.
 
-[h2]Доберитесь до ящика[/h2]
+[h2]К ящику[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
 
@@ -42,31 +42,31 @@
 
 Ящик в 150–400 клетках охраняет орда. Пустые ящики дают древесину.
 
-[b]Рация должна быть включена на военной частоте.[/b] Координаты и метка при посадке и каждые 6 ч до открытия; иначе их нет. Сохранить: [b]Добавить[/b].
+[b]Держите рацию на военной частоте.[/b] Координаты и метка — при посадке и каждые 6 ч до открытия. Сохранить: [b]Добавить[/b].
 
 [h2]Крушение вертолёта[/h2]
 
-Вертолёт снабжения может разбиться, чаще в грозу. Его MAYDAY даёт сектор на военной частоте. У пилота — записка, кодовая книга и [b]бортовой самописец[/b]; снимите детали с обломков. Груз всё равно прибудет.
+Вертолёт может разбиться, чаще в грозу; MAYDAY даёт сектор. У пилота — записка, кодовая книга и [b]бортовой самописец[/b]; обломки разбираются. Груз всё равно прибудет.
 
-[h2]Заслужите доверие базы[/h2]
+[h2]Доверие базы[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
 
-Личное доверие сокращает ожидание и расширяет заявки. Старт: 25, смена фракции его не меняет.
+Личное доверие сокращает ожидание и расширяет заявки. Старт 25; смена фракции не влияет.
 
-[h3]Репутация: награды и штрафы[/h3]
+[h3]Репутация[/h3]
 
-Сброс влияет только на заказчика; прочее — на действующего. Игровое время, значения по умолчанию.
+Сброс — только заказчику, прочее — действующему. Время игровое, значения по умолчанию.
 
 [table]
 [tr][td][b]Причина[/b][/td][td][b]Изменение[/b][/td][/tr]
 [tr][td]Заказчик открывает первый кейс[/td][td]+10[/td][/tr]
-[tr][td]Член фракции вызова открывает первым[/td][td]+5[/td][/tr]
+[tr][td]Член его фракции открывает первым[/td][td]+5[/td][/tr]
 [tr][td]Посторонний открывает первым[/td][td]−5[/td][/tr]
-[tr][td]Ничего не открыто за 48 ч после доставки[/td][td]−10[/td][/tr]
-[tr][td]Самописец прочитан и передан, раз на крушение, вне лимита[/td][td]+10[/td][/tr]
+[tr][td]Не открыто за 48 ч после доставки[/td][td]−10[/td][/tr]
+[tr][td]Самописец передан, раз на крушение, вне лимита[/td][td]+10[/td][/tr]
 [tr][td]Первый доклад за день[/td][td]+1[/td][/tr]
 [tr][td]Каждый новый именной жетон[/td][td]+2[/td][/tr]
 [tr][td]Первая разведка: 25 клеток / 48 ч[/td][td]+3[/td][/tr]
@@ -76,44 +76,51 @@
 [tr][td]Эрозия после 24 ч без связи (опция)[/td][td]−1 / +1[/td][/tr]
 [/table]
 
-Лимит +8/день, кроме сбросов. Пост: доклад +2, жетон +3, разведка +5, связь +2. Репутация 0–100; ниже 15 — без связи 3 дня. Сбросы админа, приманки: 0. Эрозия (выкл.) ведёт к 25.
+Лимит +8/день без сбросов. Пост: доклад +2, жетон +3, разведка +5, связь +2. Шкала 0–100; ниже 15 — без связи 3 дня. Админ, приманки: 0. Эрозия (выкл.) — к 25.
 
-[h2]Держите пост связи[/h2]
+[h2]Пост связи[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
 
-Стационарная военная рация — общий пульт: дела (самописцы, жетоны), приказы, журнал, сбросы. Отсек чтения читает самописец за 10 минут. У фракции свой позывной, доверие личное.
+Стационарная военная рация — общий пульт: дела, приказы, журнал, сбросы. Самописец читается за 10 минут. Позывной у фракции, доверие личное.
 
-[h2]Для администраторов[/h2]
+[h2]Зоны сброса (PvP)[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
+
+PvP: админ задаёт места сброса — зоны по секторам (парк, ТЦ, дома в Луисвилле). Ближайший или случайный сектор, затем зона по весу: место не закемпить. В эфире — имя зоны; по опции игрок выбирает сектор (и для приманки). Не в воде, зданиях, зонах без PvP и убежищах.
+
+Панель в игре ([b]Зоны сброса[/b]): рисование мышью, сектор, вес, [b]Подсветка[/b], правка, телепорт. Выкл. по умолчанию.
+
+[h2]Админам[/h2]
 
 [list]
-[*]60 настроек; ожидание сброса — неделя на весь сервер.
-[*]Позиции заявки правятся в Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]PvP: зоны сброса задаёт админ (dropzones.txt или в игре).
-[*]Админы вызывают сбросы, крушение и задания с рации; всё решает сервер.
+[*]60 настроек, без перезапуска (кроме частот); ожидание сброса — неделя на весь сервер.
+[*]Позиции заявки: Zomboid/Lua/MilitaryDrop/requisition.txt.
+[*]Админ с рации: сброс, крушение, задания.
 [/list]
 
 [h2]Совместимость[/h2]
 
 [list]
 [*]Другие моды не требуются.
-[*]Создан для совместной работы с [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
+[*]Совместим с [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]С [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] ящик отмечает зелёный дым.
 [*]Совместим с Better Walkie Talkies (его PTT, голос и батарея).
 [*]Предметы из ваших модов появляются в ящиках.
 [/list]
 
-[h2]Руководство[/h2]
+[h2]Гайд[/h2]
 
-Все подробности со скриншотами: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
+Подробно: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
 
-[h2]Поддержать проект[/h2]
+[h2]Поддержка[/h2]
 
-Кофе поддержит новые функции и переводы.
+Кофе поможет проекту.
 [url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
 
 [h2]Благодарности[/h2]
 
-Переработка для Build 42 мода [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url] (Build 41). Исходный код (MIT) на [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url].
+Версия B42 мода [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url] (Build 41). Код (MIT) на [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url].
