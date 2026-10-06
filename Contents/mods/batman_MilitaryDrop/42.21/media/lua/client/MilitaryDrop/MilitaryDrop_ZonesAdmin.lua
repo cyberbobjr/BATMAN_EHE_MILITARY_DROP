@@ -35,9 +35,21 @@
 --
 -- Contours au sol : addAreaHighlightForPlayer (LuaManager.java:9803), tracé
 -- vanilla des zones (ISAddDesignationAnimalZoneUI:prerender:271). Un contour
--- ne vit qu'une image d'interface (FBORenderAreaHighlights.java:61-66) : les
--- fenêtres le reposent dans leur prerender, donc seulement chez l'admin et
--- seulement fenêtre ouverte. Fin exclusive : cases x1..x2 → x1, x2 + 1.
+-- est horodaté par UIManager.uiRenderTimeMS, en millisecondes, et le rendu
+-- du monde jette ceux d'un autre horodatage (FBORenderAreaHighlights.java:
+-- 61-66, 195) : les fenêtres le reposent dans leur prerender, donc seulement
+-- chez l'admin et seulement fenêtre ouverte. Fin exclusive : cases x1..x2 →
+-- x1, x2 + 1.
+-- Surbrillance stable : deux images d'interface dans la même milliseconde
+-- gardent le même horodatage (UIManager.java:283-285) ; le contour de la
+-- première survit alors et celui de la seconde s'y ajoute, d'où un
+-- remplissage deux ou trois fois plus opaque par moments (clignotement).
+-- Comme le vanilla redessine ses zones une seule fois par rendu
+-- (renderAnimalDesigationZones), un même contour n'est posé qu'une fois par
+-- horodatage : ZonesAdmin.drawn retient les contours posés et n'est vidé, en
+-- OnPreUIDraw (déclenché juste après la mise à jour de l'horodatage,
+-- UIManager.java:283-303), que si l'horodatage a changé
+-- (UIManager.getMillisSinceLastRender() non nul).
 --
 -- Textes de l'admin (secteur, nom) et du serveur : sans caractère de contrôle
 -- ni < >, coupés à MAX_TEXT caractères entiers (MilitaryDrop.cutText).
@@ -542,12 +554,41 @@ end
 -- Contours au sol
 -- ----------------------------------------------------------------------------
 
---- Contour des cases x1..y2 incluses, à l'étage z (0 par défaut), pour ce
---- joueur seulement.
-function ZonesAdmin.highlight(playerNum, rect, color, z)
-    addAreaHighlightForPlayer(playerNum, math.floor(rect.x1), math.floor(rect.y1), math.floor(rect.x2) + 1,
-        math.floor(rect.y2) + 1, math.floor(z or 0), color[1], color[2], color[3], color[4])
+-- Contours déjà posés pour l'horodatage d'interface courant (clé → true).
+ZonesAdmin.drawn = ZonesAdmin.drawn or {}
+
+--- Début d'une image d'interface (OnPreUIDraw) : nouvel horodatage, les
+--- contours de l'image précédente seront jetés par le rendu du monde ; même
+--- horodatage (intervalle nul), ils restent dessinés et ne sont pas reposés.
+function ZonesAdmin.onPreUIDraw()
+    if UIManager.getMillisSinceLastRender() ~= 0 then
+        ZonesAdmin.drawn = {}
+    end
 end
+
+--- Contour des cases x1..y2 incluses, à l'étage z (0 par défaut), pour ce
+--- joueur seulement ; une seule fois par horodatage d'interface. Vrai s'il
+--- vient d'être posé.
+function ZonesAdmin.highlight(playerNum, rect, color, z)
+    local x1, y1 = math.floor(rect.x1), math.floor(rect.y1)
+    local x2, y2 = math.floor(rect.x2) + 1, math.floor(rect.y2) + 1
+    z = math.floor(z or 0)
+    local key = playerNum .. ":" .. x1 .. "," .. y1 .. "," .. x2 .. "," .. y2 .. "," .. z .. ":"
+        .. color[1] .. "," .. color[2] .. "," .. color[3] .. "," .. color[4]
+    if ZonesAdmin.drawn[key] then
+        return false
+    end
+    ZonesAdmin.drawn[key] = true
+    addAreaHighlightForPlayer(playerNum, x1, y1, x2, y2, z, color[1], color[2], color[3], color[4])
+    return true
+end
+
+-- Rechargement de ce fichier : un seul abonné (Events.X.Add ne dédoublonne pas).
+if ZonesAdmin.preUIDrawHandler then
+    Events.OnPreUIDraw.Remove(ZonesAdmin.preUIDrawHandler)
+end
+ZonesAdmin.preUIDrawHandler = function() ZonesAdmin.onPreUIDraw() end
+Events.OnPreUIDraw.Add(ZonesAdmin.preUIDrawHandler)
 
 --- Couleur d'une zone de la liste selon son état.
 function ZonesAdmin.zoneColor(zone)

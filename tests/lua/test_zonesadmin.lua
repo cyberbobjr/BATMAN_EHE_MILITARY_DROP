@@ -444,6 +444,10 @@ function T.setup()
     addAreaHighlightForPlayer = function(playerNum, x1, y1, x2, y2, z, r, g, b, a)
         HIGHLIGHTS[#HIGHLIGHTS + 1] = { playerNum = playerNum, x1 = x1, y1 = y1, x2 = x2, y2 = y2, z = z, r = r, a = a }
     end
+    -- Intervalle depuis l'image d'interface précédente (UIManager.java:284) ;
+    -- 0 : même horodatage en millisecondes.
+    UI_INTERVAL = 16
+    UIManager = { getMillisSinceLastRender = function() return UI_INTERVAL end }
     -- Souris : case du niveau 0 visée (MOUSE) et boutons tenus. À l'étage z,
     -- la case vue au même point de l'écran est décalée de 3 z cases en x et
     -- en y (projection isométrique) ; ISO_Z : étages demandés.
@@ -520,7 +524,9 @@ local function editor()
     return MilitaryDrop.ZoneEditor.instance
 end
 
+--- Image d'interface : OnPreUIDraw puis prerender (UIManager.render:283-303).
 local function frame()
+    triggerEvent("OnPreUIDraw")
     editor():prerender()
 end
 
@@ -590,8 +596,11 @@ end
 
 function T.no_world_context_menu_and_reloads_do_not_stack()
     assertEq(listenerCount("OnFillWorldObjectContextMenu"), BASE_LISTENERS.menu, "plus de menu du monde")
-    assertEq(listenerCount("OnPreUIDraw"), BASE_LISTENERS.draw, "contours dessinés par les fenêtres seulement")
+    assertEq(listenerCount("OnPreUIDraw"), BASE_LISTENERS.draw + 1,
+        "un seul abonné OnPreUIDraw (début d'image), contours dessinés par les fenêtres")
     local starts = listenerCount("OnGameStart")
+    loadMod("client/MilitaryDrop/MilitaryDrop_ZonesAdmin.lua")
+    assertEq(listenerCount("OnPreUIDraw"), BASE_LISTENERS.draw + 1, "rechargement : abonné non empilé")
     loadMod("client/MilitaryDrop/MilitaryDrop_ZonesWindow.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_ZoneEditor.lua")
     assertEq(listenerCount("OnGameStart"), starts, "installation inscrite une fois")
@@ -1110,6 +1119,7 @@ function T.selected_zone_is_outlined_by_the_open_window_only()
     local window = openWindow()
     selectZone(window, "z2")
     HIGHLIGHTS = {}
+    triggerEvent("OnPreUIDraw")
     window:prerender()
     assertEq(#HIGHLIGHTS, 1, "zone sélectionnée seulement")
     assertEq(rectOf(HIGHLIGHTS[1]), "12900,2100,12981,2161", "fin exclusive")
@@ -1119,6 +1129,7 @@ function T.selected_zone_is_outlined_by_the_open_window_only()
     -- Droit perdu : la fenêtre se ferme sans rien dessiner.
     CAPS = {}
     HIGHLIGHTS = {}
+    triggerEvent("OnPreUIDraw")
     window:prerender()
     assertEq(#HIGHLIGHTS, 0, "plus admin : aucun contour")
     assertEq(MilitaryDrop.ZonesWindow.instance, nil, "fenêtre fermée")
@@ -1441,6 +1452,105 @@ function T.trace_layer_follows_the_player_screen_size()
     press(3, 4)
     release(6, 8)
     assertEq(rectOf(e.rect), "3,4,6,8", "tracé toujours reçu")
+end
+
+-- ----------------------------------------------------------------------------
+-- Surbrillance stable d'une image à l'autre
+-- ----------------------------------------------------------------------------
+
+--- Rendu simulé fidèle au moteur 42.21 : UIManager.render met à jour
+--- uiRenderTimeMS (horloge en millisecondes) et l'intervalle, puis déclenche
+--- OnPreUIDraw avant les fenêtres (UIManager.java:283-303) ; chaque contour
+--- est horodaté à son ajout (FBORenderAreaHighlights.java:195) ; le rendu du
+--- monde jette ceux d'un autre horodatage et dessine tous les autres, doublons
+--- compris (:61-66, 84-94). Une image d'interface sautée (« UI render FPS »
+--- plus bas, UIManager.java:277) ne change rien.
+local function engine()
+    local e = { list = {}, uiTime = 0 }
+    addAreaHighlightForPlayer = function(playerNum, x1, y1, x2, y2, z, r, g, b, a)
+        e.list[#e.list + 1] = { rect = playerNum .. ":" .. x1 .. "," .. y1 .. "," .. x2 .. "," .. y2 .. "," .. z,
+            r = r, g = g, b = b, a = a, ts = e.uiTime }
+    end
+    --- Image d'interface à l'instant nowMs : draw() joue les prerender.
+    function e.ui(nowMs, draw)
+        UI_INTERVAL = math.min(nowMs - e.uiTime, 1000)
+        e.uiTime = nowMs
+        triggerEvent("OnPreUIDraw")
+        draw()
+    end
+    --- Rendu du monde : par rectangle, nombre de copies dessinées, couleur et
+    --- opacité perçue du remplissage (copies superposées).
+    function e.world()
+        local kept, seen = {}, {}
+        for _, h in ipairs(e.list) do
+            if h.ts == e.uiTime then
+                kept[#kept + 1] = h
+                local s = seen[h.rect]
+                if s then
+                    s.copies = s.copies + 1
+                    s.alpha = 1 - (1 - s.alpha) * (1 - h.a)
+                else
+                    seen[h.rect] = { copies = 1, r = h.r, g = h.g, b = h.b, alpha = h.a }
+                end
+            end
+        end
+        e.list = kept
+        return seen
+    end
+    return e
+end
+
+--- Images successives (dont plusieurs dans la même milliseconde et une image
+--- d'interface sautée) : chaque rendu du monde dessine une seule copie de
+--- chaque contour, de couleur et d'opacité constantes.
+local function assertSteady(e, draw, label)
+    local times = { 1000, 1000, 1000, 1016, 1016, false, 1031, 1047, 1047, 1047, 1063 }
+    local first
+    for i, t in ipairs(times) do
+        if t then
+            e.ui(t, draw)
+        end
+        local drawn = e.world()
+        local count = 0
+        for rect, s in pairs(drawn) do
+            count = count + 1
+            local where = label .. ", image " .. i .. ", " .. rect
+            assertEq(s.copies, 1, where .. " : une seule copie")
+            local state = s.r .. "," .. s.g .. "," .. s.b .. "," .. s.alpha
+            first = first or {}
+            first[rect] = first[rect] or state
+            assertEq(state, first[rect], where .. " : couleur et opacité inchangées")
+        end
+        assertTrue(count > 0, label .. ", image " .. i .. " : contour dessiné")
+    end
+    return first
+end
+
+function T.highlights_keep_the_same_colour_and_alpha_every_frame()
+    local window = openWindow()
+    selectZone(window, "z1")
+    local e = engine()
+    local states = assertSteady(e, function() window:prerender() end, "zone sélectionnée")
+    local active = MilitaryDrop.ZonesAdmin.COLORS.active
+    assertEq(states["0:6400,5400,6421,5411,0"], active[1] .. "," .. active[2] .. "," .. active[3] .. "," .. active[4],
+        "couleur et opacité de la zone active")
+    -- Éditeur : rectangle tracé (et trop grand), dessinés de façon stable.
+    window.addBtn:forceClick()
+    press(10, 20)
+    release(30, 25)
+    e = engine()
+    states = assertSteady(e, function() editor():prerender() end, "tracé")
+    local draft = MilitaryDrop.ZonesAdmin.COLORS.draft
+    assertEq(states["0:10,20,31,26,0"], draft[1] .. "," .. draft[2] .. "," .. draft[3] .. "," .. draft[4],
+        "couleur et opacité du tracé")
+    editor():onRedraw()
+    press(10, 20)
+    release(400, 25)
+    e = engine()
+    states = assertSteady(e, function() editor():prerender() end, "tracé trop grand")
+    local tooBig = MilitaryDrop.ZonesAdmin.COLORS.tooBig
+    assertEq(states["0:10,20,401,26,0"], tooBig[1] .. "," .. tooBig[2] .. "," .. tooBig[3] .. "," .. tooBig[4],
+        "couleur et opacité du tracé trop grand")
 end
 
 return T
