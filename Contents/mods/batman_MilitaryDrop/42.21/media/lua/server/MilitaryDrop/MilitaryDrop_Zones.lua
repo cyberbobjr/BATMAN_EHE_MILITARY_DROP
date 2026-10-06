@@ -848,14 +848,8 @@ function Zones.handleCommand(player, command, args)
     local result = spec.run(args, tostring(player:getUsername()))
     result.action = spec.action
     result.requestId = requestId
-    -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-    MilitaryDrop.log("drop zone command " .. tostring(command) .. ": received #" .. tostring(args.requestId) .. " ("
-        .. type(args.requestId) .. "), replying #" .. tostring(requestId) .. " ok=" .. tostring(result.ok)
-        .. " error=" .. tostring(result.error) .. ", isServer=" .. tostring(isServer()) .. ", client handler="
-        .. tostring(MilitaryDrop.Client ~= nil))
     sendReply(player, result)
     Zones.sendList(player, requestId)
-    MilitaryDrop.log("drop zone command " .. tostring(command) .. " #" .. tostring(requestId) .. ": replies sent")
 end
 
 local function register(command)

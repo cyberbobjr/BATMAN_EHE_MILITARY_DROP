@@ -326,10 +326,6 @@ function ZE:checkWaiting()
     local waiting = self.waiting
     if waiting and not waiting.late and getTimestampMs() >= waiting.untilMs then
         waiting.late = true
-        -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-        MilitaryDrop.log("zone editor " .. tostring(self) .. ": no reply to #" .. tostring(waiting.requestId)
-            .. " in time, instance=" .. tostring(Editor.instance) .. ", visible=" .. tostring(self:getIsVisible())
-            .. ", removed=" .. tostring(self.removed))
     end
 end
 
@@ -643,9 +639,6 @@ function ZE:onSubmit()
     local untilMs = getTimestampMs() + Editor.REPLY_TIMEOUT_MS
     local function onSending(requestId)
         self.waiting = { requestId = requestId, untilMs = untilMs }
-        -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-        MilitaryDrop.log("zone editor " .. tostring(self) .. ": waiting for #" .. tostring(requestId) .. " ("
-            .. type(requestId) .. "), instance=" .. tostring(Editor.instance))
     end
     if self.zone then
         ZonesAdmin.update(player, args, onSending)
@@ -665,10 +658,6 @@ end
 --- Réponse du serveur à l'envoi en cours (même requestId) : vrai si elle
 --- concerne l'éditeur.
 function ZE:onReply(args, text)
-    -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-    MilitaryDrop.log("zone editor " .. tostring(self) .. ": reply #" .. tostring(args.requestId) .. ", waiting="
-        .. (self.waiting and ("#" .. tostring(self.waiting.requestId)) or "nil") .. ", same number="
-        .. tostring(self.waiting ~= nil and args.requestId == self.waiting.requestId))
     if not self.waiting or args.requestId ~= self.waiting.requestId then
         return false
     end
@@ -781,8 +770,6 @@ function ZE:onJoypadDirRight(joypadData)
 end
 
 function ZE:close()
-    -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-    MilitaryDrop.log("zone editor " .. tostring(self) .. ": close, instance=" .. tostring(Editor.instance))
     self:unfocusEntries()
     if self.trace then
         self.trace:cancel()
@@ -844,8 +831,6 @@ function Editor.open(player, zone)
     editor:initialise()
     editor:addToUIManager()
     Editor.instance = editor
-    -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-    MilitaryDrop.log("zone editor " .. tostring(editor) .. ": opened (" .. (zone and tostring(zone.id) or "add") .. ")")
     local Window = MilitaryDrop.ZonesWindow
     if Window and Window.hide then
         Window.hide()

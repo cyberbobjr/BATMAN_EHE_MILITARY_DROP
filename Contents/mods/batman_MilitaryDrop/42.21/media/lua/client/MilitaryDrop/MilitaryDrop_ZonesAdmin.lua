@@ -206,19 +206,6 @@ function ZonesAdmin.levelOf(player)
     return player and math.floor(player:getZ()) or 0
 end
 
---- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : éditeur courant, son
---- attente et sa visibilité, pour MilitaryDrop.log (option DebugLog).
-function ZonesAdmin.debugEditor()
-    local Editor = MilitaryDrop.ZoneEditor
-    local editor = Editor and Editor.instance
-    if not editor then
-        return "none"
-    end
-    local waiting = editor.waiting
-    return tostring(editor) .. " waiting=" .. (waiting and ("#" .. tostring(waiting.requestId) .. " ("
-        .. type(waiting.requestId) .. ")") or "nil") .. " removed=" .. tostring(editor.removed)
-end
-
 --- Envoi d'une commande numérotée ; renvoie son requestId. onSending
 --- (facultatif) reçoit le numéro AVANT l'envoi : en solo, la réponse est
 --- traitée pendant Net.toServer (voir l'en-tête), avant que send ne rende.
@@ -230,13 +217,7 @@ local function send(player, command, args, onSending)
     if onSending then
         onSending(requestId)
     end
-    -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-    MilitaryDrop.log("zones admin: send " .. tostring(command) .. " #" .. tostring(requestId) .. " ("
-        .. type(requestId) .. "), isClient=" .. tostring(isClient()) .. ", editor="
-        .. ZonesAdmin.debugEditor())
     Net.toServer(player, command, args)
-    MilitaryDrop.log("zones admin: send " .. tostring(command) .. " #" .. tostring(requestId) .. " returned, editor="
-        .. ZonesAdmin.debugEditor())
     return requestId
 end
 
@@ -360,9 +341,6 @@ end
 --- un succès, ZonesWindow). Jamais à l'éditeur : une liste ne dit pas si
 --- son envoi a été accepté, et son ordre d'arrivée ne prouve rien.
 function ZonesAdmin.onListReply(args)
-    -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-    MilitaryDrop.log("zones admin: ZoneListReply #" .. tostring(args.requestId) .. ", editor="
-        .. ZonesAdmin.debugEditor())
     ZonesAdmin.list = ZonesAdmin.normalizeList(args)
     local Window = MilitaryDrop.ZonesWindow
     if Window and Window.refresh then
@@ -391,18 +369,12 @@ end
 --- sauf après un refus « denied » ou « busy » ; en solo, les deux arrivent
 --- pendant l'envoi.
 function ZonesAdmin.onReply(args)
-    -- DIAGNOSTIC TEMPORAIRE (éditeur bloqué en solo) : à retirer.
-    MilitaryDrop.log("zones admin: ZoneReply #" .. tostring(args.requestId) .. " (" .. type(args.requestId)
-        .. ") action=" .. tostring(args.action) .. " ok=" .. tostring(args.ok) .. " error=" .. tostring(args.error)
-        .. ", editor=" .. ZonesAdmin.debugEditor())
     local text = ZonesAdmin.replyText(args)
     local ok = args.ok == true
     local Editor = MilitaryDrop.ZoneEditor
     if Editor and Editor.onReply and Editor.onReply(args, text) then
-        MilitaryDrop.log("zones admin: ZoneReply #" .. tostring(args.requestId) .. " taken by the editor")
         return
     end
-    MilitaryDrop.log("zones admin: ZoneReply #" .. tostring(args.requestId) .. " not taken by the editor (to the list)")
     local Window = MilitaryDrop.ZonesWindow
     if Window and Window.setStatus then
         Window.setStatus(text, ok)
