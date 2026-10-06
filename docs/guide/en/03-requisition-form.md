@@ -51,6 +51,17 @@ Each unit you order arrives as one **Requisition Case**. Items are drawn when th
 
 The server admin can change costs, tiers and lots, or disable explosives. Your form always shows the server's real list.
 
+## Drop sector
+
+On a server with [drop zones](06-server-admin.md#drop-zones) where the admin lets players choose the sector, the form has a **Drop sector** field above the budget: a town, shown as "< Louisville >". Click the arrows or the name, or use left and right on a gamepad.
+
+- **Transmit requisition** stays greyed until you choose a sector ("choose a sector").
+- With a single sector, it is already selected and simply shown.
+- You choose the sector only: Logistics picks the exact spot inside it, never in water or inside a building. Zone names are never shown.
+- A sector too close to you is not offered when the server sets a minimum distance.
+- If the sector has no possible drop point right now, the base asks you to pick another sector and the form reopens, still filled in. With a single sector, try again later.
+- The **Siren decoy** uses the same field: when it is ticked, the decoy falls in the chosen sector instead of your order.
+
 ## Send or cancel
 
 - Use **+** and **-** to set quantities. **+** is greyed when the budget no longer allows it.
@@ -78,7 +89,7 @@ Under **SPECIAL ORDER**, the **Siren decoy** (3 pts) drops a dummy crate whose s
 2. Choose the **drop sector**: N, E, S or W. The crate falls in that quarter, at the usual distance.
 3. Transmit.
 
-On a server with [drop zones](06-server-admin.md#drop-zones), step 2 offers a **sector** instead of N, E, S and W: a town, shown as "< Louisville >" (arrows, or left and right on a gamepad). With a single sector, it is already selected. The decoy then falls in a drop zone of that sector, like a real drop.
+On a server with [drop zones](06-server-admin.md#drop-zones), step 2 offers a **sector** instead of N, E, S and W: a town, shown as "< Louisville >" (arrows, or left and right on a gamepad). With a single sector, it is already selected. The decoy then falls in a drop zone of that sector, like a real drop. If the form has a [Drop sector](#drop-sector) field, step 2 uses that field: the decoy has no selector of its own.
 
 The decoy looks **exactly** like a real drop: same answer, same helicopter, same announcement, same crate. Nobody can tell before opening the trunk, which holds only a **Siren Beacon - DIVERSION**.
 

@@ -46,6 +46,21 @@
 -- admin (largage forcé, APPEL-05) n'est pas concernée (analyse §2.1) : lots
 -- et leurre par proximité, secteurs N/E/S/O, quel que soit DropPlacement.
 --
+-- Secteur choisi par le joueur (ZONE-09, DropZoneChoice 3, décision de
+-- l'utilisateur du 2026-10-06) : en mode zones effectif pour ce demandeur
+-- (mode 2, ou mode 3 avec des zones à portée ; villes vanilla du repli
+-- comprises), la réponse « form » porte aussi drop = { zones = true,
+-- sectors = { noms } } (Zones.playerSectors : secteurs actifs ayant une zone
+-- à DropZoneMinDistance au moins, sinon le plus proche ; le leurre reçoit la
+-- même liste, le formulaire n'ayant qu'un sélecteur) et la commande de lots,
+-- sector = "<nom>". Le serveur le revérifie contre
+-- l'offre recalculée (absent, inconnu, désactivé, hors portée, ou donné
+-- alors que l'offre n'en propose plus : « orderInvalid ») ; la zone est tirée
+-- au poids dans ce secteur (Zones.choosePoint), aucune case : « noSite »
+-- avec le secteur, et single = true s'il est seul. Un leurre ne porte pas
+-- sector (son secteur est decoy). Choix 1 et 2, feuille admin : ni drop ni
+-- sector (une commande qui en porte un est refusée).
+--
 -- Candidats des lots : calculés d'un seul passage (Lots.warm) au démarrage
 -- du serveur (OnServerStarted) ou de la partie solo (OnGameStart), après la
 -- fusion des distributions et les retouches des mods à OnInitGlobalModData
@@ -115,16 +130,19 @@ local function round(value)
     return math.floor(value + 0.5)
 end
 
---- Secteur proposé par l'offre : N/E/S/W en proximité, nom d'un secteur de
---- zones en mode zones (idée 11, offer.decoy.sectors).
-local function isSector(value, offer)
-    local sectors = offer and offer.decoy and offer.decoy.sectors or Requisition.SECTORS
+local function listed(value, sectors)
     for _, sector in ipairs(sectors) do
         if value == sector then
             return true
         end
     end
     return false
+end
+
+--- Secteur proposé par l'offre : N/E/S/W en proximité, nom d'un secteur de
+--- zones en mode zones (idée 11, offer.decoy.sectors).
+local function isSector(value, offer)
+    return listed(value, offer and offer.decoy and offer.decoy.sectors or Requisition.SECTORS)
 end
 
 -- ----------------------------------------------------------------------------
@@ -181,10 +199,25 @@ local function decoyOffer(player, forced)
     return offer
 end
 
---- Offre d'un personnage : budget, palier de lots, lots (ordre d'affichage) et
---- leurre. Contrat de la réponse « form » (dev/PLAN-V14.md). forced :
+--- Secteur du largage choisi par le joueur (ZONE-09) : { zones = true,
+--- sectors } avec DropZoneChoice 3 en mode zones effectif pour ce demandeur
+--- (secteurs du leurre : Zones.playerSectors), sinon nil ; jamais pour la
+--- feuille admin (forced, analyse §2.1).
+local function dropOffer(player, forced)
+    local Zones = MilitaryDrop.Zones
+    local named = player and not forced and Zones
+        and Zones.playerSectors(math.floor(player:getX()), math.floor(player:getY()))
+    if named and #named > 0 then
+        return { zones = true, sectors = named }
+    end
+    return nil
+end
+
+--- Offre d'un personnage : budget, palier de lots, lots (ordre d'affichage),
+--- leurre et secteur du largage (drop). Contrat de la réponse « form » (dev/PLAN-V14.md). forced :
 --- largage admin, tous les paliers et le budget d'une note maximale. player
---- (facultatif) : demandeur, dont la position fixe les secteurs du leurre.
+--- (facultatif) : demandeur, dont la position fixe les secteurs du leurre et
+--- du largage.
 function Requisition.offer(characterId, forced, player)
     -- Repli paresseux : un seul passage sur les tables pour les 18 lots.
     Lots.warm()
@@ -211,18 +244,35 @@ function Requisition.offer(characterId, forced, player)
         end
         lots[#lots + 1] = entry
     end
-    return { budget = Requisition.budget(note), lots = lots, decoy = decoyOffer(player, forced) }
+    local decoy, drop = decoyOffer(player, forced), dropOffer(player, forced)
+    if decoy and decoy.zones and drop then
+        -- Un seul sélecteur au formulaire (ZONE-09) : le leurre prend la liste
+        -- du largage (distance minimale comprise), revalidée de même.
+        decoy.sectors = drop.sectors
+    end
+    return { budget = Requisition.budget(note), lots = lots, decoy = decoy, drop = drop }
 end
 
---- Commande normalisée { lots = { [id] = n } } ou { decoy = "N" } (ou le nom
---- d'un secteur de zones proposé par l'offre), ou nil et le motif (journal
---- seulement) si elle ne respecte pas l'offre.
-function Requisition.validate(order, decoy, offer)
+--- Commande normalisée { lots = { [id] = n }, sector = nom ou nil } ou
+--- { decoy = "N" } (ou le nom d'un secteur de zones proposé par l'offre), ou
+--- nil et le motif (journal seulement) si elle ne respecte pas l'offre.
+--- sector : secteur du largage choisi par le joueur (ZONE-09), exigé si et
+--- seulement si l'offre le propose (offer.drop), jamais avec un leurre.
+function Requisition.validate(order, decoy, offer, sector)
     if order ~= nil and type(order) ~= "table" then
         return nil, "order not a table"
     end
     if decoy ~= nil and not isSector(decoy, offer) then
         return nil, "bad sector"
+    end
+    if decoy ~= nil and sector ~= nil then
+        return nil, "decoy with drop sector"
+    end
+    if sector ~= nil and not (offer.drop and listed(sector, offer.drop.sectors)) then
+        return nil, "bad drop sector"
+    end
+    if decoy == nil and sector == nil and offer.drop then
+        return nil, "no drop sector"
     end
     local offered = {}
     for _, entry in ipairs(offer.lots) do
@@ -269,7 +319,7 @@ function Requisition.validate(order, decoy, offer)
     if total > offer.budget then
         return nil, "over budget"
     end
-    return { lots = lots }
+    return { lots = lots, sector = sector }
 end
 
 -- ----------------------------------------------------------------------------
@@ -296,7 +346,7 @@ function Requisition.openForm(player, requestId, forced)
         requestId = requestId, status = "form", forced = forced or nil,
         callsign = MilitaryDrop.Teams.callsign(teamId), tier = MilitaryDrop.Trust.tier(characterId),
         budget = offer.budget, expiresMs = Requisition.AUTH_MS,
-        lots = offer.lots, decoy = offer.decoy,
+        lots = offer.lots, decoy = offer.decoy, drop = offer.drop,
     })
 end
 
@@ -317,12 +367,18 @@ local function reply(player, requestId, status, extra)
     Net.toPlayer(player, "Result", args)
 end
 
---- Réponse « noSite » : secteur du leurre, et single = true quand l'offre
---- n'a qu'un secteur de zones (le client ne propose pas d'en choisir un autre).
+--- Réponse « noSite » : secteur du leurre ou du largage (ZONE-09), et
+--- single = true quand l'offre n'a qu'un secteur de zones (le client ne
+--- propose pas d'en choisir un autre).
 local function noSiteArgs(order, offer)
-    local decoy = offer and offer.decoy
-    local single = order.decoy ~= nil and decoy ~= nil and decoy.zones == true and #decoy.sectors == 1
-    return { sector = order.decoy, single = single or nil }
+    local sectors
+    if order.decoy ~= nil then
+        local decoy = offer and offer.decoy
+        sectors = decoy and decoy.zones == true and decoy.sectors or nil
+    elseif order.sector ~= nil then
+        sectors = offer and offer.drop and offer.drop.sectors
+    end
+    return { sector = order.decoy or order.sector, single = (sectors ~= nil and #sectors == 1) or nil }
 end
 
 --- Commande du formulaire : revalidation complète, puis lancement du vol.
@@ -382,9 +438,11 @@ function Requisition.handleOrder(player, args)
     end
     local offer = Requisition.offer(characterId, nil, player)
     -- Offre recalculée : un secteur de zones retiré par l'admin pendant que
-    -- la feuille est ouverte (dernier secteur compris) rend le leurre
-    -- « orderInvalid » ; voulu, le joueur rappelle la base.
-    local order, why = Requisition.validate(args.order, args.decoy, offer)
+    -- la feuille est ouverte (dernier secteur compris) rend le leurre, ou le
+    -- largage par secteur (ZONE-09), « orderInvalid » ; de même DropZoneChoice
+    -- changé à chaud (secteur exigé ou plus proposé). Voulu, le joueur
+    -- rappelle la base.
+    local order, why = Requisition.validate(args.order, args.decoy, offer, args.sector)
     if not order then
         MilitaryDrop.log("order from " .. name .. " refused: " .. tostring(why))
         reply(player, requestId, "orderInvalid")
@@ -393,10 +451,12 @@ function Requisition.handleOrder(player, args)
     -- Point choisi avant de consommer l'autorisation : sans point (secteur
     -- hors carte, zones sans case), le joueur choisit un autre secteur sans
     -- rappeler. info : zone tirée (idée 11), rangée par Server.launchDrop.
-    local x, y, info = Server.chooseDropPoint(player, order.decoy)
+    -- Secteur nommé : celui du leurre, sinon celui du largage (ZONE-09).
+    local sector = order.decoy or order.sector
+    local x, y, info = Server.chooseDropPoint(player, sector)
     if not x then
         MilitaryDrop.log("order from " .. name .. ": no landing point"
-            .. (order.decoy and (" in sector " .. order.decoy) or "") .. ", authorization kept")
+            .. (sector and (" in sector " .. sector) or "") .. ", authorization kept")
         reply(player, requestId, "noSite", noSiteArgs(order, offer))
         return
     end
@@ -424,7 +484,9 @@ function Requisition.handleForcedOrder(player, args, auth)
     end
     local characterId = MilitaryDrop.Trust.idFor(player)
     local offer = Requisition.offer(characterId, true, player)
-    local order, why = Requisition.validate(args.order, args.decoy, offer)
+    -- Feuille admin : jamais de secteur de largage (offer.drop absent), une
+    -- commande qui en porte un est refusée.
+    local order, why = Requisition.validate(args.order, args.decoy, offer, args.sector)
     if not order then
         MilitaryDrop.log("admin order from " .. name .. " refused: " .. tostring(why))
         reply(player, requestId, "orderInvalid")

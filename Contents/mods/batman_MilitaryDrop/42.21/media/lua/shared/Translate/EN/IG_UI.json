@@ -307,6 +307,8 @@
     "IGUI_MilitaryDrop_ReqSectorName_S": "South",
     "IGUI_MilitaryDrop_ReqSectorName_W": "West",
     "IGUI_MilitaryDrop_ReqExclusive": "no other item",
+    "IGUI_MilitaryDrop_ReqSectorNote": "Logistics picks the exact spot",
+    "IGUI_MilitaryDrop_ReqSectorDesc": "Your order, or the siren decoy if it is checked, lands somewhere in this sector. Logistics picks the exact spot, never in water or inside a building.",
     "IGUI_MilitaryDrop_ReqBudget": "Allocated budget",
     "IGUI_MilitaryDrop_ReqSpent": "Committed",
     "IGUI_MilitaryDrop_ReqLeft": "Remaining",

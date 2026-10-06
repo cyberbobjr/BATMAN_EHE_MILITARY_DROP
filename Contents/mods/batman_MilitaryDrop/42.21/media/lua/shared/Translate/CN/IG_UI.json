@@ -307,6 +307,8 @@
     "IGUI_MilitaryDrop_ReqSectorName_S": "南部",
     "IGUI_MilitaryDrop_ReqSectorName_W": "西部",
     "IGUI_MilitaryDrop_ReqExclusive": "不可搭配其他物资",
+    "IGUI_MilitaryDrop_ReqSectorNote": "具体地点由后勤处决定",
+    "IGUI_MilitaryDrop_ReqSectorDesc": "你申领的物资（或勾选时的警报诱饵）会投放到该扇区内的某处。具体地点由后勤处决定，绝不会落在水中或建筑内。",
     "IGUI_MilitaryDrop_ReqBudget": "分配预算",
     "IGUI_MilitaryDrop_ReqSpent": "已用",
     "IGUI_MilitaryDrop_ReqLeft": "剩余",

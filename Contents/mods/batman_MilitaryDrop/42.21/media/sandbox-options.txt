@@ -39,7 +39,7 @@ option MilitaryDrop.DropPlacement
 
 option MilitaryDrop.DropZoneChoice
 {
-    type = enum, numValues = 2, default = 1,
+    type = enum, numValues = 3, default = 1,
     page = MilitaryDrop, translation = MilitaryDrop_DropZoneChoice,
     valueTranslation = MilitaryDrop_DropZoneChoice,
 }

@@ -291,10 +291,10 @@ local function call(player)
     return SENT[#SENT].args
 end
 
-local function order(lots, decoy, player, requestId)
+local function order(lots, decoy, player, requestId, sector)
     NOW_MS = NOW_MS + 5000
     MilitaryDrop.Server.onClientCommand("MilitaryDrop", "RequisitionOrder", player or PLAYER,
-        { requestId = requestId or 1, radio = { kind = "item", id = 7 }, order = lots, decoy = decoy })
+        { requestId = requestId or 1, radio = { kind = "item", id = 7 }, order = lots, decoy = decoy, sector = sector })
     return SENT[#SENT].args
 end
 
@@ -832,6 +832,84 @@ end
 -- ----------------------------------------------------------------------------
 -- Options changées en cours de partie (à chaud)
 -- ----------------------------------------------------------------------------
+
+-- ----------------------------------------------------------------------------
+-- Secteur du largage choisi par le joueur (ZONE-09) : contrat de la réponse
+-- et de la commande, module des zones simulé (placement réel : test_zones.lua)
+-- ----------------------------------------------------------------------------
+
+--- Module des zones simulé : sectors proposés (nil : choix 1 ou 2, ou
+--- proximité) ; choosePoint note le secteur demandé et rend une case de zone.
+local function stubZones(sectors)
+    CHOSEN = {}
+    MilitaryDrop.Zones = {
+        decoySectors = function() return sectors end,
+        playerSectors = function() return sectors end,
+        choosePoint = function(_, _, sector)
+            CHOSEN[#CHOSEN + 1] = tostring(sector)
+            return true, 1001, 201, { zoneId = "z1", zoneName = "Alpha Park", sector = sector, source = "zone",
+                x1 = 1000, y1 = 200, x2 = 1050, y2 = 250 }
+        end,
+    }
+end
+
+function T.validate_requires_a_drop_sector_only_when_offered()
+    local R = MilitaryDrop.Requisition
+    local offer = { budget = 10, lots = { { id = "rations", group = 1, cost = 1, allowed = true } },
+        decoy = { cost = 3, allowed = true, zones = true, sectors = { "Alpha", "Bravo" } },
+        drop = { zones = true, sectors = { "Alpha", "Bravo" } } }
+    local ok, why = R.validate({ rations = 1 }, nil, offer)
+    assertEq(ok, nil, "lots sans secteur refusés")
+    assertEq(why, "no drop sector", "motif")
+    ok = R.validate({ rations = 1 }, nil, offer, "Bravo")
+    assertEq(ok.sector, "Bravo", "secteur gardé")
+    assertEq(ok.lots.rations, 1, "lots gardés")
+    _, why = R.validate({ rations = 1 }, nil, offer, "Charlie")
+    assertEq(why, "bad drop sector", "secteur inconnu")
+    _, why = R.validate({ rations = 1 }, nil, offer, { "Alpha" })
+    assertEq(why, "bad drop sector", "secteur non textuel")
+    _, why = R.validate(nil, "Bravo", offer, "Alpha")
+    assertEq(why, "decoy with drop sector", "leurre avec un secteur de largage")
+    ok = R.validate(nil, "Bravo", offer)
+    assertEq(ok.decoy, "Bravo", "leurre seul : son secteur")
+    assertEq(ok.sector, nil, "leurre : pas de secteur de largage")
+    offer.drop = nil
+    _, why = R.validate({ rations = 1 }, nil, offer, "Alpha")
+    assertEq(why, "bad drop sector", "secteur sans champ proposé")
+    ok = R.validate({ rations = 1 }, nil, offer)
+    assertTrue(ok ~= nil and ok.sector == nil, "sans champ : lots seuls")
+end
+
+function T.form_carries_the_drop_sectors_and_the_order_its_sector()
+    stubZones({ "Alpha", "Bravo" })
+    local reply = call()
+    assertEq(reply.status, "form", "formulaire")
+    assertEq(reply.drop.zones, true, "champ du secteur de largage")
+    assertEq(table.concat(reply.drop.sectors, ","), "Alpha,Bravo", "secteurs proposés")
+    assertEq(order({ rations = 1 }).status, "orderInvalid", "secteur exigé")
+    assertEq(order({ rations = 1 }, nil, PLAYER, 1, "Charlie").status, "orderInvalid", "secteur forgé")
+    assertEq(#CHOSEN, 0, "aucun point tiré pour une commande refusée")
+    assertEq(order({ rations = 1 }, nil, PLAYER, 1, "Bravo").status, "accepted", "secteur proposé")
+    assertEq(CHOSEN[1], "Bravo", "point tiré dans le secteur choisi")
+    local drop = MilitaryDrop.Secrets.privateState().drops[flights()[1].dropId]
+    assertEq(drop.order.lots.rations, 1, "commande de lots")
+    assertEq(drop.zone.sector, "Bravo", "zone rangée dans l'état privé")
+    -- Feuille admin et choix 1 ou 2 : aucun champ.
+    assertEq(MilitaryDrop.Requisition.offer("C:tester", true, PLAYER).drop, nil, "feuille admin")
+    stubZones(nil)
+    assertEq(MilitaryDrop.Requisition.offer("C:tester", nil, PLAYER).drop, nil, "choix 1 ou 2")
+    stubZones({})
+    assertEq(MilitaryDrop.Requisition.offer("C:tester", nil, PLAYER).drop, nil, "aucun secteur : aucun champ")
+end
+
+function T.without_the_zones_module_a_drop_sector_is_refused()
+    SandboxVars.MilitaryDrop.DropZoneChoice = 3
+    local reply = call()
+    assertEq(reply.status, "form", "formulaire")
+    assertEq(reply.drop, nil, "pas de zones : pas de champ")
+    assertEq(order({ rations = 1 }, nil, PLAYER, 1, "Alpha").status, "orderInvalid", "secteur refusé")
+    assertEq(order({ rations = 1 }).status, "accepted", "lots seuls, comme avant")
+end
 
 --- Options Java de la partie, copiées de SandboxVars, qui reste périmé (solo :
 --- l'éditeur d'options du menu de debug ne change que les options Java).

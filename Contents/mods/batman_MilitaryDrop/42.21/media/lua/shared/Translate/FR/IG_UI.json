@@ -307,6 +307,8 @@
     "IGUI_MilitaryDrop_ReqSectorName_S": "Sud",
     "IGUI_MilitaryDrop_ReqSectorName_W": "Ouest",
     "IGUI_MilitaryDrop_ReqExclusive": "aucun autre lot",
+    "IGUI_MilitaryDrop_ReqSectorNote": "point exact choisi par la Logistique",
+    "IGUI_MilitaryDrop_ReqSectorDesc": "Votre commande, ou le leurre à sirène s'il est coché, tombe quelque part dans ce secteur. La Logistique choisit le point exact, jamais dans l'eau ni dans un bâtiment.",
     "IGUI_MilitaryDrop_ReqBudget": "Budget alloué",
     "IGUI_MilitaryDrop_ReqSpent": "Engagé",
     "IGUI_MilitaryDrop_ReqLeft": "Restant",

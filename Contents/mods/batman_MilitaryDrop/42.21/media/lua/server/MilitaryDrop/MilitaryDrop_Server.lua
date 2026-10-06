@@ -723,10 +723,11 @@ end
 --- du demandeur. Renvoie x, y, info, ou nil.
 --- Zones de largage (idée 11, MilitaryDrop_Zones.lua, option DropPlacement) :
 --- en mode zones, point dans une zone de l'admin (ou une ville vanilla),
---- sector étant alors le nom du secteur du leurre ; aucune case : nil, jamais
---- hors zone. info = { zoneId, zoneName, sector, source = "zone"|"town",
---- x1, y1, x2, y2 }, ou { source = "proximity" } au repli du mode 2 ; nil en
---- proximité classique (mode 1). proximity vrai : largage forcé de l'admin
+--- sector étant alors le nom du secteur du leurre ou du largage choisi au
+--- formulaire (ZONE-09) ; aucune case : nil, jamais hors zone. info =
+--- { zoneId, zoneName, sector, source = "zone"|"town", x1, y1, x2, y2 }, ou
+--- { source = "proximity" } au repli du mode 2 ; nil en proximité classique
+--- (mode 1). proximity vrai : largage forcé de l'admin
 --- (APPEL-05, hors zones, analyse §2.1), proximité quel que soit le mode,
 --- sector étant alors N/E/S/W.
 function Server.chooseDropPoint(player, sector, proximity)

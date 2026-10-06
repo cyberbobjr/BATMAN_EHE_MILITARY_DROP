@@ -149,7 +149,7 @@ Nothing changes until you change **Drop placement**: the default is still "Near 
 | Option | Key | Default | Effect |
 |---|---|---|---|
 | Drop placement | `DropPlacement` | Near the caller | **Near the caller**: a point between the minimum and maximum drop distances, as before. **Drop zones**: inside a zone of the admin; without any usable zone, a vanilla town, else near the caller (see [Fallback](#fallback)). **Zones if one is near**: only the zones closer than the drop zone range are used; if there is none, near the caller. |
-| Drop zone sector | `DropZoneChoice` | Nearest to the caller | **Nearest to the caller** or **At random**. A zone of that sector is then drawn at random, by weight. |
+| Drop zone sector | `DropZoneChoice` | Nearest to the caller | **Nearest to the caller**, **At random** or **Chosen by the player**. A zone of that sector is then drawn at random, by weight. **Chosen by the player**: the requisition form gets a **Drop sector** field (see [What players see](#what-players-see)); without the requisition form (`RequisitionForm` off), the nearest sector is used. |
 | Drop zone minimum distance | `DropZoneMinDistance` | 0 | Tiles, 0 to 5000. Zones closer to the caller are skipped, so that nobody calls from inside a zone and helps himself at once. If every zone is closer, the nearest sector is used. 0: no minimum. |
 | Drop zone range | `DropZoneMaxDistance` | 1500 | Tiles, 100 to 20000. Used by "Zones if one is near" only. |
 | Announce the drop zone name | `DropZoneAnnounceName` | true | The announcement and its reminders give the zone name before the grid. Off: the grid only. |
@@ -239,13 +239,14 @@ Select the zone and press **Edit**. Change its **Zone Name**, **Sector** or **We
 - The announcement and its reminders name the zone: "Supply crate delivered at LZ Central Park, grid 12937 / 2125." With **Announce the drop zone name** off, they give the grid only. The map marker does not change.
 - The list of zones is never sent to players, and zone highlights are drawn on the admin's screen only, while the tool is open. Players learn the zones from the announcements.
 - **Decoy**: in zone mode, the form offers a sector selector ("< Louisville >", arrows or gamepad left and right) instead of N, E, S and W. With a single sector, it is selected and shown, without choice. The decoy falls in a zone of that sector, like a real drop, and gets the same announcement. Near the caller, and on the admin form, the decoy keeps N, E, S and W.
+- **Drop sector chosen by the player** (**Drop zone sector**: *Chosen by the player*): whenever the caller would get a zone drop (drop zones, zones in range with "Zones if one is near", or the vanilla towns of the fallback), the form shows a **Drop sector** field above the budget, with the same selector. It lists the active sectors that have at least one zone beyond the minimum distance (or only the nearest sector if none has), and the order cannot be sent until a sector is chosen. Only the sector is chosen: the zone is still drawn by weight inside it, and zone names are never shown. The decoy uses the same field, so it gets the same list. The server checks the sector again (a sector disabled or out of range meanwhile refuses the order); a sector with no possible drop point asks for another sector and reopens the form. Admin forms never show the field: admin drops still fall near the admin.
 - Trust does not change: an outsider who opens the crate still costs the requester 5 points.
 
 ### Fallback
 
 With **Drop zones** and no usable zone (none, all disabled, map not loaded, or a syntax error):
 
-1. **Vanilla towns**, only when the vanilla map (`Muldraugh, KY`) is loaded: Louisville, Valley Station, West Point, Muldraugh, Riverside, Brandenburg, Ekron, Irvington, Echo Creek, March Ridge, Fallas Lake and Rosewood. Each town is a sector of one zone, 150 tiles around its centre, chosen with the same rules (nearest or at random, minimum distance).
+1. **Vanilla towns**, only when the vanilla map (`Muldraugh, KY`) is loaded: Louisville, Valley Station, West Point, Muldraugh, Riverside, Brandenburg, Ekron, Irvington, Echo Creek, March Ridge, Fallas Lake and Rosewood. Each town is a sector of one zone, 150 tiles around its centre, chosen with the same rules (nearest, at random or by the player, minimum distance).
 2. Otherwise, **near the caller**, as before. The server writes a warning to `console.txt`, and connected admins get the message "No drop zone is usable: the crate falls near the caller. Check the drop zones."
 
 With **Zones if one is near**, a call far from every zone simply falls near the caller, without a warning. A mod map without zones falls back near the caller.

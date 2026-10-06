@@ -338,9 +338,10 @@ local RADIO_REPLIES = {
 -- ----------------------------------------------------------------------------
 
 -- Refus d'une commande qui gardent l'autorisation du serveur (radio éteinte
--- ou introuvable, cadence, aucun point de largage : secteur du leurre hors
--- carte) : le formulaire se rouvre, rempli, pour renvoyer. Leurre à secteur
--- unique (single) : la feuille reste utile (commande de lots, nouvel essai).
+-- ou introuvable, cadence, aucun point de largage : secteur du leurre ou du
+-- largage, ZONE-09, hors carte ou sans case) : le formulaire se rouvre,
+-- rempli, pour renvoyer. Secteur unique (single) : la feuille reste utile
+-- (commande de lots, nouvel essai).
 Client.REQUISITION_RETRY = { busy = true, radioOff = true, noRadio = true, notMilitary = true, noSite = true }
 
 --- La base invite à transmettre, puis le formulaire s'ouvre. Le délai de
@@ -374,9 +375,10 @@ end
 
 --- Transmet la commande (RequisitionOrder) : order = { [lotId] = quantité },
 --- decoy = secteur ou nil ; form : formulaire gardé pour le rouvrir si le
---- serveur garde l'autorisation (REQUISITION_RETRY). Renvoie false si la
+--- serveur garde l'autorisation (REQUISITION_RETRY) ; sector : secteur du
+--- largage choisi par le joueur (ZONE-09) ou nil. Renvoie false si la
 --- demande n'attend plus rien.
-function Client.sendRequisition(requestId, order, decoy, form)
+function Client.sendRequisition(requestId, order, decoy, form, sector)
     local request = pending[requestId]
     if not request or request.ordered then
         return false
@@ -390,7 +392,7 @@ function Client.sendRequisition(requestId, order, decoy, form)
     request.form = form
     player:Say(getText("IGUI_MilitaryDrop_ReqOrderSay", tostring(request.callsign or "")))
     Net.toServer(player, "RequisitionOrder", { requestId = requestId, radio = radioRef(request.device),
-        order = order or {}, decoy = decoy })
+        order = order or {}, decoy = decoy, sector = sector })
     return true
 end
 
@@ -436,8 +438,9 @@ local function onResult(request, args)
             Client.radioSay(request, Client.ackText(args))
         end)
     elseif status == "noSite" and args.sector then
-        -- Leurre : aucun point de largage dans le secteur choisi. Secteur
-        -- unique (single, mode zones) : pas d'« autre secteur » à proposer.
+        -- Leurre ou largage par secteur (ZONE-09) : aucun point de largage
+        -- dans le secteur choisi. Secteur unique (single, mode zones) : pas
+        -- d'« autre secteur » à proposer.
         local key = args.single == true and "IGUI_MilitaryDrop_ReqNoZoneSite" or "IGUI_MilitaryDrop_ReqNoSector"
         Client.later(Client.REPLY_DELAY_MS, function()
             Client.radioSay(request, getText(key))

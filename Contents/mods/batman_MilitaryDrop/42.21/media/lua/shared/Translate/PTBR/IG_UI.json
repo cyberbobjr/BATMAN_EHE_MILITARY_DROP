@@ -307,6 +307,8 @@
     "IGUI_MilitaryDrop_ReqSectorName_S": "Sul",
     "IGUI_MilitaryDrop_ReqSectorName_W": "Oeste",
     "IGUI_MilitaryDrop_ReqExclusive": "nenhum outro item",
+    "IGUI_MilitaryDrop_ReqSectorNote": "a Logística escolhe o ponto exato",
+    "IGUI_MilitaryDrop_ReqSectorDesc": "Seu pedido, ou a isca com sirene se estiver marcada, cai em algum lugar deste setor. A Logística escolhe o ponto exato, nunca na água nem dentro de um prédio.",
     "IGUI_MilitaryDrop_ReqBudget": "Orçamento alocado",
     "IGUI_MilitaryDrop_ReqSpent": "Comprometido",
     "IGUI_MilitaryDrop_ReqLeft": "Restante",

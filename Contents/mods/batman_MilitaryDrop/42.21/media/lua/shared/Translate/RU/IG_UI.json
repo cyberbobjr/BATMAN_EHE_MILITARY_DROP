@@ -307,6 +307,8 @@
     "IGUI_MilitaryDrop_ReqSectorName_S": "Юг",
     "IGUI_MilitaryDrop_ReqSectorName_W": "Запад",
     "IGUI_MilitaryDrop_ReqExclusive": "без других позиций",
+    "IGUI_MilitaryDrop_ReqSectorNote": "точку выбирает Снабжение",
+    "IGUI_MilitaryDrop_ReqSectorDesc": "Ваш заказ или приманка с сиреной, если она отмечена, будет сброшен где-то в этом секторе. Точное место выбирает Снабжение: никогда не в воде и не в здании.",
     "IGUI_MilitaryDrop_ReqBudget": "Выделенный бюджет",
     "IGUI_MilitaryDrop_ReqSpent": "Израсходовано",
     "IGUI_MilitaryDrop_ReqLeft": "Остаток",

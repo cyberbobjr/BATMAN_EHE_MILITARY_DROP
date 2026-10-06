@@ -307,6 +307,8 @@
     "IGUI_MilitaryDrop_ReqSectorName_S": "Süd",
     "IGUI_MilitaryDrop_ReqSectorName_W": "West",
     "IGUI_MilitaryDrop_ReqExclusive": "kein anderer Posten",
+    "IGUI_MilitaryDrop_ReqSectorNote": "genauen Punkt wählt die Logistik",
+    "IGUI_MilitaryDrop_ReqSectorDesc": "Deine Bestellung, oder der Sirenenköder, wenn er angekreuzt ist, landet irgendwo in diesem Sektor. Die Logistik wählt den genauen Punkt, nie im Wasser und nie in einem Gebäude.",
     "IGUI_MilitaryDrop_ReqBudget": "Zugeteiltes Budget",
     "IGUI_MilitaryDrop_ReqSpent": "Verplant",
     "IGUI_MilitaryDrop_ReqLeft": "Verbleibend",

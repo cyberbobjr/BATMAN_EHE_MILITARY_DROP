@@ -51,8 +51,9 @@ function T.setup()
     sent = {}
     MilitaryDrop.Client = {
         HANDLERS = {},
-        sendRequisition = function(requestId, order, decoy, form)
-            sent[#sent + 1] = { kind = "order", requestId = requestId, order = order, decoy = decoy, form = form }
+        sendRequisition = function(requestId, order, decoy, form, sector)
+            sent[#sent + 1] = { kind = "order", requestId = requestId, order = order, decoy = decoy, form = form,
+                sector = sector }
             return true
         end,
         cancelRequisition = function(requestId, spoken)
@@ -899,6 +900,208 @@ function T.zone_sector_names_are_cleaned_and_drawn_safely()
     end
     assertTrue(info ~= nil and info.x + wideMeasure(info.text) <= w3.L.sectorName.x + w3.L.sectorName.w,
         "secteur imposé dans sa ligne")
+end
+
+-- ----------------------------------------------------------------------------
+-- Secteur de largage choisi par le joueur (ZONE-09, DropZoneChoice 3) : champ
+-- au pied, un seul sélecteur partagé avec le leurre.
+-- ----------------------------------------------------------------------------
+
+--- Result « form » avec le champ du secteur de largage (et le leurre en mode
+--- zones, même liste, comme le serveur).
+local function dropArgs(sectors, maxGroup, budget)
+    local args = zoneArgs(sectors, maxGroup, budget)
+    args.drop = { zones = true, sectors = sectors }
+    return args
+end
+
+local SECTORS = { "Louisville", "Riverside", "West Point" }
+
+function T.drop_sector_field_blocks_until_a_sector_is_chosen()
+    local form = RW.newForm(dropArgs(SECTORS), NOW)
+    assertEq(#form.drop.sectors, 3, "trois secteurs")
+    assertEq(form.sector, nil, "rien d'imposé")
+    assertEq(RW.blocker(form, NOW), "nothing", "rien de choisi")
+    RW.add(form, "rations")
+    assertEq(RW.blocker(form, NOW), "sector", "lots sans secteur : bloqué")
+    assertTrue(RW.stepSector(form, 1), "secteur choisi")
+    assertEq(form.sector, "Louisville", "premier secteur")
+    assertTrue(not form.decoyOn, "choisir le secteur ne coche pas le leurre")
+    assertEq(RW.blocker(form, NOW), nil, "transmissible")
+    local built = RW.buildOrder(form)
+    assertEq(built.sector, "Louisville", "commande : secteur du largage")
+    assertEq(built.decoy, nil, "pas de leurre")
+    assertEq(built.order.rations, 1, "lots")
+    assertTrue(RW.pickSector(form, "West Point") and form.sector == "West Point", "choix direct")
+    assertTrue(not RW.pickSector(form, "N") and not RW.pickSector(form, "Ekron"), "secteur absent refusé")
+    -- Fenêtre : motif du blocage affiché comme les autres.
+    local blocked = RW.newForm(dropArgs(SECTORS), NOW)
+    RW.add(blocked, "rations")
+    local window = makeWindow(blocked)
+    assertTrue(not window:transmit(), "rien n'est envoyé sans secteur")
+    assertEq(window:tooltipFor("transmit"), "IGUI_MilitaryDrop_ReqBlock_sector", "motif affiché")
+end
+
+function T.drop_sector_field_layout_mouse_joypad_and_order()
+    useTexts(FRENCH)
+    local form = RW.newForm(dropArgs(SECTORS), NOW)
+    local L = RW.computeLayout(form, 1920, 1080)
+    assertTrue(L.dropField and L.zones, "champ du secteur de largage")
+    checkLayout(L, form, "champ")
+    local last = L.columns[#L.columns]
+    assertTrue(within(L.sectorsArea, last) and within(L.sectorsArea, L.paper), "champ au pied de la dernière colonne")
+    assertTrue(L.sectorsArea.y + L.sectorsArea.h <= L.budget.y, "au-dessus du budget")
+    assertTrue(L.sectorsArea.y > L.decoyRow.row.y, "sous le leurre")
+    assertEq(L.sectorLabelX, L.sectorsArea.x, "sans retrait")
+    assertTrue(measure(getText("IGUI_MilitaryDrop_ReqSectorLabel")) <= L.sectorsArea.w, "libellé entier")
+    local small = RW.computeLayout(form, 960, 540)
+    assertTrue(small.W <= 960 and small.H <= 540, "tient dans 960 x 540")
+    checkLayout(small, form, "champ, petit écran")
+    checkLayout(RW.computeLayout(form, 560, 1080), form, "champ, une colonne")
+    -- Souris : flèches et nom ; le leurre n'est pas coché.
+    local window = makeWindow(form)
+    L = window.L
+    local function click(r)
+        window:onMouseDown(r.x + 1, r.y + 1)
+        window:onMouseUp(r.x + 1, r.y + 1)
+    end
+    assertEq(window:hitTest(L.sectorNext.x + 1, L.sectorNext.y + 1), "sectorNext", "flèche >")
+    click(L.sectorPrev)
+    assertTrue(form.sector == "West Point" and not form.decoyOn, "< : dernier secteur, leurre non coché")
+    click(L.sectorName)
+    assertEq(form.sector, "Louisville", "clic sur le nom : suivant")
+    local tip = window:tooltipFor("sectorName")
+    assertTrue(tip:find("ReqSectorDesc", 1, true) ~= nil, "infobulle : explication du champ")
+    assertTrue(tip:find("Louisville", 1, true) ~= nil, "infobulle : secteur choisi")
+    assertTrue(tip:find("ReqDecoyDesc", 1, true) == nil, "pas l'infobulle du leurre")
+    -- Manette : la ligne des secteurs vient en dernier, une seule fois.
+    local nav = window:navigation()
+    assertEq(#nav, 18 + 2, "lots, leurre, secteurs")
+    assertEq(nav[#nav - 1].kind, "decoy", "leurre")
+    assertEq(nav[#nav].kind, "sectors", "secteurs au pied")
+    window.cursor = #nav
+    window:stepCursor(1)
+    assertEq(form.sector, "Riverside", "droite : suivant")
+    assertTrue(not form.decoyOn, "leurre toujours décoché")
+    -- Transmission : lots et secteur.
+    RW.add(form, "rations")
+    assertTrue(window:transmit(), "transmis")
+    assertEq(sent[#sent].sector, "Riverside", "sector = nom du secteur")
+    assertEq(sent[#sent].decoy, nil, "pas de leurre")
+    assertEq(sent[#sent].order.rations, 1, "lots")
+    -- Feuille paginée : le champ est au pied de chaque page.
+    local args = dropArgs({ "Louisville", "Riverside" }, 3, 40)
+    for i = 1, 22 do
+        args.lots[#args.lots + 1] = { id = "extra" .. i, group = (i % 3) + 1, cost = 1, allowed = true,
+            texts = { EN = { label = "Extra lot " .. i } } }
+    end
+    local paged = RW.newForm(args, NOW)
+    local L1 = checkPages(paged, 960, 540, "champ paginé")
+    for p = 1, L1.paging.pages do
+        local page = RW.pageLayout(paged, L1.paging, p)
+        assertTrue(page.sectorsArea ~= nil and within(page.sectorsArea, page.paper), "champ en page " .. p)
+        assertTrue(page.sectorsArea.y + page.sectorsArea.h <= page.budget.y, "champ au-dessus du budget, page " .. p)
+    end
+    local pw = makeWindow(paged)
+    pw.L = RW.computeLayout(paged, 960, 540)
+    pw.page = 1
+    local pnav = pw:navigation()
+    assertEq(pw:pageOfItem(pnav[#pnav]), nil, "manette : le champ ne change pas de page")
+end
+
+function T.drop_sector_is_shared_with_the_checked_decoy()
+    local form = RW.newForm(dropArgs(SECTORS), NOW)
+    assertEq(form.decoy.sectors, form.drop.sectors, "une seule liste")
+    RW.pickSector(form, "Riverside")
+    assertTrue(RW.toggleDecoy(form), "leurre coché")
+    assertEq(form.sector, "Riverside", "même secteur")
+    local built = RW.buildOrder(form)
+    assertEq(built.decoy, "Riverside", "leurre : son secteur")
+    assertEq(built.sector, nil, "pas de secteur de largage")
+    assertTrue(RW.stepSector(form, 1) and form.decoyOn and form.sector == "West Point", "secteur changé, leurre gardé")
+    assertTrue(not RW.add(form, "rations"), "leurre exclusif")
+    assertTrue(RW.toggleDecoy(form), "leurre décoché")
+    assertEq(form.sector, "West Point", "décoché : le secteur reste au largage")
+    assertEq(RW.blocker(form, NOW), "nothing", "aucun lot")
+    RW.add(form, "rations")
+    assertEq(RW.buildOrder(form).sector, "West Point", "lots : secteur du largage")
+    -- Leurre sans secteur choisi : bloqué ; sa case n'a plus de sélecteur.
+    local fresh = RW.newForm(dropArgs(SECTORS), NOW)
+    RW.toggleDecoy(fresh)
+    assertEq(RW.blocker(fresh, NOW), "sector", "leurre sans secteur")
+    local window = makeWindow(fresh)
+    assertEq(window.L.sectorsH, 0, "pas de bloc de secteurs sous le leurre")
+    assertTrue(window.L.sectorsArea.y > window.L.decoyRow.row.y + window.L.rowH - 1, "sélecteur au pied")
+    window:activate("sectorNext")
+    assertTrue(window:transmit(), "transmis")
+    assertEq(sent[#sent].decoy, "Louisville", "decoy = secteur du champ")
+    assertEq(sent[#sent].sector, nil, "pas de sector avec le leurre")
+end
+
+function T.drop_sector_single_is_preselected_and_drawn()
+    local form = RW.newForm(dropArgs({ "Louisville" }), NOW)
+    assertEq(form.sector, "Louisville", "choisi d'office")
+    assertEq(RW.fixedSector(form), "Louisville", "imposé")
+    assertTrue(not RW.canStepSector(form), "aucun choix")
+    RW.add(form, "rations")
+    assertEq(RW.blocker(form, NOW), nil, "transmissible sans choisir")
+    assertEq(RW.buildOrder(form).sector, "Louisville", "commande : le secteur imposé")
+    local window, drawn = recordingWindow(form)
+    local nav = window:navigation()
+    assertEq(nav[#nav].kind, "decoy", "manette : pas de ligne de secteurs")
+    local L = window.L
+    assertTrue(L.sectorPrev == nil and L.sectorNext == nil, "pas de flèches")
+    assertEq(window:hitTest(L.sectorName.x + 1, L.sectorName.y + 1), "sectorInfo", "pour information")
+    assertTrue(not window:isEnabled("sectorInfo"), "pas cliquable")
+    assertTrue(window:tooltipFor("sectorInfo"):find("Louisville", 1, true) ~= nil, "infobulle : secteur")
+    window:render()
+    local texts = {}
+    for _, d in ipairs(drawnIn(drawn, L.sectorsArea)) do
+        texts[d.text] = true
+    end
+    assertTrue(texts.Louisville, "secteur imprimé")
+    assertTrue(texts.IGUI_MilitaryDrop_ReqSectorLabel, "libellé du champ")
+    assertTrue(texts.IGUI_MilitaryDrop_ReqSectorNote, "note : point exact choisi par la Logistique")
+    -- Sans secteur choisi : la note demande d'en choisir un.
+    local open = RW.newForm(dropArgs(SECTORS), NOW)
+    local w2, drawn2 = recordingWindow(open)
+    w2:render()
+    local missing = false
+    for _, d in ipairs(drawnIn(drawn2, w2.L.sectorsArea)) do
+        missing = missing or d.text == "IGUI_MilitaryDrop_ReqBlock_sector"
+    end
+    assertTrue(missing, "note : choisir un secteur")
+    -- Aucun secteur : jamais transmissible, pas de ligne de manette.
+    local empty = RW.newForm(dropArgs({}), NOW)
+    RW.add(empty, "rations")
+    assertEq(RW.blocker(empty, NOW), "sector", "aucun secteur : bloqué")
+    assertTrue(not empty.decoy.allowed, "leurre indisponible")
+    local ew = makeWindow(empty)
+    for _, item in ipairs(ew:navigation()) do
+        assertTrue(item.kind == "lot", "seulement des lots")
+    end
+end
+
+function T.admin_sheet_and_classic_form_have_no_drop_field()
+    local args = dropArgs(SECTORS)
+    args.forced = true
+    local admin = RW.newForm(args, NOW)
+    assertEq(admin.drop, nil, "feuille admin : jamais de champ")
+    assertEq(RW.computeLayout(admin, 1920, 1080).dropField, nil, "pas de champ dessiné")
+    RW.add(admin, "rations")
+    assertEq(RW.blocker(admin, NOW), nil, "lots seuls")
+    assertEq(RW.buildOrder(admin).sector, nil, "aucun secteur envoyé")
+    local classic = RW.newForm(formArgs(3, 12), NOW)
+    assertEq(classic.drop, nil, "choix 1 ou 2 : pas de champ")
+    RW.add(classic, "rations")
+    assertEq(RW.buildOrder(classic).sector, nil, "aucun secteur envoyé")
+    local zone = RW.newForm(zoneArgs(SECTORS), NOW)
+    assertEq(zone.drop, nil, "leurre en zones sans champ du largage")
+    assertTrue(RW.stepSector(zone, 1) and zone.decoyOn, "le sélecteur du leurre coche toujours le leurre")
+    -- Champ malformé : ignoré.
+    local bad = formArgs(3, 12)
+    bad.drop = { sectors = SECTORS }
+    assertEq(RW.newForm(bad, NOW).drop, nil, "sans zones = true : ignoré")
 end
 
 return T

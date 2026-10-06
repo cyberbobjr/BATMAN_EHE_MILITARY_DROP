@@ -18,7 +18,8 @@ Not published yet. This heading has no version number, so it is not read as a ch
 - In a zone, the crate can land anywhere: grass, field, beach, path, road, parking lot. It never lands inside a building, in water or outside its zone; a zone needs no road. A zone with no usable spot gives no drop, and the caller is asked to try again. Zones overlapping a non-PvP zone or a safehouse are refused by the tool and never get a crate in the protected part.
 - Without any usable zone, drops use the vanilla towns (vanilla map only), then fall near the caller with a warning to the admins.
 - The zone tool shows its remarks (no open ground, overlap, map not loaded) on the zone's line only; the red "problems" section lists real errors of the file only.
-- New sandbox options: drop zone sector (nearest or random), minimum distance, range of "zones if one is near", zone name in the announcement.
+- New sandbox options: drop zone sector (nearest, random, or chosen by the player), minimum distance, range of "zones if one is near", zone name in the announcement.
+- With "Drop zone sector" set to "Chosen by the player", the requisition form gets a "Drop sector" field: the player picks the town (sectors too close are not offered when a minimum distance is set), and the exact zone and spot are still drawn inside it. The siren decoy uses the same field. Admin forms never show it.
 
 ### Sandbox options without restarting
 

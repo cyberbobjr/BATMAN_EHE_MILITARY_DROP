@@ -22,6 +22,25 @@
 -- de ce secteur). Le nom des zones n'est jamais connu du client. La commande
 -- envoie decoy = "<secteur>" ; le serveur le revalide.
 --
+-- Secteur de largage choisi par le joueur (ZONE-09, option DropZoneChoice 3,
+-- réponse « form » avec drop = { zones = true, sectors }) : champ « Secteur
+-- de largage » au pied de la feuille, au-dessus du budget, avec le même
+-- sélecteur « < nom > » (souris, manette, noms nettoyés et raccourcis,
+-- infobulle) ; un seul secteur : choisi d'office et imprimé pour information.
+-- Le serveur tire ensuite une zone de ce secteur, au poids : le client ne
+-- connaît que le nom du secteur. Cohabitation avec le leurre : un seul
+-- sélecteur et un seul secteur choisi (form.sector). Le serveur propose au
+-- leurre et au largage la même liste (Zones.playerSectors renvoie
+-- Zones.decoySectors), et le leurre coché remplace la commande de lots : le
+-- secteur du champ sert au largage, ou au leurre quand il est coché (la case
+-- du leurre perd alors son propre sélecteur ; cocher ou décocher le leurre
+-- garde le secteur). Deux sélecteurs auraient montré deux choix pour un seul
+-- point de largage, dont l'un sans effet. Au pied, le champ reste visible sur
+-- chaque page d'une feuille paginée. La transmission attend un secteur
+-- (motif « choisir un secteur ») ; la commande envoie sector = "<secteur>"
+-- avec les lots, ou decoy = "<secteur>" seul pour le leurre. Feuille admin
+-- (forced) : jamais de champ, même si la réponse en portait un.
+--
 -- Le client ne décide rien : il compose la commande (budget, paliers) pour
 -- l'affichage, puis MilitaryDrop.Client l'envoie (RequisitionOrder) ou
 -- l'annule (RequisitionCancel) ; le serveur revalide tout. Fermer la feuille
@@ -224,9 +243,22 @@ function RW.newForm(args, nowMs)
         if decoy.allowed == true and #sectors == 0 then
             form.decoy.reason = "empty"
         end
-        -- Un seul secteur nommé : sélectionné d'office.
-        form.sector = RW.fixedSector(form)
     end
+    -- Secteur de largage choisi par le joueur (ZONE-09) : jamais sur la
+    -- feuille admin. Le leurre partage la liste et le sélecteur du champ.
+    local drop = args.drop
+    if type(drop) == "table" and drop.zones == true and not form.forced then
+        form.drop = { sectors = RW.zoneSectors(drop.sectors) }
+        if form.decoy then
+            form.decoy.sectors = form.drop.sectors
+            form.decoy.zones = true
+            if form.decoy.allowed and #form.drop.sectors == 0 then
+                form.decoy.allowed, form.decoy.reason = false, "empty"
+            end
+        end
+    end
+    -- Un seul secteur nommé : sélectionné d'office.
+    form.sector = RW.fixedSector(form)
     return form
 end
 
@@ -253,11 +285,26 @@ function RW.zoneDecoy(form)
     return form.decoy ~= nil and form.decoy.zones == true
 end
 
---- Secteur imposé : mode zones avec un seul secteur, sinon nil.
+--- Secteurs nommés à choisir : champ du largage (ZONE-09) ou leurre en mode
+--- zones.
+function RW.namedSectors(form)
+    return form.drop ~= nil or RW.zoneDecoy(form)
+end
+
+--- Secteurs du sélecteur : ceux du champ du largage s'il existe (le leurre
+--- les partage), sinon ceux du leurre, sinon nil.
+function RW.sectorList(form)
+    if form.drop then
+        return form.drop.sectors
+    end
+    return form.decoy and form.decoy.sectors or nil
+end
+
+--- Secteur imposé : secteurs nommés, un seul, sinon nil.
 function RW.fixedSector(form)
-    local decoy = form.decoy
-    if decoy and decoy.zones and #decoy.sectors == 1 then
-        return decoy.sectors[1]
+    local sectors = RW.namedSectors(form) and RW.sectorList(form)
+    if sectors and #sectors == 1 then
+        return sectors[1]
     end
     return nil
 end
@@ -265,7 +312,7 @@ end
 --- Nom complet d'un secteur pour l'infobulle : le nom libre (mode zones),
 --- sinon le point cardinal traduit.
 function RW.sectorName(form, sector)
-    if RW.zoneDecoy(form) then
+    if RW.namedSectors(form) then
         return sector
     end
     return getText("IGUI_MilitaryDrop_ReqSectorName_" .. tostring(sector))
@@ -337,15 +384,16 @@ function RW.toggleDecoy(form)
         return false
     end
     form.decoyOn = not form.decoyOn
-    if not form.decoyOn then
+    if not form.decoyOn and not form.drop then
         -- Secteur oublié, sauf le secteur imposé (un seul secteur nommé).
+        -- Champ du largage (ZONE-09) : le secteur reste, il sert au largage.
         form.sector = RW.fixedSector(form)
     end
     return true
 end
 
 local function hasSector(form, sector)
-    for _, s in ipairs(form.decoy and form.decoy.sectors or {}) do
+    for _, s in ipairs(RW.sectorList(form) or {}) do
         if s == sector then
             return true
         end
@@ -353,8 +401,12 @@ local function hasSector(form, sector)
     return false
 end
 
---- Un secteur peut être choisi (il coche le leurre au besoin).
+--- Un secteur peut être choisi (il coche le leurre au besoin, sauf avec le
+--- champ du largage : le secteur sert alors aux lots comme au leurre).
 function RW.canPickSector(form, sector)
+    if form.drop then
+        return hasSector(form, sector)
+    end
     return hasSector(form, sector) and (form.decoyOn or RW.canToggleDecoy(form))
 end
 
@@ -362,7 +414,7 @@ function RW.pickSector(form, sector)
     if not RW.canPickSector(form, sector) then
         return false
     end
-    if not form.decoyOn then
+    if not form.decoyOn and not form.drop then
         RW.toggleDecoy(form)
     end
     form.sector = sector
@@ -370,20 +422,21 @@ function RW.pickSector(form, sector)
 end
 
 --- Le secteur peut changer par les flèches (au moins un secteur, pas de
---- secteur imposé, leurre coché ou cochable).
+--- secteur imposé ; leurre coché ou cochable, sauf champ du largage).
 function RW.canStepSector(form)
-    local sectors = form.decoy and form.decoy.sectors
+    local sectors = RW.sectorList(form)
     return sectors ~= nil and sectors[1] ~= nil and not RW.fixedSector(form)
         and RW.canPickSector(form, sectors[1])
 end
 
 --- Secteur précédent (-1) ou suivant (+1), en boucle ; sans secteur choisi,
---- le premier (+1) ou le dernier (-1). Coche le leurre au besoin.
+--- le premier (+1) ou le dernier (-1). Coche le leurre au besoin (sans champ
+--- du largage).
 function RW.stepSector(form, delta)
     if not RW.canStepSector(form) then
         return false
     end
-    local sectors = form.decoy.sectors
+    local sectors = RW.sectorList(form)
     local index = 0
     for i, sector in ipairs(sectors) do
         if sector == form.sector then
@@ -404,7 +457,8 @@ function RW.expired(form, nowMs)
 end
 
 --- Motif qui empêche de transmettre (« expired », « sector », « nothing »,
---- « budget »), ou nil.
+--- « budget »), ou nil. Champ du largage (ZONE-09) : les lots aussi
+--- attendent un secteur.
 function RW.blocker(form, nowMs)
     if RW.expired(form, nowMs) then
         return "expired"
@@ -415,6 +469,8 @@ function RW.blocker(form, nowMs)
         end
     elseif not RW.anyLot(form) then
         return "nothing"
+    elseif form.drop and not form.sector then
+        return "sector"
     end
     if RW.remaining(form) < 0 then
         return "budget"
@@ -427,7 +483,8 @@ function RW.canTransmit(form, nowMs)
 end
 
 --- Arguments de RequisitionOrder : { requestId, radio, order = { [lot] = n },
---- decoy = secteur ou nil }. Le leurre part seul (order vide).
+--- decoy = secteur ou nil, sector = secteur du largage (ZONE-09) ou nil }.
+--- Le leurre part seul (order vide, sans sector).
 function RW.buildOrder(form, radioRef)
     local order = {}
     if not form.decoyOn then
@@ -439,7 +496,8 @@ function RW.buildOrder(form, radioRef)
         end
     end
     return { requestId = form.requestId, radio = radioRef, order = order,
-        decoy = form.decoyOn and form.sector or nil }
+        decoy = form.decoyOn and form.sector or nil,
+        sector = (form.drop and not form.decoyOn) and form.sector or nil }
 end
 
 --- Clé du mot du tampon tant que la feuille est valide : « ADMIN » pour un
@@ -774,20 +832,30 @@ local function place(form, mode, view)
     end
     L.ctrlW = ctrlW
     local colW = L.labelW + 2 * u + costW + 2 * u + ctrlW
-    if RW.zoneDecoy(form) then
+    if RW.namedSectors(form) then
         -- Secteurs nommés : libellé, sélecteur « < nom > » sur toute la
         -- largeur (retrait de la case du leurre), note. La colonne s'élargit
         -- pour le nom le plus long, au plus SECTOR_NAME_EM hauteurs de police
         -- (au-delà, le nom est raccourci).
         L.zones = true
-        L.sectorsH = (compact and 1 or math.floor(u / 2)) + fh + L.gapS + L.box + L.gapS + fh
+        L.zoneH = (compact and 1 or math.floor(u / 2)) + fh + L.gapS + L.box + L.gapS + fh
             + (compact and 1 or math.ceil(u / 2))
         local nameW = 0
-        for _, sector in ipairs(form.decoy.sectors) do
+        for _, sector in ipairs(RW.sectorList(form)) do
             nameW = math.max(nameW, measureOnce(sector))
         end
         nameW = math.min(nameW, fh * RW.SECTOR_NAME_EM)
         colW = math.max(colW, L.box + u + 2 * (L.box + L.gapS) + 2 * u + nameW)
+        if form.drop then
+            -- Champ du largage (ZONE-09) : au pied, sans retrait, libellé
+            -- entier si possible (raccourci au-delà de 15 hauteurs de police) ;
+            -- le leurre n'a plus de bloc de secteurs sous sa case.
+            L.dropField = true
+            L.sectorsH = 0
+            colW = math.max(colW, math.min(measure(getText("IGUI_MilitaryDrop_ReqSectorLabel"), font), fh * 15))
+        else
+            L.sectorsH = L.zoneH
+        end
     end
     -- Pied : budget (libellé, points de suite, valeur), note, boutons.
     L.budgetLabelW = 0
@@ -803,6 +871,11 @@ local function place(form, mode, view)
         colW = math.max(colW, transmitW, cancelW)
     end
     L.footerH = u + 3 * fh + fh + u + L.btnH + (L.stacked and (L.btnH + L.gapS) or 0)
+    -- Champ du largage (ZONE-09) : en tête du pied, sur chaque page.
+    if L.dropField then
+        L.dropH = L.zoneH + u
+        L.footerH = L.footerH + L.dropH
+    end
     -- Feuille paginée : ligne « < Page 1/2 > » en tête du pied.
     if view then
         L.page, L.pages = view.page, view.pages
@@ -897,8 +970,11 @@ local function place(form, mode, view)
                 row.check = rect(cx, cy + (L.rowH - L.box) / 2, L.box, L.box)
                 L.decoyRow = row
                 cy = cy + L.rowH
-                if L.zones then
-                    RW.zoneSectorRects(L, form, cx, cy, colW)
+                if L.dropField then
+                    -- Secteur du leurre : celui du champ du pied (ZONE-09).
+                    cy = cy + L.sectorsH
+                elseif L.zones then
+                    RW.zoneSectorRects(L, form, cx, cy, colW, L.box + u)
                     cy = cy + L.sectorsH
                 else
                     local sb = L.sectorBox
@@ -925,6 +1001,10 @@ local function place(form, mode, view)
                 L.pageTextX = cx + math.floor(colW / 2)
                 L.pageTextY = cy + math.floor((L.rowH - fh) / 2)
                 cy = cy + L.pagerH
+            end
+            if L.dropField then
+                RW.zoneSectorRects(L, form, cx, cy, colW, 0)
+                cy = cy + L.dropH
             end
             L.budgetY = cy
             L.budget = rect(cx, cy, colW, 3 * fh)
@@ -967,13 +1047,15 @@ function RW.rowRects(L, x, y, colW)
     return row
 end
 
---- Bloc des secteurs nommés (mode zones) sous la ligne du leurre, en (x, y),
---- largeur colW : libellé, puis sélecteur (flèches < et > aux bords, nom
---- entre elles ; un seul secteur : le nom seul, sans flèche), puis note.
-function RW.zoneSectorRects(L, form, x, y, colW)
+--- Bloc des secteurs nommés (mode zones) en (x, y), largeur colW, sous la
+--- ligne du leurre (indent : retrait de sa case) ou au pied (champ du
+--- largage, ZONE-09, sans retrait) : libellé, puis sélecteur (flèches < et >
+--- aux bords, nom entre elles ; un seul secteur : le nom seul, sans flèche),
+--- puis note.
+function RW.zoneSectorRects(L, form, x, y, colW, indent)
     local top = y + (L.compact and 1 or math.floor(L.u / 2))
-    L.sectorsArea = rect(x, y, colW, L.sectorsH)
-    L.sectorLabelX = x + L.box + L.u
+    L.sectorsArea = rect(x, y, colW, L.zoneH)
+    L.sectorLabelX = x + (indent or 0)
     L.sectorLabelY = top
     local by = top + L.fh + L.gapS
     local right = x + colW
@@ -1167,7 +1249,8 @@ function RW:setPage(page)
     return true
 end
 
---- Page où se trouve une ligne de la manette (lot, ou leurre en dernière page).
+--- Page où se trouve une ligne de la manette (lot, ou leurre en dernière
+--- page) ; nil pour le champ du largage (ZONE-09), au pied de chaque page.
 function RW:pageOfItem(item)
     local paging = self.L and self.L.paging
     if not paging or not item then
@@ -1175,6 +1258,9 @@ function RW:pageOfItem(item)
     end
     if item.kind == "lot" then
         return paging.pageOf[item.id]
+    end
+    if item.kind == "sectors" and self.form.drop then
+        return nil
     end
     return paging.pages
 end
@@ -1223,21 +1309,26 @@ function RW:deviceValid()
 end
 
 --- Lignes accessibles à la manette : lots permis, leurre, secteurs (sauf
---- secteur imposé : rien à choisir).
+--- secteur imposé : rien à choisir) ; avec le champ du largage (ZONE-09),
+--- les secteurs en dernier (pied de la feuille), même sans leurre.
 function RW:navigation()
+    local form = self.form
     local items = {}
-    for _, section in ipairs(RW.sections(self.form)) do
+    for _, section in ipairs(RW.sections(form)) do
         for _, lot in ipairs(section.lots) do
             if lot.allowed then
                 items[#items + 1] = { kind = "lot", id = lot.id }
             end
         end
-        if section.decoy and self.form.decoy.allowed then
+        if section.decoy and form.decoy.allowed then
             items[#items + 1] = { kind = "decoy" }
-            if not RW.fixedSector(self.form) then
+            if not form.drop and not RW.fixedSector(form) then
                 items[#items + 1] = { kind = "sectors" }
             end
         end
+    end
+    if form.drop and not RW.fixedSector(form) and RW.sectorList(form)[1] ~= nil then
+        items[#items + 1] = { kind = "sectors" }
     end
     return items
 end
@@ -1251,7 +1342,7 @@ function RW:transmit()
     local Client = MilitaryDrop.Client
     if Client and Client.sendRequisition then
         local order = RW.buildOrder(self.form, nil)
-        Client.sendRequisition(self.form.requestId, order.order, order.decoy, self.form)
+        Client.sendRequisition(self.form.requestId, order.order, order.decoy, self.form, order.sector)
     end
     self:close()
     return true
@@ -1463,6 +1554,16 @@ function RW:tooltipFor(target, payload)
         end
         if not lot.allowed then
             parts[#parts + 1] = " <RGB:1,0.55,0.45> " .. escape(RW.reasonText(lot))
+        end
+        return table.concat(parts)
+    elseif form.drop and (target == "sectorPrev" or target == "sectorNext" or target == "sectorName"
+        or target == "sectorInfo") then
+        -- Champ du largage (ZONE-09) : libellé, explication, secteur choisi
+        -- (nom libre complet, échappé).
+        local parts = { " <RGB:1,1,1> " .. escape(getText("IGUI_MilitaryDrop_ReqSectorLabel")) .. " <LINE> ",
+            " <RGB:0.85,0.85,0.85> " .. escape(getText("IGUI_MilitaryDrop_ReqSectorDesc")) }
+        if form.sector then
+            parts[#parts + 1] = " <LINE> <RGB:1,1,1> " .. escape(form.sector)
         end
         return table.concat(parts)
     elseif target == "decoy" or target == "sector" or target == "sectorPrev" or target == "sectorNext"
@@ -1825,6 +1926,10 @@ function RW:drawDecoy(hover, payload, now)
         x = x + 4
     end
     self:typeRight(costText, row.costRight, ty, INK, alpha)
+    if L.dropField then
+        -- Secteur du leurre : le champ du pied (drawFooter).
+        return
+    end
     if L.zones then
         self:drawZoneSectors(hover, expired, focusedSectors)
         return
@@ -1869,21 +1974,24 @@ end
 --- écrit à l'encre bleue et souligné, champ en pointillés tant qu'aucun
 --- secteur n'est choisi), ou nom imposé imprimé ; puis la note. Noms dessinés
 --- par drawText (aucune balise interprétée), raccourcis à la largeur du champ.
+--- Champ du largage (ZONE-09) : toujours à l'encre pleine, note « point
+--- exact choisi par la Logistique » (ou « choisir un secteur » en rouge).
 function RW:drawZoneSectors(hover, expired, focused)
     local L, form = self.L, self.form
     local area = L.sectorsArea
     if focused then
         self:drawRectBorder(area.x - 3, area.y, area.w + 6, area.h, 0.85, BLUE[1], BLUE[2], BLUE[3])
     end
+    local active = form.drop ~= nil or form.decoyOn
     local textW = area.x + area.w - L.sectorLabelX
     self:type(RW.fit(getText("IGUI_MilitaryDrop_ReqSectorLabel"), L.font, textW), L.sectorLabelX, L.sectorLabelY,
-        INK, form.decoyOn and 1 or 0.6)
+        INK, active and 1 or 0.6)
     local r = L.sectorName
     local ty = r.y + math.floor((r.h - L.fh) / 2)
     local fixed = RW.fixedSector(form)
     if fixed then
         -- Secteur imposé : simple information, imprimée.
-        self:type(RW.fit(fixed, L.font, r.w), r.x, ty, INK, form.decoyOn and 1 or 0.6)
+        self:type(RW.fit(fixed, L.font, r.w), r.x, ty, INK, active and 1 or 0.6)
     else
         local enabled = not expired and RW.canStepSector(form)
         local nameHover = hover == "sectorName" and enabled
@@ -1906,14 +2014,20 @@ function RW:drawZoneSectors(hover, expired, focused)
             end
         end
     end
-    local missing = form.decoyOn and not form.sector
-    local note = getText(missing and "IGUI_MilitaryDrop_ReqBlock_sector" or "IGUI_MilitaryDrop_ReqExclusive")
+    local missing = active and not form.sector
+    local note = getText(missing and "IGUI_MilitaryDrop_ReqBlock_sector"
+        or (form.drop and "IGUI_MilitaryDrop_ReqSectorNote" or "IGUI_MilitaryDrop_ReqExclusive"))
     self:type(RW.fit(note, L.font, textW), L.sectorLabelX, L.sectorNoteY, missing and RED or INK, 0.6)
 end
 
---- Pied : budget, engagé, restant (points de conduite), note, boutons.
+--- Pied : champ du largage (ZONE-09), budget, engagé, restant (points de
+--- conduite), note, boutons.
 function RW:drawFooter(hover, now)
     local L, form = self.L, self.form
+    if L.dropField then
+        local nav = self.drawJoypadFocus and self:navigation()[self.cursor] or nil
+        self:drawZoneSectors(hover, RW.expired(form, now), nav ~= nil and nav.kind == "sectors")
+    end
     local b = L.budget
     self:rule(b.x, b.y - math.floor(L.u / 2), b.w, 0.6)
     local values = { form.budget, RW.spent(form), RW.remaining(form) }
@@ -2050,8 +2164,8 @@ end
 
 -- Manette : haut et bas choisissent la ligne, gauche et droite retirent ou
 -- ajoutent (leurre : décoche ou coche ; secteurs : tour de la rose, ou
--- secteur nommé précédent ou suivant en mode zones), A
--- transmet, B annule.
+-- secteur nommé précédent ou suivant en mode zones et dans le champ du
+-- largage), A transmet, B annule.
 function RW:onGainJoypadFocus(joypadData)
     ISPanelJoypad.onGainJoypadFocus(self, joypadData)
     self.drawJoypadFocus = true

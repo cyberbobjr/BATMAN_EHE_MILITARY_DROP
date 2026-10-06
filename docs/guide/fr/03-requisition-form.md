@@ -51,6 +51,17 @@ Chaque unité commandée arrive sous la forme d'une **Caisse de réquisition**. 
 
 L'administrateur du serveur peut changer les coûts, les paliers et les lots, ou retirer les explosifs. Votre formulaire affiche toujours la vraie liste du serveur.
 
+## Secteur de largage
+
+Sur un serveur à [zones de largage](06-server-admin.md#zones-de-largage) où l'administrateur laisse les joueurs choisir le secteur, le formulaire a un champ **Secteur de largage** au-dessus du budget : une ville, affichée « < Louisville > ». Cliquez sur les flèches ou sur le nom, ou utilisez gauche et droite à la manette.
+
+- **Transmettre la réquisition** reste grisé tant qu'aucun secteur n'est choisi (« choisir un secteur »).
+- Avec un seul secteur, il est déjà sélectionné et simplement affiché.
+- Vous choisissez seulement le secteur : la Logistique choisit le point exact à l'intérieur, jamais dans l'eau ni dans un bâtiment. Le nom des zones n'est jamais affiché.
+- Un secteur trop proche de vous n'est pas proposé quand le serveur impose une distance minimale.
+- Si le secteur n'offre pour l'instant aucun point de largage, la base vous demande un autre secteur et le formulaire se rouvre, toujours rempli. Avec un seul secteur, rappelez plus tard.
+- Le **Leurre à sirène** se sert du même champ : coché, c'est le leurre qui tombe dans le secteur choisi, à la place de votre commande.
+
 ## Transmettre ou annuler
 
 - Réglez les quantités avec **+** et **−**. Le **+** se grise quand le budget ne suffit plus.
@@ -78,7 +89,7 @@ Sous **COMMANDE SPÉCIALE**, le **Leurre à sirène** (3 pts) largue une caisse 
 2. Choisissez le **secteur de largage** : N, E, S ou O. La caisse tombe dans ce quart, à la distance habituelle.
 3. Transmettez.
 
-Sur un serveur à [zones de largage](06-server-admin.md#zones-de-largage), l'étape 2 propose un **secteur** au lieu de N, E, S et O : une ville, affichée « < Louisville > » (flèches, ou gauche et droite à la manette). Avec un seul secteur, il est déjà sélectionné. Le leurre tombe alors dans une zone de largage de ce secteur, comme un vrai largage.
+Sur un serveur à [zones de largage](06-server-admin.md#zones-de-largage), l'étape 2 propose un **secteur** au lieu de N, E, S et O : une ville, affichée « < Louisville > » (flèches, ou gauche et droite à la manette). Avec un seul secteur, il est déjà sélectionné. Le leurre tombe alors dans une zone de largage de ce secteur, comme un vrai largage. Si le formulaire a un champ [Secteur de largage](#secteur-de-largage), l'étape 2 se fait dans ce champ : le leurre n'a pas de sélecteur à lui.
 
 Le leurre est **identique** à un vrai largage : même réponse, même hélicoptère, même annonce, même caisse. Personne ne peut le reconnaître avant d'ouvrir le coffre, qui ne contient qu'une **Balise-sirène - DIVERSION**.
 

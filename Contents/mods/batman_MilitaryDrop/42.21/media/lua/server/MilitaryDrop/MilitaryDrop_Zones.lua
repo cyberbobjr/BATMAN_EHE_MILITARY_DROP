@@ -16,7 +16,15 @@
 --   1. secteur : le plus proche du demandeur (distance au bord de sa zone la
 --      plus proche, DropZoneChoice 1) ou au hasard (2), parmi les zones à au
 --      moins DropZoneMinDistance cases ; si toutes sont trop proches, le
---      secteur le plus proche. Leurre : le secteur nommé, revérifié.
+--      secteur le plus proche. Leurre, ou largage dont le joueur choisit le
+--      secteur (DropZoneChoice 3, décision de l'utilisateur du 2026-10-06) :
+--      le secteur nommé au formulaire, revérifié (Requisition.validate) ; la
+--      distance minimale trie alors ses zones (farEnough, sinon toutes).
+--      Secteurs proposés au joueur (Zones.playerSectors) : ceux qui ont une
+--      zone assez loin, sinon le seul secteur le plus proche (même règle
+--      qu'au choix du serveur : on ne choisit pas la zone où l'on se tient).
+--      Valeur 3 sans formulaire (RequisitionForm faux : rien à choisir) : le
+--      plus proche, comme 1.
 --   2. zone : tirage pondéré (weight) parmi les zones actives du secteur.
 --   3. case (règle de l'utilisateur, 2026-10-06 : « les drops peuvent tomber
 --      partout, sauf dans l'eau et dans les bâtiments ») : POINT_ATTEMPTS
@@ -47,7 +55,10 @@
 --
 -- Leurre (ZONE-04) : en mode zones effectif, la réponse « form » propose les
 -- noms de secteurs actifs (Zones.decoySectors) au lieu de N/E/S/O ; la
--- commande renvoie le nom, revérifié par Requisition.validate.
+-- commande renvoie le nom, revérifié par Requisition.validate. Avec
+-- DropZoneChoice 3 (ZONE-09), la même liste (Zones.playerSectors) sert au
+-- largage normal : drop = { zones = true, sectors } dans la réponse, sector
+-- dans la commande ; la zone reste tirée au poids dans ce secteur.
 --
 -- Secret : la liste des zones ne part qu'à un admin qui la demande ; le nom
 -- de la zone tirée reste dans l'état privé du largage jusqu'à l'annonce.
@@ -107,6 +118,8 @@ Zones.MODE_ZONES = 2
 Zones.MODE_ZONES_NEAR = 3
 Zones.CHOICE_NEAREST = 1
 Zones.CHOICE_RANDOM = 2
+-- Secteur choisi par le joueur au formulaire (ZONE-09).
+Zones.CHOICE_PLAYER = 3
 -- Cases tirées dans une zone avant de passer à une autre zone du secteur.
 Zones.POINT_ATTEMPTS = 60
 -- Carte vanilla (dossier de lots, ZonesFile.loadedMaps) et villes du repli.
@@ -148,6 +161,11 @@ end
 --- Mode de placement (option DropPlacement), borné à 1-3.
 function Zones.placement()
     return option("DropPlacement", 1, 3)
+end
+
+--- Choix du secteur (option DropZoneChoice), borné à 1-3.
+function Zones.choice()
+    return option("DropZoneChoice", 1, 3)
 end
 
 --- Distance de (x, y) au bord du rectangle de la zone (0 à l'intérieur).
@@ -260,7 +278,8 @@ local function farEnough(zones, px, py)
     return far
 end
 
---- Secteur choisi et ses zones candidates (ZONE-04, étape 1).
+--- Secteur choisi et ses zones candidates (ZONE-04, étape 1). Choix du
+--- joueur (3) sans secteur nommé (appel sans formulaire) : le plus proche.
 function Zones.pickSector(zones, px, py)
     local pool = farEnough(zones, px, py)
     local nearestOnly = pool == nil
@@ -280,7 +299,7 @@ function Zones.pickSector(zones, px, py)
     end
     local names = Zones.sectorNames(pool)
     local chosen
-    if not nearestOnly and option("DropZoneChoice", 1, 2) == Zones.CHOICE_RANDOM then
+    if not nearestOnly and Zones.choice() == Zones.CHOICE_RANDOM then
         chosen = names[ZombRand(#names) + 1]
     else
         for _, name in ipairs(names) do
@@ -387,8 +406,8 @@ local function infoFor(zone, source)
         x1 = zone.x1, y1 = zone.y1, x2 = zone.x2, y2 = zone.y2 }
 end
 
---- Point d'un appel en (px, py) ; sector : secteur nommé du leurre (mode
---- zones). Renvoie handled, x, y, info : handled faux en proximité (info
+--- Point d'un appel en (px, py) ; sector : secteur nommé du leurre ou du
+--- largage choisi au formulaire (mode zones). Renvoie handled, x, y, info : handled faux en proximité (info
 --- { source = "proximity" } pour le repli du mode 2, sinon nil) ; handled
 --- vrai en mode zones, x nil si aucune case (« noSite »).
 function Zones.choosePoint(px, py, sector)
@@ -443,6 +462,27 @@ function Zones.decoySectors(px, py)
         return nil
     end
     return Zones.sectorNames(zones)
+end
+
+--- Secteurs proposés au joueur pour son largage (DropZoneChoice 3, ZONE-09),
+--- ordre alphabétique : secteurs actifs (à portée en mode 3, villes du repli
+--- comprises) ayant au moins une zone à DropZoneMinDistance cases ou plus ;
+--- si aucun, le seul secteur le plus proche (comme pickSector). nil : choix
+--- 1 ou 2, ou proximité. Le leurre de la même feuille reçoit cette liste
+--- (Requisition.offer : un seul sélecteur).
+function Zones.playerSectors(px, py)
+    if Zones.choice() ~= Zones.CHOICE_PLAYER then
+        return nil
+    end
+    local zones = Zones.candidates(px, py)
+    if not zones then
+        return nil
+    end
+    local far = farEnough(zones, px, py)
+    if far then
+        return Zones.sectorNames(far)
+    end
+    return { (Zones.pickSector(zones, px, py)) }
 end
 
 -- ----------------------------------------------------------------------------

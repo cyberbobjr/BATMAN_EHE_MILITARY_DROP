@@ -247,6 +247,26 @@ function T.no_point_in_decoy_sector_reopens_the_form()
     assertTrue(Client.sendRequisition(requestId, {}, "S", form), "autre secteur sans rappeler")
 end
 
+function T.no_point_in_the_chosen_drop_sector_reopens_the_form()
+    local w = requisitionWorld()
+    local Client = MilitaryDrop.Client
+    Client.sendRequest(w.player, w.device, nil, false)
+    local requestId = w.toServer[1].args.requestId
+    result(formResult(requestId))
+    wait(Client.REPLY_DELAY_MS)
+    local form = { deadline = NOW + 200000 }
+    assertTrue(Client.sendRequisition(requestId, { rations = 1 }, nil, form, "Bravo"), "commande envoyée")
+    local order = w.toServer[#w.toServer]
+    assertEq(order.args.sector, "Bravo", "secteur du largage transmis (ZONE-09)")
+    assertEq(order.args.decoy, nil, "pas de leurre")
+    result({ requestId = requestId, status = "noSite", sector = "Bravo" })
+    wait(Client.REPLY_DELAY_MS)
+    assertEq(w.device.said.text, "IGUI_MilitaryDrop_ReqNoSector|nil", "« aucun point de largage dans ce secteur »")
+    assertEq(w.shown[1], form, "feuille rouverte, remplie")
+    assertTrue(Client.sendRequisition(requestId, { rations = 1 }, nil, form, "Alpha"), "autre secteur sans rappeler")
+    assertEq(w.toServer[#w.toServer].args.sector, "Alpha", "nouveau secteur")
+end
+
 function T.no_point_in_the_single_decoy_sector_says_no_zone_site()
     local w = requisitionWorld()
     local Client = MilitaryDrop.Client

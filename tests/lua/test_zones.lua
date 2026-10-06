@@ -426,10 +426,10 @@ local function call(player)
     return SENT[#SENT].args
 end
 
-local function order(lots, decoy)
+local function order(lots, decoy, sector)
     NOW_MS = NOW_MS + 5000
     MilitaryDrop.Server.onClientCommand("MilitaryDrop", "RequisitionOrder", PLAYER,
-        { requestId = 1, radio = { kind = "item", id = 7 }, order = lots, decoy = decoy })
+        { requestId = 1, radio = { kind = "item", id = 7 }, order = lots, decoy = decoy, sector = sector })
     return SENT[#SENT].args
 end
 
@@ -829,6 +829,195 @@ function T.single_decoy_sector_without_landing_point_says_so()
     assertEq(reply.sector, "Bravo", "secteur rappelé")
     assertEq(reply.single, true, "secteur unique signalé")
     assertTrue(MilitaryDrop.Requisition.pendingFor("tester") ~= nil, "autorisation gardée")
+end
+
+-- ----------------------------------------------------------------------------
+-- Secteur du largage choisi par le joueur (ZONE-09, DropZoneChoice 3)
+-- ----------------------------------------------------------------------------
+
+local function playerChoice(mode)
+    SandboxVars.MilitaryDrop.RequisitionForm = true
+    SandboxVars.MilitaryDrop.DropZoneChoice = 3
+    placement(mode or 2)
+end
+
+--- Nouvel appel possible : délai global libéré, vols oubliés.
+local function nextCall()
+    MilitaryDrop.Server.getState().lastDropHours = nil
+    MilitaryDrop.Server.getState().flights = {}
+end
+
+function T.player_chosen_sector_is_offered_and_the_drop_falls_in_it()
+    playerChoice()
+    twoSectors()
+    local reply = call()
+    assertEq(reply.status, "form", "formulaire")
+    assertEq(reply.drop and reply.drop.zones, true, "champ du secteur de largage")
+    assertEq(table.concat(reply.drop.sectors, ","), "Alpha,Bravo", "secteurs actifs, ordre alphabétique")
+    assertEq(table.concat(reply.decoy.sectors, ","), "Alpha,Bravo", "même liste que le leurre")
+    assertEq(order({ rations = 1 }).status, "orderInvalid", "lots sans secteur refusés")
+    assertEq(order({ rations = 1 }, nil, "Charlie").status, "orderInvalid", "secteur inconnu refusé")
+    assertEq(order({ rations = 1 }, nil, "N").status, "orderInvalid", "point cardinal refusé")
+    assertEq(order({ rations = 1 }, nil, 5).status, "orderInvalid", "secteur non textuel refusé")
+    assertTrue(MilitaryDrop.Requisition.pendingFor("tester") ~= nil, "autorisation gardée après les refus")
+    -- Bravo est le plus loin du demandeur : seul le choix du joueur l'explique.
+    assertEq(order({ rations = 1 }, nil, "Bravo").status, "accepted", "secteur proposé accepté")
+    local flight = flights()[1]
+    assertTrue(inside(flight.tx, flight.ty, 3000, 200, 3051, 251), "largage dans une zone du secteur Bravo")
+    local drop = MilitaryDrop.Secrets.privateState().drops[flight.dropId]
+    assertEq(drop.zone.sector, "Bravo", "zone tirée dans le secteur choisi")
+    assertEq(drop.zone.name, "Bravo Mall", "zone dans l'état privé")
+    assertEq(drop.order.lots.rations, 1, "commande de lots")
+    assertEq(drop.decoy, nil, "pas un leurre")
+end
+
+function T.player_sector_disabled_out_of_range_or_single()
+    playerChoice()
+    twoSectors()
+    zonesFile({
+        zone("z1", "Alpha", "Alpha Park", 1000, 200, 1050, 250),
+        zone("z2", "Bravo", "Bravo Mall", 3000, 200, 3050, 250, ", enabled = false"),
+    })
+    local reply = call()
+    assertEq(table.concat(reply.drop.sectors, ","), "Alpha", "secteur désactivé absent")
+    assertEq(order({ rations = 1 }, nil, "Bravo").status, "orderInvalid", "secteur désactivé refusé au serveur")
+    -- Mode 3 : seuls les secteurs à portée sont proposés.
+    nextCall()
+    twoSectors()
+    placement(3)
+    SandboxVars.MilitaryDrop.DropZoneMaxDistance = 1000
+    reply = call()
+    assertEq(table.concat(reply.drop.sectors, ","), "Alpha", "Bravo hors de portée")
+    assertEq(order({ rations = 1 }, nil, "Bravo").status, "orderInvalid", "secteur hors de portée refusé")
+    assertEq(order({ rations = 1 }, nil, "Alpha").status, "accepted", "secteur unique accepté")
+    -- Mode 3 sans zone à portée : proximité, aucun champ.
+    nextCall()
+    PLAYER = makePlayer("tester", 100, 9000)
+    ROADS[#ROADS + 1] = { x = 0, y = 8000, w = 100000, h = 2000 }
+    reply = call()
+    assertEq(reply.drop, nil, "aucune zone à portée : pas de champ")
+    assertEq(order({ rations = 1 }, nil, "Alpha").status, "orderInvalid", "secteur sans champ refusé")
+    assertEq(order({ rations = 1 }).status, "accepted", "lots seuls, près du demandeur")
+end
+
+function T.player_sectors_respect_the_minimum_distance()
+    playerChoice()
+    twoSectors()
+    PLAYER = makePlayer("inside", 1010, 220)
+    SandboxVars.MilitaryDrop.DropZoneMinDistance = 500
+    local reply = call()
+    assertEq(table.concat(reply.drop.sectors, ","), "Bravo", "Alpha trop proche : pas proposé")
+    assertEq(table.concat(reply.decoy.sectors, ","), "Bravo", "le leurre suit la même liste")
+    assertEq(order({ rations = 1 }, nil, "Alpha").status, "orderInvalid", "secteur trop proche refusé")
+    assertEq(order(nil, "Alpha").status, "orderInvalid", "leurre aussi")
+    -- Toutes trop proches : le seul secteur le plus proche.
+    MilitaryDrop.Requisition.reset()
+    SandboxVars.MilitaryDrop.DropZoneMinDistance = 5000
+    reply = call()
+    assertEq(table.concat(reply.drop.sectors, ","), "Alpha", "le plus proche seulement")
+    assertEq(order({ rations = 1 }, nil, "Alpha").status, "accepted", "secteur imposé accepté")
+end
+
+function T.player_sector_falls_back_on_vanilla_towns()
+    playerChoice()
+    zonesFile({})
+    ROADS = { { x = 0, y = 0, w = 100000, h = 100000 } }
+    local reply = call()
+    assertTrue(reply.drop ~= nil and #reply.drop.sectors > 1, "villes vanilla du repli proposées")
+    assertEq(order({ rations = 1 }, nil, "Riverside").status, "accepted", "ville choisie")
+    local drop = MilitaryDrop.Secrets.privateState().drops[flights()[1].dropId]
+    assertEq(drop.zone.sector, "Riverside", "zone de la ville")
+    assertEq(drop.zone.source, "town", "repli des villes")
+end
+
+function T.player_sector_without_landing_point_answers_no_site()
+    playerChoice()
+    KNOWN_WATER = { { x = 2992, y = 192, w = 64, h = 64 } }
+    zonesFile({
+        zone("z1", "Alpha", "Alpha Park", 1000, 200, 1050, 250),
+        zone("z2", "Bravo", "Bravo Lake", 3000, 200, 3050, 250),
+    })
+    call()
+    local reply = order({ rations = 1 }, nil, "Bravo")
+    assertEq(reply.status, "noSite", "aucune case dans Bravo")
+    assertEq(reply.sector, "Bravo", "secteur rappelé")
+    assertEq(reply.single, nil, "deux secteurs : un autre secteur est proposé")
+    assertTrue(MilitaryDrop.Requisition.pendingFor("tester") ~= nil, "autorisation gardée")
+    assertTrue(logged("sector Bravo: no landing point"), "journal : secteur choisi")
+    assertEq(order({ rations = 1 }, nil, "Alpha").status, "accepted", "autre secteur sans rappeler")
+    -- Un seul secteur : signalé.
+    nextCall()
+    MilitaryDrop.Requisition.reset()
+    zonesFile({ zone("z2", "Bravo", "Bravo Lake", 3000, 200, 3050, 250) })
+    local form = call()
+    assertEq(table.concat(form.drop.sectors, ","), "Bravo", "un seul secteur")
+    reply = order({ rations = 1 }, nil, "Bravo")
+    assertEq(reply.status, "noSite", "aucune case")
+    assertEq(reply.single, true, "secteur unique signalé")
+    assertTrue(MilitaryDrop.Requisition.pendingFor("tester") ~= nil, "autorisation gardée")
+end
+
+function T.checked_decoy_uses_its_own_sector()
+    playerChoice()
+    twoSectors()
+    call()
+    assertEq(order(nil, "Bravo", "Alpha").status, "orderInvalid", "leurre et secteur de largage ensemble refusés")
+    assertEq(order({ rations = 1 }, "Bravo").status, "orderInvalid", "leurre avec des lots refusé")
+    assertEq(order(nil, "Bravo").status, "accepted", "leurre seul, son secteur")
+    local flight = flights()[1]
+    assertTrue(inside(flight.tx, flight.ty, 3000, 200, 3051, 251), "leurre dans Bravo")
+    assertEq(MilitaryDrop.Secrets.privateState().drops[flight.dropId].decoy.sector, "Bravo", "secteur du leurre")
+end
+
+function T.choices_1_and_2_offer_no_sector_field()
+    SandboxVars.MilitaryDrop.RequisitionForm = true
+    placement(2)
+    twoSectors()
+    local reply = call()
+    assertEq(reply.drop, nil, "plus proche : pas de champ")
+    assertEq(reply.decoy.zones, true, "leurre inchangé")
+    assertEq(order({ rations = 1 }, nil, "Bravo").status, "orderInvalid", "secteur forgé refusé")
+    assertEq(order({ rations = 1 }).status, "accepted", "lots seuls")
+    assertEq(MilitaryDrop.Secrets.privateState().drops[flights()[1].dropId].zone.sector, "Alpha", "le plus proche")
+    nextCall()
+    SandboxVars.MilitaryDrop.DropZoneChoice = 2
+    ZombRand = function(n) return n - 1 end
+    reply = call()
+    assertEq(reply.drop, nil, "au hasard : pas de champ")
+    assertEq(order({ rations = 1 }, nil, "Alpha").status, "orderInvalid", "secteur forgé refusé")
+    assertEq(order({ rations = 1 }).status, "accepted", "lots seuls")
+    assertEq(MilitaryDrop.Secrets.privateState().drops[flights()[1].dropId].zone.sector, "Bravo", "au hasard")
+end
+
+function T.choice_3_without_the_form_takes_the_nearest_sector()
+    SandboxVars.MilitaryDrop.DropZoneChoice = 3
+    placement(2)
+    twoSectors()
+    ZombRand = function(n) return n - 1 end
+    local _, _, info = choose()
+    assertEq(info.sector, "Alpha", "rien à choisir : le plus proche, jamais au hasard")
+end
+
+function T.admin_sheet_has_no_sector_field_with_choice_3()
+    SandboxVars.MilitaryDrop.RequisitionForm = true
+    SandboxVars.MilitaryDrop.DropZoneChoice = 3
+    placement(2)
+    twoSectors()
+    ROADS[#ROADS + 1] = { x = 0, y = 0, w = 100000, h = 100000 }
+    PLAYER = makePlayer("tester", 5000, 5000)
+    NOW_MS = NOW_MS + 5000
+    MilitaryDrop.Server.handleRequest(PLAYER, { requestId = 1, force = true })
+    local form = SENT[#SENT].args
+    assertEq(form.forced, true, "feuille admin")
+    assertEq(form.drop, nil, "pas de champ du secteur de largage")
+    assertEq(order({ rations = 1 }, nil, "Alpha").status, "orderInvalid", "secteur refusé sur la feuille admin")
+    assertEq(order({ rations = 1 }).status, "accepted", "lots seuls")
+    local flight = flights()[1]
+    assertTrue(not inside(flight.tx, flight.ty, 1000, 200, 3051, 251), "près de l'admin, hors zone")
+    -- Joueur ordinaire, même position : le champ est proposé.
+    ADMIN = false
+    nextCall()
+    assertTrue(call().drop ~= nil, "appel ordinaire : champ")
 end
 
 -- ----------------------------------------------------------------------------
@@ -1357,6 +1546,26 @@ function T.zone_options_changed_during_the_game_apply_at_once()
     assertEq(MilitaryDrop.Broadcast.announcesZone("Alpha Park"), true, "nom annoncé")
     java["MilitaryDrop.DropZoneAnnounceName"] = false
     assertEq(MilitaryDrop.Broadcast.announcesZone("Alpha Park"), false, "nom tu dès l'annonce suivante")
+end
+
+function T.player_sector_choice_changed_during_the_game_applies_at_once()
+    SandboxVars.MilitaryDrop.RequisitionForm = true
+    local java = javaOptions()
+    java["MilitaryDrop.DropPlacement"] = 2
+    twoSectors()
+    assertEq(call().drop, nil, "plus proche au chargement : pas de champ")
+    java["MilitaryDrop.DropZoneChoice"] = 3
+    assertEq(order({ rations = 1 }).status, "orderInvalid", "feuille ouverte avant le changement : secteur exigé")
+    local reply = call()
+    assertEq(table.concat(reply.drop.sectors, ","), "Alpha,Bravo", "champ dès le formulaire suivant")
+    assertEq(order({ rations = 1 }, nil, "Bravo").status, "accepted", "secteur choisi")
+    assertEq(MilitaryDrop.Secrets.privateState().drops[flights()[1].dropId].zone.sector, "Bravo", "dans Bravo")
+    MilitaryDrop.Server.getState().lastDropHours = nil
+    MilitaryDrop.Server.getState().flights = {}
+    call()
+    java["MilitaryDrop.DropZoneChoice"] = 1
+    assertEq(order({ rations = 1 }, nil, "Bravo").status, "orderInvalid", "retour au plus proche : secteur refusé")
+    assertEq(call().drop, nil, "plus de champ au formulaire suivant")
 end
 
 return T
