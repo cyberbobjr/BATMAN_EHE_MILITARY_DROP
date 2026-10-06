@@ -10,5 +10,7 @@
     "MilitaryDrop.AvionicsSalvage": "Geborgenes Avionikpaket",
     "MilitaryDrop.MechanicalSalvage": "Geborgenes Mechanikpaket",
     "MilitaryDrop.MetalSalvage": "Geborgenes Metallpaket",
-    "MilitaryDrop.FlightRecorder": "Flugschreiber"
+    "MilitaryDrop.FlightRecorder": "Flugschreiber",
+    "MilitaryDrop.FultonPrototypeBalloon": "Fulton balloon (prototype)",
+    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)"
 }

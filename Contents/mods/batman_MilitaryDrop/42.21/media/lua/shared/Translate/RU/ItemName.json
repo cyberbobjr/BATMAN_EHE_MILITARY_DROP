@@ -10,5 +10,7 @@
     "MilitaryDrop.AvionicsSalvage": "Набор найденной авионики",
     "MilitaryDrop.MechanicalSalvage": "Набор найденных автодеталей",
     "MilitaryDrop.MetalSalvage": "Набор найденного металла",
-    "MilitaryDrop.FlightRecorder": "Бортовой самописец"
+    "MilitaryDrop.FlightRecorder": "Бортовой самописец",
+    "MilitaryDrop.FultonPrototypeBalloon": "Fulton balloon (prototype)",
+    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)"
 }

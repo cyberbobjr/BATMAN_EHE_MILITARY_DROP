@@ -10,5 +10,7 @@
     "MilitaryDrop.AvionicsSalvage": "回收航电包",
     "MilitaryDrop.MechanicalSalvage": "回收机械包",
     "MilitaryDrop.MetalSalvage": "回收金属包",
-    "MilitaryDrop.FlightRecorder": "飞行记录器"
+    "MilitaryDrop.FlightRecorder": "飞行记录器",
+    "MilitaryDrop.FultonPrototypeBalloon": "Fulton balloon (prototype)",
+    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)"
 }

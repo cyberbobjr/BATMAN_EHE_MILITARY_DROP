@@ -1,0 +1,35 @@
+/* Visual-only development objects: no loot, recipe, entity or container. */
+module Base
+{
+    model MilitaryDrop_FultonPrototypeBalloon
+    {
+        mesh = WorldItems/MilitaryDrop/md_fulton_balloon,
+        texture = WorldItems/MilitaryDrop/md_fulton_palette,
+        scale = 0.01,
+    }
+    model MilitaryDrop_FultonPrototypeBag
+    {
+        mesh = WorldItems/MilitaryDrop/md_fulton_bag,
+        texture = WorldItems/MilitaryDrop/md_fulton_palette,
+        scale = 0.01,
+    }
+}
+module MilitaryDrop
+{
+    item FultonPrototypeBalloon
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.1,
+        Icon = MilitaryDrop_FultonPrototypeBalloon,
+        WorldStaticModel = MilitaryDrop_FultonPrototypeBalloon,
+    }
+    item FultonPrototypeBag
+    {
+        ItemType = base:normal,
+        DisplayCategory = Material,
+        Weight = 0.1,
+        Icon = MilitaryDrop_FultonPrototypeBag,
+        WorldStaticModel = MilitaryDrop_FultonPrototypeBag,
+    }
+}

@@ -10,5 +10,7 @@
     "MilitaryDrop.AvionicsSalvage": "Lot d’avionique récupérée",
     "MilitaryDrop.MechanicalSalvage": "Lot de mécanique récupérée",
     "MilitaryDrop.MetalSalvage": "Lot de métal récupéré",
-    "MilitaryDrop.FlightRecorder": "Enregistreur de vol"
+    "MilitaryDrop.FlightRecorder": "Enregistreur de vol",
+    "MilitaryDrop.FultonPrototypeBalloon": "Ballon Fulton (prototype)",
+    "MilitaryDrop.FultonPrototypeBag": "Sac Fulton (prototype)"
 }

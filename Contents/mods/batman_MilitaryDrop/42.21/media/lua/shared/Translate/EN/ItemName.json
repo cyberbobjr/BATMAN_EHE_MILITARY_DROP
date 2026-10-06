@@ -10,5 +10,7 @@
     "MilitaryDrop.AvionicsSalvage": "Recovered avionics bundle",
     "MilitaryDrop.MechanicalSalvage": "Recovered mechanical bundle",
     "MilitaryDrop.MetalSalvage": "Recovered metal bundle",
-    "MilitaryDrop.FlightRecorder": "Flight recorder"
+    "MilitaryDrop.FlightRecorder": "Flight recorder",
+    "MilitaryDrop.FultonPrototypeBalloon": "Fulton balloon (prototype)",
+    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)"
 }
