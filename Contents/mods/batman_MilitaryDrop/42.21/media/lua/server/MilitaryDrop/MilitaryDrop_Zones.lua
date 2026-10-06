@@ -18,17 +18,26 @@
 --      moins DropZoneMinDistance cases ; si toutes sont trop proches, le
 --      secteur le plus proche. Leurre : le secteur nommé, revérifié.
 --   2. zone : tirage pondéré (weight) parmi les zones actives du secteur.
---   3. case : une case de route « Nav » tirée dans le rectangle, sinon le
---      pied d'un bâtiment dans le rectangle ; JAMAIS une case quelconque : la
---      métagrille ne connaît pas l'eau (Server.ROAD_ZONE). Refus d'une case
---      dont la caisse toucherait une zone non-PvP ou un refuge. Case chargée :
---      contrôlée tout de suite (Server.findLandingNear borné à la zone).
+--   3. case (règle de l'utilisateur, 2026-10-06 : « les drops peuvent tomber
+--      partout, sauf dans l'eau et dans les bâtiments ») : POINT_ATTEMPTS
+--      cases tirées n'importe où dans le rectangle (Zones.pointInZone) ; la
+--      première dont les quatre cases de la caisse sont sur la carte, hors
+--      bâtiment (métagrille, Server.isOnMap) et hors de l'eau connue de la
+--      métagrille (ZonesFile.isKnownWater : zones « Water » des cellules déjà
+--      approchées), et dont la caisse ne touche ni zone non-PvP ni refuge,
+--      est retenue. Case chargée : contrôle direct (Server.landingSquareAt :
+--      extérieure, libre, sans eau ni véhicule). Plus de préférence pour les
+--      routes ni pour le pied des bâtiments.
 --   4. aucune case : une autre zone du même secteur, puis nil (« noSite »),
 --      jamais hors zone ni ailleurs.
--- La livraison (Server.deliver) relit le rectangle dans l'état privé du
--- largage (drops[dropId].zone) et ne cherche qu'à l'intérieur (élargi d'une
--- case pour l'empreinte 2 × 2 de la caisse) : pas de case sèche, la caisse
--- attend (aucune caisse dans l'eau ni hors zone).
+-- L'eau d'une cellule jamais approchée est inconnue sans charger la case
+-- (ZonesFile, en-tête) : le point peut tomber sur un lac. La livraison
+-- (Server.deliver) est le filet qui garantit la règle : elle relit le
+-- rectangle dans l'état privé du largage (drops[dropId].zone), revérifie la
+-- case chargée et ne cherche qu'à l'intérieur (élargi d'une case pour
+-- l'empreinte 2 × 2 de la caisse) la case libre la plus proche ; pas de case
+-- sèche, la caisse attend (aucune caisse dans l'eau, dans un bâtiment ni hors
+-- zone).
 --
 -- Repli du mode 2 sans zone utilisable (ZONE-05) : les villes vanilla
 -- (TOWNS, rayon TOWN_RADIUS, chacune secteur d'une seule zone) si la carte
@@ -98,8 +107,8 @@ Zones.MODE_ZONES = 2
 Zones.MODE_ZONES_NEAR = 3
 Zones.CHOICE_NEAREST = 1
 Zones.CHOICE_RANDOM = 2
--- Cases de route tirées dans une zone avant les bâtiments.
-Zones.ROAD_ATTEMPTS = 30
+-- Cases tirées dans une zone avant de passer à une autre zone du secteur.
+Zones.POINT_ATTEMPTS = 60
 -- Carte vanilla (dossier de lots, ZonesFile.loadedMaps) et villes du repli.
 Zones.VANILLA_MAP = "Muldraugh, KY"
 Zones.TOWN_RADIUS = 150
@@ -303,54 +312,37 @@ end
 -- Case dans une zone
 -- ----------------------------------------------------------------------------
 
---- Point de largage dans la zone (route, sinon pied d'un bâtiment, borné au
---- rectangle), ou nil. Une case chargée doit déjà accueillir la caisse dans
---- la zone ; sinon elle est revérifiée à la livraison.
-function Zones.pointInZone(zone)
+--- Les quatre cases de la caisse posée au point (x, y) (x-1..x, y-1..y :
+--- Server.landingSquareAt) sont sur la carte, hors bâtiment et hors de l'eau
+--- connue de la métagrille ; valable sans charger la zone.
+function Zones.isOpenGround(x, y)
     local grid = getWorld():getMetaGrid()
+    for dx = -1, 0 do
+        for dy = -1, 0 do
+            if not Server.isOnMap(x + dx, y + dy) or ZonesFile.isKnownWater(grid, x + dx, y + dy) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+--- Point de largage tiré n'importe où dans la zone (règle du 2026-10-06 :
+--- partout sauf l'eau et les bâtiments), ou nil après POINT_ATTEMPTS
+--- tirages. Le point (x, y) est tiré dans x1+1..x2, y1+1..y2 : la caisse
+--- (x-1..x, y-1..y) reste dans le rectangle (zone d'une case de côté : une
+--- case au sud-est, permise par landingBounds). Case chargée : la caisse doit
+--- pouvoir s'y poser tout de suite ; sinon tout est revérifié à la livraison.
+function Zones.pointInZone(zone)
     local cell = getCell()
     local bounds = Zones.landingBounds(zone)
-    local function usable(x, y)
-        if not inBounds(bounds, x, y) or not Server.isOnMap(x, y) or ZonesFile.isProtected(x, y) then
-            return false
-        end
-        return not cell:getGridSquare(x, y, 0) or Server.findLandingNear(x, y, bounds) ~= nil
-    end
-    local roads, total = ZonesFile.roadRects(grid, zone), 0
-    for _, road in ipairs(roads) do
-        total = total + road.area
-    end
-    if total > 0 then
-        for _ = 1, Zones.ROAD_ATTEMPTS do
-            local roll = ZombRand(total)
-            for _, road in ipairs(roads) do
-                roll = roll - road.area
-                if roll < 0 then
-                    local x = road.x1 + ZombRand(road.x2 - road.x1 + 1)
-                    local y = road.y1 + ZombRand(road.y2 - road.y1 + 1)
-                    if usable(x, y) then
-                        return x, y
-                    end
-                    break
-                end
-            end
-        end
-    end
-    -- Pied d'un bâtiment, dans un ordre tiré au hasard : au sud, au nord, à
-    -- l'est, à l'ouest, à deux cases du mur (comme Server.buildingPointNear).
-    local buildings = ZonesFile.buildingsIn(grid, zone)
-    for i = #buildings, 2, -1 do
-        local j = ZombRand(i) + 1
-        buildings[i], buildings[j] = buildings[j], buildings[i]
-    end
-    for _, b in ipairs(buildings) do
-        local bx, by, bw, bh = b:getX(), b:getY(), b:getW(), b:getH()
-        local cx, cy = bx + math.floor(bw / 2), by + math.floor(bh / 2)
-        local feet = { { cx, by + bh + 2 }, { cx, by - 2 }, { bx + bw + 2, cy }, { bx - 2, cy } }
-        for _, foot in ipairs(feet) do
-            if usable(foot[1], foot[2]) then
-                return foot[1], foot[2]
-            end
+    local w, h = zone.x2 - zone.x1 + 1, zone.y2 - zone.y1 + 1
+    for _ = 1, Zones.POINT_ATTEMPTS do
+        local x = zone.x1 + 1 + ZombRand(math.max(1, w - 1))
+        local y = zone.y1 + 1 + ZombRand(math.max(1, h - 1))
+        if inBounds(bounds, x, y) and Zones.isOpenGround(x, y) and not ZonesFile.isProtected(x, y)
+            and (not cell:getGridSquare(x, y, 0) or Server.landingSquareAt(x, y) ~= nil) then
+            return x, y
         end
     end
     return nil
@@ -434,7 +426,8 @@ function Zones.choosePoint(px, py, sector)
             return true, x, y, infoFor(zone, source)
         end
         MilitaryDrop.log("drop zone " .. tostring(zone.id) .. " (" .. tostring(zone.sector) .. "/"
-            .. tostring(zone.name) .. "): no road or building foot to land on", true)
+            .. tostring(zone.name) .. "): no open ground in " .. Zones.POINT_ATTEMPTS
+            .. " draws (buildings, water, protected areas)", true)
         table.remove(remaining, index)
     end
     MilitaryDrop.log("sector " .. tostring(name) .. ": no landing point in its zones", true)

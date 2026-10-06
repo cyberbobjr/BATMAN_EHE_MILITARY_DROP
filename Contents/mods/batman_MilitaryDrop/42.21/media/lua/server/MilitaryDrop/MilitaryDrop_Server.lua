@@ -60,7 +60,12 @@
 -- DropPlacement à 2 ou 3, chooseDropPoint vise une zone de l'admin (ou une
 -- ville vanilla) ; la zone tirée est rangée dans l'état privé du largage et
 -- la livraison (deliver) ne cherche une case qu'à l'intérieur. Option à 1
--- (défaut) : comportement inchangé. Le largage forcé de l'admin (direct ou
+-- (défaut) : comportement inchangé. En zone, la case est tirée n'importe où
+-- hors bâtiment et hors de l'eau connue (règle du 2026-10-06,
+-- Zones.pointInZone) ; la proximité garde la route ou le pied d'un bâtiment
+-- (pickDropPoint) : l'eau d'une cellule jamais approchée reste inconnue de la
+-- métagrille, et sans rectangle borné un point tiré sur un grand lac
+-- bloquerait la livraison (aucune case sèche à RELOCATE_RADIUS). Le largage forcé de l'admin (direct ou
 -- feuille admin, leurre compris) n'est pas concerné (analyse §2.1) : il
 -- garde la proximité (chooseDropPoint, argument proximity). Les fournitures
 -- d'un crash (opts.crash) tombent près de l'épave, sans borne de zone.
@@ -444,12 +449,15 @@ end
 -- IsoDirections.java:13). Chaque secteur est un quart de cercle.
 Server.SECTOR_ANGLES = { E = 0, S = math.pi / 2, W = math.pi, N = -math.pi / 2 }
 
--- Point de largage sur la terre ferme. La métagrille ne connaît pas l'eau
--- (WaterFlow/WaterZone hors métagrille, zone « Water » des biomes créée au
--- chargement d'un chunk) : un point tiré au hasard peut tomber dans un lac. On
--- vise donc une route (zone « Nav » de streets.xml), sinon le pied d'un
--- bâtiment ; la caisse se pose ensuite sur la case libre la plus proche
--- (Server.findLandingNear, RELOCATE_RADIUS).
+-- Point de largage sur la terre ferme (mode proximité). La métagrille ne
+-- connaît l'eau que des cellules déjà approchées (zones « Water » de la
+-- biomemap, inscrites au premier chargement d'un chunk de la cellule :
+-- ZoneGenerator.genForaging, voir MilitaryDrop_ZonesFile.lua) : un point
+-- tiré au hasard peut tomber dans un lac. On vise donc une route (zone « Nav »
+-- de streets.xml), sinon le pied d'un bâtiment ; la caisse se pose ensuite
+-- sur la case libre la plus proche (Server.findLandingNear, RELOCATE_RADIUS).
+-- Les zones de largage (Zones.pointInZone) tirent, elles, n'importe où :
+-- leur livraison cherche dans tout le rectangle (findLandingInBounds).
 Server.ROAD_ZONE = "Nav"
 -- Demi-côté de la fenêtre de recherche autour d'un point de l'anneau.
 Server.LAND_WINDOW = 48
@@ -612,7 +620,9 @@ end
 
 --- Livraison au point (x, y), déjà annoncé : caisse de largage et horde
 --- autour. La zone doit être chargée ; la case est revérifiée (eau, obstacle,
---- véhicule garé) et remplacée au besoin par la plus proche. Renvoie false si
+--- intérieur d'un bâtiment, véhicule garé : landingSquareAt) et remplacée au
+--- besoin par la plus proche ; c'est le seul contrôle sûr de l'eau (la
+--- métagrille ne la connaît qu'en partie). Renvoie false si
 --- aucune case ne convient encore (la livraison reste en attente). dropId :
 --- largage (confiance), porté par chaque caisse de ravitaillement.
 function Server.deliver(x, y, requester, dropId, opts)

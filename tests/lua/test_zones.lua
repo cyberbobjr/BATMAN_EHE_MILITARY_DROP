@@ -1,8 +1,12 @@
 -- MilitaryDrop_Zones : zones de largage côté serveur (idée 11, ZONE-01, 03,
 -- 04, 05, 06) — mode proximité inchangé, secteur le plus proche ou au hasard,
--- distance minimale, tirage pondéré et autre zone du même secteur, jamais de
--- caisse dans l'eau ni hors zone (métagrille simulée : zone à moitié sur
--- l'eau, zone entièrement sur l'eau → noSite), partie non-PvP écartée, repli
+-- distance minimale, tirage pondéré et autre zone du même secteur, case tirée
+-- n'importe où dans la zone hors bâtiment et hors de l'eau (règle du
+-- 2026-10-06 : zone sans route ni bâtiment → caisse sur la terre ferme ; zone
+-- entièrement bâtie → aucune caisse dans un bâtiment), jamais de caisse dans
+-- l'eau ni hors zone (eau connue ou non de la métagrille simulée : zone à
+-- moitié sur l'eau, zone entièrement sur l'eau → noSite ou attente), partie
+-- non-PvP écartée, repli
 -- villes vanilla puis proximité avec avertissement, mode « zones si
 -- proche », leurre par secteur nommé revalidé au serveur, outil d'admin
 -- (droits, cadence, coordonnées hors carte, chevauchements, fichier
@@ -52,8 +56,31 @@ local function buildingDef(b)
     return b.def
 end
 
---- Métagrille : routes ROADS et bâtiments BUILDINGS ({ x, y, w, h }), carte
---- carrée de 20 000 cases. Elle ne connaît pas l'eau (WATER : cases chargées).
+--- Zone rectangulaire de la métagrille (Nav, Water).
+local function metaZone(kind, r)
+    return {
+        getType = function() return kind end, isRectangle = function() return true end,
+        getX = function() return r.x end, getY = function() return r.y end,
+        getWidth = function() return r.w end, getHeight = function() return r.h end,
+    }
+end
+
+--- Zones de la métagrille : routes ROADS (« Nav ») et eau connue KNOWN_WATER
+--- (« Water », cellules déjà approchées), { x, y, w, h }.
+local function metaZones()
+    local list = {}
+    for _, r in ipairs(ROADS) do
+        list[#list + 1] = { r = r, zone = metaZone("Nav", r) }
+    end
+    for _, r in ipairs(KNOWN_WATER) do
+        list[#list + 1] = { r = r, zone = metaZone("Water", r) }
+    end
+    return list
+end
+
+--- Métagrille : routes ROADS, bâtiments BUILDINGS et eau connue KNOWN_WATER
+--- ({ x, y, w, h }), carte carrée de 20 000 cases. L'eau réelle des cases
+--- chargées est WATER(x, y) : la métagrille n'en connaît que KNOWN_WATER.
 local function makeGrid()
     return {
         isValidSquare = function(_, x, y) return x >= 0 and x < 20000 and y >= 0 and y < 20000 end,
@@ -79,13 +106,18 @@ local function makeGrid()
         end,
         getZonesIntersecting = function(_, x, y, _z, w, h)
             local found = {}
-            for _, r in ipairs(ROADS) do
-                if intersects(r, x, y, w, h) then
-                    found[#found + 1] = {
-                        getType = function() return "Nav" end, isRectangle = function() return true end,
-                        getX = function() return r.x end, getY = function() return r.y end,
-                        getWidth = function() return r.w end, getHeight = function() return r.h end,
-                    }
+            for _, entry in ipairs(metaZones()) do
+                if intersects(entry.r, x, y, w, h) then
+                    found[#found + 1] = entry.zone
+                end
+            end
+            return javaList(found)
+        end,
+        getZonesAt = function(_, x, y)
+            local found = {}
+            for _, entry in ipairs(metaZones()) do
+                if intersects(entry.r, x, y, 1, 1) then
+                    found[#found + 1] = entry.zone
                 end
             end
             return javaList(found)
@@ -226,7 +258,7 @@ function T.setup()
     -- Monde : rien de chargé par défaut (point lointain), pas d'eau.
     ArrayList = { new = function() return javaList({}) end }
     MAP = "Muldraugh, KY"
-    ROADS, BUILDINGS, NONPVP, SAFEHOUSES = {}, {}, {}, {}
+    ROADS, BUILDINGS, NONPVP, SAFEHOUSES, KNOWN_WATER = {}, {}, {}, {}, {}
     LOADED, WATER = nil, nil
     PLACED = {}
     local grid = makeGrid()
@@ -426,11 +458,11 @@ function T.proximity_mode_is_unchanged_by_default()
     assertEq(MilitaryDrop.Zones.decoySectors(100, 200), nil, "leurre : N, E, S, O")
 end
 
-function T.nearest_sector_gets_the_drop_on_a_road_inside_the_zone()
+function T.nearest_sector_gets_the_drop_anywhere_inside_the_zone()
     placement(2)
     twoSectors()
     local x, y, info = choose()
-    assertEq(x .. "," .. y, "1020,200", "route de la zone Alpha")
+    assertEq(x .. "," .. y, "1001,201", "première case tirée dans la zone Alpha, caisse 2×2 dedans")
     assertEq(info.zoneId, "z1", "zone")
     assertEq(info.zoneName, "Alpha Park", "nom")
     assertEq(info.sector, "Alpha", "secteur le plus proche")
@@ -466,7 +498,8 @@ end
 
 function T.weighted_draw_then_another_zone_of_the_same_sector()
     placement(2)
-    ROADS = { { x = 1220, y = 0, w = 4, h = 1000 } }
+    -- Lac connu de la métagrille (cellule déjà approchée).
+    KNOWN_WATER = { { x = 1000, y = 200, w = 101, h = 101 } }
     zonesFile({
         zone("lake", "Alpha", "Lake", 1000, 200, 1100, 300, ", weight = 100"),
         zone("park", "Alpha", "Park", 1200, 200, 1250, 250),
@@ -475,18 +508,69 @@ function T.weighted_draw_then_another_zone_of_the_same_sector()
     local x, y, info = choose()
     assertEq(info.zoneId, "park", "le lac (poids 100) ne donne rien : autre zone du secteur")
     assertTrue(inside(x, y, 1200, 200, 1250, 250), "dans le parc")
-    assertTrue(logged("drop zone lake (Alpha/Lake): no road or building foot"), "zone sans case au journal")
+    assertTrue(logged("drop zone lake (Alpha/Lake): no open ground in 60 draws"), "zone sans case au journal")
 end
 
-function T.building_foot_is_used_inside_the_zone_only()
+--- ZombRand qui rend, dans l'ordre, les valeurs données (bornées à n - 1),
+--- puis 0.
+local function rolls(values)
+    local i = 0
+    ZombRand = function(n)
+        i = i + 1
+        return math.min(values[i] or 0, n - 1)
+    end
+end
+
+function T.zone_without_road_or_building_gets_a_point_on_open_ground()
     placement(2)
-    BUILDINGS = { { x = 1010, y = 210, w = 10, h = 10 } }
+    ROADS, BUILDINGS = {}, {}
+    zonesFile({ zone("z1", "Alpha", "Field", 1000, 200, 1099, 299) })
+    assertEq(table.concat(MilitaryDrop.ZonesFile.zones()[1].warnings, ","), "", "plus d'avertissement risk")
+    assertEq(#MilitaryDrop.ZonesFile.report().problems, 0, "aucun problème du fichier")
+    -- Tirages de la case (ZombRand(99) : côté de 100 cases moins un) : 40 puis
+    -- 60 ; tout autre tirage (zone, code, confiance) rend 0.
+    local function fieldRolls()
+        local i = 0
+        ZombRand = function(n)
+            if n ~= 99 then
+                return 0
+            end
+            i = i + 1
+            return i == 1 and 40 or 60
+        end
+    end
+    fieldRolls()
+    local x, y, info = choose()
+    assertEq(x .. "," .. y, "1041,261", "case tirée dans le champ")
+    assertEq(info.zoneId, "z1", "zone")
+    -- Livraison : la caisse se pose sur la terre ferme de la zone.
+    fieldRolls()
+    call()
+    fly()
+    LOADED = function() return true end
+    triggerEvent("LoadChunk")
+    assertEq(#PLACED, 2, "caisses posées au chargement")
+    assertEq(PLACED[1].x .. "," .. PLACED[1].y, "1041,261", "au point tiré, sans route ni bâtiment")
+end
+
+function T.building_squares_are_never_drawn()
+    placement(2)
+    BUILDINGS = { { x = 1000, y = 200, w = 20, h = 31 } }
     zonesFile({ zone("z1", "Alpha", "Block", 1000, 200, 1030, 230) })
+    -- 1er tirage dans le bâtiment, 2e : caisse à cheval sur son mur est
+    -- (x - 1 = 1019), 3e : dehors.
+    -- Premier ZombRand : tirage de la zone (Zones.drawZone).
+    rolls({ 0, 5, 5, 19, 5, 25, 5 })
     local x, y = choose()
-    assertEq(x .. "," .. y, "1015,222", "au sud du bâtiment, dans la zone")
-    BUILDINGS = { { x = 1000, y = 200, w = 30, h = 30 } }
+    assertEq(x .. "," .. y, "1026,206", "caisse 2×2 entièrement hors du bâtiment")
+    BUILDINGS = { { x = 990, y = 190, w = 60, h = 60 } }
     zonesFile({ zone("z1", "Alpha", "Block", 1000, 200, 1030, 230) })
-    assertEq(choose(), nil, "pieds du bâtiment hors de la zone : aucun point")
+    assertEq(table.concat(MilitaryDrop.ZonesFile.zones()[1].warnings, ","), "noGround",
+        "zone entièrement bâtie signalée")
+    ZombRand = function(n) return n - 1 end
+    assertEq(choose(), nil, "zone entièrement bâtie : aucun point")
+    assertEq(call().status, "noSite", "refus, délai non consommé")
+    assertEq(#PLACED, 0, "aucune caisse dans un bâtiment")
 end
 
 -- ----------------------------------------------------------------------------
@@ -495,14 +579,13 @@ end
 
 function T.half_water_zone_never_gets_a_crate_in_water()
     placement(2)
-    -- Zone x 5000-5099 ; l'ouest (x < 5050) est un lac. La route tirée longe
-    -- la rive : la caisse posée sur la case tirée toucherait l'eau.
-    ROADS = { { x = 5049, y = 200, w = 4, h = 100 } }
+    -- Zone x 5000-5099 ; l'ouest (x < 5050) est un lac que la métagrille ne
+    -- connaît pas (cellule jamais approchée) : le point tiré tombe dans l'eau.
     zonesFile({ zone("z1", "Shore", "Shore", 5000, 200, 5099, 299) })
     WATER = function(x) return x < 5050 end
     call()
     local flight = fly()
-    assertEq(flight.tx, 5049.5, "point tiré sur la route de la rive (zone non chargée)")
+    assertEq(flight.tx, 5001.5, "point tiré sur le lac (eau inconnue, zone non chargée)")
     assertEq(#PLACED, 0, "rien avant le chargement de la zone")
     LOADED = function() return true end
     triggerEvent("LoadChunk")
@@ -513,15 +596,53 @@ function T.half_water_zone_never_gets_a_crate_in_water()
     end
 end
 
+function T.half_water_zone_known_to_the_metagrid_is_drawn_on_dry_ground()
+    placement(2)
+    -- Même rive, lac connu de la métagrille (zone « Water » au grain du chunk).
+    KNOWN_WATER = { { x = 4992, y = 200, w = 56, h = 100 } }
+    zonesFile({ zone("z1", "Shore", "Shore", 5000, 200, 5099, 299) })
+    WATER = function(x) return x < 5048 end
+    local seed = 0
+    ZombRand = function(n)
+        seed = seed + 13
+        return seed % n
+    end
+    for _ = 1, 10 do
+        local x, y = choose()
+        assertTrue(x ~= nil and x - 1 >= 5048 and inside(x, y, 5001, 201, 5099, 299),
+            "caisse sur la partie sèche : " .. tostring(x))
+    end
+end
+
 function T.zone_entirely_on_water_answers_no_site()
     placement(2)
     ROADS = {}
+    KNOWN_WATER = { { x = 4992, y = 192, w = 120, h = 120 } }
     zonesFile({ zone("z1", "Lake", "Lake", 5000, 200, 5099, 299) })
+    assertEq(table.concat(MilitaryDrop.ZonesFile.zones()[1].warnings, ","), "noGround", "lac connu signalé")
     WATER = function() return true end
     local reply = call()
     assertEq(reply.status, "noSite", "aucune case : refus")
     assertEq(#flights(), 0, "aucun vol, ni ailleurs ni près du demandeur")
     assertEq(MilitaryDrop.Server.getState().lastDropHours, nil, "délai non consommé")
+end
+
+function T.zone_entirely_on_unknown_water_gets_no_crate()
+    placement(2)
+    -- Lac d'une cellule jamais approchée : le point est accepté, mais aucune
+    -- caisse n'est posée (ni dans l'eau, ni hors zone) ; la livraison attend.
+    zonesFile({ zone("z1", "Lake", "Lake", 5000, 200, 5099, 299) })
+    WATER = function(x, y) return inside(x, y, 4999, 199, 5100, 300) end
+    assertEq(call().status, "accepted", "eau inconnue au tirage")
+    fly()
+    LOADED = function() return true end
+    triggerEvent("LoadChunk")
+    assertEq(#PLACED, 0, "aucune caisse dans l'eau ni hors zone")
+    local waiting = 0
+    for _ in pairs(MilitaryDrop.Server.getState().pending or {}) do
+        waiting = waiting + 1
+    end
+    assertEq(waiting, 1, "livraison en attente")
 end
 
 function T.delivery_waits_rather_than_leaving_the_zone()
@@ -681,7 +802,7 @@ end
 function T.decoy_sector_without_landing_point_answers_no_site()
     SandboxVars.MilitaryDrop.RequisitionForm = true
     placement(2)
-    ROADS = { { x = 1020, y = 0, w = 4, h = 1000 } }
+    KNOWN_WATER = { { x = 2992, y = 192, w = 64, h = 64 } }
     zonesFile({
         zone("z1", "Alpha", "Alpha Park", 1000, 200, 1050, 250),
         zone("z2", "Bravo", "Bravo Lake", 3000, 200, 3050, 250),
@@ -699,6 +820,7 @@ function T.single_decoy_sector_without_landing_point_says_so()
     SandboxVars.MilitaryDrop.RequisitionForm = true
     placement(2)
     ROADS = {}
+    KNOWN_WATER = { { x = 2992, y = 192, w = 64, h = 64 } }
     zonesFile({ zone("z2", "Bravo", "Bravo Lake", 3000, 200, 3050, 250) })
     local form = call()
     assertEq(table.concat(form.decoy.sectors, ","), "Bravo", "un seul secteur")
@@ -726,14 +848,14 @@ function T.announcement_and_reminder_name_the_zone()
             dropped = dropped or line
         end
     end
-    assertEq(dropped.text, "IGUI_MilitaryDrop_BroadcastDroppedZone|Alpha Park|1020|200", "nom puis grille")
+    assertEq(dropped.text, "IGUI_MilitaryDrop_BroadcastDroppedZone|Alpha Park|1001|201", "nom puis grille")
     local announce
     for _, sent in ipairs(BROADCAST) do
         if sent.command == "DropAnnounce" then
             announce = sent.args
         end
     end
-    assertEq(announce.x .. "," .. announce.y, "1020,200", "repère : grille seule")
+    assertEq(announce.x .. "," .. announce.y, "1001,201", "repère : grille seule")
     local public = MilitaryDrop.Server.getState()
     local function walk(t)
         for k, v in pairs(t) do
@@ -747,7 +869,7 @@ function T.announcement_and_reminder_name_the_zone()
     assertEq(MilitaryDrop.Secrets.privateState().drops[flight.dropId].zone.name, "Alpha Park", "état privé")
     AIRING, BROADCAST = nil, {}
     assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 6), 1, "rappel")
-    assertEq(AIRING.lines[1].text, "IGUI_MilitaryDrop_BroadcastPendingZone|Alpha Park|1020|200", "rappel nommé")
+    assertEq(AIRING.lines[1].text, "IGUI_MilitaryDrop_BroadcastPendingZone|Alpha Park|1001|201", "rappel nommé")
     assertEq(BROADCAST[1].args.grids[1].zoneName, nil, "nom jamais envoyé à tous les clients")
     SandboxVars.MilitaryDrop.DropZoneAnnounceName = false
     AIRING = nil

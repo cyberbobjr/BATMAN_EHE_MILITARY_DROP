@@ -173,7 +173,8 @@ The coordinates above are examples: read yours in game, or draw the zones with t
 
 - **Expected map**: a zone whose map is not loaded in the current save is ignored, with a line in `console.txt`. The tool shows it as "map not loaded". When the file has no `map`, the tool writes the map of the current save at its first change.
 - Only data is read, never code. A syntax error disables **every** zone (see [Fallback](#fallback)); the line number is written to `console.txt`. An invalid zone is skipped (`zone #3 (z3): ...`). 200 zones at most.
-- On each load the server checks every zone and writes its warnings to `console.txt` and to the tool's list: **no road** (crates land next to buildings only), **no road nor building** (no crate can land there: the map data does not know water), **overlaps a non-PvP zone** or **a safehouse** (no crate in that part), **outside the map**, **map not loaded**.
+- The crate lands **anywhere inside the rectangle**: grass, field, beach, path, road, parking lot. Never inside a building, never in water. A zone needs no road.
+- On each load the server checks every zone. Its remarks are shown on the zone's line in the tool's list and written to `console.txt` as plain notes (`note:`), not as file problems: **no open ground** (buildings everywhere, or water that the map data already knows: no crate can land there), **overlaps a non-PvP zone** or **a safehouse** (no crate in that part), **outside the map**, **map not loaded**. The red "problems" section of the list only shows real errors of `dropzones.txt` (syntax error, invalid zone skipped, unknown field).
 
 Reload without restarting: the **Reload** button of the tool, or from an admin's debug console: `sendClientCommand(getPlayer(), "MilitaryDrop", "ZoneReload", {})`.
 
@@ -234,7 +235,7 @@ With **Zones if one is near**, a call far from every zone simply falls near the 
 
 ### What the mod never does
 
-- **A crate in water.** The map data does not know water, so the point is always a road or the foot of a building inside the zone, never any square of the rectangle. At delivery, the four squares under the crate are checked again.
+- **A crate in water or inside a building.** The point is drawn anywhere in the zone, away from buildings and from the water the map data knows. The map data only knows the water of areas players have already approached in this save: a point drawn over an unknown lake is possible. At delivery, once the area is loaded, the four squares under the crate are checked again (outdoors, free, no water, no vehicle) and the crate moves to the nearest suitable square of the zone.
 - **A crate outside its zone.** If no square of the drawn zone fits, the server tries another zone of the same sector, then answers the caller "no safe drop zone": the drop does not leave and the form stays open. At delivery, the crate is placed only on a dry, free square inside the zone; otherwise the delivery waits.
 - **A crate in a non-PvP zone or a safehouse**, even one created after the zone.
 - **Sending the list of zones to players.**
@@ -242,7 +243,7 @@ With **Zones if one is near**, a call far from every zone simply falls near the 
 ### Limits
 
 - Rectangles on ground level only, 300 tiles on a side at most, 200 zones in all.
-- A zone drawn over a lake or the Ohio, or with no road nor building, can give no drop at all ("no safe drop zone"), never a crate in water. Check the warnings in the list.
+- A zone drawn over a lake or the Ohio gives no crate in water: "no safe drop zone" if the map data already knows that water (warning **no open ground**), otherwise the drop is announced but its crate waits for a dry square of the zone and never lands. Do not draw zones on water.
 - Vanilla towns are known for the vanilla map only. On a mod map, draw your own zones.
 - With a single sector and many players, the zone becomes a regular meeting point: that is intended on a PvP server, to be balanced with **Hours between drops**.
 - In zone mode, everyone already knows where to look, so a decoy is less of a surprise. It still looks like a real drop until its siren is heard or its crate opened.

@@ -1,8 +1,10 @@
 -- MilitaryDrop_ZonesFile : fichier des zones de largage (idée 11, ZONE-02 et
 -- ZONE-08) — création avec notice et aucune zone, erreur de syntaxe citée
 -- par sa ligne (aucune zone), zone invalide écartée avec son numéro, carte
--- non chargée, diagnostic (route, bâtiments, zone à risque, hors carte,
--- chevauchement non-PvP ou refuge), réécriture fidèle et nouvel id ;
+-- non chargée, diagnostic (bâtiments, terrain libre : zone entièrement
+-- bâtie ou sur l'eau connue → noGround, plus de risk ni de noRoad ; hors
+-- carte, chevauchement non-PvP ou refuge) rangé en notes du journal et
+-- jamais dans les problèmes du fichier, réécriture fidèle et nouvel id ;
 -- relecture avant toute modification de l'outil, refus d'une réécriture qui
 -- perdrait des données (champ de premier niveau, liste à clés ou à trou,
 -- table dans une zone, nombre non fini) ou dépasserait le lecteur, carte
@@ -42,7 +44,8 @@ local function buildingDef(b)
     return b.def
 end
 
---- Métagrille simulée : ROADS et BUILDINGS ({ x, y, w, h }), carte GRID,
+--- Métagrille simulée : ROADS, BUILDINGS et eau connue KNOWN_WATER
+--- ({ x, y, w, h }), carte GRID,
 --- cellules absentes MISSING_CELLS["cx,cy"].
 local function makeGrid()
     return {
@@ -69,13 +72,15 @@ local function makeGrid()
         end,
         getZonesIntersecting = function(_, x, y, _z, w, h)
             local found = {}
-            for _, r in ipairs(ROADS) do
-                if intersects(r, x, y, w, h) then
-                    found[#found + 1] = {
-                        getType = function() return "Nav" end, isRectangle = function() return true end,
-                        getX = function() return r.x end, getY = function() return r.y end,
-                        getWidth = function() return r.w end, getHeight = function() return r.h end,
-                    }
+            for kind, rects in pairs({ Nav = ROADS, Water = KNOWN_WATER }) do
+                for _, r in ipairs(rects) do
+                    if intersects(r, x, y, w, h) then
+                        found[#found + 1] = {
+                            getType = function() return kind end, isRectangle = function() return true end,
+                            getX = function() return r.x end, getY = function() return r.y end,
+                            getWidth = function() return r.w end, getHeight = function() return r.h end,
+                        }
+                    end
                 end
             end
             return javaList(found)
@@ -100,7 +105,7 @@ function T.setup()
     MAP = "Muldraugh, KY"
     GRID = { x1 = 0, y1 = 0, x2 = 20000, y2 = 20000 }
     MISSING_CELLS = {}
-    ROADS, BUILDINGS = {}, {}
+    ROADS, BUILDINGS, KNOWN_WATER = {}, {}, {}
     -- Zones non-PvP (bord haut exclu) et refuges ({ x, y, w, h }).
     NONPVP, SAFEHOUSES = {}, {}
     local grid = makeGrid()
@@ -249,7 +254,8 @@ function T.zones_of_a_map_not_loaded_are_ignored()
     }, "Muldraugh, KY;RavenCreek")
     local report = ZF.load()
     assertEq(report.mapLoaded, false, "carte du fichier absente")
-    assertTrue(hasProblem(report, "map RavenCreek is not loaded"), "avertissement")
+    assertTrue(not hasProblem(report, "map RavenCreek is not loaded"), "pas une erreur du fichier")
+    assertTrue(logged("note: map RavenCreek is not loaded"), "note au journal")
     assertEq(report.zones[1].active, false, "zone ignorée")
     assertEq(codes(report.zones[1]), "mapNotLoaded", "code")
     assertEq(report.zones[2].active, true, "map de la zone prioritaire")
@@ -259,23 +265,33 @@ function T.zones_of_a_map_not_loaded_are_ignored()
     assertEq(#ZF.activeZones(), 2, "carte chargée : les deux sont utilisables")
 end
 
-function T.diagnosis_flags_roads_buildings_and_risk()
-    ROADS = { { x = 100, y = 100, w = 4, h = 50 } }
-    BUILDINGS = { { x = 300, y = 300, w = 10, h = 10 } }
+function T.diagnosis_flags_only_zones_without_open_ground()
+    BUILDINGS = { { x = 300, y = 300, w = 10, h = 10 }, { x = 700, y = 700, w = 40, h = 40 } }
+    KNOWN_WATER = { { x = 896, y = 896, w = 120, h = 120 } }
     writeFile({
-        '{ id = "road", sector = "S", name = "Road", x1 = 90, y1 = 90, x2 = 120, y2 = 110 }',
+        '{ id = "field", sector = "S", name = "Field", x1 = 90, y1 = 90, x2 = 120, y2 = 110 }',
         '{ id = "town", sector = "S", name = "Houses", x1 = 290, y1 = 290, x2 = 330, y2 = 330 }',
-        '{ id = "lake", sector = "S", name = "Lake", x1 = 500, y1 = 500, x2 = 600, y2 = 600 }',
+        '{ id = "mall", sector = "S", name = "Mall", x1 = 705, y1 = 705, x2 = 730, y2 = 730 }',
+        '{ id = "lake", sector = "S", name = "Lake", x1 = 900, y1 = 900, x2 = 1000, y2 = 1000 }',
+        '{ id = "shore", sector = "S", name = "Shore", x1 = 990, y1 = 900, x2 = 1100, y2 = 1000 }',
     })
     local report = ZF.load()
-    local road, town, lake = report.zones[1], report.zones[2], report.zones[3]
-    assertEq(codes(road), "", "route : rien à signaler")
-    assertEq(road.stats.roads, 4 * 11, "cases de route dans le rectangle seulement")
-    assertEq(road.stats.area, 31 * 21, "surface, coins compris")
-    assertEq(codes(town), "noRoad", "bâtiments sans route")
+    local field, town, mall, lake, shore = report.zones[1], report.zones[2], report.zones[3], report.zones[4],
+        report.zones[5]
+    assertEq(codes(field), "", "ni route ni bâtiment : plus d'avertissement")
+    assertEq(field.stats.area, 31 * 21, "surface, coins compris")
+    assertEq(field.stats.roads, nil, "plus de relevé des routes")
+    assertEq(codes(town), "", "bâtiment et terrain libre autour")
     assertEq(town.stats.buildings, 1, "un bâtiment")
-    assertEq(codes(lake), "risk", "ni route ni bâtiment : à risque")
-    assertTrue(hasProblem(report, "zone #3 (lake): warning risk"), "signalée au journal")
+    assertEq(codes(mall), "noGround", "entièrement bâtie")
+    assertEq(codes(lake), "noGround", "entièrement sur l'eau connue")
+    assertEq(codes(shore), "", "rive : terrain libre")
+    assertEq(#report.problems, 0, "constats sur des zones valides : aucun problème du fichier")
+    assertTrue(logged("note: zone #3 (mall): no open ground"), "note au journal")
+    assertTrue(not logged("warning"), "aucun « warning » au journal")
+    for _, code in ipairs({ "risk", "noRoad" }) do
+        assertTrue(not logged(code), "code retiré : " .. code)
+    end
 end
 
 function T.diagnosis_flags_off_map_non_pvp_and_safehouse()
@@ -292,6 +308,7 @@ function T.diagnosis_flags_off_map_non_pvp_and_safehouse()
     })
     local report = ZF.load()
     assertEq(codes(report.zones[1]), "offMap", "hors carte")
+    assertEq(#report.problems, 0, "diagnostic hors des problèmes du fichier")
     assertEq(codes(report.zones[2]), "nonPvp", "coin commun avec une zone non-PvP")
     assertEq(codes(report.zones[3]), "", "bord haut de la zone non-PvP exclu (NonPvpZone.java:70-77)")
     assertEq(codes(report.zones[4]), "safehouse", "refuge recoupé")

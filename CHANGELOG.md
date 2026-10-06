@@ -15,8 +15,9 @@ Not published yet. This heading has no version number, so it is not read as a ch
 - The radio announcement and its reminders name the zone: "LZ Central Park, grid ...". An option turns this off.
 - In zone mode, the siren decoy falls in a zone too: the requisition form offers the sectors instead of N, E, S and W.
 - Admin drops (Force a supply drop) ignore drop zones: they still fall near the admin, whatever the placement, and the decoy of the admin form keeps N, E, S and W.
-- A crate never lands in water or outside its zone. A zone with no usable spot gives no drop, and the caller is asked to try again. Zones overlapping a non-PvP zone or a safehouse are refused by the tool and never get a crate in the protected part.
+- In a zone, the crate can land anywhere: grass, field, beach, path, road, parking lot. It never lands inside a building, in water or outside its zone; a zone needs no road. A zone with no usable spot gives no drop, and the caller is asked to try again. Zones overlapping a non-PvP zone or a safehouse are refused by the tool and never get a crate in the protected part.
 - Without any usable zone, drops use the vanilla towns (vanilla map only), then fall near the caller with a warning to the admins.
+- The zone tool shows its remarks (no open ground, overlap, map not loaded) on the zone's line only; the red "problems" section lists real errors of the file only.
 - New sandbox options: drop zone sector (nearest or random), minimum distance, range of "zones if one is near", zone name in the announcement.
 
 ## 0.2.0 — 2026-10-05

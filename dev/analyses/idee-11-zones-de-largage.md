@@ -95,6 +95,8 @@ Le largage forcé de l'admin (APPEL-05) n'est pas concerné.
    Le contrôle ne sort jamais de la zone.
 
    **Règle absolue : jamais dans l'eau.** La métagrille ne connaît pas l'eau. Le tirage ne retient donc que des routes `Nav` ou le pied d'un bâtiment, jamais une case quelconque du rectangle. La livraison n'a lieu que sur une case chargée dont les quatre cases couvertes par la caisse sont hors de l'eau. **[C]** `Server.isFreeSquare` refuse `isWaterSquare()`, et `landingSquareAt` contrôle les cases x-1..x et y-1..y (`MilitaryDrop_Server.lua:257-271`). Le repli au sol (`findOpenGroundNear`) refuse aussi l'eau (`:318`). Si aucune case sèche ne se trouve dans la zone, la caisse n'est **pas** posée : le serveur tire une autre zone du secteur, puis répond `noSite` (2.8).
+
+   > **Règle remplacée le 2026-10-06** (décision de l'utilisateur après test en jeu : « les drops peuvent tomber partout, sauf dans l'eau et dans les bâtiments ») : en zone, la case est tirée n'importe où dans le rectangle, hors bâtiment et hors de l'eau connue de la métagrille (zones « Water » des cellules déjà approchées) ; la livraison reste le contrôle sûr de l'eau. Plus d'avertissement `risk` ni `noRoad` ; le mode proximité garde route ou pied de bâtiment. Voir `dev/SUIVI.md` (2026-10-06).
 4. **Distance minimale** : `DropZoneMinDistance`, 0 par défaut. Une valeur positive exclut les zones trop proches du demandeur, ce qui empêche d'appeler depuis l'intérieur d'une zone pour se servir aussitôt. Si toutes les zones sont exclues, le serveur revient au secteur le plus proche.
 5. **Contrôle PvP** : une case dans une zone non-PvP ou un refuge est refusée.
 6. **Leurre** (décision du 2026-10-05) : en mode zones, le leurre tombe dans une zone, comme un vrai largage.

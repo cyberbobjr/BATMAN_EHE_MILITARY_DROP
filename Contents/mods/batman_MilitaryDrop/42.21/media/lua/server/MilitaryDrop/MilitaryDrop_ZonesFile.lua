@@ -29,18 +29,37 @@
 -- un fichier trop long = aucune zone (repli : villes vanilla, puis
 -- proximité) ; une zone invalide est écartée (« zone #3 (z3): … ») ; au plus
 -- MAX_ZONES zones. Chaque problème part au journal ([MilitaryDrop], toujours)
--- et dans le rapport (liste de l'outil d'admin).
+-- et dans le rapport (liste de l'outil d'admin, en-tête des problèmes du
+-- fichier). Les constats sur une zone VALIDE (carte non chargée, codes du
+-- diagnostic ci-dessous) ne sont pas des problèmes du fichier (retour de
+-- l'utilisateur, 2026-10-06 : l'en-tête rouge laissait croire à une erreur à
+-- chaque création) : ligne « note: » au journal et codes sur la ligne de la
+-- zone dans l'outil (zone.warnings), jamais dans report.problems.
 --
--- Diagnostic (ZONE-08), au chargement et à chaque création : surface, cases
--- de route « Nav » dans le rectangle, bâtiments, présence sur la carte
--- (métagrille), chevauchement d'une zone non-PvP (NonPvpZone.getAllZones,
--- exposée : LuaManager.java:2461) ou d'un refuge (SafeHouse, exposée :
--- LuaManager.java:2053). Les deux listes sont lues de map_meta.bin par
--- IsoMetaGrid.load (IsoMetaGrid.java:1064-1075), appelé par IsoWorld.init
--- (IsoWorld.java:1952) avant OnServerStarted (GameServer.java:1461) et
--- OnGameStart (IngameState.java:849). Codes : offMap, mapNotLoaded, noRoad
--- (bâtiments seulement), risk (ni route ni bâtiment : la métagrille ne
--- connaît pas l'eau), nonPvp, safehouse.
+-- Diagnostic (ZONE-08), au chargement et à chaque création : surface,
+-- bâtiments, présence sur la carte (métagrille), terrain libre, chevauchement
+-- d'une zone non-PvP (NonPvpZone.getAllZones, exposée : LuaManager.java:2461)
+-- ou d'un refuge (SafeHouse, exposée : LuaManager.java:2053). Les deux listes
+-- sont lues de map_meta.bin par IsoMetaGrid.load (IsoMetaGrid.java:1064-1075),
+-- appelé par IsoWorld.init (IsoWorld.java:1952) avant OnServerStarted
+-- (GameServer.java:1461) et OnGameStart (IngameState.java:849). Codes :
+-- offMap, mapNotLoaded, noGround (aucune case échantillonnée hors bâtiment et
+-- hors de l'eau connue : ZonesFile.hasOpenGround), nonPvp, safehouse. Les
+-- anciens codes noRoad et risk (zone sans route) ont disparu le 2026-10-06 :
+-- la caisse tombe n'importe où dans la zone hors bâtiment et hors de l'eau
+-- (MilitaryDrop_Zones.lua, Zones.pointInZone), une route n'est plus utile.
+--
+-- Eau d'une case non chargée : la métagrille ne la connaît qu'en partie. La
+-- génération des zones de cueillette (ZoneGenerator.genForaging,
+-- ZoneGenerator.java:59-138), lancée au premier chargement d'un chunk d'une
+-- cellule (IsoChunk.java:2219-2221 ; serveur : ServerChunkLoader.java:153),
+-- inscrit pour TOUTE la cellule (256 × 256) des zones rectangulaires
+-- « Water » au grain du chunk (8 × 8 : un chunk dont un pixel de la
+-- biomemap est de l'eau, BiomeMapConfig.lua pixel 0), sauvegardées dans
+-- map_zone.bin (IsoMetaGrid.java:1451-1454, 1711-1722). Une cellule jamais
+-- approchée par un joueur de cette partie n'en a aucune : eau inconnue, la
+-- livraison reste le seul contrôle sûr. La biomemap elle-même (BiomeMap,
+-- int[]) et IsoWaterFlow ne sont pas exposées à Lua (LuaManager.java).
 --
 -- Écriture (outil d'admin, MilitaryDrop_Zones.lua : ZoneAdd, ZoneUpdate,
 -- ZoneSetEnabled, ZoneDelete) : le serveur RELIT le
@@ -79,7 +98,11 @@ ZonesFile.MAX_MAP = 512
 -- Garde-fou des coordonnées lues (la carte vanilla tient sous 20 000).
 ZonesFile.MAX_COORD = 1000000
 ZonesFile.CELL_SIZE = 256
-ZonesFile.ROAD_ZONE = "Nav"
+-- Types des zones d'eau de la métagrille (BiomeMapConfig.lua : « Water » ;
+-- « WaterNoFish » y est en commentaire, gardé si une carte l'active).
+ZonesFile.WATER_ZONES = { Water = true, WaterNoFish = true }
+-- Échantillons par côté au plus pour le diagnostic noGround (24 × 24).
+ZonesFile.GROUND_SAMPLES = 24
 -- Ordre d'écriture des champs d'une zone.
 ZonesFile.FIELDS = { "id", "sector", "name", "x1", "y1", "x2", "y2", "weight", "enabled", "map" }
 
@@ -292,28 +315,70 @@ function ZonesFile.isOnGrid(grid, rect)
     return true
 end
 
---- Parties des routes « Nav » rectangulaires dans le rectangle (coins
---- compris) : { { x1, y1, x2, y2, area }, … }. Une zone de la métagrille
---- n'est rendue qu'une fois (IsoMetaChunk.getZonesIntersecting :
+--- Zone de la métagrille d'un type d'eau (WATER_ZONES).
+function ZonesFile.isWaterZone(zone)
+    return zone ~= nil and ZonesFile.WATER_ZONES[zone:getType()] == true
+end
+
+--- La case (x, y) est de l'eau connue de la métagrille (zone « Water » de la
+--- biomemap, voir l'en-tête) ; faux si l'eau de sa cellule est inconnue.
+--- IsoMetaGrid.getZonesAt(x, y, z) : IsoMetaGrid.java:210-220.
+function ZonesFile.isKnownWater(grid, x, y)
+    local zones = grid:getZonesAt(x, y, 0)
+    for i = 0, zones:size() - 1 do
+        if ZonesFile.isWaterZone(zones:get(i)) then
+            return true
+        end
+    end
+    return false
+end
+
+--- Rectangles d'eau connue qui recoupent rect : { { x1, y1, x2, y2 }, … }
+--- (zones rectangulaires seules, comme celles de genForaging). Une zone de la
+--- métagrille n'est rendue qu'une fois (IsoMetaChunk.getZonesIntersecting :
 --- result.contains, IsoMetaChunk.java:213-218).
-function ZonesFile.roadRects(grid, rect)
+function ZonesFile.waterRects(grid, rect)
     local w, h = rect.x2 - rect.x1 + 1, rect.y2 - rect.y1 + 1
     local zones = grid:getZonesIntersecting(rect.x1, rect.y1, 0, w, h)
     local list = {}
     for i = 0, zones:size() - 1 do
         local zone = zones:get(i)
-        if zone:getType() == ZonesFile.ROAD_ZONE and zone:isRectangle() and zone:getWidth() > 0
-            and zone:getHeight() > 0 then
-            local x1 = math.max(rect.x1, zone:getX())
-            local y1 = math.max(rect.y1, zone:getY())
-            local x2 = math.min(rect.x2, zone:getX() + zone:getWidth() - 1)
-            local y2 = math.min(rect.y2, zone:getY() + zone:getHeight() - 1)
-            if x1 <= x2 and y1 <= y2 then
-                list[#list + 1] = { x1 = x1, y1 = y1, x2 = x2, y2 = y2, area = (x2 - x1 + 1) * (y2 - y1 + 1) }
-            end
+        if ZonesFile.isWaterZone(zone) and zone:isRectangle() and zone:getWidth() > 0 and zone:getHeight() > 0 then
+            list[#list + 1] = { x1 = zone:getX(), y1 = zone:getY(), x2 = zone:getX() + zone:getWidth() - 1,
+                y2 = zone:getY() + zone:getHeight() - 1 }
         end
     end
     return list
+end
+
+--- Le rectangle a au moins une case échantillonnée hors bâtiment (emprise du
+--- BuildingDef, comme IsoMetaGrid.getBuildingAt(x, y),
+--- IsoMetaGrid.java:262-269) et hors de l'eau connue. Échantillons : une case
+--- sur step (au plus GROUND_SAMPLES par côté), arrêt au premier terrain libre.
+--- buildings : ZonesFile.buildingsIn(grid, rect).
+function ZonesFile.hasOpenGround(grid, rect, buildings)
+    local covers = ZonesFile.waterRects(grid, rect)
+    for _, b in ipairs(buildings) do
+        local bx, by = b:getX(), b:getY()
+        covers[#covers + 1] = { x1 = bx, y1 = by, x2 = bx + b:getW() - 1, y2 = by + b:getH() - 1 }
+    end
+    local w, h = rect.x2 - rect.x1 + 1, rect.y2 - rect.y1 + 1
+    local step = math.max(1, math.ceil(math.max(w, h) / ZonesFile.GROUND_SAMPLES))
+    for y = rect.y1, rect.y2, step do
+        for x = rect.x1, rect.x2, step do
+            local covered = false
+            for _, c in ipairs(covers) do
+                if x >= c.x1 and x <= c.x2 and y >= c.y1 and y <= c.y2 then
+                    covered = true
+                    break
+                end
+            end
+            if not covered then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 --- Bâtiments (BuildingDef) qui recoupent le rectangle, hors sous-sols et
@@ -374,10 +439,10 @@ function ZonesFile.isProtected(x, y)
 end
 
 --- Diagnostic d'une zone (ZONE-08) : codes d'avertissement et relevé
---- { area, roads, buildings }. zone.mapLoaded == false : seul mapNotLoaded
---- (la métagrille est celle d'une autre carte).
+--- { area, buildings }. zone.mapLoaded == false : seul mapNotLoaded (la
+--- métagrille est celle d'une autre carte).
 function ZonesFile.diagnose(zone)
-    local stats = { area = (zone.x2 - zone.x1 + 1) * (zone.y2 - zone.y1 + 1), roads = 0, buildings = 0 }
+    local stats = { area = (zone.x2 - zone.x1 + 1) * (zone.y2 - zone.y1 + 1), buildings = 0 }
     if zone.mapLoaded == false then
         return { "mapNotLoaded" }, stats
     end
@@ -386,12 +451,10 @@ function ZonesFile.diagnose(zone)
     if not ZonesFile.isOnGrid(grid, zone) then
         warnings[#warnings + 1] = "offMap"
     end
-    for _, road in ipairs(ZonesFile.roadRects(grid, zone)) do
-        stats.roads = stats.roads + road.area
-    end
-    stats.buildings = #ZonesFile.buildingsIn(grid, zone)
-    if stats.roads == 0 then
-        warnings[#warnings + 1] = stats.buildings == 0 and "risk" or "noRoad"
+    local buildings = ZonesFile.buildingsIn(grid, zone)
+    stats.buildings = #buildings
+    if not ZonesFile.hasOpenGround(grid, zone, buildings) then
+        warnings[#warnings + 1] = "noGround"
     end
     if ZonesFile.overlapsNonPvp(zone) then
         warnings[#warnings + 1] = "nonPvp"
@@ -404,8 +467,7 @@ end
 
 local WARNING_TEXTS = {
     offMap = "partly or wholly off the map",
-    noRoad = "no road: crates land next to buildings only",
-    risk = "no road and no building: no crate can land there (water is unknown to the map data)",
+    noGround = "no open ground: buildings or known water everywhere, no crate can land there",
     nonPvp = "overlaps a non-PvP zone: no crate lands in that part",
     safehouse = "overlaps a safehouse: no crate lands in that part",
 }
@@ -415,10 +477,15 @@ local WARNING_TEXTS = {
 -- ----------------------------------------------------------------------------
 
 --- Rapport d'une table lue : { zones (valides, ordre du fichier, avec
---- index, mapLoaded, active, warnings, stats), problems, map, mapLoaded }.
+--- index, mapLoaded, active, warnings, stats), problems, notes, map,
+--- mapLoaded }. problems : vraies erreurs du fichier (syntaxe, champ
+--- inconnu, zone invalide écartée…), montrées à l'admin sous l'en-tête des
+--- problèmes du fichier. notes : constats sur des zones valides (carte non
+--- chargée, diagnostic ZONE-08), au journal seulement, à titre d'information ;
+--- l'outil les montre sur la ligne de chaque zone (zone.warnings).
 function ZonesFile.build(data)
-    local report = { zones = {}, problems = {}, map = nil, mapLoaded = true }
-    local problems = report.problems
+    local report = { zones = {}, problems = {}, notes = {}, map = nil, mapLoaded = true }
+    local problems, notes = report.problems, report.notes
     if type(data) ~= "table" then
         problems[1] = "the file must contain one table: no drop zone"
         return report
@@ -436,8 +503,8 @@ function ZonesFile.build(data)
         report.mapLoaded = #missing == 0
         if not report.mapLoaded then
             local _, loaded = ZonesFile.loadedMaps()
-            problems[#problems + 1] = "map " .. table.concat(missing, ";") .. " is not loaded in this save"
-                .. " (loaded: " .. table.concat(loaded, ";") .. "): its zones are ignored"
+            notes[#notes + 1] = "map " .. table.concat(missing, ";") .. " is not loaded in this save"
+                .. " (loaded: " .. table.concat(loaded, ";") .. "): its zones are not used"
         end
     end
     local zones = data.zones
@@ -476,12 +543,12 @@ function ZonesFile.build(data)
             zone.warnings, zone.stats = ZonesFile.diagnose(zone)
             if not zone.mapLoaded then
                 if zone.map then
-                    problems[#problems + 1] = where .. ": map " .. table.concat(missing, ";")
-                        .. " is not loaded: zone ignored"
+                    notes[#notes + 1] = where .. ": map " .. table.concat(missing, ";")
+                        .. " is not loaded: zone not used"
                 end
             else
                 for _, code in ipairs(zone.warnings) do
-                    problems[#problems + 1] = where .. ": warning " .. code .. ", " .. WARNING_TEXTS[code]
+                    notes[#notes + 1] = where .. ": " .. WARNING_TEXTS[code] .. " (" .. code .. ")"
                 end
             end
             report.zones[#report.zones + 1] = zone
@@ -665,10 +732,12 @@ ZonesFile.NOTICE = [[
 --   weight   1 to 100, default 1.
 --   enabled  true or false, default true.
 --   map      optional: replaces the top-level map for this zone.
--- The crate lands on a road or next to a building inside the rectangle:
--- never in water, never outside. A zone with neither road nor building gives
--- no drop. A zone overlapping a non-PvP zone or a safehouse is reported, and
--- no crate lands in the protected part.
+-- The crate lands anywhere inside the rectangle (grass, field, sand, path,
+-- road, parking lot...), never inside a building, never in water, never
+-- outside. Water is checked when the area is loaded: a crate drawn over
+-- water lands on the nearest dry ground of the zone, and a zone entirely on
+-- water gives no crate. A zone overlapping a non-PvP zone or a safehouse is
+-- reported, and no crate lands in the protected part.
 --
 -- Example (remove the leading "--" of each line inside "zones = { }"):
 --   zones = {
@@ -764,6 +833,9 @@ function ZonesFile.load()
     report.activeCount = active
     for _, line in ipairs(report.problems) do
         MilitaryDrop.log(ZonesFile.PATH .. ": " .. line, true)
+    end
+    for _, line in ipairs(report.notes or {}) do
+        MilitaryDrop.log(ZonesFile.PATH .. ": note: " .. line, true)
     end
     MilitaryDrop.log("drop zones: " .. #report.zones .. " (" .. active .. " active) from " .. source
         .. ", " .. #report.problems .. " problem(s)", true)

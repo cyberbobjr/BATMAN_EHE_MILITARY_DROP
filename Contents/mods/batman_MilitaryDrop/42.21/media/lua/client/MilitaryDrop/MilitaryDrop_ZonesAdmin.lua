@@ -90,7 +90,7 @@ ZonesAdmin.ERRORS = {
     unknownZone = true, writeFailed = true, syntaxError = true,
 }
 ZonesAdmin.WARNINGS = {
-    noRoad = true, risk = true, nonPvp = true, safehouse = true, offMap = true, mapNotLoaded = true,
+    noGround = true, nonPvp = true, safehouse = true, offMap = true, mapNotLoaded = true,
 }
 ZonesAdmin.ACTIONS = { add = true, update = true, enable = true, delete = true, reload = true }
 

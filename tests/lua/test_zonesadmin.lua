@@ -1081,11 +1081,11 @@ function T.drag_trace_sends_a_normalized_zone_add()
     assertEq(type(add.args.requestId), "number", "numéro de requête")
     frame()
     assertEq(e.submitBtn.enable, false, "attente de la réponse : pas de double envoi")
-    zoneReply({ ok = true, action = "add", id = "z3", warnings = { "noRoad" }, requestId = add.args.requestId })
+    zoneReply({ ok = true, action = "add", id = "z3", warnings = { "noGround" }, requestId = add.args.requestId })
     assertEq(editor(), nil, "éditeur fermé")
     assertEq(window.visible, true, "liste de retour")
     assertEq(window.status.fitted,
-        "IGUI_MilitaryDrop_ZoneOk_add|z3 IGUI_MilitaryDrop_ZoneWarnings|IGUI_MilitaryDrop_ZoneWarn_noRoad",
+        "IGUI_MilitaryDrop_ZoneOk_add|z3 IGUI_MilitaryDrop_ZoneWarnings|IGUI_MilitaryDrop_ZoneWarn_noGround",
         "succès et avertissement traduits")
     local zones = { ZONES[1], ZONES[2], { id = "z3", sector = "Louisville", name = "Central Gate", x1 = 100,
         y1 = 80, x2 = 120, y2 = 95, weight = 3, enabled = true, active = true } }
@@ -1300,7 +1300,7 @@ function T.list_reply_is_cleaned_and_every_error_code_is_translated()
     listReply({
         zones = {
             { id = "z1", sector = "<RGB:1,0,0>Louisville", name = "Central\nPark", x1 = 20, y1 = 30, x2 = 10, y2 = 5,
-              weight = 2, enabled = true, active = true, warnings = { "risk" } },
+              weight = 2, enabled = true, active = true, warnings = { "noGround" } },
             { id = "z2", sector = "Louisville", name = string.rep("N", 50), x1 = 1, y1 = 1, x2 = 2, y2 = 2,
               enabled = false, active = false },
             { id = "bad", sector = "X", name = "Y" },

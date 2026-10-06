@@ -173,7 +173,8 @@ Les coordonnées ci-dessus sont des exemples : relevez les vôtres en jeu, ou tr
 
 - **Carte attendue** : une zone dont la carte n'est pas chargée dans la partie en cours est ignorée, avec une ligne dans `console.txt`. L'outil l'affiche « carte non chargée ». Quand le fichier n'a pas de `map`, l'outil y écrit la carte de la partie à sa première modification.
 - Seules des données sont lues, jamais du code. Une erreur de syntaxe désactive **toutes** les zones (voir [Repli](#repli)) ; le numéro de ligne est écrit dans `console.txt`. Une zone invalide est écartée (`zone #3 (z3): ...`). 200 zones au plus.
-- À chaque chargement, le serveur contrôle chaque zone et écrit ses avertissements dans `console.txt` et dans la liste de l'outil : **aucune route** (les caisses tombent seulement au pied des bâtiments), **ni route ni bâtiment** (aucune caisse ne peut y tomber : les données de la carte ne connaissent pas l'eau), **chevauche une zone non-PvP** ou **un refuge** (aucune caisse dans cette partie), **hors de la carte**, **carte non chargée**.
+- La caisse tombe **n'importe où dans le rectangle** : herbe, champ, plage, chemin, route, parking. Jamais dans un bâtiment, jamais dans l'eau. Une zone n'a pas besoin de route.
+- À chaque chargement, le serveur contrôle chaque zone. Ses remarques s'affichent sur la ligne de la zone dans la liste de l'outil et sont écrites dans `console.txt` comme simples notes (`note:`), pas comme des problèmes du fichier : **aucun terrain libre** (des bâtiments partout, ou de l'eau déjà connue des données de la carte : aucune caisse ne peut y tomber), **chevauche une zone non-PvP** ou **un refuge** (aucune caisse dans cette partie), **hors de la carte**, **carte non chargée**. La section rouge des « problèmes » de la liste ne montre que de vraies erreurs de `dropzones.txt` (erreur de syntaxe, zone invalide écartée, champ inconnu).
 
 Recharger sans redémarrer : le bouton **Rafraîchir** de l'outil, ou depuis la console de débogage d'un admin : `sendClientCommand(getPlayer(), "MilitaryDrop", "ZoneReload", {})`.
 
@@ -234,7 +235,7 @@ Avec **Zones si l'une est proche**, un appel loin de toute zone tombe simplement
 
 ### Ce que le mod ne fait jamais
 
-- **Une caisse dans l'eau.** Les données de la carte ne connaissent pas l'eau : le point est donc toujours une route ou le pied d'un bâtiment dans la zone, jamais une case quelconque du rectangle. À la livraison, les quatre cases sous la caisse sont revérifiées.
+- **Une caisse dans l'eau ou dans un bâtiment.** Le point est tiré n'importe où dans la zone, hors des bâtiments et de l'eau que connaissent les données de la carte. Celles-ci ne connaissent que l'eau des endroits déjà approchés par les joueurs dans cette partie : un point tiré sur un lac inconnu reste possible. À la livraison, une fois la zone chargée, les quatre cases sous la caisse sont revérifiées (extérieures, libres, sans eau ni véhicule) et la caisse passe sur la case convenable la plus proche dans la zone.
 - **Une caisse hors de sa zone.** Si aucune case de la zone tirée ne convient, le serveur essaie une autre zone du même secteur, puis répond à l'appelant « aucune zone de largage sûre » : le largage ne part pas et le formulaire reste ouvert. À la livraison, la caisse n'est posée que sur une case sèche et libre de la zone ; sinon la livraison attend.
 - **Une caisse dans une zone non-PvP ou un refuge**, même créé après la zone.
 - **Envoyer la liste des zones aux joueurs.**
@@ -242,7 +243,7 @@ Avec **Zones si l'une est proche**, un appel loin de toute zone tombe simplement
 ### Limites
 
 - Rectangles au rez-de-chaussée seulement, 300 cases de côté au plus, 200 zones en tout.
-- Une zone tracée sur un lac ou sur l'Ohio, ou sans route ni bâtiment, peut ne donner aucun largage (« aucune zone de largage sûre »), jamais une caisse dans l'eau. Vérifiez les avertissements de la liste.
+- Une zone tracée sur un lac ou sur l'Ohio ne donne jamais de caisse dans l'eau : « aucune zone de largage sûre » si les données de la carte connaissent déjà cette eau (avertissement **aucun terrain libre**), sinon le largage est annoncé mais sa caisse attend une case sèche de la zone et ne tombe jamais. Ne tracez pas de zone sur l'eau.
 - Les villes vanilla ne sont connues que pour la carte vanilla. Sur une carte de mod, tracez vos propres zones.
 - Avec un seul secteur et beaucoup de joueurs, la zone devient un lieu de rendez-vous régulier : c'est voulu sur un serveur PvP, à équilibrer avec **Heures entre deux largages**.
 - En mode zones, tout le monde sait déjà où regarder : un leurre surprend moins. Il ressemble pourtant à un vrai largage jusqu'à ce qu'on entende sa sirène ou qu'on ouvre sa caisse.
