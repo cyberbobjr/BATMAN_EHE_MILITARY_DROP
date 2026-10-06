@@ -3,9 +3,7 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
-## Unreleased
-
-Not published yet. This heading has no version number, so it is not read as a change note: give it a version and a date, and the same `modversion=` in `mod.info`, at the next release.
+## 0.3.1 — 2026-10-06
 
 ### Mayday: the order is lost in a crash
 
