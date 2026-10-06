@@ -42,9 +42,13 @@
 -- deviendraient faux sans que rien ne les retire (zone changée par un autre
 -- admin, droit perdu).
 -- Retour de l'éditeur : la zone ajoutée ou modifiée n'est resélectionnée
--- par la liste suivante (pendingSelect) qu'après un succès, seul cas où une
--- ZoneListReply suit à coup sûr ; l'annulation la sélectionne tout de suite,
--- et un changement de sélection par l'admin efface pendingSelect.
+-- par les listes suivantes (pendingSelect) qu'après un succès, seul cas où
+-- une ZoneListReply suit à coup sûr ; l'attente dure jusqu'à une liste qui
+-- contient la zone ou jusqu'à la liste de l'envoi (même requestId) : une
+-- liste d'une autre demande arrivée entre-temps, sans la zone (MP : ordre
+-- d'arrivée non garanti), ne la consomme pas. L'annulation la sélectionne
+-- tout de suite, et un changement de sélection par l'admin efface
+-- pendingSelect.
 -- Mort du joueur (OnPlayerDeath, ou personnage mort ou remplacé vu dans
 -- prerender) : liste et éditeur fermés ; les actions visent toujours le
 -- personnage courant (ZonesAdmin.livePlayer), jamais l'IsoPlayer gardé.
@@ -357,8 +361,12 @@ end
 --- en attente n'est plus resélectionnée.
 function ZW:dropPendingIfMoved()
     if self.pendingSelect and self.list.selected ~= self.pendingFrom then
-        self.pendingSelect, self.pendingFrom = nil, nil
+        self:clearPending()
     end
+end
+
+function ZW:clearPending()
+    self.pendingSelect, self.pendingFrom, self.pendingRequestId = nil, nil, nil
 end
 
 --- Boutons selon la sélection et les droits.
@@ -389,10 +397,24 @@ function ZW:selectZone(id)
     end
 end
 
-function ZW:refresh(list)
+--- Liste reçue (requestId : numéro de la commande qui l'a demandée, ou nil).
+--- La zone en attente est sélectionnée si la liste la contient ; l'attente
+--- est levée alors, ou par la liste de l'envoi, sinon gardée.
+function ZW:refresh(list, requestId)
     self:dropPendingIfMoved()
-    local keep = self.pendingSelect or (self:selectedZone() and self:selectedZone().id)
-    self.pendingSelect, self.pendingFrom = nil, nil
+    local pending = self.pendingSelect
+    local found = false
+    for _, zone in ipairs(pending and list.zones or {}) do
+        if zone.id == pending then
+            found = true
+            break
+        end
+    end
+    local current = self:selectedZone() and self:selectedZone().id
+    local keep = found and pending or current
+    if found or (pending and requestId ~= nil and requestId == self.pendingRequestId) then
+        self:clearPending()
+    end
     self.data = list
     self:fitHeader()
     self.list:clear()
@@ -401,6 +423,10 @@ function ZW:refresh(list)
         self.list:addItem(row.lines[1], row)
     end
     self:selectZone(keep)
+    if self.pendingSelect then
+        -- Toujours attendue : repère de sélection dans la liste refaite.
+        self.pendingFrom = self.list.selected
+    end
     if self.list.selected > 0 then
         self.list:ensureVisible(self.list.selected)
     end
@@ -589,7 +615,7 @@ function ZW:moveSelection(step)
             i = 1
         end
         if items[i] and items[i].item.kind == "zone" then
-            self.pendingSelect, self.pendingFrom = nil, nil
+            self:clearPending()
             self.list.selected = i
             self.list:ensureVisible(i)
             return
@@ -673,9 +699,9 @@ function Window.open(player)
     return window
 end
 
-function Window.refresh(list)
+function Window.refresh(list, requestId)
     if Window.instance then
-        Window.instance:refresh(list)
+        Window.instance:refresh(list, requestId)
     end
 end
 
@@ -693,22 +719,24 @@ function Window.hide()
 end
 
 --- Retour de l'éditeur : liste de nouveau visible, zoneId sélectionné.
---- ok vrai (succès : une ZoneListReply suit) : zoneId (zone ajoutée ou
---- modifiée, peut-être absente de la liste affichée) est aussi resélectionné
---- par cette liste, sauf si l'admin change de sélection d'ici là. Sinon
+--- ok vrai (succès : une ZoneListReply suit, numéro requestId) : zoneId
+--- (zone ajoutée ou modifiée, peut-être absente de la liste affichée) est
+--- aussi resélectionné par la première liste qui la contient (au plus tard
+--- celle de requestId), sauf si l'admin change de sélection d'ici là. Sinon
 --- (annulation : aucune liste ne suit) rien n'est mis en attente.
-function Window.show(zoneId, statusText, ok)
+function Window.show(zoneId, statusText, ok, requestId)
     local window = Window.instance
     if not window then
         return
     end
     window:setVisible(true)
     window:bringToTop()
-    window.pendingSelect, window.pendingFrom = nil, nil
+    window:clearPending()
     if zoneId then
         window:selectZone(zoneId)
         if ok == true then
             window.pendingSelect, window.pendingFrom = zoneId, window.list.selected
+            window.pendingRequestId = requestId
         end
     end
     if statusText then

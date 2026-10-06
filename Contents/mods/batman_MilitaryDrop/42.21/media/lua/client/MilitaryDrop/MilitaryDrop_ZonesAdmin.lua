@@ -11,9 +11,12 @@
 -- de server/MilitaryDrop/MilitaryDrop_Zones.lua). Chaque commande porte un
 -- numéro (requestId, croissant, commun à toutes les commandes du client)
 -- renvoyé par le serveur dans ZoneReply et ZoneListReply : l'éditeur ne
--- traite que la réponse à son envoi ; le serveur traitant les commandes
--- d'un client dans l'ordre, une réponse de numéro supérieur prouve que les
--- précédentes ont été traitées (ou perdues). Les réponses ne sont
+-- traite que la ZoneReply de son envoi. L'ordre d'arrivée ne prouve rien :
+-- en MP, commandes et réponses partent en paquets ClientCommand RELIABLE
+-- non ordonnés (PacketTypes.java:492, fiabilité 2) ; en solo, Net.toServer
+-- appelle le serveur, dont les réponses (Net.toPlayer) arrivent PENDANT
+-- l'envoi, avant son retour : l'attente se déclare donc avant l'envoi
+-- (rappel onSending de send, avec le numéro). Les réponses ne sont
 -- montrées que dans les fenêtres de l'admin (jamais par Say : une bulle
 -- serait vue des joueurs proches).
 -- Droit affiché ici : capacité ChangeAndReloadServerOptions sur un client MP,
@@ -203,12 +206,17 @@ function ZonesAdmin.levelOf(player)
     return player and math.floor(player:getZ()) or 0
 end
 
---- Envoi d'une commande numérotée ; renvoie son requestId.
-local function send(player, command, args)
+--- Envoi d'une commande numérotée ; renvoie son requestId. onSending
+--- (facultatif) reçoit le numéro AVANT l'envoi : en solo, la réponse est
+--- traitée pendant Net.toServer (voir l'en-tête), avant que send ne rende.
+local function send(player, command, args, onSending)
     local requestId = ZonesAdmin.nextRequestId
     ZonesAdmin.nextRequestId = requestId >= ZonesAdmin.MAX_REQUEST_ID and 1 or requestId + 1
     args.requestId = requestId
     ZonesAdmin.lastPlayerNum = player:getPlayerNum()
+    if onSending then
+        onSending(requestId)
+    end
     Net.toServer(player, command, args)
     return requestId
 end
@@ -329,17 +337,14 @@ function ZonesAdmin.normalizeList(args)
     return list
 end
 
---- ZoneListReply : d'abord à l'éditeur qui attend une réponse perdue
---- (ZoneEditor.onListReply), puis à la liste.
+--- ZoneListReply : à la liste, avec son numéro (zone à resélectionner après
+--- un succès, ZonesWindow). Jamais à l'éditeur : une liste ne dit pas si
+--- son envoi a été accepté, et son ordre d'arrivée ne prouve rien.
 function ZonesAdmin.onListReply(args)
     ZonesAdmin.list = ZonesAdmin.normalizeList(args)
-    local Editor = MilitaryDrop.ZoneEditor
-    if Editor and Editor.onListReply then
-        Editor.onListReply(args.requestId)
-    end
     local Window = MilitaryDrop.ZonesWindow
     if Window and Window.refresh then
-        Window.refresh(ZonesAdmin.list)
+        Window.refresh(ZonesAdmin.list, args.requestId)
     end
 end
 
@@ -361,7 +366,8 @@ end
 
 --- ZoneReply : d'abord à l'éditeur ouvert s'il en attendait ce numéro
 --- (ajout, modification), sinon à la liste. La liste suit (ZoneListReply),
---- sauf après un refus « denied » ou « busy ».
+--- sauf après un refus « denied » ou « busy » ; en solo, les deux arrivent
+--- pendant l'envoi.
 function ZonesAdmin.onReply(args)
     local text = ZonesAdmin.replyText(args)
     local ok = args.ok == true
@@ -399,12 +405,13 @@ function ZonesAdmin.delete(player, id)
     return send(player, "ZoneDelete", { id = id })
 end
 
-function ZonesAdmin.add(player, args)
-    return send(player, "ZoneAdd", args)
+--- Ajout et modification (éditeur) : onSending(requestId) avant l'envoi.
+function ZonesAdmin.add(player, args, onSending)
+    return send(player, "ZoneAdd", args, onSending)
 end
 
-function ZonesAdmin.update(player, args)
-    return send(player, "ZoneUpdate", args)
+function ZonesAdmin.update(player, args, onSending)
+    return send(player, "ZoneUpdate", args, onSending)
 end
 
 --- Téléportation d'admin au centre de la zone : commande vanilla /teleportto

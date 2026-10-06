@@ -5,6 +5,8 @@
 -- normalisé, ZoneUpdate des seuls champs modifiés, rectangle trop grand
 -- refusé, réponses du serveur, manette, aucun menu du monde ; réponses
 -- identifiées par requestId, envoi jamais réactivé par un simple délai,
+-- solo synchrone (réponses pendant l'envoi) et MP asynchrone (listes
+-- d'autres demandes dans un ordre quelconque, jamais prises pour un refus),
 -- sélection de retour de l'éditeur, mort du joueur, étage du tracé, couche
 -- recalée sur l'écran ; surbrillance au sol (case « Surbrillance », pourtour
 -- des zones chargées, couleurs, effacement exact, chunks chargés ensuite,
@@ -1547,45 +1549,319 @@ function T.add_is_never_resent_after_a_timeout_until_the_server_answers()
     local e = filledAdd(window)
     e.submitBtn:forceClick()
     local add = lastSent()
+    local sent = #SENT
     NOW = NOW + MilitaryDrop.ZoneEditor.REPLY_TIMEOUT_MS + 1
     DRAWN = {}
     frame()
-    local refresh = lastSent()
-    assertEq(refresh.command, "ZoneList", "délai dépassé : liste redemandée")
-    assertTrue(refresh.args.requestId > add.args.requestId, "numéro postérieur à l'ajout")
+    assertEq(#SENT, sent, "délai dépassé : rien de renvoyé (ni ajout, ni liste)")
     assertEq(e.submitBtn.enable, false, "ajout toujours bloqué")
     assertTrue(drawnText("IGUI_MilitaryDrop_ZoneWaiting"), "« en attente du serveur »")
-    local sent = #SENT
-    frame()
-    assertEq(#SENT, sent, "une demande par délai")
-    -- Liste d'une commande antérieure : ne prouve rien, toujours bloqué.
-    listAfter(add.args.requestId - 1)
-    frame()
-    assertEq(e.submitBtn.enable, false, "liste antérieure : toujours bloqué")
+    assertEq(e.cancelBtn.enable ~= false, true, "annulation toujours possible")
     e:onSubmit()
     assertEq(#SENT, sent, "aucun second ZoneAdd, même au clic forcé")
+    -- Listes d'autres demandes, antérieures ou postérieures : en MP, les
+    -- commandes partent en RELIABLE non ordonné (PacketTypes.java:492,
+    -- fiabilité 2) ; leur ordre d'arrivée ne prouve rien.
+    listAfter(add.args.requestId - 1)
+    listAfter(add.args.requestId + 1)
+    NOW = NOW + MilitaryDrop.ZoneEditor.REPLY_TIMEOUT_MS + 1
+    frame()
+    assertTrue(e:isWaiting(), "toujours en attente de sa réponse")
+    assertEq(e.serverStatus, nil, "aucun refus déduit de l'ordre des listes")
+    assertEq(e.submitBtn.enable, false, "toujours bloqué")
     -- Réponse en retard : traitée normalement.
     zoneReply({ ok = true, action = "add", id = "z3", requestId = add.args.requestId })
     assertEq(editor(), nil, "réponse tardive : éditeur fermé")
     assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_add|z3", "succès affiché")
-    -- Réponse perdue : la liste de numéro supérieur débloque l'envoi.
-    e = filledAdd(window)
+end
+
+-- ----------------------------------------------------------------------------
+-- Solo synchrone et MP asynchrone
+-- ----------------------------------------------------------------------------
+
+local SERVER_ACTIONS = { ZoneAdd = "add", ZoneUpdate = "update", ZoneSetEnabled = "enable", ZoneDelete = "delete",
+    ZoneReload = "reload" }
+
+--- Solo : isClient() faux, Net.toServer appelle tout de suite
+--- MilitaryDrop.Server.onClientCommand (MilitaryDrop_Net.lua:18-23), dont
+--- Net.toPlayer appelle tout de suite Client.onServerCommand (:27-32) : les
+--- réponses arrivent PENDANT l'envoi, avant son retour. Serveur simulé dans
+--- l'ordre de Zones.handleCommand (MilitaryDrop_Zones.lua:796-814) :
+--- ZoneList → ZoneListReply ; action → ZoneReply puis ZoneListReply du même
+--- numéro ; refus « denied » ou « busy » → ZoneReply seule.
+--- SOLO.answer(command, args) : { ok, id, error, warnings } ; SOLO.zones :
+--- zones de la liste ; SOLO.log : réponses dans leur ordre d'envoi ;
+--- SOLO.depth : envois en cours (réponse reçue pendant l'envoi si > 0).
+local function soloServer()
+    CLIENT, DEBUG = false, true
+    SOLO = { zones = ZONES, answer = function() return { ok = true } end, log = {}, depth = 0 }
+    local Net = MilitaryDrop.Net
+    local function reply(player, command, args)
+        SOLO.log[#SOLO.log + 1] = command .. " " .. tostring(args.requestId) .. " " .. tostring(args.ok)
+            .. (SOLO.depth > 0 and " pendant l'envoi" or "")
+        Net.toPlayer(player, command, args)
+    end
+    MilitaryDrop.Server = { onClientCommand = function(module, command, player, args)
+        SENT[#SENT + 1] = { module = module, command = command, args = args }
+        SOLO.depth = SOLO.depth + 1
+        local function sendList()
+            reply(player, "ZoneListReply", { zones = SOLO.zones, sectors = { "Riverside" }, map = "Muldraugh, KY",
+                mapLoaded = true, placement = 2, requestId = args.requestId })
+        end
+        if command == "ZoneList" then
+            sendList()
+        else
+            local result = SOLO.answer(command, args)
+            result.action, result.requestId = SERVER_ACTIONS[command], args.requestId
+            reply(player, "ZoneReply", result)
+            if result.error ~= "denied" and result.error ~= "busy" then
+                sendList()
+            end
+        end
+        SOLO.depth = SOLO.depth - 1
+    end }
+end
+
+--- Liste ouverte en solo (Window.open : la liste arrive pendant la demande).
+local function soloWindow()
+    soloServer()
+    local window = MilitaryDrop.ZonesWindow.open(PLAYER)
+    assertEq(#window.list.items > 0, true, "liste reçue pendant la demande")
+    return window
+end
+
+local Z3 = { id = "z3", sector = "Riverside", name = "Gate", x1 = 100, y1 = 80, x2 = 120, y2 = 95, weight = 1,
+    enabled = true, active = true }
+
+local function noGenericRefusal()
+    for _, text in ipairs(DRAWN) do
+        assertTrue(not tostring(text):find("ZoneErr_other", 1, true), "aucun refus générique dessiné")
+    end
+end
+
+function T.solo_add_answered_during_the_send_closes_the_editor_and_selects_the_zone()
+    local window = soloWindow()
+    local e = filledAdd(window)
+    SOLO.answer = function(command)
+        assertEq(command, "ZoneAdd", "ZoneAdd")
+        SOLO.zones = { ZONES[1], ZONES[2], Z3 }
+        return { ok = true, id = "z3", warnings = {} }
+    end
+    SOLO.log = {}
     e.submitBtn:forceClick()
-    add = lastSent()
-    assertEq(add.command, "ZoneAdd", "second ajout")
-    NOW = NOW + MilitaryDrop.ZoneEditor.REPLY_TIMEOUT_MS + 1
+    local add = SENT[#SENT]
+    assertEq(table.concat(SOLO.log, ", "), "ZoneReply " .. add.args.requestId .. " true pendant l'envoi, "
+        .. "ZoneListReply " .. add.args.requestId .. " nil pendant l'envoi", "solo : réponses pendant l'envoi")
+    assertEq(editor(), nil, "succès : éditeur fermé")
+    assertEq(e.waiting, nil, "aucune attente laissée après le retour de l'envoi")
+    assertEq(e.serverStatus, nil, "aucun refus")
+    assertEq(window.visible, true, "liste de retour")
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_add|z3", "succès affiché dans la liste")
+    assertEq(window:selectedZone().id, "z3", "zone ajoutée sélectionnée")
+    assertEq(MilitaryDrop.ZoneEditor.lastSector, add.args.sector, "secteur retenu")
+    -- Plus rien ensuite : ni liste redemandée, ni refus après le délai.
+    local sent = #SENT
+    NOW = NOW + 3 * MilitaryDrop.ZoneEditor.REPLY_TIMEOUT_MS
+    DRAWN = {}
+    window:prerender()
+    ticks(3)
+    assertEq(#SENT, sent, "aucune demande après le succès")
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_add|z3", "succès toujours affiché")
+    noGenericRefusal()
+end
+
+function T.solo_update_answered_during_the_send_closes_the_editor_and_selects_the_zone()
+    local window = soloWindow()
+    selectZone(window, "z2")
+    window:prerender()
+    selectZone(window, "z1")
+    window.editBtn:forceClick()
+    local e = editor()
+    e.nameEntry:setText("North Docks")
     frame()
-    refresh = lastSent()
-    assertTrue(refresh.args.requestId > add.args.requestId, "liste demandée après l'ajout")
-    NOW = NOW + MilitaryDrop.ZoneEditor.REPLY_TIMEOUT_MS + 1
+    SOLO.answer = function(command, args)
+        assertEq(command, "ZoneUpdate", "ZoneUpdate")
+        assertEq(args.name, "North Docks", "nom changé")
+        local z1 = {}
+        for k, v in pairs(ZONES[1]) do z1[k] = v end
+        z1.name = "North Docks"
+        SOLO.zones = { z1, ZONES[2] }
+        return { ok = true, id = "z1" }
+    end
+    e.submitBtn:forceClick()
+    assertEq(editor(), nil, "succès : éditeur fermé")
+    assertEq(e.serverStatus, nil, "aucun refus")
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_update|z1", "succès affiché")
+    assertEq(window:selectedZone().id, "z1", "zone modifiée sélectionnée")
+    assertEq(window:selectedZone().name, "North Docks", "liste à jour")
+end
+
+function T.solo_refusal_answered_during_the_send_is_shown_with_its_code()
+    local window = soloWindow()
+    local e = filledAdd(window)
+    -- Refus suivi de la liste (contrôle du serveur), puis refus seul (busy).
+    SOLO.answer = function() return { ok = false, error = "overlapNonPvp" } end
+    e.submitBtn:forceClick()
+    assertEq(editor(), e, "refus : éditeur ouvert")
+    assertEq(e.serverStatus.text, "IGUI_MilitaryDrop_ZoneErr_overlapNonPvp", "code du refus affiché")
+    assertEq(e:isWaiting(), false, "aucune attente laissée")
     frame()
-    assertEq(lastSent().command, "ZoneList", "nouvelle demande au délai suivant")
-    assertEq(e.submitBtn.enable, false, "toujours bloqué")
-    listAfter(refresh.args.requestId)
-    assertEq(e:isWaiting(), false, "serveur passé au-delà de l'ajout : attente levée")
-    assertEq(e.serverStatus.text, "IGUI_MilitaryDrop_ZoneErr_other", "refus générique affiché")
+    assertEq(e.submitBtn.enable, true, "nouvel essai possible")
+    SOLO.answer = function() return { ok = false, error = "busy" } end
+    e.submitBtn:forceClick()
+    assertEq(e.serverStatus.text, "IGUI_MilitaryDrop_ZoneErr_busy", "refus « busy » sans liste")
+    assertEq(e:isWaiting(), false, "aucune attente laissée")
+    -- Le refus reste affiché au-delà du délai, sans demande ni autre message.
+    local sent = #SENT
+    NOW = NOW + 3 * MilitaryDrop.ZoneEditor.REPLY_TIMEOUT_MS
+    DRAWN = {}
     frame()
-    assertEq(e.submitBtn.enable, true, "nouvel envoi possible")
+    assertEq(#SENT, sent, "aucune demande")
+    assertTrue(drawnText("IGUI_MilitaryDrop_ZoneErr_busy"), "refus toujours affiché")
+    noGenericRefusal()
+    -- Puis un succès.
+    SOLO.answer = function()
+        SOLO.zones = { ZONES[1], ZONES[2], Z3 }
+        return { ok = true, id = "z3" }
+    end
+    e.submitBtn:forceClick()
+    assertEq(editor(), nil, "succès après refus : éditeur fermé")
+    assertEq(window:selectedZone().id, "z3", "zone ajoutée sélectionnée")
+end
+
+function T.solo_list_of_another_request_inside_the_reply_keeps_the_success()
+    local window = soloWindow()
+    local e = filledAdd(window)
+    -- Une autre demande de liste (fenêtre, minuterie) part pendant le
+    -- traitement de la réponse : en solo, sa liste (numéro supérieur) arrive
+    -- avant celle de l'ajout.
+    local Window = MilitaryDrop.ZonesWindow
+    local show = Window.show
+    Window.show = function(...)
+        show(...)
+        MilitaryDrop.ZonesAdmin.requestList(PLAYER)
+    end
+    SOLO.answer = function()
+        SOLO.zones = { ZONES[1], ZONES[2], Z3 }
+        return { ok = true, id = "z3" }
+    end
+    SOLO.log = {}
+    e.submitBtn:forceClick()
+    Window.show = show
+    local add = SENT[#SENT - 1]
+    assertEq(add.command, "ZoneAdd", "ajout puis liste")
+    local other = SENT[#SENT].args.requestId
+    assertTrue(other > add.args.requestId, "liste de numéro supérieur")
+    assertEq(table.concat(SOLO.log, ", "), "ZoneReply " .. add.args.requestId .. " true pendant l'envoi, "
+        .. "ZoneListReply " .. other .. " nil pendant l'envoi, ZoneListReply " .. add.args.requestId
+        .. " nil pendant l'envoi", "liste d'une autre demande entre la réponse et la liste de l'ajout")
+    assertEq(editor(), nil, "éditeur fermé")
+    assertEq(e.serverStatus, nil, "aucun refus")
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_add|z3", "succès affiché")
+    assertEq(window:selectedZone().id, "z3", "zone ajoutée sélectionnée")
+end
+
+function T.solo_list_actions_answered_during_the_send_update_status_and_list()
+    local window = soloWindow()
+    selectZone(window, "z2")
+    window:prerender()
+    -- Activer : réponse et liste pendant l'envoi.
+    SOLO.answer = function(command, args)
+        assertEq(command, "ZoneSetEnabled", "activer")
+        local z2 = {}
+        for k, v in pairs(ZONES[2]) do z2[k] = v end
+        z2.enabled, z2.active = args.enabled, args.enabled
+        SOLO.zones = { ZONES[1], z2 }
+        return { ok = true, id = "z2" }
+    end
+    window.toggleBtn:forceClick()
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_enable|z2", "activation affichée")
+    assertEq(window:selectedZone().id, "z2", "zone gardée sélectionnée")
+    assertEq(window:selectedZone().enabled, true, "liste à jour")
+    assertEq(window.status.ok, true, "succès")
+    -- Retirer.
+    SOLO.answer = function(command, args)
+        assertEq(command, "ZoneDelete", "retirer")
+        assertEq(args.id, "z2", "zone choisie")
+        SOLO.zones = { ZONES[1] }
+        return { ok = true, id = "z2" }
+    end
+    window.removeBtn:forceClick()
+    MODALS[#MODALS]:answer("YES")
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_delete|z2", "retrait affiché")
+    assertEq(window:selectedZone().id, "z1", "zone restante sélectionnée")
+    -- Recharger.
+    SOLO.answer = function(command)
+        assertEq(command, "ZoneReload", "recharger")
+        return { ok = true }
+    end
+    window.reloadBtn:forceClick()
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_reload|", "rechargement affiché")
+    -- Refus réel : son code.
+    SOLO.answer = function() return { ok = false, error = "syntaxError" } end
+    window.reloadBtn:forceClick()
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneErr_syntaxError", "refus affiché avec son code")
+    assertEq(window.status.ok, false, "refus")
+    SOLO.answer = function() return { ok = false, error = "busy" } end
+    window.toggleBtn:forceClick()
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneErr_busy", "refus « busy »")
+end
+
+function T.mp_add_success_whatever_the_arrival_order_of_other_lists()
+    local window = openWindow()
+    local e = filledAdd(window)
+    e.submitBtn:forceClick()
+    local add = lastSent()
+    assertTrue(e:isWaiting(), "MP : attente de la réponse")
+    -- Une autre demande de liste part après l'ajout (fenêtre rouverte).
+    MilitaryDrop.ZonesAdmin.requestList(PLAYER)
+    local other = lastSent().args.requestId
+    assertTrue(other > add.args.requestId, "numéro supérieur")
+    -- Sa liste arrive avant la réponse de l'ajout (RELIABLE non ordonné),
+    -- sans la zone ajoutée, puis une liste plus ancienne.
+    listAfter(other)
+    listAfter(add.args.requestId - 1)
+    assertTrue(e:isWaiting(), "toujours en attente")
+    assertEq(e.serverStatus, nil, "aucun refus déduit de l'ordre d'arrivée")
+    -- Réponse de l'ajout, puis une liste sans la zone avant la sienne.
+    zoneReply({ ok = true, action = "add", id = "z3", requestId = add.args.requestId })
+    assertEq(editor(), nil, "succès : éditeur fermé")
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_add|z3", "succès affiché")
+    listAfter(other)
+    assertEq(window.pendingSelect, "z3", "liste sans la zone : sélection toujours attendue")
+    listAfter(add.args.requestId, { ZONES[1], ZONES[2], Z3 })
+    assertEq(window:selectedZone().id, "z3", "zone ajoutée sélectionnée par sa liste")
+    assertEq(window.pendingSelect, nil, "attente levée")
+end
+
+function T.mp_update_and_refusal_whatever_the_arrival_order_of_other_lists()
+    local window = openWindow()
+    selectZone(window, "z1")
+    window.editBtn:forceClick()
+    local e = editor()
+    e.nameEntry:setText("North Docks")
+    frame()
+    e.submitBtn:forceClick()
+    local update = lastSent()
+    MilitaryDrop.ZonesAdmin.requestList(PLAYER)
+    listAfter(lastSent().args.requestId)
+    assertTrue(e:isWaiting(), "liste d'une autre demande : toujours en attente")
+    zoneReply({ ok = false, action = "update", id = "z1", error = "overlapSafehouse",
+        requestId = update.args.requestId })
+    assertEq(e.serverStatus.text, "IGUI_MilitaryDrop_ZoneErr_overlapSafehouse", "vrai refus : son code")
+    listAfter(update.args.requestId)
+    assertEq(e.serverStatus.text, "IGUI_MilitaryDrop_ZoneErr_overlapSafehouse", "liste qui suit : refus gardé")
+    frame()
+    e.submitBtn:forceClick()
+    update = lastSent()
+    assertEq(update.command, "ZoneUpdate", "nouvel envoi")
+    MilitaryDrop.ZonesAdmin.requestList(PLAYER)
+    listAfter(lastSent().args.requestId)
+    zoneReply({ ok = true, action = "update", id = "z1", requestId = update.args.requestId })
+    assertEq(editor(), nil, "succès : éditeur fermé")
+    assertEq(window.status.fitted, "IGUI_MilitaryDrop_ZoneOk_update|z1", "succès affiché")
+    listAfter(update.args.requestId)
+    assertEq(window:selectedZone().id, "z1", "zone modifiée sélectionnée")
 end
 
 function T.player_death_closes_the_editor_and_the_list()

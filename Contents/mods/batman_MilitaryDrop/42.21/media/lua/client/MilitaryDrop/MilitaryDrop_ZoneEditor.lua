@@ -11,14 +11,18 @@
 -- surlignée, « Retracer » relance un tracé ; « Enregistrer » n'envoie que les
 -- champs changés (ZoneUpdate). La réponse du serveur ferme l'éditeur (succès,
 -- zone sélectionnée dans la liste) ou s'affiche dans l'éditeur (refus).
--- Seule la réponse portant le requestId de l'envoi est prise (jamais celle
--- d'une autre commande de même action). Sans réponse après
--- REPLY_TIMEOUT_MS, l'envoi reste bloqué (un ZoneAdd arrivé en retard
--- ajouterait sinon la zone deux fois) : l'éditeur redemande la liste
--- (« En attente du serveur... »), puis encore à chaque délai, jusqu'à sa
--- réponse ou une ZoneListReply de numéro supérieur, qui prouve que le
--- serveur a dépassé l'envoi sans y répondre (commandes d'un client traitées
--- dans l'ordre) : refus générique affiché, envoi de nouveau possible.
+-- Seule la ZoneReply portant le requestId de l'envoi est prise (jamais celle
+-- d'une autre commande de même action), et seule elle décide : succès ou
+-- refus avec son code. L'attente (self.waiting) est déclarée AVANT l'envoi
+-- (rappel onSending de ZonesAdmin.add/update) : en solo, Net.toServer
+-- appelle le serveur, dont la ZoneReply puis la ZoneListReply arrivent
+-- pendant l'envoi, avant son retour (MilitaryDrop_Net.lua). Les listes
+-- (ZoneListReply) ne concluent jamais à un refus : en MP, commandes et
+-- réponses partent en RELIABLE non ordonné (PacketTypes.java:492), leur
+-- ordre d'arrivée ne prouve rien. Sans réponse après REPLY_TIMEOUT_MS,
+-- l'envoi reste bloqué (un ZoneAdd arrivé en retard ajouterait sinon la
+-- zone deux fois) et l'éditeur affiche « En attente du serveur... » ;
+-- l'annulation reste possible (la liste montre alors l'état du serveur).
 --
 -- Mort du joueur ou personnage remplacé (prerender, et OnPlayerDeath dans
 -- MilitaryDrop_ZonesWindow.lua) : éditeur fermé, couche retirée ; les envois
@@ -84,8 +88,8 @@ MilitaryDrop.ZoneEditor = Editor
 Editor.PAD = 10
 Editor.MIN_WIDTH = 360
 Editor.ENTRY_WIDTH = 200
--- Réponse attendue en ce délai ; au-delà, la liste est redemandée (l'envoi
--- reste bloqué, voir l'en-tête).
+-- Réponse attendue en ce délai ; au-delà, « En attente du serveur... »
+-- (l'envoi reste bloqué, voir l'en-tête).
 Editor.REPLY_TIMEOUT_MS = 5000
 -- Dernier secteur validé (proposé au prochain ajout).
 Editor.lastSector = Editor.lastSector
@@ -317,17 +321,11 @@ function ZE:isWaiting()
     return self.waiting ~= nil
 end
 
---- Délai dépassé : liste redemandée (une fois par délai), envoi bloqué.
+--- Délai dépassé : « En attente du serveur... », envoi toujours bloqué.
 function ZE:checkWaiting()
     local waiting = self.waiting
-    if not waiting or getTimestampMs() < waiting.untilMs then
-        return
-    end
-    waiting.late = true
-    waiting.untilMs = getTimestampMs() + Editor.REPLY_TIMEOUT_MS
-    local player = ZonesAdmin.livePlayer(self.playerNum)
-    if player then
-        ZonesAdmin.requestList(player)
+    if waiting and not waiting.late and getTimestampMs() >= waiting.untilMs then
+        waiting.late = true
     end
 end
 
@@ -635,13 +633,18 @@ function ZE:onSubmit()
     self:unfocusEntries()
     self.serverStatus = nil
     self.sentSector = args.sector or (self.zone and self.zone.sector)
-    local requestId
-    if self.zone then
-        requestId = ZonesAdmin.update(player, args)
-    else
-        requestId = ZonesAdmin.add(player, args)
+    -- Attente déclarée avant l'envoi : en solo, la réponse arrive pendant
+    -- l'appel (éditeur déjà fermé ou refus affiché à son retour) ; rien
+    -- n'est donc touché après.
+    local untilMs = getTimestampMs() + Editor.REPLY_TIMEOUT_MS
+    local function onSending(requestId)
+        self.waiting = { requestId = requestId, untilMs = untilMs }
     end
-    self.waiting = { requestId = requestId, untilMs = getTimestampMs() + Editor.REPLY_TIMEOUT_MS }
+    if self.zone then
+        ZonesAdmin.update(player, args, onSending)
+    else
+        ZonesAdmin.add(player, args, onSending)
+    end
 end
 
 function ZE:onCancel()
@@ -664,22 +667,12 @@ function ZE:onReply(args, text)
         self:close()
         local Window = MilitaryDrop.ZonesWindow
         if Window and Window.show then
-            Window.show(ZonesAdmin.cleanText(args.id, 16), text, true)
+            Window.show(ZonesAdmin.cleanText(args.id, 16), text, true, args.requestId)
         end
     else
         self.serverStatus = { text = text, ok = false }
     end
     return true
-end
-
---- ZoneListReply de numéro supérieur à l'envoi en attente : le serveur l'a
---- dépassé sans y répondre ; refus générique, envoi de nouveau possible.
-function ZE:onListReply(requestId)
-    local waiting = self.waiting
-    if waiting and type(requestId) == "number" and requestId > waiting.requestId then
-        self.waiting = nil
-        self.serverStatus = { text = ZonesAdmin.errorText("other"), ok = false }
-    end
 end
 
 function ZE:isKeyConsumed(key)
@@ -855,13 +848,6 @@ end
 function Editor.onReply(args, text)
     local editor = Editor.instance
     return editor ~= nil and editor:onReply(args, text)
-end
-
---- ZoneListReply (son requestId) : réponse perdue de l'éditeur ouvert.
-function Editor.onListReply(requestId)
-    if Editor.instance then
-        Editor.instance:onListReply(requestId)
-    end
 end
 
 --- Fermeture de la liste : l'éditeur du même joueur se ferme aussi.
