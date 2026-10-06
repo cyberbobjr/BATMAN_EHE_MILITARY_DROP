@@ -98,7 +98,7 @@ Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, 
 | Chance par tir plausible (%) | `CrashGunfireChance` | 10 | Approche seulement, largages admin et leurres exclus. |
 | Effets au sol | `CrashFire` | Feu et fumée | Aucun / fumée / feu et fumée ; un seul foyer initial près du fuselage, règles d’incendie du jeu appliquées. Les sauvegardes conservent leur réglage existant. |
 | Durée de la fumée (minutes) | `CrashSmokeMinutes` | 60 | Minutes de jeu ; réémise pour les nouveaux arrivants. Aucun besoin de Signal Smoke. |
-| Ravitaillement au crash | `CrashCrates` | vrai | Livraison des caisses au site ; crash sans effet sur la réputation. |
+| Ravitaillement au crash | `CrashCrates` | faux | Désactivé : la commande est perdue avec l’appareil ; restent l’épave, le matériel récupérable, l’équipage, les documents, la horde et la fumée. Activé : caisses livrées au site. Crash sans effet sur la réputation dans les deux cas. Les sauvegardes conservent leur réglage existant. |
 | Objets par lot récupéré | `SalvageRolls` | 3 | Tirages parmi les catégories/tags du jeu et des mods. |
 | Tenues du cadavre | `PilotOutfits` | `Army` | Mots recherchés dans les noms de tenue, séparés par `;`. Les deux pilotes zombies supplémentaires portent leur combinaison de vol militaire dédiée. |
 | Documents du pilote | `PilotDocuments` | vrai | Note et carnet dans le corps ; l’enregistreur reste récupérable. |

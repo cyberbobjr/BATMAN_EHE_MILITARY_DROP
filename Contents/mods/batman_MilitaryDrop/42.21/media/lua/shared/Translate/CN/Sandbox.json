@@ -129,7 +129,7 @@
     "Sandbox_MilitaryDrop_CrashSmokeMinutes": "坠机烟雾（分钟）",
     "Sandbox_MilitaryDrop_CrashSmokeMinutes_tooltip": "为后来到达的玩家更新烟雾的游戏分钟数。0关闭烟雾。",
     "Sandbox_MilitaryDrop_CrashCrates": "补给在坠机后保留",
-    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "在坠机地点交付订购的补给；否则只留下可回收残骸。坠机不会降低声望。",
+    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "默认关闭。在坠机地点交付订购的补给；否则只留下可回收残骸。坠机不会降低声望。",
     "Sandbox_MilitaryDrop_SalvageRolls": "每个回收包的物品数",
     "Sandbox_MilitaryDrop_SalvageRolls_tooltip": "每包从游戏和模组随机获得的电子、机械或金属物品数。",
     "Sandbox_MilitaryDrop_PilotOutfits": "飞行员服装关键词",

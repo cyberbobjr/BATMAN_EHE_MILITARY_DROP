@@ -163,6 +163,36 @@ function T.supplies_and_fire_are_optional()
     assertEq(FIRES,0)
     assertEq(SMOKES,0)
 end
+function T.by_default_the_crash_site_has_no_supplies_but_everything_else()
+    -- Défaut du 2026-10-06 : CrashCrates faux, la commande est perdue avec l'appareil.
+    SandboxVars.MilitaryDrop.CrashCrates = nil
+    assertEq(MilitaryDrop.Config.get("CrashCrates"),false)
+    local site = MilitaryDrop.Wreck.add(FLIGHT)
+    assertEq(site.crates,false)
+    assertTrue(site.complete)
+    assertEq(DELIVERED,0)
+    assertEq(site.done.supplies,nil)
+    assertEq(#VEHICLES,2)
+    assertEq(#GROUND,3)
+    assertEq(BODIES,1)
+    assertTrue(#ADDED > 0, "documents et enregistreur sur le pilote")
+    assertEq(#PILOTS,2)
+    assertEq(HORDES,1)
+    assertEq(SMOKES,1)
+    assertEq(CLOSED,1)
+    MilitaryDrop.Wreck.update()
+    assertEq(DELIVERED,0)
+end
+function T.enabled_option_still_delivers_the_supplies_at_the_wreck()
+    SandboxVars.MilitaryDrop.CrashCrates = true
+    local site = MilitaryDrop.Wreck.add(FLIGHT)
+    assertEq(site.crates,true)
+    assertTrue(site.complete)
+    assertEq(site.done.supplies,"done")
+    assertEq(DELIVERED,1)
+    MilitaryDrop.Wreck.update()
+    assertEq(DELIVERED,1)
+end
 function T.failed_supply_delivery_is_retried_without_repeating_the_pilot_or_horde()
     DELIVERY_FAIL = true
     local site = MilitaryDrop.Wreck.add(FLIGHT)

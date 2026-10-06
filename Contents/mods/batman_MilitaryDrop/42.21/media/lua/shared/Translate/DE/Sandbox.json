@@ -129,7 +129,7 @@
     "Sandbox_MilitaryDrop_CrashSmokeMinutes": "Absturzrauch (Minuten)",
     "Sandbox_MilitaryDrop_CrashSmokeMinutes_tooltip": "Spielminuten, in denen Rauch für später eintreffende Spieler erneuert wird. 0 deaktiviert Rauch.",
     "Sandbox_MilitaryDrop_CrashCrates": "Vorräte überstehen den Absturz",
-    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Bestellte Vorräte werden am Absturzort geliefert; andernfalls bleibt nur Bergungsgut. Abstürze senken nie den Ruf.",
+    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Standardmäßig aus. Bestellte Vorräte werden am Absturzort geliefert; andernfalls bleibt nur Bergungsgut. Abstürze senken nie den Ruf.",
     "Sandbox_MilitaryDrop_SalvageRolls": "Gegenstände pro Bergungspaket",
     "Sandbox_MilitaryDrop_SalvageRolls_tooltip": "Zufällige Gegenstände aus Spiel und Mods pro Paket: Elektronik, Fahrzeugteile oder Metall.",
     "Sandbox_MilitaryDrop_PilotOutfits": "Schlüsselwörter der Pilotenuniform",

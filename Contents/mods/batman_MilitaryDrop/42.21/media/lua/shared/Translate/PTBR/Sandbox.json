@@ -129,7 +129,7 @@
     "Sandbox_MilitaryDrop_CrashSmokeMinutes": "Fumaça da queda (minutos)",
     "Sandbox_MilitaryDrop_CrashSmokeMinutes_tooltip": "Minutos de jogo durante os quais a fumaça é renovada para quem chega depois. 0 desativa a fumaça.",
     "Sandbox_MilitaryDrop_CrashCrates": "Suprimentos sobrevivem à queda",
-    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Entrega os suprimentos pedidos no local da queda; caso contrário resta apenas material recuperável. Uma queda nunca penaliza a reputação.",
+    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Desativado por padrão. Entrega os suprimentos pedidos no local da queda; caso contrário resta apenas material recuperável. Uma queda nunca penaliza a reputação.",
     "Sandbox_MilitaryDrop_SalvageRolls": "Objetos por lote recuperado",
     "Sandbox_MilitaryDrop_SalvageRolls_tooltip": "Objetos aleatórios do jogo e mods por lote aberto: eletrônica, mecânica ou metal.",
     "Sandbox_MilitaryDrop_PilotOutfits": "Palavras do uniforme do piloto",

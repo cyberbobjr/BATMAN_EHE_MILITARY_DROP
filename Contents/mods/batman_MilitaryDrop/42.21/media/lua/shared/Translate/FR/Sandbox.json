@@ -129,7 +129,7 @@
     "Sandbox_MilitaryDrop_CrashSmokeMinutes": "Fumée du crash (minutes)",
     "Sandbox_MilitaryDrop_CrashSmokeMinutes_tooltip": "Minutes de jeu pendant lesquelles la fumée est renouvelée pour les arrivants. 0 désactive la fumée.",
     "Sandbox_MilitaryDrop_CrashCrates": "Ravitaillement survivant au crash",
-    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Livre les fournitures commandées sur le site du crash ; sinon seule la récupération d’épave reste. Un crash ne pénalise jamais la réputation.",
+    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Désactivé par défaut. Livre les fournitures commandées sur le site du crash ; sinon seule la récupération d’épave reste. Un crash ne pénalise jamais la réputation.",
     "Sandbox_MilitaryDrop_SalvageRolls": "Objets par lot de récupération",
     "Sandbox_MilitaryDrop_SalvageRolls_tooltip": "Objets tirés dans le jeu et les mods par lot ouvert : électronique, mécanique ou métal.",
     "Sandbox_MilitaryDrop_PilotOutfits": "Mots des tenues du pilote",

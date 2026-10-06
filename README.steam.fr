@@ -46,7 +46,7 @@ Rejoignez la grille à 150–400 cases ; une horde garde la caisse. La caisse vi
 
 [h2]Quand un hélicoptère s'écrase[/h2]
 
-Un hélicoptère peut s'écraser, plus souvent par orage ; son MAYDAY donne un secteur. Le pilote porte une note, un carnet de codes et l'[b]enregistreur de vol[/b] ; démontez puis découpez l'épave. Le ravitaillement arrive quand même.
+Un hélicoptère peut s'écraser, plus souvent par orage ; son MAYDAY donne un secteur. Le pilote porte une note, un carnet de codes et l'[b]enregistreur de vol[/b] ; démontez puis découpez l'épave. La commande est perdue, sauf option du serveur.
 
 [h2]Gagner la confiance de la base[/h2]
 

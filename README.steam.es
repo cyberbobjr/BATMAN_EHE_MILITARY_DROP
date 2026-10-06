@@ -46,7 +46,7 @@ Alcanza la caja a 150–400 casillas; una horda la vigila. Las cajas vacías se 
 
 [h2]Cuando cae un helicóptero[/h2]
 
-Un helicóptero de suministros puede estrellarse, más a menudo con tormenta. Su MAYDAY da un sector. El piloto lleva un memorando, un libro de códigos y el [b]registrador de vuelo[/b]; recupera las piezas de los restos y luego desguázalos. Los suministros llegan igualmente.
+Un helicóptero de suministros puede estrellarse, más a menudo con tormenta. Su MAYDAY da un sector. El piloto lleva un memorando, un libro de códigos y el [b]registrador de vuelo[/b]; recupera las piezas de los restos y luego desguázalos. El pedido se pierde, salvo que el servidor lo permita.
 
 [h2]Gánate la confianza de la base[/h2]
 

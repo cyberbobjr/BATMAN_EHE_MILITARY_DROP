@@ -344,7 +344,7 @@ option MilitaryDrop.CrashSmokeMinutes
 
 option MilitaryDrop.CrashCrates
 {
-    type = boolean, default = true,
+    type = boolean, default = false,
     page = MilitaryDrop, translation = MilitaryDrop_CrashCrates,
 }
 

@@ -129,7 +129,7 @@
     "Sandbox_MilitaryDrop_CrashSmokeMinutes": "Дым после крушения (минуты)",
     "Sandbox_MilitaryDrop_CrashSmokeMinutes_tooltip": "Игровые минуты обновления дыма для прибывающих позже игроков. 0 отключает дым.",
     "Sandbox_MilitaryDrop_CrashCrates": "Припасы переживают крушение",
-    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Заказанные припасы доставляются на место крушения; иначе остаются только обломки. Крушение никогда не снижает репутацию.",
+    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "По умолчанию выключено. Заказанные припасы доставляются на место крушения; иначе остаются только обломки. Крушение никогда не снижает репутацию.",
     "Sandbox_MilitaryDrop_SalvageRolls": "Предметов в наборе",
     "Sandbox_MilitaryDrop_SalvageRolls_tooltip": "Случайные предметы игры и модов на набор: электроника, автодетали или металл.",
     "Sandbox_MilitaryDrop_PilotOutfits": "Ключевые слова одежды пилота",

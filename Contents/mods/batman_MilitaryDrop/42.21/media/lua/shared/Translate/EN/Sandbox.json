@@ -129,7 +129,7 @@
     "Sandbox_MilitaryDrop_CrashSmokeMinutes": "Crash smoke (minutes)",
     "Sandbox_MilitaryDrop_CrashSmokeMinutes_tooltip": "Game minutes during which smoke is renewed for late arrivals. 0 disables smoke.",
     "Sandbox_MilitaryDrop_CrashCrates": "Supplies survive a crash",
-    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Deliver the ordered supplies at the crash site; otherwise only wreck salvage remains. Crashes never penalize reputation.",
+    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Off by default. Deliver the ordered supplies at the crash site; otherwise only wreck salvage remains. Crashes never penalize reputation.",
     "Sandbox_MilitaryDrop_SalvageRolls": "Items per salvage bundle",
     "Sandbox_MilitaryDrop_SalvageRolls_tooltip": "Random items from the game and mods per opened bundle; electronics, mechanical parts or metal.",
     "Sandbox_MilitaryDrop_PilotOutfits": "Pilot outfit keywords",

@@ -98,7 +98,7 @@ The mod reads its options each time it uses them: a new value counts for the nex
 | Chance per plausible shot (%) | `CrashGunfireChance` | 10 | Approach phase only ; admin drops and decoys excluded. |
 | Ground effects | `CrashFire` | Fire and smoke | None / smoke / fire and smoke ; one initial fire beside the fuselage, game fire rules apply. Existing saves keep their setting. |
 | Smoke duration (minutes) | `CrashSmokeMinutes` | 60 | Game minutes ; repeated for late arrivals. Signal Smoke is not required. |
-| Supplies at crash site | `CrashCrates` | true | Supplies delivered at the site ; a crash has no reputation effect. |
+| Supplies at crash site | `CrashCrates` | false | Off: the ordered supplies are lost with the helicopter, only the wreck, salvage, crew, documents, horde and smoke remain. On: supplies delivered at the site. A crash has no reputation effect either way. Existing saves keep their setting. |
 | Items per salvage bundle | `SalvageRolls` | 3 | Drawn from game and mod item categories/tags. |
 | Corpse outfits | `PilotOutfits` | `Army` | Words matched against outfit names, separated by `;`. The two additional zombie pilots wear their dedicated military flight outfit. |
 | Pilot documents | `PilotDocuments` | true | Memo and codebook on the body ; the flight recorder remains available. |

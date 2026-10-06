@@ -129,7 +129,7 @@
     "Sandbox_MilitaryDrop_CrashSmokeMinutes": "Humo del accidente (minutos)",
     "Sandbox_MilitaryDrop_CrashSmokeMinutes_tooltip": "Minutos de juego durante los que se renueva el humo para quienes llegan tarde. 0 desactiva el humo.",
     "Sandbox_MilitaryDrop_CrashCrates": "Suministros que sobreviven al accidente",
-    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Entrega los suministros pedidos en el lugar del accidente; de lo contrario solo queda material recuperable. Los accidentes nunca penalizan la reputación.",
+    "Sandbox_MilitaryDrop_CrashCrates_tooltip": "Desactivado por defecto. Entrega los suministros pedidos en el lugar del accidente; de lo contrario solo queda material recuperable. Los accidentes nunca penalizan la reputación.",
     "Sandbox_MilitaryDrop_SalvageRolls": "Objetos por lote recuperado",
     "Sandbox_MilitaryDrop_SalvageRolls_tooltip": "Objetos aleatorios del juego y mods por lote abierto: electrónica, mecánica o metal.",
     "Sandbox_MilitaryDrop_PilotOutfits": "Palabras del uniforme del piloto",

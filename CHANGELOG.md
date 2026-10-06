@@ -3,6 +3,15 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## Unreleased
+
+Not published yet. This heading has no version number, so it is not read as a change note: give it a version and a date, and the same `modversion=` in `mod.info`, at the next release.
+
+### Mayday: the order is lost in a crash
+
+- When a supply helicopter crashes, the ordered supplies are now lost with it by default: the crash site keeps the wrecks, salvage, crew, documents, horde and smoke, but no supply crate. A crash still never costs reputation.
+- Server admins can bring back the old behaviour with the sandbox option **Supplies survive a crash**, now off by default. An existing game keeps the value saved with it.
+
 ## 0.3.0 — 2026-10-06
 
 ### Drop zones for PvP servers
