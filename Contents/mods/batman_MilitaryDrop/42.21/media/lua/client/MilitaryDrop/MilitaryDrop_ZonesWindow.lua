@@ -984,6 +984,19 @@ function Window.onPlayerDeath(player)
     end
 end
 
+--- Option DropPlacement changée en cours de partie (MilitaryDrop.Config.poll) :
+--- la fenêtre affichée redemande la liste, dont l'en-tête montre le mode lu
+--- par le serveur (ZoneListReply.placement). Masquée pendant l'édition : rien.
+function Window.onOptionsChanged()
+    local window = Window.instance
+    if window and window:getIsVisible() and window.player then
+        ZonesAdmin.requestList(window.player)
+        return true
+    end
+    return false
+end
+
+MilitaryDrop.Config.onChange("ZonesWindow", { "DropPlacement" }, Window.onOptionsChanged)
 Window.installAdminButton()
 Window.installDebugMenuButton()
 Window.installDebugContextMenu()

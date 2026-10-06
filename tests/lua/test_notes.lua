@@ -405,4 +405,35 @@ function T.codebook_added_once_to_army_loot_in_encrypted_mode()
     assertEq(PARSED, 1, "pas de seconde relecture")
 end
 
+function T.codebook_loot_follows_options_changed_during_the_game()
+    local values = {}
+    for name, value in pairs(SandboxVars.MilitaryDrop) do
+        values["MilitaryDrop." .. name] = value
+    end
+    local java = useJavaSandboxOptions(values)
+    java["MilitaryDrop.CodebookDropRate"] = 6
+    local lockers = ProceduralDistributions.list.ArmyBunkerLockers.items
+    triggerEvent("OnInitGlobalModData")
+    triggerEvent("EveryOneMinute")
+    assertEq(#lockers, 2, "code fixe au chargement : pas de carnet")
+    java["MilitaryDrop.AuthCode"] = 4
+    triggerEvent("EveryOneMinute")
+    assertEq(lockers[3], "MilitaryDrop.Codebook", "mode 4 choisi en cours de partie : carnet ajouté")
+    assertEq(lockers[4], 25, "poids 50 / 2")
+    assertEq(PARSED, 1, "tables relues")
+    java["MilitaryDrop.CodebookDropRate"] = 3
+    triggerEvent("EveryOneMinute")
+    assertEq(#lockers, 4, "une seule entrée")
+    assertEq(lockers[4], 0.5, "nouveau poids 50 / 100 (Rare)")
+    assertEq(PARSED, 2, "relues de nouveau")
+    java["MilitaryDrop.AuthCode"] = 2
+    triggerEvent("EveryOneMinute")
+    assertEq(#lockers, 2, "hors mode 4 : carnet retiré")
+    assertEq(lockers[1] .. "=" .. lockers[2], "Base.Something=4", "entrées du jeu intactes")
+    assertEq(#ProceduralDistributions.list.ArmyStorageElectronics.items, 0, "autre liste vidée")
+    assertEq(PARSED, 3, "relues après le retrait")
+    triggerEvent("EveryOneMinute")
+    assertEq(PARSED, 3, "rien de neuf : pas de relecture")
+end
+
 return T

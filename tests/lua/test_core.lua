@@ -107,4 +107,93 @@ function T.kahlua_strings_drop_one_unit_or_a_surrogate_pair()
     string.byte = realByte
 end
 
+-- ----------------------------------------------------------------------------
+-- Options changées en cours de partie (à chaud)
+-- ----------------------------------------------------------------------------
+
+function T.java_options_win_over_a_stale_sandbox_vars()
+    -- Solo : l'éditeur d'options change les options Java, pas SandboxVars.
+    SandboxVars.MilitaryDrop = { CooldownHours = 24, AuthCode = 2, NotesOnlyArmyPolice = true }
+    local java = useJavaSandboxOptions({ ["MilitaryDrop.CooldownHours"] = 24, ["MilitaryDrop.AuthCode"] = 2,
+        ["MilitaryDrop.NotesOnlyArmyPolice"] = true })
+    assertEq(MilitaryDrop.Config.get("CooldownHours"), 24, "valeur de la partie")
+    java["MilitaryDrop.CooldownHours"] = 12
+    java["MilitaryDrop.AuthCode"] = 1
+    java["MilitaryDrop.NotesOnlyArmyPolice"] = false
+    assertEq(MilitaryDrop.Config.get("CooldownHours"), 12, "changement vu tout de suite")
+    assertEq(MilitaryDrop.Config.codeMode(), 1, "mode du code aussi")
+    assertEq(MilitaryDrop.Config.get("NotesOnlyArmyPolice"), false, "false Java gagne sur true périmé")
+end
+
+function T.sandbox_vars_then_default_when_the_java_option_is_unknown()
+    useJavaSandboxOptions({})
+    SandboxVars.MilitaryDrop = { CooldownHours = 48 }
+    assertEq(MilitaryDrop.Config.get("CooldownHours"), 48, "option inconnue de Java : SandboxVars")
+    SandboxVars.MilitaryDrop.CooldownHours = 6
+    assertEq(MilitaryDrop.Config.get("CooldownHours"), 6, "SandboxVars réécrit (MP) : vu tout de suite")
+    SandboxVars.MilitaryDrop = nil
+    assertEq(MilitaryDrop.Config.get("CooldownHours"), 168, "rien : défaut")
+end
+
+function T.vanilla_option_is_read_live()
+    local java = useJavaSandboxOptions({ GeneratorTileRange = 20 })
+    assertEq(MilitaryDrop.Config.sandboxValue("GeneratorTileRange"), 20, "option vanilla par son nom")
+    java.GeneratorTileRange = 35
+    assertEq(MilitaryDrop.Config.sandboxValue("GeneratorTileRange"), 35, "à jour")
+    assertEq(MilitaryDrop.Config.sandboxValue("Nope"), nil, "inconnue : nil")
+    getSandboxOptions = function() return {} end
+    assertEq(MilitaryDrop.Config.sandboxValue("GeneratorTileRange"), nil, "sans getOptionByName : nil")
+end
+
+function T.poll_calls_listeners_only_on_a_real_change()
+    local logs = {}
+    print = function(text) logs[#logs + 1] = tostring(text) end
+    local java = useJavaSandboxOptions({ ["MilitaryDrop.AuthCode"] = 4, ["MilitaryDrop.DropPlacement"] = 1 })
+    local calls = {}
+    MilitaryDrop.Config.onChange("test", { "DropPlacement" }, function(changed)
+        calls[#calls + 1] = table.concat(changed, ",")
+    end)
+    assertEq(#MilitaryDrop.Config.poll(), 0, "première lecture : référence")
+    assertEq(#calls, 0, "aucun appel à la première lecture")
+    java["MilitaryDrop.AuthCode"] = 2
+    assertEq(table.concat(MilitaryDrop.Config.poll(), ","), "AuthCode", "option connue changée")
+    assertEq(#calls, 0, "abonné non concerné")
+    assertTrue(logs[#logs]:find("sandbox options changed: AuthCode", 1, true) ~= nil, "journalisé")
+    java["MilitaryDrop.DropPlacement"] = 2
+    java["MilitaryDrop.AuthCode"] = 3
+    MilitaryDrop.Config.poll()
+    assertEq(table.concat(calls, ";"), "AuthCode,DropPlacement", "un appel, noms triés")
+    MilitaryDrop.Config.poll()
+    assertEq(#calls, 1, "rien de neuf : pas d'appel")
+    -- Même clé (fichier rechargé) : abonné remplacé, jamais doublé.
+    local second = 0
+    MilitaryDrop.Config.onChange("test", { "DropPlacement" }, function() second = second + 1 end)
+    java["MilitaryDrop.DropPlacement"] = 3
+    MilitaryDrop.Config.poll()
+    assertEq(#calls, 1, "ancien abonné retiré")
+    assertEq(second, 1, "nouvel abonné appelé une fois")
+end
+
+function T.poll_runs_every_game_minute_once_even_after_a_reload()
+    assertEq(listenerCount("EveryOneMinute"), 1, "un abonné")
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
+    assertEq(listenerCount("EveryOneMinute"), 1, "fichier rechargé : toujours un")
+    local java = useJavaSandboxOptions({ ["MilitaryDrop.CooldownHours"] = 168 })
+    local seen = 0
+    MilitaryDrop.Config.onChange("test", { "CooldownHours" }, function() seen = seen + 1 end)
+    triggerEvent("EveryOneMinute")
+    java["MilitaryDrop.CooldownHours"] = 1
+    triggerEvent("EveryOneMinute")
+    assertEq(seen, 1, "changement vu à la minute de jeu suivante")
+end
+
+function T.created_channel_keeps_its_frequency_until_restart()
+    local java = useJavaSandboxOptions({ ["MilitaryDrop.Frequency"] = 151.4 })
+    MilitaryDrop.Broadcast = { frequency = 151400 }
+    java["MilitaryDrop.Frequency"] = 140
+    assertEq(MilitaryDrop.Config.getChannel(), 151400, "chaîne créée : sa fréquence fait foi")
+    MilitaryDrop.Broadcast = nil
+    assertEq(MilitaryDrop.Config.getChannel(), 140000, "sans chaîne (client MP) : l'option")
+end
+
 return T

@@ -737,4 +737,49 @@ function T.v13_state_never_goes_to_the_public_mod_data()
     assertTrue(public.flights ~= nil and public.lastDropHours ~= nil, "vols et délai restent publics")
 end
 
+-- ----------------------------------------------------------------------------
+-- Options changées en cours de partie (à chaud)
+-- ----------------------------------------------------------------------------
+
+--- Options Java de la partie, copiées de SandboxVars (qui reste périmé, comme
+--- en solo après l'éditeur d'options du menu de debug).
+local function javaOptions()
+    local values = {}
+    for name, value in pairs(SandboxVars.MilitaryDrop) do
+        values["MilitaryDrop." .. name] = value
+    end
+    return useJavaSandboxOptions(values)
+end
+
+function T.cooldown_option_changed_during_the_game_applies_at_once()
+    local java = javaOptions()
+    local state = MilitaryDrop.Server.getState()
+    -- Équipe neuve (note 25) : facteur 1,25.
+    state.lastDropHours = WORLD_HOURS - 20
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "cooldown", "168 h : trop tôt")
+    java["MilitaryDrop.CooldownHours"] = 12
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "accepted", "12 h : permis tout de suite")
+    -- MP : SandboxVars réécrit par le paquet des options, lu de même.
+    getSandboxOptions = nil
+    SandboxVars.MilitaryDrop.CooldownHours = 168
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(CODE)), "cooldown", "SandboxVars réécrit : vu aussi")
+end
+
+function T.horde_and_distance_options_changed_during_the_game_apply_at_once()
+    local java = javaOptions()
+    assertEq(MilitaryDrop.Server.hordeSize(), 0, "0 et 0 : aucun zombie")
+    java["MilitaryDrop.MinZombies"] = 5
+    java["MilitaryDrop.MaxZombies"] = 5
+    ZombRand = function(low) return low end
+    assertEq(MilitaryDrop.Server.hordeSize(), 5, "horde de la nouvelle valeur")
+    java["MilitaryDrop.DropMinDistance"] = 300
+    java["MilitaryDrop.DropMaxDistance"] = 300
+    local x = MilitaryDrop.Server.pickDropPoint(100, 200)
+    assertEq(x, 400, "300 cases : nouvel anneau")
+    java["MilitaryDrop.DropMinDistance"] = 50
+    java["MilitaryDrop.DropMaxDistance"] = 50
+    x = MilitaryDrop.Server.pickDropPoint(100, 200)
+    assertEq(x, 150, "50 cases : changé de nouveau")
+end
+
 return T

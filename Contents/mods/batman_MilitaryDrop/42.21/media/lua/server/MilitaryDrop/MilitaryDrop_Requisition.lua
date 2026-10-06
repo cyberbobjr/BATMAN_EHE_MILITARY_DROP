@@ -611,9 +611,19 @@ Server.COMMANDS.RequisitionOrder = function(player, args) Requisition.handleOrde
 Server.COMMANDS.RequisitionCancel = function(player, args) Requisition.handleCancel(player, args) end
 Server.COMMANDS.ReloadLots = function(player) Requisition.handleReload(player) end
 
+--- Option RequisitionForm activée en cours de partie : lots précalculés tout
+--- de suite plutôt qu'au premier formulaire (Requisition.warmUp, sans effet
+--- formulaire désactivé). Les autres options du formulaire sont lues à chaque offre.
+function Requisition.onOptionsChanged()
+    if Requisition.formEnabled() then
+        Requisition.warmUp()
+    end
+end
+
 -- Serveur dédié : OnServerStarted ; solo : OnGameStart (un second appel ne
 -- recalcule rien).
 Events.OnServerStarted.Add(Requisition.warmUp)
 Events.OnGameStart.Add(Requisition.warmUp)
+Config.onChange("Requisition", { "RequisitionForm" }, Requisition.onOptionsChanged)
 
 return Requisition

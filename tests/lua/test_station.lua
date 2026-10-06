@@ -184,4 +184,38 @@ function T.station_keeps_no_state_in_mod_data()
     assertEq(MODDATA.MilitaryDrop, nil, "aucune ModData")
 end
 
+-- ----------------------------------------------------------------------------
+-- Option AuthCode changée en cours de partie (à chaud)
+-- ----------------------------------------------------------------------------
+
+function T.station_is_created_when_the_encrypted_code_is_chosen_during_the_game()
+    local java = useJavaSandboxOptions({ ["MilitaryDrop.AuthCode"] = 3, ["MilitaryDrop.Frequency"] = 151.4 })
+    getZomboidRadio = function()
+        return { removeChannelName = function(_, freq) REMOVED_NAMES[#REMOVED_NAMES + 1] = freq end,
+            getScriptManager = function() return SCRIPT_MANAGER end }
+    end
+    local station = load()
+    assertEq(station.channel, nil, "partie chargée en mode 3 : pas de station")
+    triggerEvent("EveryOneMinute")
+    java["MilitaryDrop.AuthCode"] = 4
+    triggerEvent("EveryOneMinute")
+    assertTrue(station.channel ~= nil, "mode 4 choisi en cours de partie : station créée")
+    assertTrue(station.frequency >= 10000 and station.frequency <= 25000, "ondes courtes")
+    assertEq(REMOVED_NAMES[#REMOVED_NAMES], station.frequency, "nom masqué")
+    triggerEvent("EveryTenMinutes")
+    assertTrue(AIRED ~= nil, "diffusion à la demi-heure")
+    AIRED = nil
+    java["MilitaryDrop.AuthCode"] = 2
+    triggerEvent("EveryOneMinute")
+    DATE.hour = 12.5
+    triggerEvent("EveryTenMinutes")
+    assertEq(AIRED, nil, "hors mode 4 : la station se tait")
+    local channel = station.channel
+    java["MilitaryDrop.AuthCode"] = 4
+    triggerEvent("EveryOneMinute")
+    assertEq(station.channel, channel, "retour au mode 4 : même chaîne, jamais une seconde")
+    triggerEvent("EveryTenMinutes")
+    assertTrue(AIRED ~= nil, "diffusion reprise")
+end
+
 return T

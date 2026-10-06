@@ -2261,4 +2261,23 @@ function T.two_hundred_large_zones_cost_a_bounded_amount_per_update()
     assertEq(Ground.ownedCount, 0, "plus aucune case à nous")
 end
 
+-- Option DropPlacement changée en cours de partie (client MP : options Java
+-- reçues du serveur) : la liste affichée est redemandée pour son en-tête.
+function T.placement_changed_during_the_game_asks_the_list_again()
+    local java = useJavaSandboxOptions({ ["MilitaryDrop.DropPlacement"] = 2 })
+    local window = openWindow()
+    triggerEvent("EveryOneMinute")
+    local before = #SENT
+    triggerEvent("EveryOneMinute")
+    assertEq(#SENT, before, "rien de changé : rien demandé")
+    java["MilitaryDrop.DropPlacement"] = 1
+    triggerEvent("EveryOneMinute")
+    assertEq(#SENT, before + 1, "mode changé : une demande")
+    assertEq(lastSent().command, "ZoneList", "liste redemandée")
+    window:setVisible(false)
+    java["MilitaryDrop.DropPlacement"] = 3
+    triggerEvent("EveryOneMinute")
+    assertEq(#SENT, before + 1, "liste masquée (édition) : rien")
+end
+
 return T

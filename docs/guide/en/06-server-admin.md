@@ -6,13 +6,30 @@
 
 All options are on the **Military Drop** page of the sandbox options. Hours and days are game time.
 
+### Changing options during a game
+
+Options can be changed without restarting, except the two frequencies (see below).
+
+- **Single player**: debug menu › **Sandbox Settings**, change the values, **Apply**.
+- **Multiplayer**: admin panel › **Sandbox Options** (permission to edit sandbox options), change the values, **Apply**. The server saves them in `Zomboid/Server/<server name>_SandboxVars.lua` and sends them to every connected player.
+- `/reloadoptions` and `/changeoption` only reload the server settings (`<server name>.ini`), never the sandbox options. Editing `<server name>_SandboxVars.lua` by hand while the server runs does nothing until it restarts: the file is read at startup only, and an **Apply** from the panel overwrites it.
+
+The mod reads its options each time it uses them: a new value counts for the next call, drop, order, mission or crash. What already exists keeps the value it was created with: a flight in the air, a horde already spawned, a mission deadline, a crash site. Within one in-game minute of the change, the console (`console.txt`, or the server log) shows `[MilitaryDrop] sandbox options changed: …`, and a few changes are applied at that moment:
+
+- switching to the encrypted weekly code starts the numbers station if the game was loaded in another mode; leaving it silences the station;
+- the codebook is put in army storage, or taken out, with its new drop rate (containers filled afterwards only);
+- the requisition lots are prepared when the form is turned on;
+- the drop zone tool, if open, shows the new placement.
+
+**Restart required**: `Frequency` and `NumbersStationFrequency`. A radio channel keeps the frequency it was created with when the world loads; until the restart, the base keeps answering on the old frequency and memos keep giving it.
+
 
 ### Drops
 
 | Option | Key | Default | Effect |
 |---|---|---|---|
 | Hours between drops | `CooldownHours` | 168 | Minimum wait between two drops, for the whole server. Multiplied by the caller's trust factor (x1.5 to x0.6). |
-| Military frequency (MHz) | `Frequency` | 0 | 0: random free frequency between 120 and 170 MHz, written on the memos. A fixed value is visible to every player. 112.2 MHz is reserved. |
+| Military frequency (MHz) | `Frequency` | 0 | 0: random free frequency between 120 and 170 MHz, written on the memos. A fixed value is visible to every player. 112.2 MHz is reserved. Restart required. |
 | Minimum drop distance | `DropMinDistance` | 150 | Minimum tiles between the caller and the drop point. |
 | Maximum drop distance | `DropMaxDistance` | 400 | Maximum tiles between the caller and the drop point. |
 | Grid reminder every (hours) | `DropRepeatHours` | 6 | In-game hours between two reminders of the grid of a drop whose supply cases are all unopened, for up to `TrustDropLostHours`. 0 = no reminder. |
@@ -26,7 +43,7 @@ All options are on the **Military Drop** page of the sandbox options. Hours and 
 | Option | Key | Default | Effect |
 |---|---|---|---|
 | Authentication code | `AuthCode` | Weekly code, encrypted | None / Fixed code, in clear on the notes / Weekly code, in clear on the notes / Weekly code, encrypted (numbers station and codebook). 3 wrong codes in a day: the base ignores the caller until the next day. |
-| Numbers station frequency (MHz) | `NumbersStationFrequency` | 0 | 0: random free shortwave frequency, 10 to 25 MHz. Encrypted mode only. |
+| Numbers station frequency (MHz) | `NumbersStationFrequency` | 0 | 0: random free shortwave frequency, 10 to 25 MHz. Encrypted mode only. Restart required. |
 | Military notes drop rate | `NoteDropRate` | Normal (1/50) | Extremely rare 1/1000, Very rare 1/500, Rare 1/100, Normal 1/50, Common 1/25, Debug 1/2. |
 | Notes only on military and police zombies | `NotesOnlyArmyPolice` | true | Only outfits from the list below carry memos. |
 | Outfits carrying notes | `NoteOutfits` | `Army;Police;Sheriff` | Words searched in the outfit name (also matches mod outfits). |

@@ -829,4 +829,60 @@ function T.successor_cannot_use_the_previous_characters_authorization()
     assertEq(SENT[#SENT].args.status, "expired", "same account does not share an authorization")
 end
 
+-- ----------------------------------------------------------------------------
+-- Options changées en cours de partie (à chaud)
+-- ----------------------------------------------------------------------------
+
+--- Options Java de la partie, copiées de SandboxVars, qui reste périmé (solo :
+--- l'éditeur d'options du menu de debug ne change que les options Java).
+local function javaOptions()
+    local values = {}
+    for name, value in pairs(SandboxVars.MilitaryDrop) do
+        values["MilitaryDrop." .. name] = value
+    end
+    return useJavaSandboxOptions(values)
+end
+
+function T.form_budget_and_cost_options_changed_during_the_game_apply_at_once()
+    local java = javaOptions()
+    local R = MilitaryDrop.Requisition
+    java["MilitaryDrop.RequisitionForm"] = false
+    assertEq(call().status, "accepted", "formulaire désactivé : caisses aléatoires")
+    MilitaryDrop.Server.getState().lastDropHours = nil
+    MilitaryDrop.Server.getState().flights = {}
+    java["MilitaryDrop.RequisitionForm"] = true
+    NOW_MS = NOW_MS + 5000
+    assertEq(call().status, "form", "réactivé : formulaire dès l'appel suivant")
+    assertEq(R.budget(50), 12, "budget à 100 %")
+    java["MilitaryDrop.RequisitionBudget"] = 50
+    assertEq(R.budget(50), 6, "budget à 50 % tout de suite")
+    java["MilitaryDrop.RequisitionCostMultiplier"] = 150
+    assertEq(R.cost(5), 8, "coûts × 1,5 tout de suite")
+    java["MilitaryDrop.RequisitionTier2"] = 20
+    assertEq(R.maxGroup(20), 2, "palier 2 tout de suite")
+    java["MilitaryDrop.DecoyEnabled"] = false
+    MilitaryDrop.Server.getState().lastDropHours = nil
+    NOW_MS = NOW_MS + 5000
+    assertEq(call().decoy, nil, "leurre retiré du formulaire suivant")
+end
+
+function T.form_enabled_during_the_game_prepares_the_lots_at_the_next_minute()
+    local java = javaOptions()
+    java["MilitaryDrop.RequisitionForm"] = false
+    local passes = 0
+    local toEntries = MilitaryDrop.Loot.toEntries
+    MilitaryDrop.Loot.toEntries = function(flat)
+        passes = passes + 1
+        return toEntries(flat)
+    end
+    triggerEvent("OnServerStarted")
+    triggerEvent("EveryOneMinute")
+    assertEq(passes, 0, "formulaire désactivé : rien de précalculé")
+    java["MilitaryDrop.RequisitionForm"] = true
+    triggerEvent("EveryOneMinute")
+    assertEq(passes, 1, "activé en cours de partie : lots précalculés en un passage")
+    assertEq(call().status, "form", "formulaire")
+    assertEq(passes, 1, "servi depuis la mémoire")
+end
+
 return T

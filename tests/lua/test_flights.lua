@@ -303,6 +303,8 @@ function T.two_drops_at_the_same_point_are_both_delivered()
 end
 
 function T.blocked_delivery_is_retried_at_most_once_a_minute()
+    -- Sondage des options (MilitaryDrop_Core.lua) : abonné permanent.
+    local permanent = listenerCount("EveryOneMinute")
     local now = 0
     getTimestampMs = function() return now end
     local dry = false
@@ -344,7 +346,7 @@ function T.blocked_delivery_is_retried_at_most_once_a_minute()
     triggerEvent("LoadChunk", makeChunk(496, 600))
     assertEq(calls, 3, "case revenue : essai sans attendre")
     assertEq(#PLACED, 1, "livré")
-    assertEq(listenerCount("EveryOneMinute"), 0, "surveillance arrêtée")
+    assertEq(listenerCount("EveryOneMinute"), permanent, "surveillance arrêtée")
 end
 
 local function maydaySetup()

@@ -231,34 +231,80 @@ end
 -- Butin et zombies
 -- ----------------------------------------------------------------------------
 
+--- Listes de butin de l'armée qui existent : { items, … }.
+local function codebookListItems()
+    local result = {}
+    for _, name in ipairs(Notes.CODEBOOK_LISTS) do
+        local list = ProceduralDistributions.list[name]
+        if list and list.items then
+            result[#result + 1] = list.items
+        end
+    end
+    return result
+end
+
+--- Ajoute le carnet (et son poids) aux listes qui ne l'ont pas ; vrai si ajouté.
+local function insertCodebook()
+    local weight = Notes.CODEBOOK_LOOT_FACTOR / Notes.codebookRate()
+    local added = false
+    for _, items in ipairs(codebookListItems()) do
+        local present = false
+        for _, entry in ipairs(items) do
+            present = present or entry == Notes.CODEBOOK_ITEM
+        end
+        if not present then
+            table.insert(items, Notes.CODEBOOK_ITEM)
+            table.insert(items, weight)
+            added = true
+        end
+    end
+    if added then
+        MilitaryDrop.log("codebook added to army loot lists, weight " .. weight)
+    end
+    return added
+end
+
 --- Ajoute le carnet aux listes de butin de l'armée (AuthCode 4), une seule
 --- fois, puis relit les tables (ItemPickerJava.Parse, idempotent).
 function Notes.addCodebookToLoot()
     if Config.codeMode() ~= Codes.MODE_WEEKLY_CIPHER or not ProceduralDistributions then
         return false
     end
-    local weight = Notes.CODEBOOK_LOOT_FACTOR / Notes.codebookRate()
-    local added = false
-    for _, name in ipairs(Notes.CODEBOOK_LISTS) do
-        local list = ProceduralDistributions.list[name]
-        local items = list and list.items
-        if items then
-            local present = false
-            for _, entry in ipairs(items) do
-                present = present or entry == Notes.CODEBOOK_ITEM
-            end
-            if not present then
-                table.insert(items, Notes.CODEBOOK_ITEM)
-                table.insert(items, weight)
-                added = true
+    local added = insertCodebook()
+    if added then
+        ItemPickerJava.Parse()
+    end
+    return added
+end
+
+--- Options AuthCode ou CodebookDropRate changées en cours de partie : le
+--- carnet est retiré des listes (objet et poids qui le suit), remis avec le
+--- nouveau poids en mode 4, puis les tables sont relues (ItemPickerJava.Parse,
+--- comme le bouton « Appliquer » vanilla : IsoWorld.parseDistributions,
+--- IsoWorld.java:3115-3118). Seuls les conteneurs remplis ensuite changent.
+--- Vrai si les listes ont changé.
+function Notes.refreshCodebookLoot()
+    if not ProceduralDistributions then
+        return false
+    end
+    local removed = false
+    for _, items in ipairs(codebookListItems()) do
+        for i = #items - 1, 1, -1 do
+            if items[i] == Notes.CODEBOOK_ITEM and type(items[i + 1]) == "number" then
+                table.remove(items, i + 1)
+                table.remove(items, i)
+                removed = true
             end
         end
     end
-    if added then
+    local added = Config.codeMode() == Codes.MODE_WEEKLY_CIPHER and insertCodebook()
+    if removed or added then
         ItemPickerJava.Parse()
-        MilitaryDrop.log("codebook added to army loot lists, weight " .. weight)
+        if not added then
+            MilitaryDrop.log("codebook removed from army loot lists")
+        end
     end
-    return added
+    return removed or added
 end
 
 --- Tirage de la note : index du texte, ou false.
@@ -308,5 +354,6 @@ end
 
 Events.OnZombieDead.Add(Notes.onZombieDead)
 Events.OnInitGlobalModData.Add(Notes.addCodebookToLoot)
+Config.onChange("Notes.codebookLoot", { "AuthCode", "CodebookDropRate" }, Notes.refreshCodebookLoot)
 
 return Notes

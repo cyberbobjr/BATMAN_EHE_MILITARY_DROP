@@ -117,6 +117,23 @@ function listenerCount(name)
     return #Events[name].handlers
 end
 
+-- Options sandbox Java (getSandboxOptions) : getOptionByName(nom complet)
+-- renvoie nil pour une option inconnue, sinon un objet dont getValue lit
+-- values[nom] à chaque appel, comme SandboxOptions.getOptionByName (42.21,
+-- SandboxOptions.java:546) ; un changement de values est donc vu tout de
+-- suite, comme une option changée en cours de partie. Renvoie values.
+function useJavaSandboxOptions(values)
+    getSandboxOptions = function()
+        return { getOptionByName = function(_, name)
+            if values[name] == nil then
+                return nil
+            end
+            return { getValue = function() return values[name] end }
+        end }
+    end
+    return values
+end
+
 -- Émetteur de getWorld():getFreeEmitter(x, y, z), fidèle aux surcharges Java de
 -- FMODSoundEmitter (42.21, fmod/fmod/FMODSoundEmitter.java:380-490) telles que
 -- Kahlua les résout. À utiliser pour tout son joué par le mod : une simulation

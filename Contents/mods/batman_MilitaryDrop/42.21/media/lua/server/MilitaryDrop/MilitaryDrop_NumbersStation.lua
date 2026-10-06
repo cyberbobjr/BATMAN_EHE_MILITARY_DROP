@@ -123,10 +123,30 @@ function Station.air(clock)
     return true
 end
 
+--- Option AuthCode passée au mode 4 en cours de partie : la station, absente
+--- si la partie a été chargée dans un autre mode, est créée comme au
+--- chargement (AddChannel n'est pas réservé à OnLoadRadioScripts : il range la
+--- chaîne dans la table que ZomboidRadio met à jour à chaque image,
+--- RadioScriptManager.java:94-103, 119-123 ; une chaîne de serveur suffit en
+--- MP, comme la chaîne militaire). Hors mode 4, elle se tait (onEveryTenMinutes).
+--- Sa fréquence reste celle de sa création jusqu'au redémarrage.
+function Station.onOptionsChanged()
+    if Station.channel or Config.codeMode() ~= Codes.MODE_WEEKLY_CIPHER then
+        return false
+    end
+    local radio = getZomboidRadio and getZomboidRadio()
+    local manager = radio and radio:getScriptManager()
+    if not manager then
+        return false
+    end
+    Station.onLoadRadioScripts(manager)
+    return Station.channel ~= nil
+end
+
 --- Une diffusion par tranche de INTERVAL_MINUTES, au premier passage dans la
 --- tranche (GameTime:getMinutes tronque un flottant : 30 peut devenir 29).
 function Station.onEveryTenMinutes()
-    if not Station.channel then
+    if not Station.channel or Config.codeMode() ~= Codes.MODE_WEEKLY_CIPHER then
         return
     end
     local clock = Codes.gameClock(getGameTime())
@@ -138,5 +158,6 @@ end
 
 Events.OnLoadRadioScripts.Add(Station.onLoadRadioScripts)
 Events.EveryTenMinutes.Add(Station.onEveryTenMinutes)
+Config.onChange("NumbersStation", { "AuthCode" }, Station.onOptionsChanged)
 
 return Station

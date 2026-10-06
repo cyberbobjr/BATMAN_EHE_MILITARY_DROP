@@ -7,12 +7,29 @@
 --
 -- Les options sont lues à chaque appel, jamais au chargement du fichier : sur
 -- un client MP, SandboxVars n'est reçu du serveur qu'après le chargement du Lua.
+--
+-- Options changées en cours de partie (à chaud) : Config.get lit d'abord les
+-- options Java (getSandboxOptions), que tout changement met à jour, puis
+-- SandboxVars. En solo, l'éditeur d'options (menu de debug « Options bac à
+-- sable ») fait seulement getSandboxOptions():set(...) : la table SandboxVars
+-- reste périmée jusqu'au prochain chargement (ISServerSandboxOptionsUI.lua:738-740,
+-- SandboxOptions.java:550-559). En MP, « Appliquer » envoie les options au
+-- serveur, qui les recopie dans SandboxVars (toLua), les enregistre et les
+-- renvoie à tous les clients, qui font de même (GameServer.java:1633-1646,
+-- GameClient.java:2649-2657). Aucun événement Lua ne suit : Config.poll compare
+-- les valeurs à chaque minute de jeu et prévient les abonnés de Config.onChange
+-- (recalculs ciblés : chaîne de la station, carnet dans le butin, lots).
 -- ============================================================================
 
 MilitaryDrop = MilitaryDrop or {}
 
+-- Rechargement de ce fichier : un seul abonné au sondage (Events.X.Add ne
+-- dédoublonne pas).
+local previousPoll = MilitaryDrop.Config and MilitaryDrop.Config.poll
+
 local Config = {}
 MilitaryDrop.Config = Config
+Config.PAGE = "MilitaryDrop"
 
 -- Pas de réglage des radios (RWMChannel.lua : pas de 0,2 MHz) et bornes des
 -- radios militaires vanilla (WalkieTalkie5, HamRadio2, ManPackRadio :
@@ -51,14 +68,97 @@ local DEFAULTS = {
     DebugLog = false,
 }
 
---- Valeur d'une option sandbox (page MilitaryDrop), ou sa valeur par défaut.
+--- Valeur courante d'une option sandbox par son nom complet (« MilitaryDrop.X »,
+--- ou vanilla : « GeneratorTileRange »), lue dans les options Java, à jour
+--- après un changement en cours de partie ; nil si l'option est inconnue.
+--- getValue : nombre (entier, flottant, enum), booléen ou chaîne.
+function Config.sandboxValue(fullName)
+    local options = getSandboxOptions and getSandboxOptions()
+    local option = options and options.getOptionByName and options:getOptionByName(fullName)
+    if option == nil then
+        return nil
+    end
+    return option:getValue()
+end
+
+--- Valeur d'une option sandbox (page MilitaryDrop) : options Java, sinon
+--- SandboxVars, sinon sa valeur par défaut.
 function Config.get(name)
-    local vars = SandboxVars and SandboxVars.MilitaryDrop
-    local value = vars and vars[name]
+    local value = Config.sandboxValue(Config.PAGE .. "." .. name)
+    if value == nil then
+        local vars = SandboxVars and SandboxVars.MilitaryDrop
+        value = vars and vars[name]
+    end
     if value == nil then
         return DEFAULTS[name]
     end
     return value
+end
+
+-- Abonnés aux changements d'options, par clé (un fichier rechargé remplace son
+-- abonné au lieu d'en ajouter un second) : { key, names, fn }.
+Config.listeners = {}
+-- Dernière valeur vue de chaque option suivie ; known[name] : déjà lue une fois.
+local lastValues, known = {}, {}
+
+--- fn(changed) est appelée quand l'une des options names change en cours de
+--- partie (changed : noms changés, triés). Même clé : abonné remplacé.
+function Config.onChange(key, names, fn)
+    for _, listener in ipairs(Config.listeners) do
+        if listener.key == key then
+            listener.names, listener.fn = names, fn
+            return
+        end
+    end
+    Config.listeners[#Config.listeners + 1] = { key = key, names = names, fn = fn }
+end
+
+--- Compare les options connues (valeurs par défaut des modules chargés et
+--- options des abonnés) à la lecture précédente ; journalise les changements et
+--- appelle les abonnés concernés. La première lecture d'une option sert de
+--- référence, sans appel. Renvoie la liste des options changées.
+function Config.poll()
+    local changed, checked = {}, {}
+    local function check(name)
+        if checked[name] then
+            return
+        end
+        checked[name] = true
+        local value = Config.get(name)
+        if not known[name] then
+            known[name] = true
+            lastValues[name] = value
+        elseif lastValues[name] ~= value then
+            lastValues[name] = value
+            changed[#changed + 1] = name
+        end
+    end
+    for name in pairs(DEFAULTS) do
+        check(name)
+    end
+    for _, listener in ipairs(Config.listeners) do
+        for _, name in ipairs(listener.names) do
+            check(name)
+        end
+    end
+    if #changed == 0 then
+        return changed
+    end
+    table.sort(changed)
+    MilitaryDrop.log("sandbox options changed: " .. table.concat(changed, ", "), true)
+    local isChanged = {}
+    for _, name in ipairs(changed) do
+        isChanged[name] = true
+    end
+    for _, listener in ipairs(Config.listeners) do
+        for _, name in ipairs(listener.names) do
+            if isChanged[name] then
+                listener.fn(changed)
+                break
+            end
+        end
+    end
+    return changed
 end
 
 --- Valeurs par défaut des options d'un module (sans écraser celles déjà connues).
@@ -110,15 +210,21 @@ function Config.isFixedFrequency()
     return (tonumber(Config.get("Frequency")) or 0) > 0
 end
 
---- Canal militaire de la partie (kHz). Option Frequency > 0 : ce canal fixe.
---- Option à 0 : fréquence libre tirée par le serveur à partir de la graine
---- secrète (MilitaryDrop.Broadcast.freeChannel, fichier serveur). Un client MP
---- ne la connaît jamais : nil (aucun code client n'en a besoin).
+--- Canal militaire de la partie (kHz). Chaîne déjà créée (serveur ou solo) :
+--- sa fréquence, jusqu'au redémarrage, même si l'option Frequency change en
+--- cours de partie (une chaîne garde la fréquence de sa création :
+--- RadioChannel.java:45-55, aucun mutateur). Sinon, option Frequency > 0 : ce
+--- canal fixe. Option à 0 : fréquence libre tirée par le serveur à partir de
+--- la graine secrète (MilitaryDrop.Broadcast.freeChannel, fichier serveur). Un
+--- client MP ne la connaît jamais : nil (aucun code client n'en a besoin).
 function Config.getChannel()
+    local Broadcast = MilitaryDrop.Broadcast
+    if Broadcast and Broadcast.frequency then
+        return Broadcast.frequency
+    end
     if Config.isFixedFrequency() then
         return Config.toChannel(Config.get("Frequency"))
     end
-    local Broadcast = MilitaryDrop.Broadcast
     if Broadcast and Broadcast.freeChannel then
         return Broadcast.freeChannel()
     end
@@ -208,5 +314,12 @@ function MilitaryDrop.cutText(text, max)
     end
     return text:sub(1, i - 1)
 end
+
+-- Sondage des options : chaque minute de jeu, sur le serveur, le client MP et
+-- le solo (un seul état Lua : un seul passage pour les abonnés client et serveur).
+if previousPoll then
+    Events.EveryOneMinute.Remove(previousPoll)
+end
+Events.EveryOneMinute.Add(Config.poll)
 
 return MilitaryDrop

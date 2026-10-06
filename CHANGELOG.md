@@ -20,6 +20,12 @@ Not published yet. This heading has no version number, so it is not read as a ch
 - The zone tool shows its remarks (no open ground, overlap, map not loaded) on the zone's line only; the red "problems" section lists real errors of the file only.
 - New sandbox options: drop zone sector (nearest or random), minimum distance, range of "zones if one is near", zone name in the announcement.
 
+### Sandbox options without restarting
+
+- Military Drop options changed during a game now apply right away, in single player (debug menu › Sandbox Settings) as on servers (admin panel › Sandbox Options): drop placement and zones, cooldown, distances, horde, requisition form, budget and costs, trust, missions, crashes and the others. Before, a single player change waited for the next load.
+- Switching to the encrypted weekly code during a game starts the numbers station and puts the codebook in army storage; the codebook drop rate is updated in army storage as well.
+- The two frequencies (military and numbers station) still need a restart: their tooltip now says so.
+
 ## 0.2.0 — 2026-10-05
 
 ### Mayday: supply helicopters can crash

@@ -6,13 +6,30 @@
 
 Toutes les options sont sur la page **Military Drop** des options du bac à sable. Heures et jours sont en temps de jeu.
 
+### Changer une option en cours de partie
+
+Les options se changent sans redémarrer, sauf les deux fréquences (voir plus bas).
+
+- **Solo** : menu de debug › **Options bac à sable**, modifier les valeurs, **Appliquer**.
+- **Multijoueur** : panneau d'admin › **Options bac à sable** (droit de modifier les options du bac à sable), modifier les valeurs, **Appliquer**. Le serveur les enregistre dans `Zomboid/Server/<nom du serveur>_SandboxVars.lua` et les envoie à tous les joueurs connectés.
+- `/reloadoptions` et `/changeoption` ne rechargent que les réglages du serveur (`<nom du serveur>.ini`), jamais les options du bac à sable. Modifier à la main `<nom du serveur>_SandboxVars.lua` pendant que le serveur tourne ne fait rien avant son redémarrage : le fichier n'est lu qu'au démarrage, et un **Appliquer** depuis le panneau le réécrit.
+
+Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, le largage, la commande, la mission ou le crash suivant. Ce qui existe déjà garde la valeur de sa création : un vol en cours, une horde déjà apparue, l'échéance d'une mission, un site de crash. Dans la minute de jeu qui suit le changement, la console (`console.txt`, ou le journal du serveur) affiche `[MilitaryDrop] sandbox options changed: …`, et quelques changements sont appliqués à ce moment :
+
+- passer au code de la semaine chiffré lance la station de chiffres si la partie a été chargée dans un autre mode ; le quitter fait taire la station ;
+- le carnet est ajouté au butin de l'armée, ou retiré, avec sa nouvelle fréquence (conteneurs remplis ensuite seulement) ;
+- les lots de réquisition sont préparés quand le formulaire est activé ;
+- l'outil des zones de largage, s'il est ouvert, affiche le nouveau mode de placement.
+
+**Redémarrage requis** : `Frequency` et `NumbersStationFrequency`. Une chaîne radio garde la fréquence de sa création au chargement du monde ; jusqu'au redémarrage, la base répond toujours sur l'ancienne fréquence et les notes la donnent encore.
+
 
 ### Largages
 
 | Option | Clé | Défaut | Effet |
 |---|---|---|---|
 | Heures entre deux largages | `CooldownHours` | 168 | Attente minimale entre deux largages, pour tout le serveur. Multipliée par le facteur de confiance de l'appelant (×1,5 à ×0,6). |
-| Fréquence militaire (MHz) | `Frequency` | 0 | 0 : fréquence libre tirée au hasard entre 120 et 170 MHz, écrite sur les notes. Une valeur fixe est visible par tous les joueurs. 112,2 MHz est réservée. |
+| Fréquence militaire (MHz) | `Frequency` | 0 | 0 : fréquence libre tirée au hasard entre 120 et 170 MHz, écrite sur les notes. Une valeur fixe est visible par tous les joueurs. 112,2 MHz est réservée. Redémarrage requis. |
 | Distance minimale du largage | `DropMinDistance` | 150 | Cases au minimum entre l'appelant et le point de largage. |
 | Distance maximale du largage | `DropMaxDistance` | 400 | Cases au maximum entre l'appelant et le point de largage. |
 | Rappel de la grille toutes les (heures) | `DropRepeatHours` | 6 | Heures de jeu entre deux rappels de la grille d'un largage dont aucune caisse de ravitaillement n'a été ouverte, pendant `TrustDropLostHours` au plus. 0 = aucun rappel. |
@@ -26,7 +43,7 @@ Toutes les options sont sur la page **Military Drop** des options du bac à sabl
 | Option | Clé | Défaut | Effet |
 |---|---|---|---|
 | Code d'authentification | `AuthCode` | Code de la semaine, chiffré | Aucun / Code fixe, en clair sur les notes / Code de la semaine, en clair sur les notes / Code de la semaine, chiffré (station de chiffres et carnet). 3 codes faux dans la journée : la base ignore l'appelant jusqu'au lendemain. |
-| Fréquence de la station de chiffres (MHz) | `NumbersStationFrequency` | 0 | 0 : fréquence libre des ondes courtes tirée au hasard, de 10 à 25 MHz. Mode chiffré seulement. |
+| Fréquence de la station de chiffres (MHz) | `NumbersStationFrequency` | 0 | 0 : fréquence libre des ondes courtes tirée au hasard, de 10 à 25 MHz. Mode chiffré seulement. Redémarrage requis. |
 | Fréquence des notes militaires | `NoteDropRate` | Normale (1/50) | Extrêmement rare 1/1000, Très rare 1/500, Rare 1/100, Normale 1/50, Courante 1/25, Débogage 1/2. |
 | Notes seulement sur les zombies militaires et policiers | `NotesOnlyArmyPolice` | vrai | Seules les tenues de la liste ci-dessous portent des notes. |
 | Tenues qui portent les notes | `NoteOutfits` | `Army;Police;Sheriff` | Mots cherchés dans le nom de la tenue (reconnaît aussi les tenues des mods). |

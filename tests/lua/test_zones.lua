@@ -917,6 +917,33 @@ function T.admin_adds_a_zone_and_the_file_is_rewritten()
     assertEq(data.zones[1].id, "z1", "zones existantes gardées")
 end
 
+--- Solo, chemin réel (sans Net.toPlayer simulé) : Net.toServer appelle
+--- Server.onClientCommand, dont les réponses passent par Net.toPlayer jusqu'à
+--- MilitaryDrop.Client.onServerCommand PENDANT l'envoi : ZoneReply puis
+--- ZoneListReply, avec le requestId envoyé (nombre), avant le retour de l'envoi.
+function T.solo_real_net_delivers_the_reply_with_its_number_during_the_send()
+    twoSectors()
+    -- Zones.lua garde sa table Net : y remettre les vraies fonctions.
+    local Net = MilitaryDrop.Net
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
+    Net.toPlayer, Net.toAll, Net.toServer = MilitaryDrop.Net.toPlayer, MilitaryDrop.Net.toAll, MilitaryDrop.Net.toServer
+    MilitaryDrop.Net = Net
+    local got, sending = {}, false
+    MilitaryDrop.Client = { onServerCommand = function(module, command, args)
+        got[#got + 1] = command .. " " .. tostring(args.requestId) .. " " .. type(args.requestId) .. " "
+            .. tostring(args.ok) .. (sending and " pendant" or " après")
+    end }
+    NOW_MS = NOW_MS + 1000
+    local args = { sector = "Alpha", name = "Gate", x1 = 1000, y1 = 300, x2 = 1010, y2 = 310, weight = 1,
+        requestId = 7 }
+    sending = true
+    Net.toServer(PLAYER, "ZoneAdd", args)
+    sending = false
+    assertEq(table.concat(got, ", "), "ZoneReply 7 number true pendant, ZoneListReply 7 number nil pendant",
+        "réponses du vrai serveur pendant l'envoi, même numéro")
+    assertEq(args.requestId, 7, "table envoyée intacte")
+end
+
 function T.admin_add_refuses_bad_zones()
     twoSectors()
     NONPVP = { { x = 7000, y = 7000, x2 = 7100, y2 = 7100 } }
@@ -1269,6 +1296,67 @@ function T.zones_are_read_at_server_start()
     triggerEvent("OnServerStarted")
     assertTrue(FILES[PATH] ~= nil, "fichier créé au démarrage")
     assertTrue(logged("drop zones: 0 (0 active) from created"), "résumé au journal")
+end
+
+-- ----------------------------------------------------------------------------
+-- Options changées en cours de partie (à chaud)
+-- ----------------------------------------------------------------------------
+
+--- Options Java de la partie, copiées de SandboxVars, qui reste périmé (solo :
+--- l'éditeur d'options du menu de debug ne change que les options Java).
+local function javaOptions()
+    local values = {}
+    for name, value in pairs(SandboxVars.MilitaryDrop) do
+        values["MilitaryDrop." .. name] = value
+    end
+    return useJavaSandboxOptions(values)
+end
+
+function T.placement_option_changed_during_the_game_applies_at_once()
+    local java = javaOptions()
+    twoSectors()
+    ROADS[#ROADS + 1] = { x = 0, y = 0, w = 100000, h = 100000 }
+    local _, _, info = choose()
+    assertEq(info, nil, "proximité au chargement")
+    assertEq(admin("ZoneList").ZoneListReply.placement, 1, "panneau : proximité")
+    java["MilitaryDrop.DropPlacement"] = 2
+    _, _, info = choose()
+    assertEq(info and info.sector, "Alpha", "zones : dès le largage suivant")
+    assertEq(admin("ZoneList").ZoneListReply.placement, 2, "panneau : nouveau mode lu par le serveur")
+    assertEq(table.concat(MilitaryDrop.Zones.decoySectors(100, 200), ","), "Alpha,Bravo", "leurre : secteurs")
+    java["MilitaryDrop.DropPlacement"] = 1
+    _, _, info = choose()
+    assertEq(info, nil, "retour à la proximité")
+end
+
+function T.zone_options_changed_during_the_game_apply_at_once()
+    local java = javaOptions()
+    java["MilitaryDrop.DropPlacement"] = 2
+    twoSectors()
+    local caller = makePlayer("inside", 1010, 220)
+    local _, _, info = choose(caller)
+    assertEq(info.sector, "Alpha", "secteur le plus proche")
+    java["MilitaryDrop.DropZoneMinDistance"] = 500
+    _, _, info = choose(caller)
+    assertEq(info.sector, "Bravo", "distance minimale : Alpha écartée")
+    java["MilitaryDrop.DropZoneMinDistance"] = 0
+    java["MilitaryDrop.DropZoneChoice"] = 2
+    ZombRand = function(n) return n - 1 end
+    _, _, info = choose()
+    assertEq(info.sector, "Bravo", "secteur au hasard")
+    ZombRand = function() return 0 end
+    java["MilitaryDrop.DropZoneChoice"] = 1
+    java["MilitaryDrop.DropPlacement"] = 3
+    java["MilitaryDrop.DropZoneMaxDistance"] = 1000
+    ROADS[#ROADS + 1] = { x = 0, y = 8000, w = 100000, h = 2000 }
+    _, _, info = choose()
+    assertEq(info.zoneId, "z1", "zones proches : Alpha à 900 cases")
+    java["MilitaryDrop.DropZoneMaxDistance"] = 500
+    _, _, info = choose(makePlayer("south", 100, 9000))
+    assertEq(info, nil, "portée réduite : proximité")
+    assertEq(MilitaryDrop.Broadcast.announcesZone("Alpha Park"), true, "nom annoncé")
+    java["MilitaryDrop.DropZoneAnnounceName"] = false
+    assertEq(MilitaryDrop.Broadcast.announcesZone("Alpha Park"), false, "nom tu dès l'annonce suivante")
 end
 
 return T

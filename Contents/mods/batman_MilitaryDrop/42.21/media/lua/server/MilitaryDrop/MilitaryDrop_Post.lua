@@ -174,8 +174,10 @@ local function sortedKeys(t)
     return keys
 end
 
+--- Option vanilla : options Java (à jour après un changement en cours de
+--- partie, même en solo), sinon SandboxVars, sinon default.
 local function sandboxNumber(name, default)
-    local value = SandboxVars and tonumber(SandboxVars[name])
+    local value = tonumber(Config.sandboxValue(name)) or (SandboxVars and tonumber(SandboxVars[name]))
     return value or default
 end
 
