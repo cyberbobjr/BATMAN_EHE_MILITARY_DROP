@@ -78,7 +78,7 @@ function T.setup()
     end }
     MilitaryDrop.Secrets = { privateState = function() return PRIVATE end }
     MilitaryDrop.Net = { toAll = function(cmd) SENT[#SENT+1] = cmd end }
-    MilitaryDrop.Trust = { onCrash = function() CLOSED = CLOSED + 1 end }
+    MilitaryDrop.Trust = { onCrash = function(_, supplies) CLOSED = CLOSED + 1 SUPPLIES_PENDING = supplies end }
     MilitaryDrop.Broadcast = { mayday = function() SENT[#SENT+1] = "MaydayAnnounce" end }
     MilitaryDrop.Notes = { createMemo = function() return item("memo") end,
         createCodebook = function() return item("book") end }
@@ -169,6 +169,7 @@ function T.by_default_the_crash_site_has_no_supplies_but_everything_else()
     assertEq(MilitaryDrop.Config.get("CrashCrates"),false)
     local site = MilitaryDrop.Wreck.add(FLIGHT)
     assertEq(site.crates,false)
+    assertEq(SUPPLIES_PENDING,false,"aucune fourniture attendue")
     assertTrue(site.complete)
     assertEq(DELIVERED,0)
     assertEq(site.done.supplies,nil)
@@ -187,6 +188,7 @@ function T.enabled_option_still_delivers_the_supplies_at_the_wreck()
     SandboxVars.MilitaryDrop.CrashCrates = true
     local site = MilitaryDrop.Wreck.add(FLIGHT)
     assertEq(site.crates,true)
+    assertEq(SUPPLIES_PENDING,true,"dossier gardé jusqu'aux fournitures")
     assertTrue(site.complete)
     assertEq(site.done.supplies,"done")
     assertEq(DELIVERED,1)

@@ -82,6 +82,20 @@ function Crate.contentsFor(dropId)
     if order and order.lots then
         return Requisition.casesFor(dropId)
     end
+    -- Contenu aléatoire alors qu'un largage était désigné : dossier introuvable
+    -- (oublié, état privé perdu), ou sans commande alors que le formulaire est
+    -- actif (largage d'avant l'option, ou commande perdue). Toujours journalisé
+    -- (retour joueur du 2026-10-06 : commande admin livrée au hasard).
+    local Trust = MilitaryDrop.Trust
+    if dropId and Trust and Trust.drop then
+        local drop = Trust.drop(dropId)
+        if not drop then
+            MilitaryDrop.log("drop " .. tostring(dropId) .. ": no drop record, random supply cases", true)
+        elseif Requisition and Requisition.formEnabled and Requisition.formEnabled() then
+            MilitaryDrop.log("drop " .. tostring(dropId) .. ": no order in its record"
+                .. (drop.forced and " (admin drop)" or "") .. ", random supply cases", true)
+        end
+    end
     local entries = {}
     for i, fullType in ipairs(Crate.rollCases()) do
         entries[i] = { fullType = fullType }
@@ -118,6 +132,11 @@ end
 function Crate.onFillContainer(roomType, _, container)
     if roomType ~= Crate.SCRIPT or not instanceof(container, "ItemContainer") then
         return
+    end
+    if fillingDropId == nil then
+        -- Coffre rempli hors de Crate.spawn (aucun appel connu du moteur 42.21 :
+        -- BaseVehicle.randomizeContainers ne repasse pas sur un coffre exploré).
+        MilitaryDrop.log("supply crate trunk filled without a drop id (outside Crate.spawn): random supply cases", true)
     end
     for _, entry in ipairs(Crate.contentsFor(fillingDropId)) do
         local item = container:AddItem(entry.fullType)

@@ -290,7 +290,8 @@ function Wreck.add(flight)
         outfit = #matches > 0 and matches[ZombRand(#matches) + 1] or nil,
     }
     -- Le crash n'est pas un échec du demandeur : aucun malus de largage perdu.
-    if MilitaryDrop.Trust.onCrash then MilitaryDrop.Trust.onCrash(flight.dropId) end
+    -- Fournitures attendues : le dossier (commande) reste jusqu'à leur livraison.
+    if MilitaryDrop.Trust.onCrash then MilitaryDrop.Trust.onCrash(flight.dropId, registry[id].crates) end
     Net.toAll("FlightCrash", { id = flight.id, x = impact.x, y = impact.y })
     MilitaryDrop.log("flight " .. flight.id .. " crashed (" .. tostring(impact.cause) .. ")", true)
     Wreck.trySite(registry[id])

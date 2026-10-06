@@ -3,6 +3,16 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## Unreleased
+
+Not published yet. This heading has no version number, so it is not read as a change note: give it a version and a date, and the same `modversion=` in `mod.info`, at the next release.
+
+### Fixed
+
+- The base now stops repeating a drop's grid on the radio as soon as its crate has been emptied: taking at least one case out of the crate (or picking up one of the cases left on the ground), or dismantling the crate, counts as found. Before, only opening a supply case stopped the reminders. Reputation rules are unchanged: only opening a case decides who recovered the drop.
+- With **Supplies survive a crash** on, a crashed drop keeps its order until the supplies land at the wreck, even more than a week later: they no longer fall back to random supply cases.
+- The server log now always reports a supply crate that gets random supply cases although a drop was expected (drop record missing, or no order while the requisition form is on), and a crate trunk filled outside a drop. This should explain an admin order reported as delivered with random cases after several quick admin drops, which could not be reproduced.
+
 ## 0.3.1 — 2026-10-06
 
 ### Mayday: the order is lost in a crash

@@ -202,6 +202,9 @@ function T.setup()
         isOutside = function() return true end, isFree = function() return true end,
         isWaterSquare = function() return false end,
         getVehicleContainer = function() return nil end,
+        -- Une seule case simulée pour toutes les coordonnées : les objets posés
+        -- ne sont pas recomptés au sol (Server.countDropItems).
+        getWorldObjects = function() return { size = function() return 0 end } end,
         AddWorldInventoryItem = function(_, item, _, _, _, transmit)
             assert(type(item) == "table" and transmit == true, "objet déjà créé, transmis à la pose")
             -- Marqué avant la pose : la pose le transmet aux clients.
@@ -584,6 +587,12 @@ function T.trunk_receives_the_ordered_cases()
         return item
     end
     local vehicle = { getSqlId = function() return 5 end }
+    -- Coffre relu à la livraison (Server.trunkCount : objets marqués posés).
+    function vehicle.getPartById(_, id)
+        return id == "TrailerTrunk" and { getItemContainer = function()
+            return { getItems = function() return list(container.items) end }
+        end } or nil
+    end
     addVehicleDebug = function()
         triggerEvent("OnFillContainer", "MilitaryDrop_SupplyCrate", "TrailerTrunk", container)
         return vehicle
@@ -962,6 +971,157 @@ function T.form_enabled_during_the_game_prepares_the_lots_at_the_next_minute()
     assertEq(passes, 1, "activé en cours de partie : lots précalculés en un passage")
     assertEq(call().status, "form", "formulaire")
     assertEq(passes, 1, "servi depuis la mémoire")
+end
+
+-- ----------------------------------------------------------------------------
+-- Six largages admin rapprochés (retour joueur du 2026-10-06)
+-- ----------------------------------------------------------------------------
+
+--- Monde simulé : cases créées à la demande, caisses posées (véhicules) sur
+--- les quatre cases x-1..x, y-1..y, refus d'une caisse qui en chevauche une
+--- autre (IsoChunk.doSpawnedVehiclesInInvalidPosition : véhicule renvoyé,
+--- jamais ajouté, getSqlId() == -1), coffre rempli pendant addVehicleDebug
+--- (BaseVehicle.createPhysics → randomizeContainers → OnFillContainer).
+local function crateWorld()
+    local world = { squares = {}, vehicles = {}, crates = {}, ground = {} }
+    local function key(x, y) return x .. "," .. y end
+    function world.square(x, y)
+        local k = key(x, y)
+        if not world.squares[k] then
+            local square = {
+                x = x, y = y, items = {},
+                getX = function() return x end, getY = function() return y end, getZ = function() return 0 end,
+                isOutside = function() return true end, isFree = function() return true end,
+                isWaterSquare = function() return false end,
+                getVehicleContainer = function() return world.vehicles[k] end,
+            }
+            function square.getWorldObjects(self)
+                local objects = {}
+                for i, item in ipairs(self.items) do
+                    objects[i] = { getItem = function() return item end }
+                end
+                return list(objects)
+            end
+            function square.AddWorldInventoryItem(self, item)
+                self.items[#self.items + 1] = item
+                world.ground[#world.ground + 1] = item
+                return item
+            end
+            world.squares[k] = square
+        end
+        return world.squares[k]
+    end
+    getCell = function() return { getGridSquare = function(_, x, y) return world.square(x, y) end } end
+    addVehicleDebug = function(_, _, _, square)
+        local x, y = square:getX(), square:getY()
+        for dx = -2, 1 do
+            for dy = -2, 1 do
+                if world.vehicles[key(x + dx, y + dy)] then
+                    return { getSqlId = function() return -1 end }
+                end
+            end
+        end
+        local container = { kind = "ItemContainer", items = {} }
+        function container.AddItem(self, fullType)
+            local item = makeWorldItem(fullType)
+            self.items[#self.items + 1] = item
+            return item
+        end
+        local vehicle = { container = container, x = x, y = y, getSqlId = function() return #world.crates + 1 end,
+            getScriptName = function() return "Base.MilitaryDrop_SupplyCrate" end,
+            isRemovedFromWorld = function() return false end }
+        function vehicle.getPartById(_, id)
+            return id == "TrailerTrunk" and { getItemContainer = function()
+                return { getItems = function() return list(container.items) end }
+            end } or nil
+        end
+        for dx = -1, 0 do
+            for dy = -1, 0 do
+                world.vehicles[key(x + dx, y + dy)] = vehicle
+            end
+        end
+        world.crates[#world.crates + 1] = vehicle
+        triggerEvent("OnFillContainer", "MilitaryDrop_SupplyCrate", "TrailerTrunk", container)
+        return vehicle
+    end
+    return world
+end
+
+--- Avance tous les vols en cours jusqu'à leur fin (OnTick simulé).
+local function flyAll()
+    for _ = 1, 4000 do
+        local active = flights()
+        if #active == 0 then
+            return
+        end
+        for i = #active, 1, -1 do
+            if MilitaryDrop.Flights.advance(active[i], 0.25) then
+                table.remove(active, i)
+            end
+        end
+    end
+end
+
+--- Lots portés par une liste d'objets : « id×n » triés, ou « random ».
+local function lotsOf(items)
+    local counts, names = {}, {}
+    for _, item in ipairs(items) do
+        local lot = item.modData and item.modData.MilitaryDrop_lot
+        if not lot then
+            return "random"
+        end
+        counts[lot] = (counts[lot] or 0) + 1
+    end
+    for lot, n in pairs(counts) do
+        names[#names + 1] = lot .. "x" .. n
+    end
+    table.sort(names)
+    return table.concat(names, ",")
+end
+
+function T.six_quick_admin_drops_each_deliver_their_own_order()
+    local world = crateWorld()
+    PLAYER = makePlayer(nil)
+    local orders = {
+        { rations = 14, water = 6 }, { medical = 3 }, { tools = 2, rations = 1 },
+        { water = 4 }, { camping = 1, materials = 2 }, { rations = 2, medical = 1 },
+    }
+    local expected = {}
+    for i, lots in ipairs(orders) do
+        -- Trois points distincts, chacun visé deux fois (même point, coup sur coup).
+        local offset = (i - 1) % 3 * 40
+        ZombRandFloat = function(low) return low + offset / 1000 end
+        NOW_MS = NOW_MS + 5000
+        MilitaryDrop.Server.handleRequest(PLAYER, { requestId = 10 + i, force = true })
+        assertEq(SENT[#SENT].args.status, "form", "feuille admin " .. i)
+        assertEq(order(lots, nil, PLAYER, 10 + i).status, "accepted", "commande admin " .. i)
+        local names = {}
+        for id, n in pairs(lots) do
+            names[#names + 1] = id .. "x" .. n
+        end
+        table.sort(names)
+        expected[flights()[#flights()].dropId] = table.concat(names, ",")
+    end
+    assertEq(#flights(), 6, "six vols en même temps")
+    flyAll()
+    local seen = 0
+    for _, crate in ipairs(world.crates) do
+        local dropId = crate.container.items[1] and crate.container.items[1].modData.MilitaryDrop_dropId
+        assertTrue(dropId ~= nil, "coffre marqué de son largage")
+        assertEq(lotsOf(crate.container.items), expected[dropId], "coffre de " .. tostring(dropId))
+        seen = seen + 1
+    end
+    local ground = {}
+    for _, item in ipairs(world.ground) do
+        local dropId = item.modData.MilitaryDrop_dropId
+        ground[dropId] = ground[dropId] or {}
+        table.insert(ground[dropId], item)
+    end
+    for dropId, items in pairs(ground) do
+        assertEq(lotsOf(items), expected[dropId], "repli au sol de " .. tostring(dropId))
+        seen = seen + 1
+    end
+    assertEq(seen, 6, "six livraisons, chacune avec sa commande")
 end
 
 return T

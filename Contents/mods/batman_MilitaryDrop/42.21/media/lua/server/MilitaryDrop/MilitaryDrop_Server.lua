@@ -52,7 +52,8 @@
 -- Rappel de la grille (option DropRepeatHours, 0 = aucun) : toutes les N
 -- heures de jeu après l'annonce, la base répète sur la chaîne militaire la
 -- grille de chaque largage dont aucune caisse n'a été ouverte (leurre trouvé
--- compris), pendant TrustDropLostHours heures au plus (Server.repeatGrids).
+-- compris) ni le contenu pris (Server.pollCollected), pendant
+-- TrustDropLostHours heures au plus (Server.repeatGrids).
 -- Comme l'annonce, le rappel s'entend seulement sur une radio allumée et
 -- réglée, et marque la carte de qui l'entend.
 --
@@ -676,7 +677,15 @@ function Server.deliver(x, y, requester, dropId, opts)
     end
     local state = Server.getState()
     state.lastDrop = { x = x, y = y, hours = getGameTime():getWorldAgeHours() }
-    MilitaryDrop.Trust.onDropDelivered(dropId)
+    -- Objets marqués posés (coffre ou sol) : suivis pour arrêter les rappels
+    -- de la grille quand on les prend (Server.pollCollected).
+    local cases = 0
+    if dropId and vehicle then
+        cases = Server.trunkCount(vehicle, dropId)
+    elseif dropId then
+        cases = Server.countDropItems(x, y, dropId)
+    end
+    MilitaryDrop.Trust.onDropDelivered(dropId, { x = x, y = y, cases = cases })
     -- Leurre (v1.5) : la sirène démarre une fois la caisse posée (véhicule nil :
     -- repli au sol).
     local order = MilitaryDrop.Requisition and MilitaryDrop.Requisition.orderOf(dropId)
@@ -686,6 +695,116 @@ function Server.deliver(x, y, requester, dropId, opts)
     MilitaryDrop.log(string.format("drop at %d,%d: %d crate/cases, %d zombies, for %s",
         x, y, count, zombies, tostring(requester)), true)
     return true
+end
+
+-- ----------------------------------------------------------------------------
+-- Caisse vidée : fin des rappels de la grille
+-- ----------------------------------------------------------------------------
+
+-- Cases sondées autour du point de livraison : la caisse (véhicule) est
+-- centrée sur le coin nord-ouest de la case et couvre x-1..x, y-1..y ; le
+-- repli au sol est posé sur la case elle-même.
+Server.COLLECT_RADIUS = 2
+-- Manque constaté pendant au moins COLLECT_GRACE_MS réelles avant de conclure :
+-- au chargement d'un chunk, le véhicule peut arriver après les cases (comme
+-- Decoy.MISSING_GRACE_MS). Mémoire du serveur : dropId → ms du premier manque.
+Server.COLLECT_GRACE_MS = 20000
+local shortSince = {}
+
+local function countTagged(items, dropId)
+    local count = 0
+    if not items then
+        return 0
+    end
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if item and item:getModData()[MilitaryDrop.Crate.DROP_KEY] == dropId then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+--- Caisse de largage encore dans le monde.
+local function isCrate(vehicle)
+    return vehicle ~= nil and not vehicle:isRemovedFromWorld()
+        and vehicle:getScriptName() == MilitaryDrop.Crate.FULL_SCRIPT
+end
+
+--- Objets marqués du largage dropId dans le coffre de la caisse vehicle.
+function Server.trunkCount(vehicle, dropId)
+    local part = vehicle and vehicle:getPartById(MilitaryDrop.Crate.TRUNK)
+    local container = part and part:getItemContainer()
+    return countTagged(container and container:getItems(), dropId)
+end
+
+--- Objets marqués du largage dropId autour de (x, y) : dans le coffre d'une
+--- caisse de largage et au sol. Renvoie le nombre et vrai si toutes les
+--- cases sondées sont chargées. Serveur : en MP, les transferts sont des
+--- transactions exécutées par le serveur (TransactionManager), son coffre
+--- est donc à jour sans événement Lua (pz-knowledge combat-and-xp.md).
+function Server.countDropItems(x, y, dropId)
+    local cell = getCell()
+    local r = Server.COLLECT_RADIUS
+    local count, complete, seen = 0, true, {}
+    for dx = -r, r do
+        for dy = -r, r do
+            local square = cell and cell:getGridSquare(x + dx, y + dy, 0)
+            if not square then
+                complete = false
+            else
+                local vehicle = square:getVehicleContainer()
+                if vehicle and not seen[vehicle] and isCrate(vehicle) then
+                    seen[vehicle] = true
+                    count = count + Server.trunkCount(vehicle, dropId)
+                end
+                local objects = square:getWorldObjects()
+                for i = 0, (objects and objects:size() or 0) - 1 do
+                    local object = objects:get(i)
+                    local item = object and object:getItem()
+                    if item and item:getModData()[MilitaryDrop.Crate.DROP_KEY] == dropId then
+                        count = count + 1
+                    end
+                end
+            end
+        end
+    end
+    return count, complete
+end
+
+--- Retour joueur du 2026-10-06 : la base rappelait la grille d'une caisse
+--- vidée, seule l'ouverture d'une caisse de ravitaillement (recette,
+--- Trust.onCaseOpened) l'arrêtait. Critère : au moins un objet marqué
+--- (caisse de ravitaillement, de réquisition, balise) manque, ou la caisse a
+--- disparu, constaté zone chargée. La caisse est alors trouvée : le rappel,
+--- fait pour la retrouver, n'a plus d'objet ; attendre le coffre vide
+--- laisserait la base rappeler une caisse déjà pillée. Sondage léger
+--- (EveryOneMinute, et juste avant chaque rappel) des seuls largages
+--- annoncés et non vidés dont la zone est chargée ; le manque doit durer
+--- COLLECT_GRACE_MS. Renvoie le nombre de largages marqués vidés.
+function Server.pollCollected(nowMs)
+    local marked = 0
+    for _, entry in ipairs(MilitaryDrop.Trust.announcedDrops()) do
+        local placed = entry.drop.placed
+        if type(placed) == "table" and type(placed.x) == "number" and type(placed.y) == "number" then
+            local count, complete = Server.countDropItems(placed.x, placed.y, entry.id)
+            if not complete or count >= (tonumber(placed.cases) or 0) then
+                shortSince[entry.id] = nil
+            else
+                nowMs = nowMs or getTimestampMs()
+                local since = shortSince[entry.id]
+                if not since or nowMs < since then
+                    shortSince[entry.id] = nowMs
+                elseif nowMs - since >= Server.COLLECT_GRACE_MS then
+                    shortSince[entry.id] = nil
+                    if MilitaryDrop.Trust.markCollected(entry.id) then
+                        marked = marked + 1
+                    end
+                end
+            end
+        end
+    end
+    return marked
 end
 
 function Server.handleRequest(player, args)
@@ -836,6 +955,8 @@ function Server.repeatGrids(hours)
         return 0
     end
     hours = hours or getGameTime():getWorldAgeHours()
+    -- Caisse vidée depuis le dernier sondage (zone encore chargée) : pas de rappel.
+    Server.pollCollected()
     local window = math.max(1, tonumber(Config.get("TrustDropLostHours")) or 48)
     local grids = {}
     for _, entry in ipairs(MilitaryDrop.Trust.announcedDrops()) do
@@ -859,6 +980,9 @@ end
 
 Events.EveryHours.Add(function()
     Server.repeatGrids()
+end)
+Events.EveryOneMinute.Add(function()
+    Server.pollCollected()
 end)
 Events.OnInitGlobalModData.Add(function()
     Secrets.getSeed()

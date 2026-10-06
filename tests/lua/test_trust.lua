@@ -460,4 +460,27 @@ function T.crash_closes_recovery_without_penalizing_the_requester()
     assertEq(#trust.announcedDrops(),0)
 end
 
+--- Fournitures de l'épave (CrashCrates) livrées plus de 168 h après le crash :
+--- le dossier, avec sa commande, doit encore exister à leur livraison.
+function T.crashed_drop_keeps_its_order_until_the_wreck_supplies_land()
+    local id = Trust.registerDrop("C:alice", "alice", true,
+        { untracked = true, order = { lots = { rations = 14, water = 6 } } })
+    Trust.onDropAnnounced(id, 500, 600)
+    Trust.onCrash(id, true)
+    wait(Trust.CLOSED_DROP_KEEP_HOURS + 10)
+    Trust.checkDrops()
+    assertTrue(STATE.drops[id] ~= nil, "fournitures en attente : dossier gardé")
+    assertEq(STATE.drops[id].order.lots.rations, 14, "commande gardée")
+    Trust.onDropDelivered(id)
+    assertEq(STATE.drops[id].suppliesPending, nil, "fournitures livrées")
+    Trust.checkDrops()
+    assertEq(STATE.drops[id], nil, "puis oublié comme tout largage clos")
+    -- Crash sans fournitures (CrashCrates faux) : oubli inchangé.
+    local other = Trust.registerDrop("C:alice", "alice", true)
+    Trust.onCrash(other)
+    wait(Trust.CLOSED_DROP_KEEP_HOURS + 10)
+    Trust.checkDrops()
+    assertEq(STATE.drops[other], nil, "sans fournitures : oublié après 168 h")
+end
+
 return T

@@ -111,6 +111,9 @@ function T.setup()
         isOutside = function() return true end, isFree = function() return true end,
         isWaterSquare = function() return false end,
         getVehicleContainer = function() return nil end,
+        -- Une seule case simulée pour toutes les coordonnées : les objets posés
+        -- ne sont pas recomptés au sol (Server.countDropItems).
+        getWorldObjects = function() return { size = function() return 0 end } end,
         -- Repli au sol : objet créé (instanceItem), marqué, puis posé.
         AddWorldInventoryItem = function(_, item, _, _, _, transmit)
             assert(type(item) == "table" and transmit == true, "objet déjà créé, transmis à la pose")
@@ -619,6 +622,153 @@ function T.base_repeats_the_grid_until_a_case_is_opened()
     assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 12), 1, "rappel suivant à 12 h")
     MilitaryDrop.Trust.onCaseOpened(PLACED_ITEMS[1], PLAYER)
     assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 18), 0, "caisse ouverte : plus de rappel")
+end
+
+-- ----------------------------------------------------------------------------
+-- Caisse vidée : fin des rappels (retour joueur du 2026-10-06)
+-- ----------------------------------------------------------------------------
+
+local function javaList(values)
+    return { size = function() return #values end, get = function(_, i) return values[i + 1] end }
+end
+
+--- Monde à plusieurs cases : caisse (véhicule) sur x-1..x, y-1..y, coffre
+--- rempli pendant addVehicleDebug ; objets au sol par case
+--- (IsoWorldInventoryObject:getItem). CRATE_OFF : la caisse n'est pas
+--- (encore) vue sur ses cases ; UNLOADED(x, y) : case non chargée.
+local function collectWorld(withCrate)
+    local world = { squares = {}, crate = nil }
+    local function square(x, y)
+        local k = x .. "," .. y
+        if not world.squares[k] then
+            local sq = {
+                items = {},
+                getX = function() return x end, getY = function() return y end,
+                isOutside = function() return true end, isFree = function() return true end,
+                isWaterSquare = function() return false end,
+            }
+            function sq.getVehicleContainer()
+                local crate = world.crate
+                if crate and not CRATE_OFF and (x == crate.x or x == crate.x - 1) and (y == crate.y or y == crate.y - 1) then
+                    return crate
+                end
+                return nil
+            end
+            function sq.getWorldObjects(self)
+                local objects = {}
+                for i, item in ipairs(self.items) do
+                    objects[i] = { getItem = function() return item end }
+                end
+                return javaList(objects)
+            end
+            function sq.AddWorldInventoryItem(self, item)
+                self.items[#self.items + 1] = item
+                return item
+            end
+            world.squares[k] = sq
+        end
+        return world.squares[k]
+    end
+    world.square = square
+    getCell = function()
+        return { getGridSquare = function(_, x, y)
+            if UNLOADED and UNLOADED(x, y) then
+                return nil
+            end
+            return square(x, y)
+        end }
+    end
+    addVehicleDebug = function(_, _, _, sq)
+        if not withCrate then
+            return nil
+        end
+        local trunk = { kind = "ItemContainer", items = {} }
+        function trunk.AddItem(self, fullType)
+            local item = { fullType = fullType, modData = {} }
+            function item.getModData(this) return this.modData end
+            self.items[#self.items + 1] = item
+            return item
+        end
+        function trunk.getItems(self) return javaList(self.items) end
+        local crate = { x = sq:getX(), y = sq:getY(), trunk = trunk,
+            getSqlId = function() return 9 end, isRemovedFromWorld = function() return false end,
+            getScriptName = function() return "Base.MilitaryDrop_SupplyCrate" end }
+        function crate.getPartById(_, id)
+            return id == "TrailerTrunk" and { getItemContainer = function() return trunk end } or nil
+        end
+        world.crate = crate
+        triggerEvent("OnFillContainer", "MilitaryDrop_SupplyCrate", "TrailerTrunk", trunk)
+        return crate
+    end
+    return world
+end
+
+--- Sondage du serveur (EveryOneMinute) avant et après le délai de grâce.
+local function pollTwice()
+    triggerEvent("EveryOneMinute")
+    NOW_MS = NOW_MS + MilitaryDrop.Server.COLLECT_GRACE_MS
+    triggerEvent("EveryOneMinute")
+end
+
+function T.taking_a_case_from_the_crate_trunk_stops_the_grid_reminders()
+    local world = collectWorld(true)
+    local drop = dropOnce()
+    local trunk = world.crate.trunk
+    assertEq(#trunk.items, 2, "coffre rempli (CaseRolls)")
+    assertEq(drop.placed and drop.placed.cases, 2, "objets marqués posés, relevés à la livraison")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 6), 1, "rappel tant que le coffre est plein")
+    pollTwice()
+    assertEq(drop.collectedHours, nil, "coffre intact : rien de constaté")
+    local note = MilitaryDrop.Trust.get(MilitaryDrop.Trust.idFor(PLAYER))
+    -- Transfert vers l'inventaire du joueur (transaction exécutée par le serveur en MP).
+    table.remove(trunk.items, 1)
+    pollTwice()
+    assertTrue(drop.collectedHours ~= nil, "caisse prise : constaté")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 12), 0, "plus de rappel")
+    assertEq(drop.outcome, nil, "issue inchangée (CONF-04 : seule l'ouverture compte)")
+    assertEq(MilitaryDrop.Trust.get(MilitaryDrop.Trust.idFor(PLAYER)), note, "confiance inchangée")
+end
+
+function T.picking_up_ground_cases_stops_the_grid_reminders()
+    local world = collectWorld(false)
+    local drop = dropOnce()
+    local square = world.square(250, 200)
+    assertEq(#square.items, 2, "repli au sol")
+    assertEq(drop.placed and drop.placed.cases, 2, "objets au sol relevés")
+    table.remove(square.items, 2)
+    pollTwice()
+    assertTrue(drop.collectedHours ~= nil, "caisse ramassée : constaté")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 6), 0, "aucun rappel")
+end
+
+function T.crate_not_yet_seen_or_area_unloaded_is_not_taken_for_emptied()
+    local world = collectWorld(true)
+    local drop = dropOnce()
+    -- Chunk rechargé : les cases avant le véhicule, qui revient avant le délai.
+    CRATE_OFF = true
+    triggerEvent("EveryOneMinute")
+    CRATE_OFF = nil
+    NOW_MS = NOW_MS + MilitaryDrop.Server.COLLECT_GRACE_MS
+    triggerEvent("EveryOneMinute")
+    assertEq(drop.collectedHours, nil, "caisse revenue : rien de constaté")
+    -- Zone en partie déchargée : aucun constat, même coffre vide.
+    world.crate.trunk.items = {}
+    UNLOADED = function(x) return x > 251 end
+    pollTwice()
+    assertEq(drop.collectedHours, nil, "zone incomplète : rien")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 6), 1, "rappel maintenu")
+    UNLOADED = nil
+    pollTwice()
+    assertTrue(drop.collectedHours ~= nil, "zone chargée : caisse vidée constatée")
+end
+
+function T.dismantled_or_vanished_crate_stops_the_grid_reminders()
+    local world = collectWorld(true)
+    local drop = dropOnce()
+    world.crate = nil
+    pollTwice()
+    assertTrue(drop.collectedHours ~= nil, "caisse disparue, zone chargée : trouvée")
+    assertEq(MilitaryDrop.Server.repeatGrids(WORLD_HOURS + 6), 0, "aucun rappel")
 end
 
 function T.grid_reminders_stop_after_the_recovery_window_without_catching_up()

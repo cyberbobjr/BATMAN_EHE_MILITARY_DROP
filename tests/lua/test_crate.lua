@@ -159,4 +159,30 @@ function T.drop_without_order_keeps_random_cases()
     assertEq(items[1].name, nil, "pas de nom composé")
 end
 
+--- Journal toujours écrit (DebugLog faux) quand une caisse reçoit le contenu
+--- aléatoire alors qu'un largage était attendu (retour joueur du 2026-10-06).
+function T.random_contents_for_an_expected_drop_are_always_logged()
+    local logged = {}
+    print = function(text) logged[#logged + 1] = text end
+    withOrders()
+    RECORDS = { D3 = { forced = true } }
+    MilitaryDrop.Trust = { drop = function(dropId) return RECORDS[dropId] end }
+    MilitaryDrop.Requisition.formEnabled = function() return true end
+    fillFor("D3")
+    assertTrue(logged[1] and logged[1]:find("D3: no order in its record (admin drop)", 1, true) ~= nil,
+        "dossier sans commande, formulaire actif : " .. tostring(logged[1]))
+    logged = {}
+    fillFor("D9")
+    assertTrue(logged[1] and logged[1]:find("D9: no drop record", 1, true) ~= nil, "dossier introuvable")
+    logged = {}
+    triggerEvent("OnFillContainer", "MilitaryDrop_SupplyCrate", "TrailerTrunk", makeItemContainer())
+    assertTrue(logged[1] and logged[1]:find("without a drop id", 1, true) ~= nil, "coffre rempli hors de Crate.spawn")
+    logged = {}
+    fillFor("D1")
+    assertEq(#logged, 0, "commande trouvée : rien")
+    MilitaryDrop.Requisition.formEnabled = function() return false end
+    fillFor("D3")
+    assertEq(#logged, 0, "formulaire désactivé : un largage sans commande est normal")
+end
+
 return T

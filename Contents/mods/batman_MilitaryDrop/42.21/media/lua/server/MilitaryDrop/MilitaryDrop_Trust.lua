@@ -267,15 +267,44 @@ function Trust.registerDrop(characterId, requester, forced, opts)
     return dropId
 end
 
---- Caisse posée : l'échéance du largage court.
-function Trust.onDropDelivered(dropId)
+--- Dossier privé d'un largage (lecture : Crate.contentsFor, Server), ou nil.
+function Trust.drop(dropId)
+    return dropId and state().drops[dropId] or nil
+end
+
+--- Caisse posée : l'échéance du largage court. placed (facultatif) : { x, y,
+--- cases } — case de la caisse (ou du repli au sol) et nombre d'objets
+--- marqués du dropId posés (Server.deliver), suivis par Server.pollCollected.
+--- Fournitures d'une épave (crash) : le dossier peut de nouveau être oublié.
+function Trust.onDropDelivered(dropId, placed)
     local drop = dropId and state().drops[dropId]
-    if not drop or drop.deliveredHours then
+    if not drop then
+        return
+    end
+    drop.suppliesPending = nil
+    if drop.deliveredHours then
         return
     end
     local hours = hoursNow()
     drop.deliveredHours = hours
     drop.deadline = hours + math.max(1, tonumber(Config.get("TrustDropLostHours")) or 48)
+    if type(placed) == "table" and (tonumber(placed.cases) or 0) > 0 then
+        drop.placed = { x = placed.x, y = placed.y, cases = placed.cases }
+    end
+end
+
+--- Contenu de la caisse pris (au moins un objet marqué retiré du coffre ou
+--- du sol, ou caisse disparue : Server.pollCollected) : la base cesse de
+--- rappeler la grille. Sans effet sur la confiance ni sur l'issue du largage
+--- (CONF-04 : seule l'ouverture d'une caisse de ravitaillement compte).
+function Trust.markCollected(dropId)
+    local drop = dropId and state().drops[dropId]
+    if not drop or drop.collectedHours then
+        return false
+    end
+    drop.collectedHours = hoursNow()
+    MilitaryDrop.log("drop " .. tostring(dropId) .. ": crate emptied, grid reminders stop")
+    return true
 end
 
 --- Grille annoncée au passage de l'hélicoptère (MilitaryDrop_Flights.lua) :
@@ -291,11 +320,12 @@ function Trust.onDropAnnounced(dropId, x, y)
 end
 
 --- Largages annoncés dont aucune caisse n'a été ouverte (ni échus, ni
---- trouvés) : { { id, drop } }, du plus ancien au plus récent.
+--- trouvés, ni vidés : Trust.markCollected) : { { id, drop } }, du plus
+--- ancien au plus récent.
 function Trust.announcedDrops()
     local list = {}
     for dropId, drop in pairs(state().drops) do
-        if drop.announcedHours and not drop.outcome then
+        if drop.announcedHours and not drop.outcome and not drop.collectedHours then
             list[#list + 1] = { id = dropId, drop = drop }
         end
     end
@@ -323,11 +353,15 @@ function Trust.markFound(dropId)
 end
 
 --- Panne de l'appareil : clôt le suivi, sans perte de confiance ni rappels de ravitaillement.
-function Trust.onCrash(dropId)
+--- supplies : fournitures de l'épave à livrer (option CrashCrates) ; le
+--- dossier (commande comprise, Requisition.orderOf) est gardé jusqu'à leur
+--- livraison (Trust.onDropDelivered), même au-delà de CLOSED_DROP_KEEP_HOURS.
+function Trust.onCrash(dropId, supplies)
     local drop = dropId and state().drops[dropId]
     if not drop or drop.outcome then return end
     drop.outcome = "crashed"
     drop.closedHours = hoursNow()
+    drop.suppliesPending = supplies == true or nil
 end
 
 --- Marque une caisse de ravitaillement du largage dropId.
@@ -378,7 +412,8 @@ function Trust.checkDrops(hours)
     for dropId, drop in pairs(drops) do
         if not drop.outcome and drop.deadline and hours >= drop.deadline then
             expired[#expired + 1] = dropId
-        elseif drop.outcome and drop.closedHours and hours - drop.closedHours > Trust.CLOSED_DROP_KEEP_HOURS then
+        elseif drop.outcome and drop.closedHours and not drop.suppliesPending
+            and hours - drop.closedHours > Trust.CLOSED_DROP_KEEP_HOURS then
             forgotten[#forgotten + 1] = dropId
         end
     end

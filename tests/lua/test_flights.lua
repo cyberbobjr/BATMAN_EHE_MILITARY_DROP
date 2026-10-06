@@ -11,6 +11,8 @@ local function makeSquare(x, y)
         isOutside = function() return true end, isFree = function() return true end,
         isWaterSquare = function() return false end,
         getVehicleContainer = function() return nil end,
+        -- Objets posés non recomptés au sol (Server.countDropItems) : sans objet ici.
+        getWorldObjects = function() return { size = function() return 0 end } end,
         -- Repli au sol : objet créé (instanceItem), marqué, puis posé.
         AddWorldInventoryItem = function(_, item, _, _, _, transmit)
             assert(type(item) == "table" and transmit == true, "objet déjà créé, transmis à la pose")
