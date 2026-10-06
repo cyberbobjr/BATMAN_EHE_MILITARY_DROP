@@ -472,5 +472,6 @@
     "IGUI_MilitaryDrop_ZoneNoChange": "没有需要保存的内容。",
     "IGUI_MilitaryDrop_ZoneSending": "已发送至服务器...",
     "IGUI_MilitaryDrop_ZoneOk_update": "已保存空投区 %1。",
-    "IGUI_MilitaryDrop_ZoneNone": "还没有空投区。点击“添加区域”，然后在地面上绘制矩形。"
+    "IGUI_MilitaryDrop_ZoneNone": "还没有空投区。点击“添加区域”，然后在地面上绘制矩形。",
+    "IGUI_MilitaryDrop_ZoneHighlight": "高亮显示"
 }

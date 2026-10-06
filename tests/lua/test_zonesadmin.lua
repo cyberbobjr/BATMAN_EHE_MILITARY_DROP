@@ -3,10 +3,12 @@
 -- l'admin, tracé à la souris (glisser ou deux clics, clics consommés,
 -- rectangle figé après le second coin, clic droit et Échap), ZoneAdd
 -- normalisé, ZoneUpdate des seuls champs modifiés, rectangle trop grand
--- refusé, réponses du serveur, contours, manette, aucun menu du monde ;
--- réponses identifiées par requestId, envoi jamais réactivé par un simple
--- délai, sélection de retour de l'éditeur, mort du joueur, étage du tracé,
--- couche recalée sur l'écran.
+-- refusé, réponses du serveur, manette, aucun menu du monde ; réponses
+-- identifiées par requestId, envoi jamais réactivé par un simple délai,
+-- sélection de retour de l'éditeur, mort du joueur, étage du tracé, couche
+-- recalée sur l'écran ; surbrillance au sol (case « Surbrillance », pourtour
+-- des zones chargées, couleurs, effacement exact, chunks chargés ensuite,
+-- tracé, coût borné, jamais addAreaHighlight*).
 
 local T = {}
 
@@ -114,6 +116,30 @@ local function setupUI()
     function ISScrollingListBox:clear() self.items = {} end
     function ISScrollingListBox:addItem(text, item)
         self.items[#self.items + 1] = { text = text, item = item, index = #self.items + 1 }
+    end
+
+    -- ISTickBox 42.21 (ISTickBox.lua:156-182, 266-280) : un clic inverse
+    -- l'option et appelle changeOptionMethod(target, index, selected).
+    ISTickBox = Base:derive("ISTickBox")
+    function ISTickBox:new(x, y, w, h, name, target, onChange)
+        local o = Base.new(self, x, y, w, h)
+        o.options, o.selected, o.target, o.onChange, o.leftMargin = {}, {}, target, onChange, 0
+        return o
+    end
+    function ISTickBox:setFont() end
+    function ISTickBox:addOption(text) self.options[#self.options + 1] = text end
+    function ISTickBox:setWidthToFit()
+        local width = 0
+        for _, text in ipairs(self.options) do
+            width = math.max(width, self.leftMargin + self.height + 10 + #text * 7)
+        end
+        self.width = width
+    end
+    function ISTickBox:setSelected(index, selected) self.selected[index] = selected end
+    function ISTickBox:isSelected(index) return self.selected[index] == true end
+    function ISTickBox:click()
+        self.selected[1] = not self.selected[1]
+        return self.onChange(self.target, 1, self.selected[1])
     end
 
     ISTextEntryBox = Base:derive("ISTextEntryBox")
@@ -391,6 +417,218 @@ local function rightClick(force)
 end
 
 -- ----------------------------------------------------------------------------
+-- Monde simulé : cases chargées et objets de sol (surbrillance 42.21)
+-- ----------------------------------------------------------------------------
+
+--- Cases chargées : bornes incluses LOADED = { x1, y1, x2, y2 } (carte de
+--- chunks du joueur, IsoChunkMap:getWorldXMinTiles... : max exclusif), un
+--- objet de sol par case, créé au premier accès. La surbrillance suit
+--- IsoObject.java:4653-4754 : surcharges par nombre d'arguments (une autre
+--- est une erreur, comme « No implementation found »), bits par joueur,
+--- couleur par joueur en float, jaune par défaut. GRID_CALLS : appels de
+--- getGridSquare ; WRITES : écritures de surbrillance ; AREA_CALLS : appels
+--- de addAreaHighlight* (interdits).
+local function setupWorld()
+    LOADED = { 0, 0, 19999, 19999 }
+    FLOORS, GRID_CALLS, WRITES, AREA_CALLS = {}, 0, 0, 0
+    local function toFloat(v)
+        return tonumber(string.format("%.7g", v))
+    end
+    local function colorInfo(c)
+        return {
+            getR = function() return c[1] end, getG = function() return c[2] end,
+            getB = function() return c[3] end, getA = function() return c[4] end,
+        }
+    end
+    local Floor = {}
+    Floor.__index = Floor
+    function Floor:getObjectIndex() return self.index end
+    function Floor:getSquare() return self.square end
+    function Floor:isHighlighted(...)
+        if select("#", ...) == 0 then
+            for p = 0, 3 do
+                if self.hl[p] then
+                    return true
+                end
+            end
+            return false
+        end
+        local p = ...
+        assert(type(p) == "number", "isHighlighted(int) : joueur attendu")
+        return self.hl[p] == true
+    end
+    function Floor:setHighlighted(...)
+        local n, a, b, c = select("#", ...), ...
+        WRITES = WRITES + 1
+        if n == 3 then
+            assert(type(a) == "number" and type(b) == "boolean" and type(c) == "boolean",
+                "setHighlighted(int, boolean, boolean)")
+            self.hl[a], self.once[a] = b, c
+        elseif n == 1 or n == 2 then
+            assert(type(a) == "boolean" and (n == 1 or type(b) == "boolean"), "setHighlighted(boolean, boolean)")
+            for p = 0, 3 do
+                self.hl[p], self.once[p] = a, n == 1 or b
+            end
+        else
+            error("setHighlighted : aucune surcharge à " .. n .. " arguments")
+        end
+    end
+    function Floor:getHighlightColor(...)
+        local p = select("#", ...) == 0 and 0 or ...
+        assert(type(p) == "number", "getHighlightColor(int) : joueur attendu")
+        self.colors[p] = self.colors[p] or { 0.9, 1.0, 0.0, 1.0 }
+        return colorInfo(self.colors[p])
+    end
+    function Floor:setHighlightColor(...)
+        local n, args = select("#", ...), { ... }
+        WRITES = WRITES + 1
+        if n == 5 then
+            for i = 1, 5 do
+                assert(type(args[i]) == "number", "setHighlightColor(int, float, float, float, float)")
+            end
+            self.colors[args[1]] = { toFloat(args[2]), toFloat(args[3]), toFloat(args[4]), toFloat(args[5]) }
+        elseif n == 4 then
+            for p = 0, 3 do
+                self.colors[p] = { toFloat(args[1]), toFloat(args[2]), toFloat(args[3]), toFloat(args[4]) }
+            end
+        else
+            error("setHighlightColor : surcharge à " .. n .. " arguments non simulée")
+        end
+    end
+    local function loaded(x, y)
+        return x >= LOADED[1] and x <= LOADED[3] and y >= LOADED[2] and y <= LOADED[4]
+    end
+    CELL = {
+        getGridSquare = function(_, x, y, z)
+            GRID_CALLS = GRID_CALLS + 1
+            assert(x == math.floor(x) and y == math.floor(y) and z == math.floor(z), "coordonnées entières")
+            if not loaded(x, y) then
+                return nil
+            end
+            local key = x .. "," .. y .. "," .. z
+            local floor = FLOORS[key]
+            if not floor then
+                floor = setmetatable({ hl = {}, once = {}, colors = {}, index = 0 }, Floor)
+                floor.square = {
+                    getX = function() return x end, getY = function() return y end, getZ = function() return z end,
+                    getFloor = function() return FLOORS[key] end,
+                }
+                FLOORS[key] = floor
+            end
+            return floor.square
+        end,
+        getChunkMap = function(_, playerNum)
+            assert(playerNum == 0, "carte de chunks du joueur 0")
+            return {
+                getWorldXMinTiles = function() return LOADED[1] end,
+                getWorldYMinTiles = function() return LOADED[2] end,
+                getWorldXMaxTiles = function() return LOADED[3] + 1 end,
+                getWorldYMaxTiles = function() return LOADED[4] + 1 end,
+            }
+        end,
+    }
+    getCell = function() return CELL end
+    addAreaHighlight = function()
+        AREA_CALLS = AREA_CALLS + 1
+        error("addAreaHighlight ne doit plus être utilisé")
+    end
+    addAreaHighlightForPlayer = addAreaHighlight
+end
+
+--- Nouvelle carte chargée : les sols hors des bornes sont déchargés (objet
+--- retiré du monde, surbrillance remise à zéro comme IsoObject.reset) ; une
+--- case rechargée reçoit un nouvel objet.
+local function setLoaded(x1, y1, x2, y2)
+    LOADED = { x1, y1, x2, y2 }
+    local gone = {}
+    for key, floor in pairs(FLOORS) do
+        local sq = floor.square
+        local x, y = sq:getX(), sq:getY()
+        if x < x1 or x > x2 or y < y1 or y > y2 then
+            gone[#gone + 1] = key
+        end
+    end
+    for _, key in ipairs(gone) do
+        local floor = FLOORS[key]
+        floor.index, floor.square, floor.hl, floor.once, floor.colors = -1, nil, {}, {}, {}
+        FLOORS[key] = nil
+    end
+end
+
+local function floorAt(x, y, z)
+    return FLOORS[x .. "," .. y .. "," .. (z or 0)]
+end
+
+local function isLit(x, y, z)
+    local floor = floorAt(x, y, z)
+    return floor ~= nil and floor.hl[0] == true
+end
+
+local function fmt(c)
+    return string.format("%.2f,%.2f,%.2f,%.2f", c[1], c[2], c[3], c[4])
+end
+
+--- Couleur du joueur 0 sur la case, ou nil.
+local function colorAt(x, y, z)
+    local floor = floorAt(x, y, z)
+    local c = floor and floor.colors[0]
+    return c and fmt(c)
+end
+
+--- Cases surlignées pour le joueur 0 (clé → couleur) et leur nombre.
+local function litSquares()
+    local lit, count = {}, 0
+    for key, floor in pairs(FLOORS) do
+        if floor.hl[0] then
+            lit[key] = fmt(floor.colors[0])
+            count = count + 1
+        end
+    end
+    return lit, count
+end
+
+local function litCount()
+    local _, count = litSquares()
+    return count
+end
+
+--- Rendu du monde 42.21 : FBORenderObjectHighlight.render dessine les objets
+--- surlignés, puis clearHighlightOnceFlag (IngameState.java:1344) efface
+--- ceux d'une surbrillance « une image ». Renvoie les cases dessinées.
+local function renderWorld()
+    local drawn = litSquares()
+    for _, floor in pairs(FLOORS) do
+        local once = false
+        for p = 0, 3 do
+            once = once or (floor.hl[p] == true and floor.once[p] == true)
+        end
+        if once then
+            for p = 0, 3 do
+                floor.hl[p], floor.once[p] = false, true
+            end
+        end
+    end
+    return drawn
+end
+
+--- Mises à jour du jeu (OnTickEvenPaused), au même instant.
+local function ticks(n)
+    for _ = 1, n or 1 do
+        triggerEvent("OnTickEvenPaused")
+    end
+end
+
+--- Une mise à jour après le délai de balayage.
+local function later()
+    NOW = NOW + MilitaryDrop.ZonesAdmin.Ground.SWEEP_MS
+    ticks(1)
+end
+
+local function perimeter(x1, y1, x2, y2)
+    return 2 * (x2 - x1 + 1) + 2 * (y2 - y1 + 1) - 4
+end
+
+-- ----------------------------------------------------------------------------
 -- Mise en place
 -- ----------------------------------------------------------------------------
 
@@ -440,14 +678,7 @@ function T.setup()
     JOYPAD = nil
     getJoypadData = function() return JOYPAD end
     setJoypadFocus = function(_, element) FOCUS = element end
-    HIGHLIGHTS = {}
-    addAreaHighlightForPlayer = function(playerNum, x1, y1, x2, y2, z, r, g, b, a)
-        HIGHLIGHTS[#HIGHLIGHTS + 1] = { playerNum = playerNum, x1 = x1, y1 = y1, x2 = x2, y2 = y2, z = z, r = r, a = a }
-    end
-    -- Intervalle depuis l'image d'interface précédente (UIManager.java:284) ;
-    -- 0 : même horodatage en millisecondes.
-    UI_INTERVAL = 16
-    UIManager = { getMillisSinceLastRender = function() return UI_INTERVAL end }
+    setupWorld()
     -- Souris : case du niveau 0 visée (MOUSE) et boutons tenus. À l'étage z,
     -- la case vue au même point de l'écran est décalée de 3 z cases en x et
     -- en y (projection isométrique) ; ISO_Z : étages demandés.
@@ -483,7 +714,8 @@ function T.setup()
     MilitaryDrop.Server = { onClientCommand = function(module, command, _, args)
         SENT[#SENT + 1] = { module = module, command = command, args = args }
     end }
-    BASE_LISTENERS = { menu = listenerCount("OnFillWorldObjectContextMenu"), draw = listenerCount("OnPreUIDraw") }
+    BASE_LISTENERS = { menu = listenerCount("OnFillWorldObjectContextMenu"), tick = listenerCount("OnTickEvenPaused"),
+        draw = listenerCount("OnPreUIDraw") }
     loadMod("client/MilitaryDrop/MilitaryDrop_ZonesAdmin.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_ZonesWindow.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_ZoneEditor.lua")
@@ -524,10 +756,10 @@ local function editor()
     return MilitaryDrop.ZoneEditor.instance
 end
 
---- Image d'interface : OnPreUIDraw puis prerender (UIManager.render:283-303).
+--- Image : prerender de l'éditeur, puis une mise à jour du jeu.
 local function frame()
-    triggerEvent("OnPreUIDraw")
     editor():prerender()
+    ticks(1)
 end
 
 local function aim(x, y)
@@ -596,11 +828,11 @@ end
 
 function T.no_world_context_menu_and_reloads_do_not_stack()
     assertEq(listenerCount("OnFillWorldObjectContextMenu"), BASE_LISTENERS.menu, "plus de menu du monde")
-    assertEq(listenerCount("OnPreUIDraw"), BASE_LISTENERS.draw + 1,
-        "un seul abonné OnPreUIDraw (début d'image), contours dessinés par les fenêtres")
+    assertEq(listenerCount("OnPreUIDraw"), BASE_LISTENERS.draw, "plus d'abonné OnPreUIDraw (dédoublonnage retiré)")
+    assertEq(listenerCount("OnTickEvenPaused"), BASE_LISTENERS.tick + 1, "un seul abonné de la surbrillance au sol")
     local starts = listenerCount("OnGameStart")
     loadMod("client/MilitaryDrop/MilitaryDrop_ZonesAdmin.lua")
-    assertEq(listenerCount("OnPreUIDraw"), BASE_LISTENERS.draw + 1, "rechargement : abonné non empilé")
+    assertEq(listenerCount("OnTickEvenPaused"), BASE_LISTENERS.tick + 1, "rechargement : abonné non empilé")
     loadMod("client/MilitaryDrop/MilitaryDrop_ZonesWindow.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_ZoneEditor.lua")
     assertEq(listenerCount("OnGameStart"), starts, "installation inscrite une fois")
@@ -817,9 +1049,10 @@ function T.drag_trace_sends_a_normalized_zone_add()
     assertTrue(e.layer.isBackMost, "couche au fond de la pile d'interface")
     assertEq(ISWorldObjectContextMenu.disableWorldMenu, true, "menu du monde coupé pendant le tracé")
     aim(130, 90)
-    HIGHLIGHTS = {}
     frame()
-    assertEq(rectOf(HIGHLIGHTS[#HIGHLIGHTS]), "130,90,131,91", "case survolée surlignée")
+    assertTrue(isLit(130, 90, 0), "case survolée surlignée")
+    assertEq(colorAt(130, 90, 0), fmt(MilitaryDrop.ZonesAdmin.COLORS.cursor), "couleur du curseur")
+    assertEq(litCount(), 1, "seule la case survolée")
     assertEq(press(120, 80), true, "clic du coin 1 consommé")
     aim(100, 95)
     frame()
@@ -943,10 +1176,11 @@ function T.rectangle_larger_than_300_squares_is_refused()
     press(1000, 2000)
     release(1300, 2010)
     assertEq(rectOf(e.rect), "1000,2000,1300,2010", "301 x 11")
-    HIGHLIGHTS, DRAWN = {}, {}
+    DRAWN = {}
     frame()
     assertEq(e.submitBtn.enable, false, "ajout grisé")
-    assertEq(HIGHLIGHTS[#HIGHLIGHTS].r, MilitaryDrop.ZonesAdmin.COLORS.tooBig[1], "contour rouge")
+    assertEq(colorAt(1300, 2010, 0), fmt(MilitaryDrop.ZonesAdmin.COLORS.tooBig), "pourtour rouge")
+    assertEq(litCount(), perimeter(1000, 2000, 1300, 2010), "pourtour entier")
     local found = false
     for _, text in ipairs(DRAWN) do
         found = found or text == "IGUI_MilitaryDrop_ZoneTooBigTip|300"
@@ -994,9 +1228,12 @@ function T.edit_sends_only_the_changed_fields()
     assertEq(e.nameEntry:getText(), "Docks", "nom de la zone")
     assertEq(e.weightEntry:getText(), "2", "poids de la zone")
     assertEq(e.sectorCombo:getOptionData(e.sectorCombo.selected), "Riverside", "secteur de la zone")
-    HIGHLIGHTS = {}
     frame()
-    assertEq(rectOf(HIGHLIGHTS[#HIGHLIGHTS]), "6400,5400,6421,5411", "zone surlignée (fin exclusive)")
+    local draft = fmt(MilitaryDrop.ZonesAdmin.COLORS.draft)
+    assertEq(colorAt(6400, 5400, 0), draft, "zone surlignée : coin 1")
+    assertEq(colorAt(6420, 5410, 0), draft, "coin 2 inclus")
+    assertTrue(not isLit(6410, 5405, 0), "intérieur non surligné")
+    assertEq(litCount(), perimeter(6400, 5400, 6420, 5410), "pourtour seulement")
     assertEq(e.submitBtn.enable, false, "rien changé : enregistrement grisé")
     e.nameEntry:setText("North Docks")
     e.weightEntry:setText("5")
@@ -1018,12 +1255,14 @@ function T.edit_sends_only_the_changed_fields()
     -- Retracé : le rectangle entier part, l'ancien reste affiché en gris.
     e.redrawBtn:forceClick()
     press(6430, 5420)
-    HIGHLIGHTS = {}
     aim(6400, 5400)
     frame()
-    assertEq(rectOf(HIGHLIGHTS[1]), "6400,5400,6421,5411", "ancienne zone en gris")
-    assertEq(HIGHLIGHTS[1].r, MilitaryDrop.ZonesAdmin.COLORS.previous[1], "couleur de l'ancienne zone")
+    assertEq(colorAt(6420, 5410, 0), fmt(MilitaryDrop.ZonesAdmin.COLORS.previous), "ancienne zone en gris")
+    assertEq(colorAt(6400, 5400, 0), draft, "coin commun : nouveau tracé prioritaire")
+    assertEq(colorAt(6430, 5420, 0), draft, "nouveau tracé")
     release(6400, 5400)
+    frame()
+    assertTrue(not isLit(6420, 5410, 0), "tracé fini : l'ancienne zone n'est plus montrée")
     e.nameEntry:setText("Docks")
     e.weightEntry:setText("2")
     frame()
@@ -1115,24 +1354,14 @@ function T.list_buttons_send_the_commands()
     assertEq(window.editBtn.enable, false, "aucune zone sélectionnée")
 end
 
-function T.selected_zone_is_outlined_by_the_open_window_only()
+function T.lost_right_closes_the_list_and_clears_its_highlight()
     local window = openWindow()
-    selectZone(window, "z2")
-    HIGHLIGHTS = {}
-    triggerEvent("OnPreUIDraw")
-    window:prerender()
-    assertEq(#HIGHLIGHTS, 1, "zone sélectionnée seulement")
-    assertEq(rectOf(HIGHLIGHTS[1]), "12900,2100,12981,2161", "fin exclusive")
-    assertEq(HIGHLIGHTS[1].z, 0, "niveau 0")
-    assertEq(HIGHLIGHTS[1].playerNum, 0, "joueur local seulement")
-    assertEq(HIGHLIGHTS[1].r, MilitaryDrop.ZonesAdmin.COLORS.disabled[1], "désactivée en gris")
-    -- Droit perdu : la fenêtre se ferme sans rien dessiner.
+    window.highlightTick:click()
+    assertTrue(litCount() > 0, "surbrillance posée")
     CAPS = {}
-    HIGHLIGHTS = {}
-    triggerEvent("OnPreUIDraw")
     window:prerender()
-    assertEq(#HIGHLIGHTS, 0, "plus admin : aucun contour")
-    assertEq(MilitaryDrop.ZonesWindow.instance, nil, "fenêtre fermée")
+    assertEq(MilitaryDrop.ZonesWindow.instance, nil, "plus admin : fenêtre fermée")
+    assertEq(litCount(), 0, "plus admin : surbrillance retirée")
 end
 
 function T.joypad_trace_uses_the_dpad_and_a()
@@ -1420,17 +1649,16 @@ function T.trace_aims_and_draws_at_the_player_level()
     window.addBtn:forceClick()
     local e = editor()
     aim(100, 100)
-    HIGHLIGHTS, ISO_Z = {}, {}
+    ISO_Z = {}
     frame()
     assertEq(ISO_Z[#ISO_Z], 2, "case visée à l'étage du joueur")
-    assertEq(rectOf(HIGHLIGHTS[#HIGHLIGHTS]), "106,106,107,107", "case vue sous le curseur à l'étage 2")
-    assertEq(HIGHLIGHTS[#HIGHLIGHTS].z, 2, "contour du curseur à l'étage du joueur")
+    assertTrue(isLit(106, 106, 2), "case vue sous le curseur à l'étage 2, surlignée à cet étage")
+    assertEq(litCount(), 1, "rien au niveau 0")
     press(100, 100)
     release(110, 105)
     assertEq(rectOf(e.rect), "106,106,116,111", "rectangle des cases vues à l'étage 2")
-    HIGHLIGHTS = {}
     frame()
-    assertEq(HIGHLIGHTS[#HIGHLIGHTS].z, 2, "contour du tracé à l'étage du joueur")
+    assertTrue(isLit(116, 111, 2) and not isLit(116, 111, 0), "pourtour du tracé à l'étage du joueur")
     e.nameEntry:setText("Roof")
     frame()
     e.submitBtn:forceClick()
@@ -1455,102 +1683,306 @@ function T.trace_layer_follows_the_player_screen_size()
 end
 
 -- ----------------------------------------------------------------------------
--- Surbrillance stable d'une image à l'autre
+-- Surbrillance au sol : case « Surbrillance », pourtour, effacement exact
 -- ----------------------------------------------------------------------------
 
---- Rendu simulé fidèle au moteur 42.21 : UIManager.render met à jour
---- uiRenderTimeMS (horloge en millisecondes) et l'intervalle, puis déclenche
---- OnPreUIDraw avant les fenêtres (UIManager.java:283-303) ; chaque contour
---- est horodaté à son ajout (FBORenderAreaHighlights.java:195) ; le rendu du
---- monde jette ceux d'un autre horodatage et dessine tous les autres, doublons
---- compris (:61-66, 84-94). Une image d'interface sautée (« UI render FPS »
---- plus bas, UIManager.java:277) ne change rien.
-local function engine()
-    local e = { list = {}, uiTime = 0 }
-    addAreaHighlightForPlayer = function(playerNum, x1, y1, x2, y2, z, r, g, b, a)
-        e.list[#e.list + 1] = { rect = playerNum .. ":" .. x1 .. "," .. y1 .. "," .. x2 .. "," .. y2 .. "," .. z,
-            r = r, g = g, b = b, a = a, ts = e.uiTime }
-    end
-    --- Image d'interface à l'instant nowMs : draw() joue les prerender.
-    function e.ui(nowMs, draw)
-        UI_INTERVAL = math.min(nowMs - e.uiTime, 1000)
-        e.uiTime = nowMs
-        triggerEvent("OnPreUIDraw")
-        draw()
-    end
-    --- Rendu du monde : par rectangle, nombre de copies dessinées, couleur et
-    --- opacité perçue du remplissage (copies superposées).
-    function e.world()
-        local kept, seen = {}, {}
-        for _, h in ipairs(e.list) do
-            if h.ts == e.uiTime then
-                kept[#kept + 1] = h
-                local s = seen[h.rect]
-                if s then
-                    s.copies = s.copies + 1
-                    s.alpha = 1 - (1 - s.alpha) * (1 - h.a)
-                else
-                    seen[h.rect] = { copies = 1, r = h.r, g = h.g, b = h.b, alpha = h.a }
-                end
-            end
-        end
-        e.list = kept
-        return seen
-    end
-    return e
+local function colors()
+    return MilitaryDrop.ZonesAdmin.COLORS, MilitaryDrop.ZonesAdmin.SELECTED_COLORS
 end
 
---- Images successives (dont plusieurs dans la même milliseconde et une image
---- d'interface sautée) : chaque rendu du monde dessine une seule copie de
---- chaque contour, de couleur et d'opacité constantes.
-local function assertSteady(e, draw, label)
-    local times = { 1000, 1000, 1000, 1016, 1016, false, 1031, 1047, 1047, 1047, 1063 }
-    local first
-    for i, t in ipairs(times) do
-        if t then
-            e.ui(t, draw)
-        end
-        local drawn = e.world()
-        local count = 0
-        for rect, s in pairs(drawn) do
-            count = count + 1
-            local where = label .. ", image " .. i .. ", " .. rect
-            assertEq(s.copies, 1, where .. " : une seule copie")
-            local state = s.r .. "," .. s.g .. "," .. s.b .. "," .. s.alpha
-            first = first or {}
-            first[rect] = first[rect] or state
-            assertEq(state, first[rect], where .. " : couleur et opacité inchangées")
-        end
-        assertTrue(count > 0, label .. ", image " .. i .. " : contour dessiné")
-    end
-    return first
+local DEFAULT_COLOR = "0.90,1.00,0.00,1.00"
+
+function T.highlight_tick_is_unchecked_by_default_and_draws_nothing()
+    local window = openWindow()
+    local tick = window.highlightTick
+    assertTrue(tick ~= nil and tick.parent == window, "case dans le panneau")
+    assertEq(tick.options[1], "IGUI_MilitaryDrop_ZoneHighlight", "libellé")
+    assertEq(tick:isSelected(1), false, "décochée par défaut")
+    local pad = MilitaryDrop.ZonesWindow.PAD
+    local remove = window.removeBtn
+    assertEq(tick.x + tick.width, window.width - pad, "à droite de la première rangée de boutons")
+    assertTrue(tick.x >= remove.x + remove.width + pad, "sans chevaucher les boutons")
+    assertTrue(tick.y >= remove.y and tick.y + tick.height <= remove.y + remove.height, "centrée dans la rangée")
+    selectZone(window, "z1")
+    window:prerender()
+    later()
+    ticks(5)
+    assertEq(litCount(), 0, "décochée : aucune surbrillance, pas même la zone sélectionnée")
+    assertEq(WRITES, 0, "aucune écriture")
+    assertEq(AREA_CALLS, 0, "jamais addAreaHighlight*")
 end
 
-function T.highlights_keep_the_same_colour_and_alpha_every_frame()
+function T.checked_tick_outlines_every_zone_with_its_state_colour()
+    local COLORS, SELECTED = colors()
     local window = openWindow()
     selectZone(window, "z1")
-    local e = engine()
-    local states = assertSteady(e, function() window:prerender() end, "zone sélectionnée")
-    local active = MilitaryDrop.ZonesAdmin.COLORS.active
-    assertEq(states["0:6400,5400,6421,5411,0"], active[1] .. "," .. active[2] .. "," .. active[3] .. "," .. active[4],
-        "couleur et opacité de la zone active")
-    -- Éditeur : rectangle tracé (et trop grand), dessinés de façon stable.
+    window:prerender()
+    window.highlightTick:click()
+    assertEq(MilitaryDrop.ZonesWindow.highlightOn, true, "cochée")
+    local lit, count = litSquares()
+    assertEq(count, perimeter(6400, 5400, 6420, 5410) + perimeter(12900, 2100, 12980, 2160),
+        "pourtour de chaque zone, intérieur exclu")
+    assertEq(lit["6400,5400,0"], fmt(SELECTED.active), "zone sélectionnée active : verte, plus marquée")
+    assertEq(lit["6420,5410,0"], fmt(SELECTED.active), "coin opposé inclus")
+    assertEq(lit["6410,5400,0"], fmt(SELECTED.active), "bord")
+    assertEq(lit["6410,5405,0"], nil, "intérieur jamais surligné")
+    assertEq(lit["12980,2130,0"], fmt(COLORS.disabled), "zone désactivée : grise")
+    for key in pairs(lit) do
+        assertEq(key:match(",(%-?%d+)$"), "0", "niveau 0 : " .. key)
+        assertEq(FLOORS[key].hl[1], nil, "écran partagé : joueur de la fenêtre seulement")
+    end
+    -- Sélection changée : la zone marquée suit.
+    selectZone(window, "z2")
+    window:prerender()
+    assertEq(colorAt(12900, 2100, 0), fmt(SELECTED.disabled), "nouvelle sélection marquée")
+    assertEq(colorAt(6400, 5400, 0), fmt(COLORS.active), "ancienne sélection : couleur de son état")
+    -- Stable : rien n'est reposé, chaque rendu du monde dessine la même chose,
+    -- y compris pendant les balayages de vérification.
+    local writes, first = WRITES, renderWorld()
+    for i = 1, 10 do
+        window:prerender()
+        NOW = NOW + 400
+        ticks(3)
+        local drawn = renderWorld()
+        for key, c in pairs(first) do
+            assertEq(drawn[key], c, "rendu " .. i .. " : " .. key)
+        end
+        for key in pairs(drawn) do
+            assertTrue(first[key] ~= nil, "rendu " .. i .. " : case en trop " .. key)
+        end
+    end
+    assertEq(WRITES, writes, "aucune écriture après la pose : la surbrillance persiste seule")
+    -- Carte non chargée : orange (seule zone, donc sélectionnée).
+    listAfter(nil, { { id = "z1", sector = "Riverside", name = "Docks", x1 = 6400, y1 = 5400, x2 = 6420, y2 = 5410,
+        weight = 2, enabled = true, active = false } })
+    assertEq(colorAt(6400, 5400, 0), fmt(SELECTED.unusable), "carte non chargée : orange")
+    assertEq(litCount(), perimeter(6400, 5400, 6420, 5410), "zone disparue de la liste effacée")
+    assertEq(AREA_CALLS, 0, "jamais addAreaHighlight*")
+end
+
+function T.unchecking_clears_exactly_what_was_set()
+    local COLORS = colors()
+    local window = openWindow()
+    -- Avant : une case déjà surlignée par le jeu ou un autre mod, une autre
+    -- avec une couleur à elle (non surlignée).
+    CELL:getGridSquare(6400, 5400, 0)
+    local foreign = floorAt(6400, 5400, 0)
+    foreign:setHighlightColor(1, 0, 1, 1)
+    foreign:setHighlighted(true, false)
+    CELL:getGridSquare(6401, 5400, 0)
+    floorAt(6401, 5400, 0):setHighlightColor(0, 0.1, 0.2, 0.3, 0.4)
+    window.highlightTick:click()
+    assertEq(colorAt(6400, 5400, 0), "1.00,0.00,1.00,1.00", "surbrillance d'un autre jamais écrasée")
+    assertEq(colorAt(6401, 5400, 0), fmt(COLORS.active), "case voisine prise")
+    -- Reprise par un autre après coup : elle lui est laissée.
+    local taken = floorAt(6402, 5400, 0)
+    taken:setHighlightColor(0.5, 0.5, 0, 1)
+    taken:setHighlighted(true, false)
+    later()
+    window.highlightTick:click()
+    assertEq(MilitaryDrop.ZonesWindow.highlightOn, false, "décochée")
+    local lit, count = litSquares()
+    assertEq(count, 2, "ne restent que les surbrillances des autres")
+    assertEq(lit["6400,5400,0"], "1.00,0.00,1.00,1.00", "surbrillance d'avant intacte")
+    assertEq(lit["6402,5400,0"], "0.50,0.50,0.00,1.00", "reprise laissée")
+    assertEq(colorAt(6401, 5400, 0), "0.10,0.20,0.30,0.40", "couleur d'avant rendue")
+    assertEq(colorAt(6403, 5400, 0), DEFAULT_COLOR, "couleur par défaut rendue")
+    assertEq(MilitaryDrop.ZonesAdmin.Ground.ownedCount, 0, "plus aucune case à nous")
+end
+
+function T.deleted_disabled_or_moved_zones_are_redrawn_exactly()
+    local _, SELECTED = colors()
+    local window = openWindow()
+    window.highlightTick:click()
+    -- z2 retirée, z1 déplacée et agrandie.
+    local moved = { id = "z1", sector = "Riverside", name = "Docks", x1 = 6410, y1 = 5405, x2 = 6440, y2 = 5430,
+        weight = 2, enabled = true, active = true }
+    listAfter(nil, { moved })
+    local lit, count = litSquares()
+    assertEq(count, perimeter(6410, 5405, 6440, 5430), "seulement le nouveau pourtour")
+    assertEq(lit["12900,2100,0"], nil, "zone retirée effacée")
+    assertEq(lit["6400,5400,0"], nil, "ancien pourtour effacé")
+    assertEq(colorAt(6400, 5400, 0), DEFAULT_COLOR, "et sa couleur d'avant rendue")
+    assertEq(lit["6420,5405,0"], fmt(SELECTED.active), "case commune aux deux pourtours gardée")
+    moved.enabled = false
+    listAfter(nil, { moved })
+    assertEq(colorAt(6440, 5430, 0), fmt(SELECTED.disabled), "désactivée : grise")
+    listAfter(nil, {})
+    assertEq(litCount(), 0, "liste vide : plus rien")
+    assertEq(MilitaryDrop.ZonesAdmin.Ground.ownedCount, 0, "plus aucune case à nous")
+end
+
+function T.chunks_loaded_later_are_outlined_and_unloaded_ones_forgotten()
+    local Ground = MilitaryDrop.ZonesAdmin.Ground
+    setLoaded(6380, 5390, 6410, 5420)
+    local window = openWindow()
+    window.highlightTick:click()
+    assertEq(litCount(), 11 + 11 + 9, "partie chargée de z1 seulement (bord est hors carte)")
+    -- Le joueur avance : les chunks chargés ensuite sont surlignés au
+    -- balayage suivant (jamais avant le délai).
+    setLoaded(6380, 5390, 6440, 5420)
+    ticks(3)
+    assertEq(litCount(), 31, "avant le délai : rien de refait")
+    later()
+    assertEq(litCount(), perimeter(6400, 5400, 6420, 5410), "chunks chargés : pourtour entier")
+    -- Partie ouest déchargée : ses objets sont oubliés sans être touchés.
+    setLoaded(6415, 5390, 6440, 5420)
+    later()
+    assertEq(Ground.ownedCount, 6 + 6 + 9, "seules les cases encore chargées restent à nous")
+    -- Rechargée : nouveaux objets de sol, surlignés à leur tour.
+    setLoaded(6380, 5390, 6440, 5420)
+    later()
+    assertEq(litCount(), perimeter(6400, 5400, 6420, 5410), "cases rechargées surlignées")
+    window.closeBtn:forceClick()
+    assertEq(litCount(), 0, "panneau fermé : tout est effacé")
+    assertEq(Ground.ownedCount, 0, "plus aucune case à nous")
+end
+
+function T.highlight_erased_by_the_game_is_put_back()
+    local COLORS = colors()
+    local window = openWindow()
+    window.highlightTick:click()
+    local floor = floorAt(6405, 5400, 0)
+    -- Curseur du jeu : surbrillance « une image » d'une autre couleur.
+    floor:setHighlightColor(1, 1, 1, 1)
+    floor:setHighlighted(true)
+    local drawn = renderWorld()
+    assertEq(drawn["6405,5400,0"], "1.00,1.00,1.00,1.00", "le curseur passe")
+    assertTrue(not floor.hl[0], "effacée après l'image (clearHighlightOnceFlag)")
+    later()
+    assertTrue(isLit(6405, 5400, 0), "reprise au balayage suivant")
+    assertEq(colorAt(6405, 5400, 0), fmt(COLORS.active), "à notre couleur")
+    window.highlightTick:click()
+    assertEq(colorAt(6405, 5400, 0), DEFAULT_COLOR, "couleur d'avant la première prise rendue")
+end
+
+function T.trace_outline_follows_the_mouse_then_is_cleared()
+    local COLORS = colors()
+    local window = openWindow()
     window.addBtn:forceClick()
-    press(10, 20)
-    release(30, 25)
-    e = engine()
-    states = assertSteady(e, function() editor():prerender() end, "tracé")
-    local draft = MilitaryDrop.ZonesAdmin.COLORS.draft
-    assertEq(states["0:10,20,31,26,0"], draft[1] .. "," .. draft[2] .. "," .. draft[3] .. "," .. draft[4],
-        "couleur et opacité du tracé")
-    editor():onRedraw()
-    press(10, 20)
-    release(400, 25)
-    e = engine()
-    states = assertSteady(e, function() editor():prerender() end, "tracé trop grand")
-    local tooBig = MilitaryDrop.ZonesAdmin.COLORS.tooBig
-    assertEq(states["0:10,20,401,26,0"], tooBig[1] .. "," .. tooBig[2] .. "," .. tooBig[3] .. "," .. tooBig[4],
-        "couleur et opacité du tracé trop grand")
+    local e = editor()
+    aim(130, 90)
+    frame()
+    assertEq(litCount(), 1, "case survolée")
+    press(120, 80)
+    aim(100, 95)
+    frame()
+    assertEq(litCount(), perimeter(100, 80, 120, 95), "pourtour du rectangle en cours")
+    assertEq(colorAt(100, 95, 0), fmt(COLORS.draft), "bleu")
+    assertTrue(not isLit(130, 90, 0), "case survolée effacée")
+    aim(110, 85)
+    frame()
+    assertEq(litCount(), perimeter(110, 80, 120, 85), "case visée changée : ancien pourtour effacé")
+    assertTrue(not isLit(100, 95, 0), "coin abandonné effacé")
+    local writes = WRITES
+    for _ = 1, 5 do
+        frame()
+    end
+    later()
+    assertEq(WRITES, writes, "souris immobile : rien n'est refait")
+    aim(500, 85)
+    frame()
+    assertEq(colorAt(500, 85, 0), fmt(COLORS.tooBig), "plus de 300 cases : rouge")
+    -- Clic droit : tracé annulé, tout est effacé, l'éditeur reste ouvert.
+    BUTTONS[1] = true
+    e.layer:onRightMouseDown(0, 0)
+    frame()
+    assertEq(litCount(), 0, "tracé annulé : effacé")
+    BUTTONS[1] = false
+    e.layer:onRightMouseUp(0, 0)
+    -- Rectangle figé : affiché tant que l'éditeur est ouvert.
+    e.redrawBtn:forceClick()
+    press(10, 10)
+    release(20, 15)
+    for _ = 1, 3 do
+        later()
+        frame()
+    end
+    assertEq(litCount(), perimeter(10, 10, 20, 15), "rectangle figé affiché")
+    assertEq(colorAt(20, 15, 0), fmt(COLORS.draft), "en bleu")
+    e.cancelBtn:forceClick()
+    assertEq(editor(), nil, "éditeur fermé")
+    assertEq(litCount(), 0, "éditeur fermé : effacé")
+    assertEq(AREA_CALLS, 0, "jamais addAreaHighlight*")
+end
+
+function T.list_highlight_follows_the_panel_and_the_tick_is_remembered()
+    local window = openWindow()
+    window.highlightTick:click()
+    local listed = litCount()
+    assertTrue(listed > 0, "zones surlignées")
+    -- Édition : liste masquée, ses zones restent surlignées, le tracé s'ajoute.
+    window.addBtn:forceClick()
+    assertEq(window.visible, false, "liste masquée")
+    aim(130, 90)
+    frame()
+    assertEq(litCount(), listed + 1, "zones de la liste et case survolée")
+    editor().cancelBtn:forceClick()
+    assertEq(litCount(), listed, "éditeur fermé : la liste reste surlignée")
+    -- Fermeture du panneau : tout est retiré.
+    window.closeBtn:forceClick()
+    assertEq(litCount(), 0, "panneau fermé : retiré")
+    -- Rouvert : la case est restée cochée pour la session.
+    window = openWindow()
+    assertEq(window.highlightTick:isSelected(1), true, "case retenue")
+    assertEq(litCount(), listed, "surbrillance rétablie avec la liste")
+    -- Mort : retirée.
+    PLAYER.dead = true
+    triggerEvent("OnPlayerDeath", PLAYER)
+    assertEq(litCount(), 0, "mort : retirée")
+    assertEq(MilitaryDrop.ZonesAdmin.Ground.ownedCount, 0, "plus aucune case à nous")
+end
+
+function T.two_hundred_large_zones_cost_a_bounded_amount_per_update()
+    local Ground = MilitaryDrop.ZonesAdmin.Ground
+    -- Carte de chunks la plus large (19 chunks de 8 cases).
+    local bx1, by1, bx2, by2 = 6000, 5000, 6151, 5151
+    setLoaded(bx1, by1, bx2, by2)
+    local zones, expected, total = {}, {}, 0
+    local function expect(x, y)
+        local key = x .. "," .. y .. ",0"
+        if x >= bx1 and x <= bx2 and y >= by1 and y <= by2 and not expected[key] then
+            expected[key] = true
+            total = total + 1
+        end
+    end
+    for i = 0, 199 do
+        local x1, y1 = 5926 + (i % 20) * 6, 4926 + math.floor(i / 20) * 12
+        local x2, y2 = x1 + 299, y1 + 299
+        zones[#zones + 1] = { id = "z" .. (i + 1), sector = "S", name = "N" .. i, x1 = x1, y1 = y1, x2 = x2, y2 = y2,
+            weight = 1, enabled = true, active = true }
+        for x = x1, x2 do
+            expect(x, y1)
+            expect(x, y2)
+        end
+        for y = y1, y2 do
+            expect(x1, y)
+            expect(x2, y)
+        end
+    end
+    local window = openWindow()
+    listAfter(nil, zones)
+    local maxPerUpdate = Ground.BUDGET + 4 * (bx2 - bx1 + 1)
+    GRID_CALLS = 0
+    window.highlightTick:click()
+    assertTrue(GRID_CALLS <= maxPerUpdate, "clic : cases visitées bornées (" .. GRID_CALLS .. ")")
+    local updates = 1
+    while Ground.layers.list.sweep do
+        GRID_CALLS = 0
+        ticks(1)
+        assertTrue(GRID_CALLS <= maxPerUpdate, "mise à jour " .. updates .. " bornée (" .. GRID_CALLS .. ")")
+        updates = updates + 1
+        assertTrue(updates < 200, "balayage terminé")
+    end
+    assertTrue(updates > 1, "balayage réparti sur plusieurs mises à jour")
+    local lit, count = litSquares()
+    assertEq(count, total, "union des pourtours chargés surlignée")
+    for key in pairs(lit) do
+        assertTrue(expected[key], "case hors pourtour surlignée : " .. key)
+    end
+    window.highlightTick:click()
+    assertEq(litCount(), 0, "décochée : tout est effacé d'un coup")
+    assertEq(Ground.ownedCount, 0, "plus aucune case à nous")
 end
 
 return T

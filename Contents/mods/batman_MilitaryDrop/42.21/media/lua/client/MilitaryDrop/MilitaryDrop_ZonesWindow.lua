@@ -27,8 +27,20 @@
 -- « Se téléporter sur la zone », « Rafraîchir » (relit dropzones.txt),
 -- « Fermer ». Ajouter et Modifier ouvrent l'éditeur
 -- (MilitaryDrop_ZoneEditor.lua) et masquent la liste, comme le vanilla
--- (ISDesignationZonePanel:onClick:205-214). La zone sélectionnée est
--- surlignée au sol dans prerender, fenêtre ouverte seulement.
+-- (ISDesignationZonePanel:onClick:205-214).
+-- Case « Surbrillance » (ISTickBox, à droite de la première rangée de
+-- boutons, comme la case « Afficher la zone » d'ISDesignationAnimalZoneUI:
+-- 201-210) : décochée au premier affichage, puis retenue pour la session
+-- (Window.highlightOn). Cochée, toutes les zones de la dernière liste reçue
+-- sont surlignées au sol en continu (pourtour, couche « list » de
+-- ZonesAdmin.Ground : verte active, grise désactivée, orange carte non
+-- chargée, la zone sélectionnée plus marquée), chez cet admin seulement.
+-- Choix retenu : la surbrillance suit la case tant que le panneau existe
+-- (aussi pendant l'édition, liste masquée) et elle est retirée à sa
+-- fermeture (Fermer, Échap, mort, droit perdu, personnage remplacé). Sans
+-- panneau, plus aucune liste n'arrive : des contours laissés au sol
+-- deviendraient faux sans que rien ne les retire (zone changée par un autre
+-- admin, droit perdu).
 -- Retour de l'éditeur : la zone ajoutée ou modifiée n'est resélectionnée
 -- par la liste suivante (pendingSelect) qu'après un succès, seul cas où une
 -- ZoneListReply suit à coup sûr ; l'annulation la sélectionne tout de suite,
@@ -50,6 +62,7 @@
 require "ISUI/ISCollapsableWindowJoypad"
 require "ISUI/ISScrollingListBox"
 require "ISUI/ISButton"
+require "ISUI/ISTickBox"
 require "ISUI/ISModalDialog"
 require "ISUI/AdminPanel/ISAdminPanelUI"
 require "MilitaryDrop/MilitaryDrop_ZonesAdmin"
@@ -63,6 +76,8 @@ Window.WIDTH = 580
 Window.HEIGHT = 480
 Window.PAD = 10
 Window.ADMIN_BUTTON = "MILITARYDROP_ZONES"
+-- Case « Surbrillance » : décochée par défaut, retenue pour la session.
+Window.highlightOn = Window.highlightOn == true
 
 local ZW = ISCollapsableWindowJoypad:derive("MilitaryDropZonesWindow")
 Window.class = ZW
@@ -226,9 +241,22 @@ function ZW:createChildren()
     local pad = Window.PAD
     local lineH = fontHeight()
     local buttonH = lineH + 6
-    -- Largeur : la plus longue rangée de boutons, au moins WIDTH ; fixée
-    -- avant la barre de titre (bouton de fermeture placé à droite).
-    local widths, rowWidth = {}, { 0, 0 }
+    -- Case « Surbrillance » (réglages d'ISDesignationAnimalZoneUI:201-208),
+    -- mesurée sur son libellé ; placée à droite de la première rangée.
+    local tick = ISTickBox:new(0, 0, 100, lineH, "", self, ZW.onHighlightTick)
+    tick:initialise()
+    tick.background = false
+    tick.choicesColor = { r = 1, g = 1, b = 1, a = 1 }
+    tick.leftMargin = 2
+    tick:setFont(UIFont.Small)
+    tick:addOption(getText("IGUI_MilitaryDrop_ZoneHighlight"))
+    tick:setWidthToFit()
+    tick:setSelected(1, Window.highlightOn)
+    self.highlightTick = tick
+    -- Largeur : la plus longue rangée de boutons (la première avec la case),
+    -- au moins WIDTH ; fixée avant la barre de titre (bouton de fermeture
+    -- placé à droite).
+    local widths, rowWidth = {}, { tick.width + pad, 0 }
     for _, spec in ipairs(BUTTONS) do
         local texts = {}
         for i, key in ipairs(spec[2]) do
@@ -270,7 +298,43 @@ function ZW:createChildren()
         x[spec[4]] = x[spec[4]] + width + pad
     end
     self.closeBtn:enableCancelColor()
+    tick:setX(self.width - pad - tick.width)
+    tick:setY(row1Y + math.floor((buttonH - tick.height) / 2))
+    self:addChild(tick)
     self:updateButtons()
+end
+
+--- Case « Surbrillance » cochée ou décochée (ISTickBox : index, selected).
+function ZW:onHighlightTick(index, selected)
+    Window.highlightOn = selected == true
+    self:updateHighlight()
+end
+
+--- Couche « list » de la surbrillance au sol : toutes les zones de la
+--- dernière liste, la sélectionnée d'abord (prioritaire) et plus marquée ;
+--- retirée si la case est décochée ou avant la première liste.
+function ZW:updateHighlight()
+    local Ground = ZonesAdmin.Ground
+    local selected = self:selectedZone()
+    self.highlightedId = selected and selected.id
+    if not Window.highlightOn or not self.data then
+        Ground.remove("list")
+        return
+    end
+    local shapes = {}
+    local function add(zone, isSelected)
+        shapes[#shapes + 1] = { x1 = zone.x1, y1 = zone.y1, x2 = zone.x2, y2 = zone.y2, z = 0,
+            color = ZonesAdmin.zoneColor(zone, isSelected) }
+    end
+    if selected then
+        add(selected, true)
+    end
+    for _, zone in ipairs(self.data.zones) do
+        if zone ~= selected then
+            add(zone, false)
+        end
+    end
+    Ground.setShapes("list", self.playerNum, shapes, false)
 end
 
 function ZW:selectedZone()
@@ -341,6 +405,7 @@ function ZW:refresh(list)
         self.list:ensureVisible(self.list.selected)
     end
     self:updateButtons()
+    self:updateHighlight()
 end
 
 function ZW:onAdd()
@@ -456,9 +521,10 @@ function ZW:prerender()
     end
     self:dropPendingIfMoved()
     self:updateButtons()
+    -- Sélection changée (clic, manette) : la zone marquée au sol suit.
     local zone = self:selectedZone()
-    if zone then
-        ZonesAdmin.highlight(self.playerNum, zone, ZonesAdmin.zoneColor(zone))
+    if (zone and zone.id) ~= self.highlightedId then
+        self:updateHighlight()
     end
 end
 
@@ -552,6 +618,7 @@ function ZW:close()
     self:removeFromUIManager()
     if Window.instance == self then
         Window.instance = nil
+        ZonesAdmin.Ground.remove("list")
     end
     local Editor = MilitaryDrop.ZoneEditor
     if Editor and Editor.closeFor then

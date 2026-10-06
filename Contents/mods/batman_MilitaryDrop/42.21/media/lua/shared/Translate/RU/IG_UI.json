@@ -472,5 +472,6 @@
     "IGUI_MilitaryDrop_ZoneNoChange": "Нечего сохранять.",
     "IGUI_MilitaryDrop_ZoneSending": "Отправлено на сервер...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Зона сброса %1 сохранена.",
-    "IGUI_MilitaryDrop_ZoneNone": "Зон сброса пока нет. Нажмите «Добавить зону», затем разметьте прямоугольник на земле."
+    "IGUI_MilitaryDrop_ZoneNone": "Зон сброса пока нет. Нажмите «Добавить зону», затем разметьте прямоугольник на земле.",
+    "IGUI_MilitaryDrop_ZoneHighlight": "Подсветка"
 }

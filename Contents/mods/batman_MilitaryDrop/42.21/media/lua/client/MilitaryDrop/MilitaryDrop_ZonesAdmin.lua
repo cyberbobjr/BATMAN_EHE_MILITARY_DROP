@@ -33,23 +33,38 @@
 -- le contour du tracé y est dessiné ; la zone n'enregistre que x et y (le
 -- largage tombe au niveau 0).
 --
--- Contours au sol : addAreaHighlightForPlayer (LuaManager.java:9803), tracé
--- vanilla des zones (ISAddDesignationAnimalZoneUI:prerender:271). Un contour
--- est horodaté par UIManager.uiRenderTimeMS, en millisecondes, et le rendu
--- du monde jette ceux d'un autre horodatage (FBORenderAreaHighlights.java:
--- 61-66, 195) : les fenêtres le reposent dans leur prerender, donc seulement
--- chez l'admin et seulement fenêtre ouverte. Fin exclusive : cases x1..x2 →
--- x1, x2 + 1.
--- Surbrillance stable : deux images d'interface dans la même milliseconde
--- gardent le même horodatage (UIManager.java:283-285) ; le contour de la
--- première survit alors et celui de la seconde s'y ajoute, d'où un
--- remplissage deux ou trois fois plus opaque par moments (clignotement).
--- Comme le vanilla redessine ses zones une seule fois par rendu
--- (renderAnimalDesigationZones), un même contour n'est posé qu'une fois par
--- horodatage : ZonesAdmin.drawn retient les contours posés et n'est vidé, en
--- OnPreUIDraw (déclenché juste après la mise à jour de l'horodatage,
--- UIManager.java:283-303), que si l'horodatage a changé
--- (UIManager.getMillisSinceLastRender() non nul).
+-- Surbrillance au sol (ZonesAdmin.Ground) : le pourtour seulement de chaque
+-- rectangle, par la surbrillance persistante de l'objet de sol de ses cases :
+-- IsoObject:setHighlightColor(joueur, r, g, b, a) puis
+-- setHighlighted(joueur, true, false) (IsoObject.java:4689-4699, 4746-4750).
+-- L'objet est inscrit dans FBORenderObjectHighlight, que le moteur redessine
+-- à chaque rendu du monde (FBORenderCell.java:1041 → FBORenderObjectHighlight.
+-- render) tant que la surbrillance n'est pas retirée ; seules les
+-- surbrillances « une image » sont effacées après le rendu
+-- (clearHighlightOnceFlag, IngameState.java:1344). Rien n'est donc reposé à
+-- chaque image depuis Lua. Le surlignage de zone addAreaHighlight*, reposé
+-- à chaque image d'interface, clignotait en jeu (même dédoublonné par
+-- horodatage) : il n'est plus utilisé. Variante par joueur : seul l'écran de
+-- l'admin la voit (écran partagé compris) ; c'est un état local de l'objet,
+-- jamais envoyé au serveur. L'opacité a est la part de la couleur mélangée à
+-- celle du sol éclairé (IsoObject.prepareToRender, :3702-3713) : visible de
+-- nuit aussi.
+-- Cases chargées seulement (getGridSquare nil sinon), bornées à la carte de
+-- chunks du joueur (IsoChunkMap:getWorldXMinTiles... ; 19 chunks de large au
+-- plus, IsoChunkMap.java:139 : 4 × 152 = 608 cases au plus par rectangle). Un balayage (OnTickEvenPaused : aussi en
+-- pause solo) repasse le pourtour au plus toutes les SWEEP_MS ms, BUDGET cases
+-- au plus par mise à jour pour la liste (200 zones) : il surligne les cases
+-- des chunks chargés depuis, reprend une surbrillance que le jeu a effacée,
+-- et retire celles qui ne sont plus voulues (zone retirée, modifiée,
+-- recolorée, sortie de la carte chargée).
+-- Jamais d'écrasement : une case déjà surlignée (jeu, autre mod) n'est pas
+-- prise ; une case prise n'est effacée que si elle porte encore notre
+-- couleur (sinon elle est laissée à qui l'a reprise), puis sa couleur
+-- d'avant lui est rendue. Si l'objet a changé (sol remplacé, chunk déchargé
+-- puis rechargé), l'ancien n'est touché que s'il est encore sur sa case.
+-- Deux couches : « editor » (tracé et rectangle de l'éditeur, prioritaire,
+-- refaite en entier à chaque changement) et « list » (zones de la liste,
+-- case « Surbrillance » du panneau).
 --
 -- Textes de l'admin (secteur, nom) et du serveur : sans caractère de contrôle
 -- ni < >, coupés à MAX_TEXT caractères entiers (MilitaryDrop.cutText).
@@ -79,15 +94,22 @@ ZonesAdmin.WARNINGS = {
 }
 ZonesAdmin.ACTIONS = { add = true, update = true, enable = true, delete = true, reload = true }
 
--- Couleurs des contours (r, g, b, opacité du remplissage).
+-- Couleurs de la surbrillance au sol (r, g, b, part de la couleur mélangée au
+-- sol). Tables constantes : la surbrillance les compare par référence.
 ZonesAdmin.COLORS = {
-    active = { 0.2, 0.9, 0.2, 0.15 },
-    disabled = { 0.6, 0.6, 0.6, 0.12 },
-    unusable = { 1.0, 0.6, 0.1, 0.15 },
-    previous = { 0.6, 0.6, 0.6, 0.1 },
-    draft = { 0.2, 0.5, 1.0, 0.25 },
-    tooBig = { 1.0, 0.1, 0.1, 0.3 },
-    cursor = { 0.2, 0.5, 1.0, 1.0 },
+    active = { 0.2, 0.9, 0.2, 0.5 },
+    disabled = { 0.6, 0.6, 0.6, 0.45 },
+    unusable = { 1.0, 0.6, 0.1, 0.5 },
+    previous = { 0.6, 0.6, 0.6, 0.45 },
+    draft = { 0.2, 0.5, 1.0, 0.7 },
+    tooBig = { 1.0, 0.1, 0.1, 0.8 },
+    cursor = { 0.2, 0.5, 1.0, 0.8 },
+}
+-- Zone sélectionnée dans la liste : même teinte, plus marquée.
+ZonesAdmin.SELECTED_COLORS = {
+    active = { 0.2, 0.9, 0.2, 0.85 },
+    disabled = { 0.6, 0.6, 0.6, 0.8 },
+    unusable = { 1.0, 0.6, 0.1, 0.85 },
 }
 
 -- Dernière ZoneListReply : { zones, sectors, map, mapLoaded, placement,
@@ -551,53 +573,340 @@ function Trace:rect()
 end
 
 -- ----------------------------------------------------------------------------
--- Contours au sol
+-- Surbrillance au sol (pourtour des rectangles, voir l'en-tête)
 -- ----------------------------------------------------------------------------
 
--- Contours déjà posés pour l'horodatage d'interface courant (clé → true).
-ZonesAdmin.drawn = ZonesAdmin.drawn or {}
+local Ground = ZonesAdmin.Ground or {}
+ZonesAdmin.Ground = Ground
 
---- Début d'une image d'interface (OnPreUIDraw) : nouvel horodatage, les
---- contours de l'image précédente seront jetés par le rendu du monde ; même
---- horodatage (intervalle nul), ils restent dessinés et ne sont pas reposés.
-function ZonesAdmin.onPreUIDraw()
-    if UIManager.getMillisSinceLastRender() ~= 0 then
-        ZonesAdmin.drawn = {}
+-- Cases visitées au plus par mise à jour pour la couche « list ».
+Ground.BUDGET = 1000
+-- Délai minimal entre deux balayages d'une couche (chunks chargés depuis,
+-- surbrillance effacée par le jeu).
+Ground.SWEEP_MS = 1000
+-- Ordre de priorité des couches : la première qui veut une case la colore.
+Ground.ORDER = { "editor", "list" }
+-- Écart toléré sur une composante de couleur relue (ColorInfo en float).
+local COLOR_EPSILON = 0.002
+
+-- État gardé au rechargement de ce fichier, pour pouvoir tout effacer :
+-- layers[nom] = { shapes, sig, sync, desired, gen, sweep, sweptMs } ;
+-- desired[clé] = { x, y, z, color, gen } ; owned[clé] = { obj, x, y, z,
+-- color, prev } (case surlignée par nous, couleur d'avant).
+Ground.layers = Ground.layers or {}
+Ground.owned = Ground.owned or {}
+Ground.ownedCount = Ground.ownedCount or 0
+Ground.playerNum = Ground.playerNum or 0
+
+--- Clé numérique d'une case (0 ≤ x < 2^20, 0 ≤ y < 2^20, z de -64 à 63 :
+--- au plus 2^47, exacte en double).
+local function keyOf(x, y, z)
+    return (y * 1048576 + x) * 128 + z + 64
+end
+
+local function sameColor(info, color)
+    return math.abs(info:getR() - color[1]) < COLOR_EPSILON and math.abs(info:getG() - color[2]) < COLOR_EPSILON
+        and math.abs(info:getB() - color[3]) < COLOR_EPSILON and math.abs(info:getA() - color[4]) < COLOR_EPSILON
+end
+
+--- Objet de sol de la case chargée (x, y, z), ou nil.
+function Ground.floorAt(x, y, z)
+    local cell = getCell()
+    local square = cell and cell:getGridSquare(x, y, z)
+    return square and square:getFloor() or nil
+end
+
+--- Bornes incluses { x1, y1, x2, y2 } de la carte de chunks du joueur, ou nil.
+function Ground.bounds(playerNum)
+    local cell = getCell()
+    local map = cell and cell:getChunkMap(playerNum)
+    if not map then
+        return nil
+    end
+    return { map:getWorldXMinTiles(), map:getWorldYMinTiles(), map:getWorldXMaxTiles() - 1,
+        map:getWorldYMaxTiles() - 1 }
+end
+
+--- Appelle fn(x, y, z) pour chaque case du pourtour de shape (cases x1..x2,
+--- y1..y2 incluses) comprise dans bounds, chacune une fois ; renvoie le
+--- nombre de cases visitées.
+function Ground.eachPerimeterSquare(shape, bounds, fn)
+    local x1, y1, x2, y2, z = shape.x1, shape.y1, shape.x2, shape.y2, shape.z
+    local count = 0
+    local fromX, toX = math.max(x1, bounds[1]), math.min(x2, bounds[3])
+    for _, y in ipairs(y1 == y2 and { y1 } or { y1, y2 }) do
+        if y >= bounds[2] and y <= bounds[4] then
+            for x = fromX, toX do
+                fn(x, y, z)
+                count = count + 1
+            end
+        end
+    end
+    local fromY, toY = math.max(y1 + 1, bounds[2]), math.min(y2 - 1, bounds[4])
+    for _, x in ipairs(x1 == x2 and { x1 } or { x1, x2 }) do
+        if x >= bounds[1] and x <= bounds[3] then
+            for y = fromY, toY do
+                fn(x, y, z)
+                count = count + 1
+            end
+        end
+    end
+    return count
+end
+
+--- Case voulue par la couche la plus prioritaire, ou nil.
+local function wanted(key)
+    for _, name in ipairs(Ground.ORDER) do
+        local layer = Ground.layers[name]
+        local want = layer and layer.desired[key]
+        if want then
+            return want
+        end
+    end
+    return nil
+end
+
+local function paint(obj, playerNum, color)
+    obj:setHighlightColor(playerNum, color[1], color[2], color[3], color[4])
+    obj:setHighlighted(playerNum, true, false)
+end
+
+--- Retire notre surbrillance d'une case possédée, seulement si l'objet est
+--- encore sur sa case et porte encore notre couleur ; rend sa couleur d'avant.
+local function release(key, rec)
+    Ground.owned[key] = nil
+    Ground.ownedCount = Ground.ownedCount - 1
+    local obj = rec.obj
+    local p = Ground.playerNum
+    if obj:getObjectIndex() == -1 then
+        return
+    end
+    local square = obj:getSquare()
+    if not square or square:getX() ~= rec.x or square:getY() ~= rec.y or square:getZ() ~= rec.z then
+        return
+    end
+    if not sameColor(obj:getHighlightColor(p), rec.color) then
+        return
+    end
+    if obj:isHighlighted(p) then
+        obj:setHighlighted(p, false, false)
+    end
+    local prev = rec.prev
+    obj:setHighlightColor(p, prev[1], prev[2], prev[3], prev[4])
+end
+
+--- Met la case au goût des couches : la surligne (sans voler celle d'un
+--- autre), change sa couleur, la reprend si le jeu l'a effacée, ou la libère.
+function Ground.applyKey(key)
+    local want = wanted(key)
+    local rec = Ground.owned[key]
+    local where = want or rec
+    if not where then
+        return
+    end
+    local floor = Ground.floorAt(where.x, where.y, where.z)
+    if rec and (not want or rec.obj ~= floor) then
+        release(key, rec)
+        rec = nil
+    end
+    if not want or not floor then
+        return
+    end
+    local p = Ground.playerNum
+    local prev
+    if rec then
+        if floor:isHighlighted(p) then
+            if sameColor(floor:getHighlightColor(p), rec.color) then
+                if rec.color ~= want.color then
+                    paint(floor, p, want.color)
+                    rec.color = want.color
+                end
+            else
+                -- Reprise par le jeu ou un autre mod : elle lui est laissée.
+                Ground.owned[key] = nil
+                Ground.ownedCount = Ground.ownedCount - 1
+            end
+            return
+        end
+        -- Effacée par le jeu (surbrillance « une image » d'un curseur...) :
+        -- reprise, avec la couleur d'avant notre première prise.
+        prev = rec.prev
+        Ground.owned[key] = nil
+        Ground.ownedCount = Ground.ownedCount - 1
+    elseif floor:isHighlighted(p) then
+        return
+    end
+    if not prev then
+        local info = floor:getHighlightColor(p)
+        prev = { info:getR(), info:getG(), info:getB(), info:getA() }
+    end
+    paint(floor, p, want.color)
+    Ground.owned[key] = { obj = floor, x = where.x, y = where.y, z = where.z, color = want.color, prev = prev }
+    Ground.ownedCount = Ground.ownedCount + 1
+end
+
+local function startSweep(layer)
+    layer.gen = layer.gen + 1
+    layer.sweep = { gen = layer.gen, index = 1, bounds = Ground.bounds(Ground.playerNum) }
+end
+
+--- Fin d'un balayage : les cases qu'il n'a pas revues sont libérées.
+local function finishSweep(layer, nowMs)
+    local gen = layer.sweep.gen
+    layer.sweep = nil
+    layer.sweptMs = nowMs
+    local stale = {}
+    for key, want in pairs(layer.desired) do
+        if want.gen ~= gen then
+            stale[#stale + 1] = key
+        end
+    end
+    for _, key in ipairs(stale) do
+        layer.desired[key] = nil
+        Ground.applyKey(key)
     end
 end
 
---- Contour des cases x1..y2 incluses, à l'étage z (0 par défaut), pour ce
---- joueur seulement ; une seule fois par horodatage d'interface. Vrai s'il
---- vient d'être posé.
-function ZonesAdmin.highlight(playerNum, rect, color, z)
-    local x1, y1 = math.floor(rect.x1), math.floor(rect.y1)
-    local x2, y2 = math.floor(rect.x2) + 1, math.floor(rect.y2) + 1
-    z = math.floor(z or 0)
-    local key = playerNum .. ":" .. x1 .. "," .. y1 .. "," .. x2 .. "," .. y2 .. "," .. z .. ":"
-        .. color[1] .. "," .. color[2] .. "," .. color[3] .. "," .. color[4]
-    if ZonesAdmin.drawn[key] then
+--- Poursuit le balayage (budget nil : en entier) ; renvoie les cases visitées.
+local function stepSweep(layer, budget, nowMs)
+    local sweep = layer.sweep
+    local visited = 0
+    local function mark(x, y, z, color)
+        local key = keyOf(x, y, z)
+        local want = layer.desired[key]
+        if want and want.gen == sweep.gen then
+            return -- déjà prise par une forme plus prioritaire de ce balayage
+        end
+        if want then
+            want.color, want.gen = color, sweep.gen
+        else
+            layer.desired[key] = { x = x, y = y, z = z, color = color, gen = sweep.gen }
+        end
+        Ground.applyKey(key)
+    end
+    while sweep.index <= #layer.shapes and (not budget or visited < budget) do
+        local shape = layer.shapes[sweep.index]
+        sweep.index = sweep.index + 1
+        if sweep.bounds then
+            visited = visited + Ground.eachPerimeterSquare(shape, sweep.bounds,
+                function(x, y, z) mark(x, y, z, shape.color) end)
+        end
+    end
+    if sweep.index > #layer.shapes then
+        finishSweep(layer, nowMs)
+    end
+    return visited
+end
+
+local function signature(shapes)
+    local parts = {}
+    for i, shape in ipairs(shapes) do
+        local c = shape.color
+        parts[i] = shape.x1 .. "," .. shape.y1 .. "," .. shape.x2 .. "," .. shape.y2 .. "," .. shape.z .. ":"
+            .. c[1] .. "," .. c[2] .. "," .. c[3] .. "," .. c[4]
+    end
+    return table.concat(parts, ";")
+end
+
+--- Formes de la couche name pour ce joueur : { x1, y1, x2, y2, z, color },
+--- la plus prioritaire d'abord (coordonnées entières, x1 ≤ x2, y1 ≤ y2).
+--- sync : couche refaite en entier à chaque changement (éditeur, quelques
+--- rectangles), sinon par BUDGET cases par mise à jour. Sans changement,
+--- rien n'est refait. Vrai si les formes ont changé.
+function Ground.setShapes(name, playerNum, shapes, sync)
+    if playerNum ~= Ground.playerNum then
+        Ground.clearAll()
+        Ground.playerNum = playerNum
+    end
+    local sig = signature(shapes)
+    local layer = Ground.layers[name]
+    if layer and layer.sig == sig then
         return false
     end
-    ZonesAdmin.drawn[key] = true
-    addAreaHighlightForPlayer(playerNum, x1, y1, x2, y2, z, color[1], color[2], color[3], color[4])
+    if not layer then
+        layer = { desired = {}, gen = 0 }
+        Ground.layers[name] = layer
+    end
+    layer.shapes, layer.sig, layer.sync = shapes, sig, sync == true
+    startSweep(layer)
+    stepSweep(layer, not layer.sync and Ground.BUDGET or nil, getTimestampMs())
     return true
 end
 
--- Rechargement de ce fichier : un seul abonné (Events.X.Add ne dédoublonne pas).
-if ZonesAdmin.preUIDrawHandler then
-    Events.OnPreUIDraw.Remove(ZonesAdmin.preUIDrawHandler)
-end
-ZonesAdmin.preUIDrawHandler = function() ZonesAdmin.onPreUIDraw() end
-Events.OnPreUIDraw.Add(ZonesAdmin.preUIDrawHandler)
-
---- Couleur d'une zone de la liste selon son état.
-function ZonesAdmin.zoneColor(zone)
-    if not zone.enabled then
-        return ZonesAdmin.COLORS.disabled
-    elseif not zone.active then
-        return ZonesAdmin.COLORS.unusable
+--- Retire la couche name : ses cases sont libérées (ou prises par l'autre).
+function Ground.remove(name)
+    local layer = Ground.layers[name]
+    if not layer then
+        return
     end
-    return ZonesAdmin.COLORS.active
+    Ground.layers[name] = nil
+    local keys = {}
+    for key in pairs(layer.desired) do
+        keys[#keys + 1] = key
+    end
+    for _, key in ipairs(keys) do
+        Ground.applyKey(key)
+    end
+end
+
+--- Retire toutes les couches et toutes nos surbrillances.
+function Ground.clearAll()
+    Ground.layers = {}
+    local keys = {}
+    for key in pairs(Ground.owned) do
+        keys[#keys + 1] = key
+    end
+    for _, key in ipairs(keys) do
+        release(key, Ground.owned[key])
+    end
+end
+
+--- Vrai si au moins une couche est posée.
+function Ground.active()
+    for _, name in ipairs(Ground.ORDER) do
+        if Ground.layers[name] then
+            return true
+        end
+    end
+    return false
+end
+
+--- Mise à jour (OnTickEvenPaused) : balayages en cours ou dus.
+function Ground.update()
+    if not Ground.active() or not getCell() then
+        return
+    end
+    local nowMs = getTimestampMs()
+    for _, name in ipairs(Ground.ORDER) do
+        local layer = Ground.layers[name]
+        if layer then
+            if not layer.sweep and nowMs - (layer.sweptMs or 0) >= Ground.SWEEP_MS then
+                startSweep(layer)
+            end
+            if layer.sweep then
+                stepSweep(layer, not layer.sync and Ground.BUDGET or nil, nowMs)
+            end
+        end
+    end
+end
+
+-- Rechargement de ce fichier : un seul abonné (Events.X.Add ne dédoublonne pas).
+if Ground.tickHandler then
+    Events.OnTickEvenPaused.Remove(Ground.tickHandler)
+end
+Ground.tickHandler = function() Ground.update() end
+Events.OnTickEvenPaused.Add(Ground.tickHandler)
+
+--- Couleur d'une zone de la liste selon son état (plus marquée si elle est
+--- sélectionnée).
+function ZonesAdmin.zoneColor(zone, selected)
+    local colors = selected and ZonesAdmin.SELECTED_COLORS or ZonesAdmin.COLORS
+    if not zone.enabled then
+        return colors.disabled
+    elseif not zone.active then
+        return colors.unusable
+    end
+    return colors.active
 end
 
 --- Case de l'étage z (0 par défaut) vue sous la souris, comme

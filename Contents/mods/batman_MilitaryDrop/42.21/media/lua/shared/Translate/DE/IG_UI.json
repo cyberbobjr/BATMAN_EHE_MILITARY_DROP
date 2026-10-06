@@ -472,5 +472,6 @@
     "IGUI_MilitaryDrop_ZoneNoChange": "Nichts zu speichern.",
     "IGUI_MilitaryDrop_ZoneSending": "An den Server gesendet...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Abwurfzone %1 gespeichert.",
-    "IGUI_MilitaryDrop_ZoneNone": "Noch keine Abwurfzone. Klicke auf Zone hinzufügen und zeichne dann das Rechteck auf dem Boden."
+    "IGUI_MilitaryDrop_ZoneNone": "Noch keine Abwurfzone. Klicke auf Zone hinzufügen und zeichne dann das Rechteck auf dem Boden.",
+    "IGUI_MilitaryDrop_ZoneHighlight": "Hervorheben"
 }

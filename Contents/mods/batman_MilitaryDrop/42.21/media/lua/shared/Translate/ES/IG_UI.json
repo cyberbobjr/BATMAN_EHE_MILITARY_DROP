@@ -472,5 +472,6 @@
     "IGUI_MilitaryDrop_ZoneNoChange": "No hay nada que guardar.",
     "IGUI_MilitaryDrop_ZoneSending": "Enviado al servidor...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Zona de lanzamiento %1 guardada.",
-    "IGUI_MilitaryDrop_ZoneNone": "Aún no hay ninguna zona de lanzamiento. Haz clic en Añadir zona y luego traza el rectángulo en el suelo."
+    "IGUI_MilitaryDrop_ZoneNone": "Aún no hay ninguna zona de lanzamiento. Haz clic en Añadir zona y luego traza el rectángulo en el suelo.",
+    "IGUI_MilitaryDrop_ZoneHighlight": "Resaltar"
 }

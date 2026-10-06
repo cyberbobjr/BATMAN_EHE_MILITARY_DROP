@@ -188,7 +188,7 @@ Où l'ouvrir :
 - **Multijoueur** : bouton **Zones de largage** du panneau d'admin du jeu.
 - **Solo, mode debug** : clic droit au sol › **Debug** › **Main** › **Zones de largage** ; aussi dans la fenêtre de debug (icône en forme d'insecte en bas de la barre d'icônes à gauche, onglet **Main**), ou depuis la console de débogage : `MilitaryDrop.ZonesWindow.open(getPlayer())`.
 
-La fenêtre **Zones de largage (admin)** reprend le panneau des zones d'animaux du jeu. En tête : la carte attendue, le mode de placement et le nombre de zones utilisables. La liste montre les zones groupées par secteur, avec leur état (active, désactivée, carte non chargée), leurs coins, leur taille, leur poids et leurs avertissements, puis les premiers problèmes du fichier. La zone sélectionnée est surlignée au sol, sur votre écran seulement et seulement fenêtre ouverte : vert active, gris désactivée, orange carte non chargée. Les messages de l'outil (zone ajoutée, refus, fichier rechargé) s'affichent dans la fenêtre, jamais au-dessus de votre personnage : les joueurs proches ne voient rien.
+La fenêtre **Zones de largage (admin)** reprend le panneau des zones d'animaux du jeu. En tête : la carte attendue, le mode de placement et le nombre de zones utilisables. La liste montre les zones groupées par secteur, avec leur état (active, désactivée, carte non chargée), leurs coins, leur taille, leur poids et leurs avertissements, puis les premiers problèmes du fichier. Cochez **Surbrillance** (en haut à droite des boutons, décochée au départ, retenue jusqu'à ce que vous quittiez la partie) pour éclairer au sol, en continu, les cases du pourtour de chaque zone : vert active, gris désactivée, orange carte non chargée, la zone sélectionnée plus marquée. Seules les cases chargées autour de vous s'éclairent, puis les nouvelles à mesure que vous vous déplacez ; vous seul les voyez, et elles disparaissent quand vous décochez la case ou fermez la fenêtre (elles restent pendant l'édition). Les messages de l'outil (zone ajoutée, refus, fichier rechargé) s'affichent dans la fenêtre, jamais au-dessus de votre personnage : les joueurs proches ne voient rien.
 
 Boutons :
 
@@ -205,7 +205,7 @@ Manette : croix haut et bas pour choisir une zone, A modifie, X active ou désac
 #### Ajouter une zone
 
 1. Appuyez sur **Ajouter une zone**. La liste se masque et un éditeur s'ouvre en haut à gauche de l'écran.
-2. Tracez le rectangle au sol avec le **clic gauche** : appuyez, faites glisser et relâchez, ou cliquez un coin puis le coin opposé. Pendant le tracé, les clics ne servent qu'à tracer : ni attaque, ni déplacement, ni porte ouverte, ni menu contextuel. Les cases sont prises au rez-de-chaussée, quel que soit votre étage. L'éditeur affiche les coins, la **Largeur** et la **Longueur**, en rouge au-delà de 300 cases.
+2. Tracez le rectangle au sol avec le **clic gauche** : appuyez, faites glisser et relâchez, ou cliquez un coin puis le coin opposé. Pendant le tracé, les clics ne servent qu'à tracer : ni attaque, ni déplacement, ni porte ouverte, ni menu contextuel. Les cases sont prises au rez-de-chaussée, quel que soit votre étage. Le pourtour du rectangle s'éclaire au sol pendant le tracé (bleu, rouge au-delà de 300 cases) ; l'éditeur affiche les coins, la **Largeur** et la **Longueur**, en rouge au-delà de 300 cases.
 3. Après le second coin, le rectangle est figé. Clic droit ou Échap annule le tracé en cours ; un second Échap ferme l'éditeur.
 4. Remplissez **Nom de la zone**, **Secteur** (un secteur connu, ou **Nouveau secteur...** et son nom dans **Nouveau secteur**) et **Poids (1-100)**, puis appuyez sur **Ajouter une zone**.
 5. Le serveur contrôle la zone et répond dans l'éditeur : « Zone de largage z4 ajoutée. », avec ses avertissements, ou un refus (trop grande, hors de la carte, chevauchement d'une zone non-PvP ou d'un refuge, déjà 200 zones, fichier avec une erreur de syntaxe). Il écrit `dropzones.txt` et le recharge. En cas de succès, l'éditeur se ferme et la nouvelle zone est sélectionnée dans la liste. **Annuler** revient à la liste.
@@ -219,7 +219,7 @@ Sélectionnez la zone et appuyez sur **Modifier**. Changez son **Nom de la zone*
 ### Ce que voient les joueurs
 
 - L'annonce et ses rappels nomment la zone : « Caisse de ravitaillement livrée sur la zone Central Park, grille 12937 / 2125. » Avec **Annoncer le nom de la zone** désactivé, ils donnent la grille seule. Le repère de carte ne change pas.
-- La liste des zones n'est jamais envoyée aux joueurs, et les contours des zones ne s'affichent que sur l'écran de l'admin, outil ouvert. Les joueurs découvrent les zones par les annonces.
+- La liste des zones n'est jamais envoyée aux joueurs, et la surbrillance des zones ne s'affiche que sur l'écran de l'admin, outil ouvert. Les joueurs découvrent les zones par les annonces.
 - **Leurre** : en mode zones, le formulaire propose un sélecteur de secteur (« < Louisville > », flèches, ou gauche et droite à la manette) au lieu de N, E, S et O. Avec un seul secteur, il est sélectionné d'office et affiché, sans choix. Le leurre tombe dans une zone de ce secteur, comme un vrai largage, avec la même annonce. Près du demandeur, et sur le formulaire admin, le leurre garde N, E, S et O.
 - La confiance ne change pas : un joueur extérieur qui ouvre la caisse coûte toujours 5 points au demandeur.
 

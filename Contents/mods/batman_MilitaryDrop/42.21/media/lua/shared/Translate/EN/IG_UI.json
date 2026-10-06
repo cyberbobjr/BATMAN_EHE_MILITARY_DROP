@@ -472,5 +472,6 @@
     "IGUI_MilitaryDrop_ZoneNoChange": "Nothing to save.",
     "IGUI_MilitaryDrop_ZoneSending": "Sent to the server...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Drop zone %1 saved.",
-    "IGUI_MilitaryDrop_ZoneNone": "No drop zone yet. Click Add Zone, then draw the rectangle on the ground."
+    "IGUI_MilitaryDrop_ZoneNone": "No drop zone yet. Click Add Zone, then draw the rectangle on the ground.",
+    "IGUI_MilitaryDrop_ZoneHighlight": "Highlight"
 }

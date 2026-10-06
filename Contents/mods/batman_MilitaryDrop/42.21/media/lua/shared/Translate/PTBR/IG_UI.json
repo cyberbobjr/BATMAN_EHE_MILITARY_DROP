@@ -472,5 +472,6 @@
     "IGUI_MilitaryDrop_ZoneNoChange": "Nada para salvar.",
     "IGUI_MilitaryDrop_ZoneSending": "Enviado para o servidor...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Zona de lançamento %1 salva.",
-    "IGUI_MilitaryDrop_ZoneNone": "Ainda não há nenhuma zona de lançamento. Clique em Adicionar Zona e depois trace o retângulo no chão."
+    "IGUI_MilitaryDrop_ZoneNone": "Ainda não há nenhuma zona de lançamento. Clique em Adicionar Zona e depois trace o retângulo no chão.",
+    "IGUI_MilitaryDrop_ZoneHighlight": "Destacar"
 }

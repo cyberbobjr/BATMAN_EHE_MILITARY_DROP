@@ -26,6 +26,16 @@
 -- est recalée chaque image sur l'écran du joueur (résolution changée).
 -- Étage : le tracé vise et dessine à l'étage du joueur (ZonesAdmin).
 --
+-- Retour visuel au sol (couche « editor » de ZonesAdmin.Ground, prioritaire
+-- sur la liste, chez cet admin seulement) : pourtour du rectangle en cours
+-- (bleu, rouge au-delà de 300 cases), case survolée avant le premier coin,
+-- ancien rectangle en gris pendant un nouveau tracé. Surbrillance
+-- persistante des sols, sans clignotement : prerender ne fait que comparer
+-- les formes, et la couche n'est refaite que si la case visée, le
+-- rectangle ou l'étage changent. Le rectangle figé reste affiché tant que
+-- l'éditeur est ouvert ; la couche est retirée à sa fermeture (validation,
+-- annulation, mort, droit perdu).
+--
 -- Tracé à la souris (ZonesAdmin.Trace) : appui-glisser-relâcher comme
 -- ISAddDesignationAnimalZoneUI:onMouseDownOutside/MoveOutside/UpOutside
 -- (:47-74), ou deux clics. Le vanilla écoute les clics « hors » du panneau,
@@ -506,21 +516,28 @@ function ZE:currentRect()
     return self.rect
 end
 
---- Contours à l'étage du joueur (ISAddDesignationAnimalZoneUI:prerender:271).
-function ZE:drawHighlights()
+--- Surbrillance au sol à l'étage du joueur (voir l'en-tête) : rectangle
+--- courant ou case survolée d'abord, puis l'ancien rectangle en gris.
+function ZE:updateGround()
     local colors = ZonesAdmin.COLORS
     local z = self.level
-    if self.trace and self.previousRect then
-        ZonesAdmin.highlight(self.playerNum, self.previousRect, colors.previous, z)
+    local shapes = {}
+    local function add(x1, y1, x2, y2, color)
+        local ax, ay, bx, by = ZonesAdmin.rect(math.floor(x1), math.floor(y1), math.floor(x2), math.floor(y2))
+        shapes[#shapes + 1] = { x1 = ax, y1 = ay, x2 = bx, y2 = by, z = z, color = color }
     end
     local rect = self:currentRect()
     if rect then
         local _, _, _, _, w, h = ZonesAdmin.rect(rect.x1, rect.y1, rect.x2, rect.y2)
-        ZonesAdmin.highlight(self.playerNum, rect, ZonesAdmin.tooBig(w, h) and colors.tooBig or colors.draft, z)
+        add(rect.x1, rect.y1, rect.x2, rect.y2, ZonesAdmin.tooBig(w, h) and colors.tooBig or colors.draft)
     elseif self.trace and self.trace.hx then
-        ZonesAdmin.highlight(self.playerNum, { x1 = self.trace.hx, y1 = self.trace.hy, x2 = self.trace.hx,
-            y2 = self.trace.hy }, colors.cursor, z)
+        add(self.trace.hx, self.trace.hy, self.trace.hx, self.trace.hy, colors.cursor)
     end
+    if self.trace and self.previousRect then
+        local prev = self.previousRect
+        add(prev.x1, prev.y1, prev.x2, prev.y2, colors.previous)
+    end
+    ZonesAdmin.Ground.setShapes("editor", self.playerNum, shapes, true)
 end
 
 function ZE:prerender()
@@ -567,7 +584,7 @@ function ZE:prerender()
     self:drawText(getText("IGUI_MilitaryDrop_ZoneWeightLabel"), pad, self.weightY + labelY, 1, 1, 1, 1, UIFont.Small)
     self:updateButtons()
     self:drawStatus()
-    self:drawHighlights()
+    self:updateGround()
 end
 
 --- Ligne d'état : réponse du serveur (refus), attente, ou motif local qui
@@ -773,6 +790,7 @@ function ZE:close()
     self:removeFromUIManager()
     if Editor.instance == self then
         Editor.instance = nil
+        ZonesAdmin.Ground.remove("editor")
     end
 end
 

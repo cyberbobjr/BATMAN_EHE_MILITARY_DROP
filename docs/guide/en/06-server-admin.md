@@ -188,7 +188,7 @@ Where to open it:
 - **Multiplayer**: the **Military Drop Zones** button of the game's admin panel.
 - **Single player, debug mode**: right-click the ground › **Debug** › **Main** › **Military Drop Zones**; also in the debug window (bug icon at the bottom of the left icon bar, **Main** tab), or from the debug console: `MilitaryDrop.ZonesWindow.open(getPlayer())`.
 
-The **Drop zones (admin)** window is modelled on the game's animal zones panel. At the top: the expected map, the placement mode and the count of usable zones. The list shows the zones grouped by sector, with their state (active, disabled, map not loaded), corners, size, weight and warnings, then the first problems of the file. The selected zone is outlined on the ground, on your screen only and only while the window is open: green active, grey disabled, orange map not loaded. The tool's messages (zone added, refusal, file reloaded) appear in the window, never above your character, so nearby players see nothing.
+The **Drop zones (admin)** window is modelled on the game's animal zones panel. At the top: the expected map, the placement mode and the count of usable zones. The list shows the zones grouped by sector, with their state (active, disabled, map not loaded), corners, size, weight and warnings, then the first problems of the file. Tick **Highlight** (top right of the buttons, unticked at first, remembered until you quit the game) to light up the border squares of every zone on the ground, steadily: green active, grey disabled, orange map not loaded, the selected zone in a stronger shade. Only the squares around you that the game has loaded are lit, and new ones as you move; only you see them, and they are removed when you untick the box or close the window (they stay while the editor is open). The tool's messages (zone added, refusal, file reloaded) appear in the window, never above your character, so nearby players see nothing.
 
 Buttons:
 
@@ -205,7 +205,7 @@ Gamepad: D-pad up and down selects a zone, A edits, X enables or disables, Y add
 #### Adding a zone
 
 1. Press **Add Zone**. The list hides and an editor opens in the top-left corner of the screen.
-2. Draw the rectangle with the **left mouse button** on the ground: press, drag and release, or click one corner and then the opposite one. While you draw, clicks only draw: no attack, no walking, no door opened, no context menu. Squares are taken on ground level, whatever floor you are on. The editor shows the corners, the **Width** and the **Length**, in red beyond 300 squares.
+2. Draw the rectangle with the **left mouse button** on the ground: press, drag and release, or click one corner and then the opposite one. While you draw, clicks only draw: no attack, no walking, no door opened, no context menu. Squares are taken on ground level, whatever floor you are on. The border of the rectangle lights up on the ground as you draw (blue, red beyond 300 squares); the editor shows the corners, the **Width** and the **Length**, in red beyond 300 squares.
 3. After the second corner, the rectangle is fixed. Right-click or Esc cancels the outline in progress; Esc again closes the editor.
 4. Fill in **Zone Name**, **Sector** (a known sector, or **New sector...** and its name in **New sector**) and **Weight (1-100)**, then press **Add Zone**.
 5. The server checks the zone and answers in the editor: "Drop zone z4 added.", with its warnings, or a refusal (too large, off the map, overlapping a non-PvP zone or a safehouse, 200 zones already, file with a syntax error). It writes `dropzones.txt` and reloads it. On success the editor closes and the new zone is selected in the list. **Cancel** returns to the list.
@@ -219,7 +219,7 @@ Select the zone and press **Edit**. Change its **Zone Name**, **Sector** or **We
 ### What players see
 
 - The announcement and its reminders name the zone: "Supply crate delivered at LZ Central Park, grid 12937 / 2125." With **Announce the drop zone name** off, they give the grid only. The map marker does not change.
-- The list of zones is never sent to players, and zone outlines are drawn on the admin's screen only, while the tool is open. Players learn the zones from the announcements.
+- The list of zones is never sent to players, and zone highlights are drawn on the admin's screen only, while the tool is open. Players learn the zones from the announcements.
 - **Decoy**: in zone mode, the form offers a sector selector ("< Louisville >", arrows or gamepad left and right) instead of N, E, S and W. With a single sector, it is selected and shown, without choice. The decoy falls in a zone of that sector, like a real drop, and gets the same announcement. Near the caller, and on the admin form, the decoy keeps N, E, S and W.
 - Trust does not change: an outsider who opens the crate still costs the requester 5 points.
 

@@ -472,5 +472,6 @@
     "IGUI_MilitaryDrop_ZoneNoChange": "Rien à enregistrer.",
     "IGUI_MilitaryDrop_ZoneSending": "Envoyé au serveur...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Zone de largage %1 enregistrée.",
-    "IGUI_MilitaryDrop_ZoneNone": "Aucune zone de largage. Cliquez sur Ajouter une zone, puis tracez le rectangle au sol."
+    "IGUI_MilitaryDrop_ZoneNone": "Aucune zone de largage. Cliquez sur Ajouter une zone, puis tracez le rectangle au sol.",
+    "IGUI_MilitaryDrop_ZoneHighlight": "Surbrillance"
 }
