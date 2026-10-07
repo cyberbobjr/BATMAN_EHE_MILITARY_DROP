@@ -15,6 +15,7 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 
 ### Fixed
 
+- Opening the liaison post console no longer throws a Lua error in games whose post journal still holds entries written before 0.3.3: those older lines are shown as they were recorded.
 - The recipes that unpack recovered avionics, mechanical and metal bundles now show their translated names instead of their internal recipe names.
 
 ## 0.3.3 — 2026-10-07

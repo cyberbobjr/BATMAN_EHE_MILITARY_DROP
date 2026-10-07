@@ -295,6 +295,14 @@ function T.fulton_reply_keeps_the_window_for_the_local_player()
     assertEq(FultonClient.window(0), nil, "durée nulle ignorée")
 end
 
+function T.legacy_plain_text_journal_lines_do_not_crash()
+    assertEq(Exchange.lineText("Old base line"), "Old base line", "ligne d'avant la 0.3.3 : texte simple")
+    assertEq(Exchange.lineText({ key = "IGUI_MilitaryDrop_Fulton_Cure" }), "IGUI_MilitaryDrop_Fulton_Cure",
+        "ligne sans paramètres")
+    assertEq(Exchange.lineText(nil), "", "ligne absente")
+    assertEq(Exchange.lineText({}), "", "ligne vide")
+end
+
 function T.statuses_without_base_lines_are_said_locally()
     isClient = function() return true end
     local shown = {}

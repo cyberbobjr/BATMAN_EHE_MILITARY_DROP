@@ -114,6 +114,8 @@ local function makePlayer()
     function p.faceLocation(self, x, y) self.faced = x .. "," .. y end
     function p.Say(self, text) self.said[#self.said + 1] = text end
     function p.SetVariable() end
+    function p.getPrimaryHandItem(self) return self.hand end
+    function p.getSecondaryHandItem() return nil end
     return p
 end
 
@@ -167,6 +169,19 @@ function T.setup()
     end
     QUEUE, SENT, HALO, NOISE, TRANSFERS, WALKS = {}, {}, {}, {}, {}, {}
     GROUND = makeGround()
+    EMPTY = {}
+    getCell = function()
+        return { getGridSquare = function(_, x, y, z)
+            if x == 10 and y == 20 and z == 0 then
+                return GROUND
+            end
+            local key = x .. "," .. y .. "," .. z
+            EMPTY[key] = EMPTY[key] or { getWorldObjects = function() return list({}) end,
+                getX = function() return x end, getY = function() return y end, getZ = function() return z end }
+            return EMPTY[key]
+        end }
+    end
+    RADIO_SAID, LATER = {}, {}
     ISBaseTimedAction = {}
     function ISBaseTimedAction.derive(parent, type)
         return setmetatable({ Type = type }, { __index = parent })
@@ -195,8 +210,15 @@ function T.setup()
     MilitaryDrop.Net = { toServer = function(player, command, args)
         SENT[#SENT + 1] = { player = player, command = command, args = args }
     end }
-    MilitaryDrop.Exchange = { lineText = function(line) return line.key .. "|" .. table.concat(line.params or {}, "|") end }
-    MilitaryDrop.Client = { HANDLERS = {} }
+    MilitaryDrop.Exchange = { REPLY_DELAY_MS = 4000, LINE_DELAY_MS = 3500,
+        lineText = function(line) return line.key .. "|" .. table.concat(line.params or {}, "|") end }
+    MilitaryDrop.Client = { HANDLERS = {},
+        later = function(delay, fn) LATER[#LATER + 1] = delay fn() end,
+        radioSay = function(request, text) RADIO_SAID[#RADIO_SAID + 1] = { device = request.device, text = text } end }
+    MilitaryDrop.Radio = {
+        isInventoryRadio = function(object) return type(object) == "table" and object.radio == true end,
+        isMilitary = function(object) return object.military == true end,
+    }
     loadMod("shared/MilitaryDrop/MilitaryDrop_Fulton.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_FultonClient.lua")
     FultonClient = MilitaryDrop.FultonClient
@@ -240,6 +262,14 @@ end
 
 function T.world_right_click_finds_the_kit_on_the_ground()
     local player, kit = ready({ item("Base.Paperwork") })
+    local neighbour = getCell():getGridSquare(11, 21, 0)
+    local near = makeContext()
+    FultonMenu.onFillWorldContextMenu(0, near, { { getSquare = function() return neighbour end } }, false)
+    assertEq(near.options[1] and near.options[1].param, kit, "clic sur la case voisine : kit trouvé (rayon d'une case)")
+    local far = makeContext()
+    local distant = getCell():getGridSquare(13, 20, 0)
+    FultonMenu.onFillWorldContextMenu(0, far, { { getSquare = function() return distant end } }, false)
+    assertEq(#far.options, 0, "à trois cases : rien")
     local context = makeContext()
     FultonMenu.onFillWorldContextMenu(0, context, { { getSquare = function() return GROUND end } }, false)
     assertEq(#context.options, 1, "une option")
@@ -315,11 +345,26 @@ function T.action_faces_the_kit_makes_noise_then_sends_its_square()
     assertTrue(not action:isValid(), "kit ramassé : action annulée")
 end
 
+function T.acknowledgement_comes_through_the_radio_in_hand()
+    local player = ready({ item("Base.Paperwork") })
+    local radio = { radio = true, military = true,
+        getDeviceData = function() return { getIsTurnedOn = function() return true end } end }
+    player.hand = radio
+    FultonMenu.onResult({ username = "alice", status = "ok", lines = {
+        { key = "IGUI_MilitaryDrop_Fulton_Received", params = { "BRAVO", "2" } },
+        { key = "IGUI_MilitaryDrop_Fulton_CapReached", params = {} } } })
+    assertEq(#RADIO_SAID, 2, "deux lignes par la radio")
+    assertEq(RADIO_SAID[1].device, radio, "par le talkie en main")
+    assertEq(RADIO_SAID[1].text, "IGUI_MilitaryDrop_Fulton_Received|BRAVO|2", "accusé de réception")
+    assertEq(LATER[1] .. "," .. LATER[2], "4000,7500", "mêmes délais qu'une réponse d'échange")
+    assertEq(#HALO, 0, "pas de texte flottant")
+end
+
 function T.result_shows_base_lines_or_the_refusal()
     local player = ready({ item("Base.Paperwork") })
     FultonMenu.onResult({ username = "alice", status = "ok",
         lines = { { key = "IGUI_MilitaryDrop_Fulton_Received", params = { "BRAVO", "1" } } } })
-    assertEq(HALO[1], "IGUI_MilitaryDrop_Fulton_Received|BRAVO|1", "accusé de réception au-dessus du personnage")
+    assertEq(HALO[1], "IGUI_MilitaryDrop_Fulton_Received|BRAVO|1", "sans radio en main : texte au-dessus du personnage")
     assertEq(FultonClient.window(0), nil, "créneau du client fermé")
     FultonMenu.onResult({ username = "alice", status = "noWindow", reason = "IGUI_MilitaryDrop_Fulton_NoWindow" })
     assertEq(player.said[1], "IGUI_MilitaryDrop_Fulton_NoWindow", "refus dit par le personnage")

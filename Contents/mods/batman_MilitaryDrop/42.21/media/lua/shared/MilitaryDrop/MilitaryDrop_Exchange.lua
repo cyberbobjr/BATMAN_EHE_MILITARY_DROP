@@ -242,12 +242,20 @@ end
 
 --- Résolution côté client ; les paramètres peuvent être eux-mêmes traduisibles.
 --- Une ligne littérale porte explicitement text (annonces déjà composées).
+--- Les journaux de poste d'avant la 0.3.3 gardent des lignes en texte simple :
+--- elles sont affichées telles quelles (la console plantait sur ipairs(nil)).
 function Exchange.lineText(line)
+    if type(line) ~= "table" then
+        return line ~= nil and tostring(line) or ""
+    end
     if line.text then
-        return line.text
+        return tostring(line.text)
+    end
+    if type(line.key) ~= "string" then
+        return ""
     end
     local params = {}
-    for i, value in ipairs(line.params) do
+    for i, value in ipairs(type(line.params) == "table" and line.params or {}) do
         params[i] = type(value) == "table" and Exchange.lineText(value) or value
     end
     return getText(line.key, unpack(params))

@@ -26,6 +26,7 @@ require "MilitaryDrop/MilitaryDrop_Fulton"
 require "MilitaryDrop/MilitaryDrop_Exchange"
 require "MilitaryDrop/MilitaryDrop_FultonClient"
 require "MilitaryDrop/MilitaryDrop_Client"
+require "MilitaryDrop/MilitaryDrop_Radio"
 
 local Fulton = MilitaryDrop.Fulton
 local Exchange = MilitaryDrop.Exchange
@@ -238,34 +239,89 @@ function FultonMenu.onFillContextMenu(playerNum, context, items)
     end
 end
 
---- Clic droit dans le monde : premier kit posé sur les cases visées.
+--- Kit posé sur la case, ou nil.
+local function kitOn(square)
+    local objects = square and square:getWorldObjects()
+    if not objects then
+        return nil
+    end
+    for i = 0, objects:size() - 1 do
+        local item = objects:get(i):getItem()
+        if item and item:getFullType() == Fulton.KIT_TYPE then
+            return item
+        end
+    end
+    return nil
+end
+
+--- Clic droit dans le monde : premier kit posé sur les cases visées ou à une
+--- case autour. Le jeu repère les objets au sol dans un rayon d'une case autour
+--- de la souris (ISWorldObjectContextMenuLogic.handleGrabWorldItem, 42.21) : le
+--- modèle d'un objet posé déborde souvent sur la case voisine de celle cliquée.
 function FultonMenu.onFillWorldContextMenu(playerNum, context, worldObjects, test)
     if test then
         return
     end
     local player = getSpecificPlayer(playerNum)
-    if not player then
+    local cell = getCell()
+    if not player or not cell then
         return
     end
     local seen = {}
     for _, object in ipairs(worldObjects) do
-        local square = object and object:getSquare()
-        if square and not seen[square] then
-            seen[square] = true
-            local objects = square:getWorldObjects()
-            for i = 0, objects:size() - 1 do
-                local item = objects:get(i):getItem()
-                if item and item:getFullType() == Fulton.KIT_TYPE then
-                    FultonMenu.addOption(player, context, item)
-                    return
+        local center = object and object:getSquare()
+        if center then
+            for dx = -1, 1 do
+                for dy = -1, 1 do
+                    local square = cell:getGridSquare(center:getX() + dx, center:getY() + dy, center:getZ())
+                    if square and not seen[square] then
+                        seen[square] = true
+                        local kit = kitOn(square)
+                        if kit then
+                            FultonMenu.addOption(player, context, kit)
+                            return
+                        end
+                    end
                 end
             end
         end
     end
 end
 
---- Résultat du serveur : lignes de la base (accusé de réception) en texte
---- au-dessus du personnage, ou motif de refus dit par le personnage.
+--- Radio militaire allumée tenue en main par le joueur, ou nil.
+function FultonMenu.handRadio(player)
+    local Radio = MilitaryDrop.Radio
+    for _, item in ipairs({ player:getPrimaryHandItem(), player:getSecondaryHandItem() }) do
+        if Radio and Radio.isInventoryRadio(item) and Radio.isMilitary(item) and item:getDeviceData():getIsTurnedOn() then
+            return item
+        end
+    end
+    return nil
+end
+
+--- Lignes de la base : par la radio militaire tenue en main (comme une réponse
+--- d'échange, avec les mêmes délais), sinon en texte au-dessus du personnage.
+local function showBaseLines(player, lines)
+    local device = FultonMenu.handRadio(player)
+    local Client = MilitaryDrop.Client
+    local count = 0
+    for _, line in ipairs(lines) do
+        if type(line) == "table" then
+            local text = Exchange.lineText(line)
+            if device and Client and Client.radioSay and Client.later then
+                local request = { playerNum = player:getPlayerNum(), device = device }
+                Client.later(Exchange.REPLY_DELAY_MS + count * Exchange.LINE_DELAY_MS,
+                    function() Client.radioSay(request, text) end)
+            else
+                HaloTextHelper.addText(player, text, "", 180, 220, 140)
+            end
+            count = count + 1
+        end
+    end
+end
+
+--- Résultat du serveur : lignes de la base (accusé de réception) par la radio
+--- en main ou au-dessus du personnage, ou motif de refus dit par le personnage.
 function FultonMenu.onResult(args)
     local player = nil
     for i = 0, getNumActivePlayers() - 1 do
@@ -285,11 +341,7 @@ function FultonMenu.onResult(args)
         return
     end
     FultonClient.windows[player:getPlayerNum()] = nil
-    for _, line in ipairs(type(args.lines) == "table" and args.lines or {}) do
-        if type(line) == "table" then
-            HaloTextHelper.addText(player, Exchange.lineText(line), "", 180, 220, 140)
-        end
-    end
+    showBaseLines(player, type(args.lines) == "table" and args.lines or {})
 end
 
 if MilitaryDrop.Client and MilitaryDrop.Client.HANDLERS then
