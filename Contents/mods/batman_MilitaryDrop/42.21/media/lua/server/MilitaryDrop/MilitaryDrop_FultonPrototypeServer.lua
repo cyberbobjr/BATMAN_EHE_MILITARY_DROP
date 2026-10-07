@@ -1,4 +1,7 @@
--- Ephemeral, server-authoritative prototype. Dedicated server never renders.
+-- Ephemeral, server-authoritative flights. Dedicated server never renders.
+-- Debug flights (Start/Stop/Pause) follow their player; real launches
+-- (Server.startFlight, MilitaryDrop_FultonServer.lua, FULTON-07) are anchored to
+-- the release point and survive the launcher's death or disconnection.
 if isClient() then return end
 require "MilitaryDrop/MilitaryDrop_FultonPrototypeFlight"
 local Flight = MilitaryDrop.FultonPrototypeFlight
@@ -17,13 +20,22 @@ local function broadcast(player)
     for _, e in pairs(entries) do
         rows[#rows + 1] = { id = e.id, owner = e.owner, x = e.x, y = e.y, z = e.z,
             height = e.height, duration = e.duration, hold = e.hold, pickup = e.pickup,
-            elapsed = e.elapsed, paused = e.paused, vanilla = e.vanilla }
+            elapsed = e.elapsed, paused = e.paused, vanilla = e.vanilla, real = e.real }
     end
     local args = { revision = MilitaryDrop.FultonPrototypeRevision, sentAt = Flight.clock(), flights = rows }
     if player then
         sendServerCommand(player, Flight.MODULE, "Snapshot", args)
     else
         sendServerCommand(Flight.MODULE, "Snapshot", args)
+    end
+end
+
+local function startTicking()
+    if not ticking then
+        lastClock = Flight.clock()
+        Events.OnTick.Add(Server.onTick)
+        ticking = true
+        syncIn = Flight.SYNC_SECONDS
     end
 end
 
@@ -44,7 +56,8 @@ function Server.onTick()
     local finished = {}
     for id, e in pairs(entries) do
         if not e.paused then e.elapsed = e.elapsed + dt end
-        if not connected[e.player] or e.player:isDead() or e.elapsed >= Flight.totalTime(e) then
+        local gone = e.player ~= nil and (not connected[e.player] or e.player:isDead())
+        if gone or e.elapsed >= Flight.totalTime(e) then
             finished[#finished + 1] = id
         end
     end
@@ -99,16 +112,24 @@ function Server.onClientCommand(module, command, player, args)
             duration = Flight.bounded(args.duration, Flight.RISE_SECONDS, 1, 60),
             hold = Flight.bounded(args.hold, Flight.HOLD_SECONDS, 0, 300), pickup = Flight.PICKUP_SECONDS,
             elapsed = 0, paused = false, vanilla = args.vanilla == true }
-        if not ticking then
-            lastClock = Flight.clock()
-            Events.OnTick.Add(Server.onTick)
-            ticking = true
-            syncIn = Flight.SYNC_SECONDS
-        end
+        startTicking()
     elseif ownId then
         entries[ownId] = nil
     end
     broadcast()
+end
+
+--- Real launch (MP server): flight anchored at x, y, z with the default
+--- trajectory, without owner or player; broadcast to every client. Returns its id.
+function Server.startFlight(x, y, z)
+    nextId = nextId + 1
+    MilitaryDrop.FultonPrototypeNextId = nextId
+    entries[nextId] = { id = nextId, owner = -1, x = x, y = y, z = math.floor(z),
+        height = 2.5, duration = Flight.RISE_SECONDS, hold = Flight.HOLD_SECONDS, pickup = Flight.PICKUP_SECONDS,
+        elapsed = 0, paused = false, vanilla = false, real = true }
+    startTicking()
+    broadcast()
+    return nextId
 end
 
 function Server.dispose()

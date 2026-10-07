@@ -172,6 +172,16 @@ function Broadcast.mayday(id, x, y)
     toPostLogs(text)
 end
 
+--- Extraction Fulton (FULTON-06) : secteur de 50 cases annoncé deux fois à
+--- toutes les stations, comme un MAYDAY (l'expéditeur est exposé).
+function Broadcast.fulton(x, y)
+    x, y = math.floor(x / 50) * 50 + 25, math.floor(y / 50) * 50 + 25
+    local text = getText("IGUI_MilitaryDrop_BroadcastFulton", tostring(x), tostring(y))
+    Broadcast.air({ { text }, { text }, { getText("IGUI_MilitaryDrop_BroadcastOut") } })
+    toPostLogs(text)
+    return x, y
+end
+
 --- Le nom de la zone de largage (idée 11) est lu dans l'annonce : nom
 --- donné et option DropZoneAnnounceName vraie (défaut).
 function Broadcast.announcesZone(zoneName)

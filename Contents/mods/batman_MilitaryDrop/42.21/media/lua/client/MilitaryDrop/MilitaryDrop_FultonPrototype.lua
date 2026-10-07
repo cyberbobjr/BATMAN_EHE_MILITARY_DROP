@@ -1,4 +1,8 @@
--- Visual-only prototype; MP trajectories come exclusively from the server.
+-- Fulton balloon rendering; MP trajectories come exclusively from the server.
+-- Real launches (FULTON-07): server flights marked `real`, or a local anchored
+-- flight in solo (Prototype.startAt). Each client plays the aircraft flyby
+-- locally when a real flight starts (FULTON-06 sound, peak at 3.8 s = pickup).
+-- The test menu is only offered in debug mode.
 require "MilitaryDrop/MilitaryDrop_FultonPrototypeFlight"
 local Flight = MilitaryDrop.FultonPrototypeFlight
 local previous = MilitaryDrop.FultonPrototype
@@ -7,11 +11,28 @@ local Prototype = {}
 MilitaryDrop.FultonPrototype = Prototype
 Prototype.pose = Flight.pose
 local entries, active = {}, nil
+-- Solo anchored flights use negative ids (server flights are positive).
+local nextLocalId = 0
 local modes = { auto = true, world = true, post = true }
 local mode, cable, selectedPlayerNum = "auto", true, 0
 local ticking, revision = false, -1
 local worldFrames, postFrames, lastRenderer = 0, 0, nil
 local drewInWorld = {}
+Prototype.SOUND = "MilitaryDropFultonFlyby"
+-- High emitter: never muffled by walls (as MilitaryDrop_Heli.lua).
+Prototype.SOUND_Z = 20
+-- A flight discovered later than this (join, unloaded area) plays no flyby.
+Prototype.SOUND_LATE_SECONDS = 1
+
+--- Aircraft flyby, local to this client. Never playSoundImpl(name, nil): Kahlua
+--- would pick the (String, IsoGridSquare) overload and throw (NPE).
+function Prototype.playFlyby(x, y)
+    local world = getWorld and getWorld()
+    local emitter = world and world:getFreeEmitter(x, y, Prototype.SOUND_Z)
+    if emitter then
+        emitter:playSoundImpl(Prototype.SOUND, false, nil)
+    end
+end
 
 local function clear()
     entries, active, drewInWorld = {}, nil, {}
@@ -59,6 +80,7 @@ function Prototype.onServerCommand(module, command, args)
     local ownPlayer = getSpecificPlayer(selectedPlayerNum)
     active = nil
     for _, row in ipairs(args.flights) do
+        local known = entries[row.id] ~= nil
         local e = entries[row.id] or {}
         if not e.balloon then e.balloon, e.bag = items(row.vanilla) end
         if e.balloon and e.bag then
@@ -66,6 +88,9 @@ function Prototype.onServerCommand(module, command, args)
                 "elapsed", "paused", "vanilla" }) do e[key] = row[key] end
             e.shared, e.serverAt, e.serverElapsed = true, args.sentAt or 0, row.elapsed
             updated[e.id] = e
+            if row.real and not known and (tonumber(row.elapsed) or 0) < Prototype.SOUND_LATE_SECONDS then
+                Prototype.playFlyby(row.x, row.y)
+            end
             if ownPlayer and e.owner == ownPlayer:getOnlineID() then active = e end
         end
     end
@@ -78,7 +103,9 @@ function Prototype.onTick()
     local now = isClient() and Flight.clock() or 0
     local finished = {}
     for id, e in pairs(entries) do
-        if e.shared then
+        if e.anchored then
+            if not e.paused and getGameSpeed() ~= 0 then e.elapsed = e.elapsed + dt end
+        elseif e.shared then
             -- Server clock also accounts for packet transit time.
             if e.paused then e.elapsed = e.serverElapsed
             elseif now > 0 and e.serverAt > 0 then
@@ -175,6 +202,20 @@ function Prototype.start(playerNum, options)
     return true
 end
 
+--- Solo real launch (FULTON-07): local flight anchored at x, y, z, independent
+--- of any player, with the flyby. MP launches arrive by Snapshot instead.
+function Prototype.startAt(x, y, z)
+    local balloon, bag = items(false)
+    if not balloon or not bag then return false end
+    nextLocalId = nextLocalId - 1
+    entries[nextLocalId] = { id = nextLocalId, anchored = true, real = true, x = x, y = y, z = math.floor(z),
+        balloon = balloon, bag = bag, elapsed = 0, phase = "rise", paused = false, height = 2.5,
+        duration = Flight.RISE_SECONDS, hold = Flight.HOLD_SECONDS, pickup = Flight.PICKUP_SECONDS }
+    startTicking()
+    Prototype.playFlyby(x, y)
+    return true
+end
+
 function Prototype.togglePause()
     if not active then return end
     if isClient() then return request("Pause", { id = active.id, paused = not active.paused }) end
@@ -203,7 +244,7 @@ end
 local function startFromMenu(playerNum, vanilla) Prototype.start(playerNum, { vanilla = vanilla }) end
 
 function Prototype.onContext(playerNum, context, worldObjects, test)
-    if test or not getSpecificPlayer(playerNum) then return end
+    if test or not getSpecificPlayer(playerNum) or not (getDebug and getDebug()) then return end
     selectedPlayerNum = playerNum
     if isClient() then
         active = nil

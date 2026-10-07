@@ -164,6 +164,7 @@ function T.setup()
     loadMod("server/MilitaryDrop/MilitaryDrop_FultonServer.lua")
     FultonServer = MilitaryDrop.FultonServer
     Trust = MilitaryDrop.Trust
+    DEFAULT_ON_LAUNCHED = FultonServer.onLaunched
     FultonServer.onLaunched = function(player, x, y, z) LAUNCHED[#LAUNCHED + 1] = { player = player, x = x, y = y, z = z } end
 end
 
@@ -286,6 +287,27 @@ function T.solo_removes_without_network()
     assertEq(launch(player, kit, tank), "ok", "solo")
     assertEq(#REMOVED, 0, "pas d'envoi réseau en solo")
     assertEq(player.inventory:getItemWithID(kit.id), nil, "kit retiré")
+end
+
+function T.default_hook_starts_the_flight_noise_and_announcement()
+    local calls = {}
+    MilitaryDrop.FultonPrototypeServer = {
+        startFlight = function(x, y, z) calls[#calls + 1] = "mp " .. x .. "," .. y .. "," .. z end,
+    }
+    MilitaryDrop.FultonPrototype = { startAt = function(x, y, z) calls[#calls + 1] = "solo " .. x .. "," .. y .. "," .. z end }
+    MilitaryDrop.Broadcast = { fulton = function(x, y) calls[#calls + 1] = "broadcast " .. x .. "," .. y end }
+    getWorldSoundManager = function()
+        return { addSound = function(_, source, x, y, z, radius, volume)
+            calls[#calls + 1] = "noise " .. tostring(source) .. " " .. radius .. "/" .. volume
+        end }
+    end
+    DEFAULT_ON_LAUNCHED(nil, 100, 200, 0)
+    assertEq(table.concat(calls, " | "), "mp 100.5,200.5,0 | noise nil 40/40 | broadcast 100,200",
+        "serveur MP : vol à tous les clients, bruit, annonce")
+    calls = {}
+    isServer = function() return false end
+    DEFAULT_ON_LAUNCHED(nil, 100, 200, 0)
+    assertEq(calls[1], "solo 100.5,200.5,0", "solo : vol local")
 end
 
 function T.command_is_registered()

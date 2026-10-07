@@ -15,7 +15,9 @@
 -- « fultonCure » hors plafond), fermeture du créneau, réponse au joueur et
 -- ligne au journal du poste de son équipe. Les objets ne passent jamais par
 -- le sol : aucun doublon possible si une case se décharge.
--- Le vol visible et l'annonce publique viennent au lot 4 (FultonServer.onLaunched).
+-- Puis FultonServer.onLaunched : vol visible attaché au point du lâcher (serveur
+-- MP : Snapshot à tous les clients, qui jouent le passage de l'avion ; solo :
+-- vol local), bruit du passage pour les zombies, annonce du secteur.
 -- ============================================================================
 
 if isClient() then
@@ -29,6 +31,8 @@ require "MilitaryDrop/MilitaryDrop_Teams"
 require "MilitaryDrop/MilitaryDrop_Trust"
 require "MilitaryDrop/MilitaryDrop_Missions"
 require "MilitaryDrop/MilitaryDrop_ZonesFile"
+require "MilitaryDrop/MilitaryDrop_Broadcast"
+require "MilitaryDrop/MilitaryDrop_FultonPrototypeServer"
 require "MilitaryDrop/MilitaryDrop_Fulton"
 require "MilitaryDrop/MilitaryDrop_Exchange"
 
@@ -41,6 +45,9 @@ MilitaryDrop.FultonServer = FultonServer
 FultonServer.RESULT = "FultonResult"
 -- Un lâcher par joueur toutes les 3 s réelles au plus.
 FultonServer.INTERVAL_MS = 3000
+-- Bruit du passage de l'avion pour les zombies (rayon, volume) [proposition].
+FultonServer.FLYBY_NOISE_RADIUS = 40
+FultonServer.FLYBY_NOISE_VOLUME = 40
 
 -- Motifs de refus → réplique du personnage (clé de traduction).
 FultonServer.REASONS = {
@@ -186,6 +193,26 @@ function FultonServer.launch(player, args)
         FultonServer.onLaunched(player, x, y, z)
     end
     return "ok"
+end
+
+--- Après un lâcher payé : vol visible au centre de la case, bruit, annonce.
+function FultonServer.onLaunched(player, x, y, z)
+    local fx, fy = x + 0.5, y + 0.5
+    if isServer() then
+        local Flights = MilitaryDrop.FultonPrototypeServer
+        if Flights and Flights.startFlight then
+            Flights.startFlight(fx, fy, z)
+        end
+    elseif MilitaryDrop.FultonPrototype and MilitaryDrop.FultonPrototype.startAt then
+        MilitaryDrop.FultonPrototype.startAt(fx, fy, z)
+    end
+    local sounds = getWorldSoundManager and getWorldSoundManager()
+    if sounds then
+        sounds:addSound(nil, x, y, z, FultonServer.FLYBY_NOISE_RADIUS, FultonServer.FLYBY_NOISE_VOLUME)
+    end
+    if MilitaryDrop.Broadcast and MilitaryDrop.Broadcast.fulton then
+        MilitaryDrop.Broadcast.fulton(x, y)
+    end
 end
 
 MilitaryDrop.Server.COMMANDS.FultonLaunch = function(player, args) FultonServer.launch(player, args) end

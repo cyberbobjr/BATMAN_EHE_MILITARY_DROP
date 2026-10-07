@@ -97,6 +97,19 @@ function T.dropped_repeats_coordinates_with_code()
     assertEq(AIRED.lines[#AIRED.lines].codes, nil, "fin sans code")
 end
 
+function T.fulton_announces_a_50_tile_sector_to_all_stations()
+    local recorded = {}
+    MilitaryDrop.Post = { record = function(team, text) recorded[#recorded + 1] = { team = team, text = text } end }
+    triggerEvent("OnLoadRadioScripts", SCRIPT_MANAGER, false)
+    local x, y = MilitaryDrop.Broadcast.fulton(1234, 5678)
+    assertEq(x .. "," .. y, "1225,5675", "secteur de 50 cases, pas la case exacte")
+    assertEq(#AIRED.lines, 3, "deux annonces et fin")
+    assertEq(AIRED.lines[1].text, "IGUI_MilitaryDrop_BroadcastFulton|1225|5675", "grille du secteur")
+    assertEq(AIRED.lines[1].codes, nil, "pas de repère de carte")
+    assertEq(recorded[1].team, nil, "journal de toutes les stations")
+    assertEq(#SENT, 0, "rien envoyé aux clients en dehors de la chaîne")
+end
+
 function T.inbound_has_no_coordinates_or_code()
     triggerEvent("OnLoadRadioScripts", SCRIPT_MANAGER, false)
     MilitaryDrop.Broadcast.inbound()

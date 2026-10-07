@@ -305,3 +305,12 @@ Ces options sont lues à chaud par `Config.get` (OPT-02). Le butin est rafraîch
 - **Son du gonflage** : aucun sifflement vanilla trouvé ; seul le bruit pour les zombies est émis (`addSound` depuis l'action côté client, relayé au serveur comme `ISBarricadeAction`).
 - **Vent** : refus au-delà de 60 km/h (`ClimateManager:getWindspeedKph`), et par orage (`getIsThunderStorming`) **[P]**.
 
+## 13. Écarts du lot 4 (2026-10-07)
+
+- **Secteur annoncé** : la grille est arrondie au secteur de 50 cases, comme le MAYDAY (`Broadcast.fulton`). Le nom de la zone de largage n'est pas ajouté, faute de fonction « zone contenant ce point » dans `MilitaryDrop_Zones.lua`. Aucun repère de carte n'est créé : l'annonce est seulement entendue et notée au journal des postes.
+- **Point de départ** : centre de la case du lanceur. Le prototype partait 1,5 case en diagonale, mais cette case n'est pas contrôlée (dehors, arbre).
+- **Vol réel** : `FultonPrototypeServer.startFlight(x, y, z)` crée un vol sans propriétaire, attaché à une position et marqué `real`. Il continue si le lanceur meurt ou se déconnecte. En solo, `FultonPrototype.startAt` crée le même vol localement.
+- **Son** : chaque client joue le passage une seule fois, quand il découvre un vol réel de moins d'une seconde. Un client qui arrive plus tard voit le ballon, sans le son. Émetteur placé haut (z = 20), `playSoundImpl(nom, false, nil)`.
+- **Bruit du passage** pour les zombies : rayon 40, volume 40 **[P]**, sur le serveur ou en solo.
+- **Menu de test du prototype** : seulement en mode debug.
+

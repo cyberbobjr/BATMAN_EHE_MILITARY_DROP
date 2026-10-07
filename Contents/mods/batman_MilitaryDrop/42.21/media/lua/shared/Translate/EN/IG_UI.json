@@ -502,5 +502,6 @@
     "IGUI_MilitaryDrop_Fulton_Received": "%1, Logistics. Fulton cargo recovered: %2 useful items. Out.",
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, Logistics. Cargo recovered, but nothing useful in it. Out.",
     "IGUI_MilitaryDrop_Fulton_Cure": "The cure has arrived. Top priority. Thank you.",
-    "IGUI_MilitaryDrop_Fulton_CapReached": "Today's credit is used up: part of it won't count for you."
+    "IGUI_MilitaryDrop_Fulton_CapReached": "Today's credit is used up: part of it won't count for you.",
+    "IGUI_MilitaryDrop_BroadcastFulton": "Logistics to all stations: Fulton pick-up in progress near grid %1 / %2. Out."
 }

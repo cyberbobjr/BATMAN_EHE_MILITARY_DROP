@@ -502,5 +502,6 @@
     "IGUI_MilitaryDrop_Fulton_Received": "%1,这里是后勤。富尔顿货物已回收:%2 件有用物品。通话结束。",
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1,这里是后勤。货物已回收,但没有有用的东西。通话结束。",
     "IGUI_MilitaryDrop_Fulton_Cure": "解药已送达。最高优先级。谢谢。",
-    "IGUI_MilitaryDrop_Fulton_CapReached": "今日额度已用完:部分内容不会计入。"
+    "IGUI_MilitaryDrop_Fulton_CapReached": "今日额度已用完:部分内容不会计入。",
+    "IGUI_MilitaryDrop_BroadcastFulton": "后勤呼叫所有电台:网格 %1 / %2 附近正在进行富尔顿回收。通话结束。"
 }

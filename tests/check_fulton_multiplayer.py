@@ -32,6 +32,13 @@ Render3DItem = function(item, square, x, y, z)
     DRAWS[#DRAWS+1] = {kind=item.kind, x=x, y=y, z=z}
 end
 renderIsoLine = function() end
+FLYBYS = {}
+getWorld = function() return {getFreeEmitter = function(_, x, y, z)
+    return {playSoundImpl = function(_, name, loop, object)
+        assert(loop == false, "unambiguous overload: playSoundImpl(name, false, nil)")
+        FLYBYS[#FLYBYS+1] = {name=name, x=x, y=y, z=z}
+    end}
+end} end
 """
 
 
@@ -235,10 +242,51 @@ def check_server_bounds_and_completion():
     assert n.server.eval('listenerCount("OnTick")') == 0
 
 
+def flybys(index, n):
+    vm = n.clients[index]
+    return [vm.globals().FLYBYS[i + 1].name for i in range(len(vm.globals().FLYBYS))]
+
+
+def check_real_launch_is_anchored_shared_and_heard_once():
+    n = Network()
+    n.server.eval("MilitaryDrop.FultonPrototypeServer.startFlight(150.5, 250.5, 0)")
+    row = n.packets[0][3]["flights"][1]
+    assert row["real"] is True and (row["x"], row["y"], row["owner"]) == (150.5, 250.5, -1)
+    n.deliver()
+    assert n.count(0) == n.count(1) == 1, "every client sees the real flight"
+    assert flybys(0, n) == flybys(1, n) == ["MilitaryDropFultonFlyby"], "each client plays the flyby once"
+    emitter = n.clients[0].globals().FLYBYS[1]
+    assert (emitter.x, emitter.y, emitter.z) == (150.5, 250.5, 20), "high emitter above the release point"
+    n.server.execute('PLAYERS = {}')  # launcher and everyone disconnect: the flight still completes
+    n.tick(1)
+    n.deliver()
+    assert n.count(0) == 1 and flybys(0, n) == ["MilitaryDropFultonFlyby"], "no second flyby on later snapshots"
+    observer = n.clients[1]
+    observer.execute('triggerEvent("OnDisconnect"); triggerEvent("OnGameStart")')
+    n.server.execute('PLAYERS = {player(1), player(2)}')
+    n.command()
+    n.deliver()
+    assert n.count(1) == 1 and flybys(1, n) == ["MilitaryDropFultonFlyby"], "late join: flight shown, no flyby"
+    n.tick(3.5)
+    n.deliver()
+    assert n.count(0) == n.count(1) == 0, "real flight ends after 4.5 s"
+    assert n.server.eval('listenerCount("OnTick")') == 0
+
+
+def check_debug_menu_hidden_without_debug():
+    n = Network()
+    vm = n.clients[0]
+    vm.execute('getDebug = function() return false end; ADDED = 0; '
+               'CTX = {addOption = function() ADDED = ADDED + 1 end}; '
+               'MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
+    assert vm.globals().ADDED == 0, "test menu only in debug mode"
+
+
 def run_checks():
     for check in (check_shared_ascent_and_packet_delay, check_late_join_unloaded_square_and_reload,
                   check_unordered_commands_and_snapshots, check_two_flights_pause_ownership_and_disconnect,
-                  check_server_bounds_and_completion):
+                  check_server_bounds_and_completion, check_real_launch_is_anchored_shared_and_heard_once,
+                  check_debug_menu_hidden_without_debug):
         try:
             check()
         except Exception as exc:

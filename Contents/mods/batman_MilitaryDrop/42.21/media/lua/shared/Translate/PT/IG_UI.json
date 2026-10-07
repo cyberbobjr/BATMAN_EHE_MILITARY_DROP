@@ -502,5 +502,6 @@
     "IGUI_MilitaryDrop_Fulton_Received": "%1, aqui Logística. Carga Fulton recuperada: %2 objetos aproveitáveis. Terminado.",
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, aqui Logística. Carga recuperada, mas nada aproveitável. Terminado.",
     "IGUI_MilitaryDrop_Fulton_Cure": "A cura chegou. Prioridade absoluta. Obrigado.",
-    "IGUI_MilitaryDrop_Fulton_CapReached": "Crédito do dia esgotado: uma parte não lhe será contada."
+    "IGUI_MilitaryDrop_Fulton_CapReached": "Crédito do dia esgotado: uma parte não lhe será contada.",
+    "IGUI_MilitaryDrop_BroadcastFulton": "Logística a todas as estações: extração Fulton em curso perto da quadrícula %1 / %2. Terminado."
 }

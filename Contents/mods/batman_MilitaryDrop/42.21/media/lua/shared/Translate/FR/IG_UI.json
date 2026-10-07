@@ -502,5 +502,6 @@
     "IGUI_MilitaryDrop_Fulton_Received": "%1, ici Logistique. Colis Fulton récupéré : %2 objets exploitables. Terminé.",
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, ici Logistique. Colis récupéré, mais rien d'exploitable. Terminé.",
     "IGUI_MilitaryDrop_Fulton_Cure": "Le remède est arrivé. Priorité absolue. Merci.",
-    "IGUI_MilitaryDrop_Fulton_CapReached": "Crédit du jour épuisé : une partie ne vous sera pas comptée."
+    "IGUI_MilitaryDrop_Fulton_CapReached": "Crédit du jour épuisé : une partie ne vous sera pas comptée.",
+    "IGUI_MilitaryDrop_BroadcastFulton": "Logistique à toutes les stations : extraction Fulton en cours près de la grille %1 / %2. Terminé."
 }

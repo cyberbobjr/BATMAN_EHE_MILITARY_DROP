@@ -502,5 +502,6 @@
     "IGUI_MilitaryDrop_Fulton_Received": "%1, hier Logistik. Fulton-Fracht geborgen: %2 verwertbare Gegenstände. Ende.",
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, hier Logistik. Fracht geborgen, aber nichts Verwertbares. Ende.",
     "IGUI_MilitaryDrop_Fulton_Cure": "Das Heilmittel ist angekommen. Höchste Priorität. Danke.",
-    "IGUI_MilitaryDrop_Fulton_CapReached": "Tagesguthaben erschöpft: Ein Teil wird Ihnen nicht angerechnet."
+    "IGUI_MilitaryDrop_Fulton_CapReached": "Tagesguthaben erschöpft: Ein Teil wird Ihnen nicht angerechnet.",
+    "IGUI_MilitaryDrop_BroadcastFulton": "Logistik an alle Stationen: Fulton-Bergung läuft nahe Raster %1 / %2. Ende."
 }

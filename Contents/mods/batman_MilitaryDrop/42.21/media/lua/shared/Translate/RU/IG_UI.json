@@ -502,5 +502,6 @@
     "IGUI_MilitaryDrop_Fulton_Received": "%1, говорит Логистика. Груз «Фултона» получен: полезных предметов — %2. Конец связи.",
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, говорит Логистика. Груз получен, но ничего полезного. Конец связи.",
     "IGUI_MilitaryDrop_Fulton_Cure": "Лекарство доставлено. Высший приоритет. Спасибо.",
-    "IGUI_MilitaryDrop_Fulton_CapReached": "Дневной лимит исчерпан: часть не будет засчитана."
+    "IGUI_MilitaryDrop_Fulton_CapReached": "Дневной лимит исчерпан: часть не будет засчитана.",
+    "IGUI_MilitaryDrop_BroadcastFulton": "Логистика всем станциям: идёт эвакуация «Фултоном» около квадрата %1 / %2. Конец связи."
 }

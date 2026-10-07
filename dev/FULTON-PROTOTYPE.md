@@ -22,7 +22,8 @@ avec une accélération progressive ; l'ancien départ final durait 4 secondes.
 Le rendu est retiré automatiquement à la fin. Le câble est un tracé écran expérimental.
 
 Le même menu permet de figer/reprendre l'animation, de masquer le câble et d'arrêter
-immédiatement le test. Sans `-debug`, le menu reste disponible sur cette branche.
+immédiatement le test. **Depuis le lot 4 (2026-10-07), ce menu n'apparaît qu'en mode `-debug`** :
+le vrai lâcher passe par le kit d'extraction (FULTON-07, `dev/analyses/idee-12-fulton-conception.md`).
 
 ### Comparer les rendus
 
