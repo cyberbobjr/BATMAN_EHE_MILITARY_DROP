@@ -5,7 +5,7 @@
 
 Liens relatifs entre pages → URL du wiki (EN-/FR- + nom du fichier, README → Home),
 images (Markdown et <img src="../images/…">) → raw.githubusercontent.com (branche main),
-_Sidebar.md régénéré. Vérifié le 2026-10-07 : reproduit à l'identique le wiki de la 0.3.2.
+_Sidebar.md régénéré, pages EN-/FR- orphelines supprimées (git add -A). Vérifié le 2026-10-07 : reproduit à l'identique le wiki de la 0.3.2.
 --check : liste les pages nouvelles ou modifiées sans rien écrire. Pousser le wiki ensuite.
 """
 import re
@@ -87,6 +87,12 @@ def main():
         print(f"{status:8} {name}")
         if not check and status != "same":
             path.write_text(text, encoding="utf-8", newline="\n")
+    # Pages de guide renommées ou retirées (EN-/FR- absentes de docs/guide) : supprimées.
+    for path in sorted(wiki.glob("*.md")):
+        if path.name[:3] in ("EN-", "FR-") and path.name not in pages:
+            print(f"removed  {path.name}")
+            if not check:
+                path.unlink()
 
 
 if __name__ == "__main__":
