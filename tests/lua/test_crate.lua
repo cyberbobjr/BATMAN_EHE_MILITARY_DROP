@@ -272,6 +272,19 @@ function T.drop_without_order_keeps_random_cases()
     assertEq(items[1].name, nil, "pas de nom composé")
 end
 
+function T.damaged_fulton_kit_only_in_crates_without_order()
+    withOrders()
+    MilitaryDrop.FultonLoot = { DAMAGED_KIT = "MilitaryDrop.FultonKitDamaged", rollCrate = function() return true end }
+    local items = fillFor("D3")
+    assertEq(#items, 5, "CaseRolls caisses et un kit endommagé")
+    assertEq(items[5].fullType, "MilitaryDrop.FultonKitDamaged", "kit endommagé")
+    assertEq(items[5].modData.MilitaryDrop_dropId, "D3", "marqué du largage comme les caisses")
+    assertEq(#fillFor("D1"), 2, "commande : jamais de kit")
+    assertEq(#fillFor("D2"), 1, "leurre : jamais de kit")
+    MilitaryDrop.FultonLoot.rollCrate = function() return false end
+    assertEq(#fillFor("D3"), 4, "tirage perdu : caisses seules")
+end
+
 -- ----------------------------------------------------------------------------
 -- Journal « crate contents »
 -- ----------------------------------------------------------------------------

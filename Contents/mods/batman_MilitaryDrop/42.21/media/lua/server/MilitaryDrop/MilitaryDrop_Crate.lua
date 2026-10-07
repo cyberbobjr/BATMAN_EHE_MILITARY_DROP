@@ -135,6 +135,11 @@ function Crate.contentsFor(dropId)
     for i, fullType in ipairs(Crate.rollCases()) do
         entries[i] = { fullType = fullType }
     end
+    -- Kit Fulton endommagé (FULTON-10) : caisses sans commande seulement.
+    local FultonLoot = MilitaryDrop.FultonLoot
+    if FultonLoot and FultonLoot.rollCrate() then
+        entries[#entries + 1] = { fullType = FultonLoot.DAMAGED_KIT }
+    end
     return entries
 end
 

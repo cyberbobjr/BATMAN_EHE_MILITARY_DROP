@@ -418,6 +418,25 @@ def script_items(folder):
     return items
 
 
+FULTON_LOOT_LUA = MOD_LUA / "server" / "MilitaryDrop" / "MilitaryDrop_FultonLoot.lua"
+
+
+def check_fulton_loot_lists(report):
+    """Listes de butin du Fulton (FULTON-10) : définies dans ProceduralDistributions
+    et citées par au moins une salle de Distributions (sinon l'ajout est sans effet)."""
+    items = lua_harness.PZ_MEDIA / "lua" / "server" / "Items"
+    procedural = (items / "ProceduralDistributions.lua").read_text(encoding="utf-8", errors="replace")
+    rooms = (items / "Distributions.lua").read_text(encoding="utf-8", errors="replace")
+    source = FULTON_LOOT_LUA.read_text(encoding="utf-8")
+    for name in sorted(set(re.findall(r'^\s*\{ [^,]+, "(\w+)", [\d.]+ \},', source, re.M))):
+        if not re.search(r"^\s*" + name + r"\s*=\s*\{", procedural, re.M):
+            report.fail(f"liste {name} absente de ProceduralDistributions.lua")
+        elif not re.search(r'name\s*=\s*"' + name + '"', rooms):
+            report.fail(f"liste {name} citée par aucune salle (Distributions.lua)")
+        else:
+            report.ok(f"liste de butin {name}")
+
+
 def check_fulton_vanilla(report):
     """Types et tags vanilla cités par le barème Fulton (FULTON-08, FULTON-09)."""
     report.section("Fulton : objets et tags vanilla du barème")
@@ -443,6 +462,7 @@ def check_fulton_vanilla(report):
                 report.fail(f"{full_type} sans base:applyownername")
             else:
                 report.ok(f"{table} : {full_type}")
+    check_fulton_loot_lists(report)
     if not VACCINE_SCRIPTS.is_dir():
         report.skip("Zombie Virus Vaccine absent : types LabItems non vérifiés")
         return

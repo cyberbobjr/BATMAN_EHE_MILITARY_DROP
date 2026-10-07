@@ -119,6 +119,14 @@ function Wreck.pilot(site, square)
             data.MilitaryDrop_crashX, data.MilitaryDrop_crashY, data.MilitaryDrop_crashClock = site.x, site.y, site.c
             sendAddItemToContainer(container, recorder)
         end
+        -- Kit Fulton endommagé (FULTON-10), tiré une fois avec le pilote.
+        local FultonLoot = MilitaryDrop.FultonLoot
+        if FultonLoot and FultonLoot.rollWreck() then
+            local kit = container:AddItem(FultonLoot.DAMAGED_KIT)
+            if kit then
+                sendAddItemToContainer(container, kit)
+            end
+        end
         if site.documents then
             local memo = MilitaryDrop.Notes.createMemo(1)
             local book = MilitaryDrop.Notes.createCodebook()

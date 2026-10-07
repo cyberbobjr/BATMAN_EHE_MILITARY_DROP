@@ -128,6 +128,23 @@ function T.site_waits_for_loading_then_places_once()
     assertEq(HORDES,1)
     assertEq(#PILOTS,2)
 end
+function T.pilot_may_carry_a_damaged_fulton_kit_once()
+    local rolls = 0
+    MilitaryDrop.FultonLoot = { DAMAGED_KIT = "MilitaryDrop.FultonKitDamaged",
+        rollWreck = function() rolls = rolls + 1 return true end }
+    MilitaryDrop.Wreck.add(FLIGHT)
+    local kits = 0
+    for _, added in ipairs(ADDED) do
+        if added.name == "MilitaryDrop.FultonKitDamaged" then
+            kits = kits + 1
+        end
+    end
+    assertEq(kits, 1, "un kit endommagé sur le pilote")
+    MilitaryDrop.Wreck.restore()
+    MilitaryDrop.Wreck.add(FLIGHT)
+    assertEq(rolls, 1, "tiré une seule fois par site")
+end
+
 --- Épaves marquées contre les mods qui re-remplissent les véhicules de mod
 --- (resetedContainers, Crate.protect).
 function T.wrecks_carry_the_refill_marker()
