@@ -474,5 +474,11 @@
     "IGUI_MilitaryDrop_ZoneSending": "Отправлено на сервер...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Зона сброса %1 сохранена.",
     "IGUI_MilitaryDrop_ZoneNone": "Зон сброса пока нет. Нажмите «Добавить зону», затем разметьте прямоугольник на земле.",
-    "IGUI_MilitaryDrop_ZoneHighlight": "Подсветка"
+    "IGUI_MilitaryDrop_ZoneHighlight": "Подсветка",
+    "IGUI_MilitaryDrop_Exchange_Fulton": "Запросить подбор «Фултон»",
+    "IGUI_MilitaryDrop_Exchange_FultonTooltip": "Запросить пролёт самолёта: после этого будет недолгое окно, чтобы выпустить комплект «Фултон» на открытом месте.",
+    "IGUI_MilitaryDrop_Say_Fulton_1": "Логистика, запрашиваю подбор «Фултон». Приём.",
+    "IGUI_MilitaryDrop_Say_Fulton_2": "Логистика, груз готов к эвакуации «Фултоном». Приём.",
+    "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, говорит Логистика. Подбор «Фултон» разрешён: выпустите аэростат в течение %2 минут на открытом месте. Конец связи.",
+    "IGUI_MilitaryDrop_Reply_FultonPending": "%1, говорит Логистика. Ваше окно «Фултон» ещё открыто: осталось %2 минут. Конец связи."
 }

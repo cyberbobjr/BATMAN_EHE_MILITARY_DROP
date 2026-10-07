@@ -85,6 +85,8 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
+    -- Chargé par le require de MilitaryDrop_Exchange.lua (sans effet dans le banc).
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Fulton.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Exchange.lua")
     Exchange = MilitaryDrop.Exchange
 end
@@ -266,6 +268,33 @@ function T.send_carries_the_radio_reference_and_shows_the_base_lines()
     assertEq(#shown, 2, "réponse déjà traitée : ignorée")
 end
 
+function T.fulton_reply_keeps_the_window_for_the_local_player()
+    isClient = function() return true end
+    HOURS = 500
+    getGameTime = function() return { getWorldAgeHours = function() return HOURS end } end
+    loadMod("client/MilitaryDrop/MilitaryDrop_FultonClient.lua")
+    local FultonClient = MilitaryDrop.FultonClient
+    MilitaryDrop.Client = { later = function(_, fn) fn() end, radioSay = function() end }
+    local radio = makeRadio()
+    local player = makePlayer(radio)
+    getSpecificPlayer = function() return player end
+    Exchange.send(player, radio, "MissionFulton", {}, nil)
+    QUEUE[1]:perform()
+    Exchange.onReply({ exchangeId = SENT[1].args.exchangeId, status = "ok", lines = { { text = "ok" } },
+        fulton = { minutesLeft = 30, dailyLeft = 7 } })
+    local window = FultonClient.window(0)
+    assertTrue(window ~= nil, "créneau gardé pour le joueur 0")
+    assertEq(window.dailyLeft, 7, "plafond restant du serveur")
+    assertEq(FultonClient.minutesLeft(0), 30, "30 minutes")
+    assertEq(FultonClient.window(1), nil, "rien pour un autre joueur local")
+    HOURS = HOURS + 0.25
+    assertEq(FultonClient.minutesLeft(0), 15, "décompte dans l'heure du client")
+    HOURS = HOURS + 0.25
+    assertEq(FultonClient.window(0), nil, "échu")
+    FultonClient.onWindow(0, { minutesLeft = 0 })
+    assertEq(FultonClient.window(0), nil, "durée nulle ignorée")
+end
+
 function T.statuses_without_base_lines_are_said_locally()
     isClient = function() return true end
     local shown = {}
@@ -320,6 +349,7 @@ function T.source_gains_have_defaults_and_0_disables()
     assertEq(Exchange.gain("recon"), 3, "reconnaissance")
     assertEq(Exchange.gain("cleanup"), 5, "nettoyage")
     assertEq(Exchange.gain("control"), 1, "appel de contrôle")
+    assertEq(Exchange.gain("fulton"), 100, "Fulton : barème en pour cent")
     SandboxVars.MilitaryDrop.ReconGain = 0
     assertEq(Exchange.isEnabled("recon"), false, "0 : désactivée")
     assertEq(Exchange.isEnabled("unknown"), false, "source inconnue")

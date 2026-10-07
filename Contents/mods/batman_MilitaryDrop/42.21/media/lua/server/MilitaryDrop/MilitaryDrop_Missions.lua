@@ -158,6 +158,14 @@ local function state()
     end
     -- Plaques numérotées du mod (essais v1.3) : registre sans objet.
     tags.a, tags.b, tags.issued, tags.used = nil, nil, nil, nil
+    -- Créneaux de lâcher Fulton par personnage (FULTON-06) :
+    -- characterId → { opened, deadline (heures de jeu), teamId }.
+    if type(m.fulton) ~= "table" then
+        m.fulton = {}
+    end
+    if type(m.fulton.windows) ~= "table" then
+        m.fulton.windows = {}
+    end
     return m
 end
 
@@ -205,13 +213,17 @@ function Missions.announce(text, repeats, code)
 end
 
 --- Réponse privée au joueur : statut et lignes de la base (notées au journal
---- du poste de son équipe).
-local function reply(ctx, status, lines)
+--- du poste de son équipe) ; extra : champs ajoutés à la réponse (facultatif).
+local function reply(ctx, status, lines, extra)
     lines = lines or {}
     for _, text in ipairs(lines) do
         postRecord(ctx.teamId, text)
     end
-    Exchange.toPlayer(ctx.player, Exchange.REPLY, { exchangeId = ctx.exchangeId, status = status, lines = lines })
+    local args = { exchangeId = ctx.exchangeId, status = status, lines = lines }
+    for key, value in pairs(extra or {}) do
+        args[key] = value
+    end
+    Exchange.toPlayer(ctx.player, Exchange.REPLY, args)
 end
 
 --- Début commun d'un échange : cadence, radio, équipe, ligne coupée, source
@@ -264,6 +276,78 @@ function Missions.report(player, args)
     MilitaryDrop.Trust.add(ctx.characterId, Exchange.gain("report"), "report", ctx.opts)
     reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_Report_" .. (ZombRand(Missions.REPORT_REPLIES) + 1),
         ctx.callsign) })
+end
+
+-- ----------------------------------------------------------------------------
+-- FULTON-06 : demande de passage Fulton (créneau de lâcher)
+-- ----------------------------------------------------------------------------
+
+--- Durée d'un créneau en heures de jeu (option FultonWindowMinutes, 5 au moins).
+function Missions.fultonWindowHours()
+    return math.max(5, tonumber(Config.get("FultonWindowMinutes")) or 30) / 60
+end
+
+--- Créneau encore ouvert du personnage, ou nil (un créneau échu est oublié).
+function Missions.fultonWindow(characterId, now)
+    local windows = state().fulton.windows
+    local window = characterId and windows[characterId]
+    if type(window) ~= "table" then
+        return nil
+    end
+    if (now or hoursNow()) >= (tonumber(window.deadline) or 0) then
+        windows[characterId] = nil
+        return nil
+    end
+    return window
+end
+
+--- Ferme le créneau du personnage (Fulton lâché).
+function Missions.closeFultonWindow(characterId)
+    if characterId then
+        state().fulton.windows[characterId] = nil
+    end
+end
+
+--- Oublie les créneaux échus (aucune pénalité).
+function Missions.expireFultonWindows(now)
+    local windows = state().fulton.windows
+    local expired = {}
+    for characterId, window in pairs(windows) do
+        if type(window) ~= "table" or now >= (tonumber(window.deadline) or 0) then
+            expired[#expired + 1] = characterId
+        end
+    end
+    for _, characterId in ipairs(expired) do
+        windows[characterId] = nil
+    end
+end
+
+--- Minutes restantes d'un créneau, arrondies au supérieur (1 au moins).
+local function minutesLeft(window, now)
+    return math.max(1, math.ceil((window.deadline - now) * 60 - 1e-6))
+end
+
+--- Demande de passage : ouvre un créneau immédiat, ou rappelle celui en cours.
+--- La réponse porte fulton = { minutesLeft, dailyLeft } pour le menu du kit
+--- (plafond restant calculé par le serveur).
+function Missions.requestFulton(player, args)
+    local ctx = begin(player, args, "fulton")
+    if not ctx then
+        return
+    end
+    local now = hoursNow()
+    local window = Missions.fultonWindow(ctx.characterId, now)
+    local status, key = "pending", "IGUI_MilitaryDrop_Reply_FultonPending"
+    if not window then
+        window = { opened = now, deadline = now + Missions.fultonWindowHours(), teamId = ctx.teamId }
+        state().fulton.windows[ctx.characterId] = window
+        status, key = "ok", "IGUI_MilitaryDrop_Reply_FultonOpen"
+        MilitaryDrop.log("character " .. tostring(ctx.characterId) .. ": Fulton window opened")
+    end
+    local minutes = minutesLeft(window, now)
+    reply(ctx, status, { Exchange.line(key, ctx.callsign, whole(minutes)) }, {
+        fulton = { minutesLeft = minutes, dailyLeft = MilitaryDrop.Trust.dailyLeft(ctx.characterId) },
+    })
 end
 
 -- ----------------------------------------------------------------------------
@@ -703,6 +787,7 @@ end
 function Missions.update(now)
     now = now or hoursNow()
     local s = state()
+    Missions.expireFultonWindows(now)
     for _, kind in ipairs(Missions.KINDS) do
         local mission = s.open[kind]
         if mission and now >= mission.deadline then
@@ -1146,6 +1231,7 @@ COMMANDS[Exchange.COMMANDS.dogtag] = function(player, args) Missions.transmitDog
 COMMANDS[Exchange.COMMANDS.recon] = function(player, args) Missions.confirmRecon(player, args) end
 COMMANDS[Exchange.COMMANDS.control] = function(player, args) Missions.confirmControl(player, args) end
 COMMANDS[Exchange.COMMANDS.cleanupStatus] = function(player, args) Missions.cleanupStatus(player, args) end
+COMMANDS[Exchange.COMMANDS.fulton] = function(player, args) Missions.requestFulton(player, args) end
 
 Events.EveryTenMinutes.Add(function() Missions.update() end)
 Events.OnZombieDead.Add(Missions.onZombieDead)

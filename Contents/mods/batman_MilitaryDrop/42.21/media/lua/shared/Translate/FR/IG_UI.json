@@ -474,5 +474,11 @@
     "IGUI_MilitaryDrop_ZoneSending": "Envoyé au serveur...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Zone de largage %1 enregistrée.",
     "IGUI_MilitaryDrop_ZoneNone": "Aucune zone de largage. Cliquez sur Ajouter une zone, puis tracez le rectangle au sol.",
-    "IGUI_MilitaryDrop_ZoneHighlight": "Surbrillance"
+    "IGUI_MilitaryDrop_ZoneHighlight": "Surbrillance",
+    "IGUI_MilitaryDrop_Exchange_Fulton": "Demander un passage Fulton",
+    "IGUI_MilitaryDrop_Exchange_FultonTooltip": "Demander le passage d'un avion : vous disposez ensuite d'un court créneau pour lâcher un kit d'extraction Fulton dehors.",
+    "IGUI_MilitaryDrop_Say_Fulton_1": "Logistique, demande de passage Fulton. À vous.",
+    "IGUI_MilitaryDrop_Say_Fulton_2": "Logistique, cargaison prête pour extraction Fulton. À vous.",
+    "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, ici Logistique. Passage Fulton accordé : lâchez votre ballon dans les %2 minutes, dehors et à découvert. Terminé.",
+    "IGUI_MilitaryDrop_Reply_FultonPending": "%1, ici Logistique. Votre créneau Fulton est toujours ouvert : %2 minutes restantes. Terminé."
 }

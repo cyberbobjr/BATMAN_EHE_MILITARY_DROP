@@ -474,5 +474,11 @@
     "IGUI_MilitaryDrop_ZoneSending": "Enviado para o servidor...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Zona de lançamento %1 guardada.",
     "IGUI_MilitaryDrop_ZoneNone": "Ainda não há nenhuma zona de lançamento. Clica em Adicionar Zona e depois traça o retângulo no chão.",
-    "IGUI_MilitaryDrop_ZoneHighlight": "Destacar"
+    "IGUI_MilitaryDrop_ZoneHighlight": "Destacar",
+    "IGUI_MilitaryDrop_Exchange_Fulton": "Pedir uma recolha Fulton",
+    "IGUI_MilitaryDrop_Exchange_FultonTooltip": "Pedir a passagem de um avião: depois terá uma janela curta para largar um kit de extração Fulton ao ar livre.",
+    "IGUI_MilitaryDrop_Say_Fulton_1": "Logística, peço recolha Fulton. Escuto.",
+    "IGUI_MilitaryDrop_Say_Fulton_2": "Logística, carga pronta para extração Fulton. Escuto.",
+    "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, aqui Logística. Recolha Fulton aprovada: largue o balão dentro de %2 minutos, ao ar livre e em terreno desimpedido. Terminado.",
+    "IGUI_MilitaryDrop_Reply_FultonPending": "%1, aqui Logística. A sua janela Fulton continua aberta: faltam %2 minutos. Terminado."
 }

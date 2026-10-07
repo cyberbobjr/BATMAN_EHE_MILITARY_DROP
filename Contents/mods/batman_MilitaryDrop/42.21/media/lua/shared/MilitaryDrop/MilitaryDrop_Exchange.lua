@@ -41,6 +41,7 @@
 require "TimedActions/ISBaseTimedAction"
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
+require "MilitaryDrop/MilitaryDrop_Fulton"
 local RadioCompat = require "BatmanRadio/BatmanRadio_Compat"
 
 local Config = MilitaryDrop.Config
@@ -59,6 +60,8 @@ Exchange.COMMANDS = {
     control = "MissionControl",
     -- « Faire le point » sur le nettoyage (source « cleanup », sans gain).
     cleanupStatus = "MissionCleanupStatus",
+    -- Demande de passage Fulton (FULTON-06) : ouvre un créneau de lâcher.
+    fulton = "MissionFulton",
 }
 -- Plaques traitées par transmission radio (MilitaryDrop_Missions.lua).
 Exchange.DOGTAGS_PER_CALL = 10
@@ -75,6 +78,8 @@ Exchange.GAIN_OPTIONS = {
     recon = "ReconGain",
     cleanup = "CleanupGain",
     control = "ControlGain",
+    -- Barème Fulton en pour cent (MilitaryDrop_Fulton.lua) : 0 désactive.
+    fulton = "FultonValue",
 }
 
 Config.addDefaults({
@@ -477,6 +482,10 @@ function Exchange.onReply(args)
         return
     end
     pending[args.exchangeId] = nil
+    -- Créneau Fulton ouvert ou rappelé (FULTON-06) : gardé pour le menu du kit.
+    if type(args.fulton) == "table" and MilitaryDrop.FultonClient then
+        MilitaryDrop.FultonClient.onWindow(request.playerNum, args.fulton)
+    end
     local lines = type(args.lines) == "table" and args.lines or {}
     local count = 0
     for _, line in ipairs(lines) do

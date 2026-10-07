@@ -33,6 +33,7 @@
 require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Exchange"
 require "MilitaryDrop/MilitaryDrop_Client"
+require "MilitaryDrop/MilitaryDrop_FultonClient"
 
 local Radio = MilitaryDrop.Radio
 local Exchange = MilitaryDrop.Exchange
@@ -51,6 +52,9 @@ Menu.OPTIONS = {
         tooltip = "IGUI_MilitaryDrop_Exchange_ReconTooltip", speech = "IGUI_MilitaryDrop_Say_Recon_", speechCount = 2 },
     { source = "control", label = "IGUI_MilitaryDrop_Exchange_Control",
         tooltip = "IGUI_MilitaryDrop_Exchange_ControlTooltip", speech = "IGUI_MilitaryDrop_Say_Control_", speechCount = 2 },
+    -- Passage Fulton (FULTON-06) : ouvre un créneau de lâcher (MilitaryDrop_FultonClient.lua).
+    { source = "fulton", label = "IGUI_MilitaryDrop_Exchange_Fulton",
+        tooltip = "IGUI_MilitaryDrop_Exchange_FultonTooltip", speech = "IGUI_MilitaryDrop_Say_Fulton_", speechCount = 2 },
     -- « Faire le point » : source « cleanup » (désactivée avec les nettoyages),
     -- commande propre, grisé sans nettoyage en cours.
     { source = "cleanup", command = "cleanupStatus", needsCleanup = true,

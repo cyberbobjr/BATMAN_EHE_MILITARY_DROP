@@ -474,5 +474,11 @@
     "IGUI_MilitaryDrop_ZoneSending": "Sent to the server...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Drop zone %1 saved.",
     "IGUI_MilitaryDrop_ZoneNone": "No drop zone yet. Click Add Zone, then draw the rectangle on the ground.",
-    "IGUI_MilitaryDrop_ZoneHighlight": "Highlight"
+    "IGUI_MilitaryDrop_ZoneHighlight": "Highlight",
+    "IGUI_MilitaryDrop_Exchange_Fulton": "Request a Fulton pick-up",
+    "IGUI_MilitaryDrop_Exchange_FultonTooltip": "Ask for an aircraft pass: you then have a short window to release a Fulton recovery kit outdoors.",
+    "IGUI_MilitaryDrop_Say_Fulton_1": "Logistics, requesting a Fulton pick-up. Over.",
+    "IGUI_MilitaryDrop_Say_Fulton_2": "Logistics, cargo ready for Fulton extraction. Over.",
+    "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, Logistics. Fulton pick-up approved: release your balloon within %2 minutes, outdoors and in the clear. Out.",
+    "IGUI_MilitaryDrop_Reply_FultonPending": "%1, Logistics. Your Fulton window is still open: %2 minutes left. Out."
 }

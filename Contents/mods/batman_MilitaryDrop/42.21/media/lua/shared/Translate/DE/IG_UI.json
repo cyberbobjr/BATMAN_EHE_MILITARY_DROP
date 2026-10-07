@@ -474,5 +474,11 @@
     "IGUI_MilitaryDrop_ZoneSending": "An den Server gesendet...",
     "IGUI_MilitaryDrop_ZoneOk_update": "Abwurfzone %1 gespeichert.",
     "IGUI_MilitaryDrop_ZoneNone": "Noch keine Abwurfzone. Klicke auf Zone hinzufügen und zeichne dann das Rechteck auf dem Boden.",
-    "IGUI_MilitaryDrop_ZoneHighlight": "Hervorheben"
+    "IGUI_MilitaryDrop_ZoneHighlight": "Hervorheben",
+    "IGUI_MilitaryDrop_Exchange_Fulton": "Fulton-Abholung anfordern",
+    "IGUI_MilitaryDrop_Exchange_FultonTooltip": "Einen Flugzeugüberflug anfordern: Danach bleibt ein kurzes Zeitfenster, um ein Fulton-Bergungsset im Freien zu starten.",
+    "IGUI_MilitaryDrop_Say_Fulton_1": "Logistik, erbitte Fulton-Abholung. Kommen.",
+    "IGUI_MilitaryDrop_Say_Fulton_2": "Logistik, Fracht bereit für Fulton-Bergung. Kommen.",
+    "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, hier Logistik. Fulton-Abholung genehmigt: Ballon innerhalb von %2 Minuten im Freien und ohne Hindernisse starten. Ende.",
+    "IGUI_MilitaryDrop_Reply_FultonPending": "%1, hier Logistik. Ihr Fulton-Zeitfenster ist noch offen: noch %2 Minuten. Ende."
 }

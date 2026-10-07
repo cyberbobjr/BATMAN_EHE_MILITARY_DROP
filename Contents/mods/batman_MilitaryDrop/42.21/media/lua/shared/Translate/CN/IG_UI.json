@@ -474,5 +474,11 @@
     "IGUI_MilitaryDrop_ZoneSending": "已发送至服务器...",
     "IGUI_MilitaryDrop_ZoneOk_update": "已保存空投区 %1。",
     "IGUI_MilitaryDrop_ZoneNone": "还没有空投区。点击“添加区域”，然后在地面上绘制矩形。",
-    "IGUI_MilitaryDrop_ZoneHighlight": "高亮显示"
+    "IGUI_MilitaryDrop_ZoneHighlight": "高亮显示",
+    "IGUI_MilitaryDrop_Exchange_Fulton": "请求富尔顿回收",
+    "IGUI_MilitaryDrop_Exchange_FultonTooltip": "请求飞机通过:之后你有一段很短的时间,在室外放飞富尔顿回收套件。",
+    "IGUI_MilitaryDrop_Say_Fulton_1": "后勤,请求富尔顿回收。完毕。",
+    "IGUI_MilitaryDrop_Say_Fulton_2": "后勤,货物已准备好进行富尔顿回收。完毕。",
+    "IGUI_MilitaryDrop_Reply_FultonOpen": "%1,这里是后勤。富尔顿回收已批准:请在%2分钟内于室外开阔处放飞气球。通话结束。",
+    "IGUI_MilitaryDrop_Reply_FultonPending": "%1,这里是后勤。你的富尔顿时段仍然开放:还剩%2分钟。通话结束。"
 }

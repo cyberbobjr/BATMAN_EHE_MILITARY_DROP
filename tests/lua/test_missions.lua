@@ -294,6 +294,8 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
+    -- Chargé par le require de MilitaryDrop_Exchange.lua (sans effet dans le banc).
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Fulton.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Exchange.lua")
     loadMod("server/MilitaryDrop/MilitaryDrop_Guard.lua")
     PICK = { 300, 400 }
@@ -344,6 +346,88 @@ function T.commands_are_registered_in_the_server_table()
         "MissionCleanupStatus" }) do
         assertEq(type(MilitaryDrop.Server.COMMANDS[name]), "function", name)
     end
+end
+
+--- Champs fulton de la dernière réponse au joueur (créneau Fulton), ou nil.
+local function lastFulton(player)
+    for i = #SENT, 1, -1 do
+        if SENT[i].player == player and SENT[i].command == "ExchangeReply" then
+            return SENT[i].args.fulton
+        end
+    end
+    return nil
+end
+
+function T.fulton_request_opens_a_window_with_the_remaining_cap()
+    local alice = makePlayer("alice")
+    Trust.add("C:alice", 3, "report")
+    call("MissionFulton", alice)
+    local reply = lastReply(alice)
+    assertEq(reply.status, "ok", "créneau ouvert")
+    assertEq(reply.lines[1], "IGUI_MilitaryDrop_Reply_FultonOpen|" .. Teams.callsign("P:alice") .. "|30",
+        "30 minutes par défaut, avec l'indicatif")
+    local fulton = lastFulton(alice)
+    assertEq(fulton.minutesLeft, 30, "minutes transmises au client")
+    assertEq(fulton.dailyLeft, 7, "plafond restant calculé par le serveur")
+    local window = STATE.missions.fulton.windows["C:alice"]
+    assertEq(window.deadline, 1000.5, "échéance en heures de jeu")
+    assertEq(Trust.get("C:alice"), 28, "la demande ne rapporte rien")
+end
+
+function T.fulton_second_request_recalls_the_open_window()
+    local alice = makePlayer("alice")
+    call("MissionFulton", alice)
+    wait(1 / 6)
+    call("MissionFulton", alice)
+    assertEq(lastReply(alice).status, "pending", "créneau déjà ouvert")
+    assertEq(lastFulton(alice).minutesLeft, 20, "20 minutes restantes")
+    assertEq(STATE.missions.fulton.windows["C:alice"].deadline, 1000.5, "échéance inchangée")
+end
+
+function T.fulton_window_expires_without_penalty_and_can_be_reopened()
+    local alice = makePlayer("alice")
+    call("MissionFulton", alice)
+    wait(0.5)
+    assertEq(Missions.fultonWindow("C:alice"), nil, "échu à l'échéance exacte")
+    assertEq(Trust.get("C:alice"), 25, "aucune pénalité")
+    call("MissionFulton", alice)
+    assertEq(lastReply(alice).status, "ok", "nouveau créneau")
+    assertEq(STATE.missions.fulton.windows["C:alice"].deadline, 1001, "nouvelle échéance")
+end
+
+function T.fulton_windows_are_personal_and_follow_the_option()
+    SandboxVars.MilitaryDrop.FultonWindowMinutes = 10
+    local alice, bob = makePlayer("alice"), makePlayer("bob")
+    call("MissionFulton", alice)
+    assertEq(lastFulton(alice).minutesLeft, 10, "option FultonWindowMinutes")
+    assertEq(Missions.fultonWindow("C:bob"), nil, "rien pour un autre personnage")
+    call("MissionFulton", bob)
+    Missions.closeFultonWindow("C:alice")
+    assertEq(Missions.fultonWindow("C:alice"), nil, "fermé au lâcher")
+    assertTrue(Missions.fultonWindow("C:bob") ~= nil, "celui de bob reste ouvert")
+    SandboxVars.MilitaryDrop.FultonWindowMinutes = 1
+    call("MissionFulton", alice)
+    assertEq(lastFulton(alice).minutesLeft, 5, "5 minutes au moins")
+end
+
+function T.fulton_disabled_by_a_zero_scale()
+    SandboxVars.MilitaryDrop.FultonValue = 0
+    local alice = makePlayer("alice")
+    call("MissionFulton", alice)
+    assertEq(lastReply(alice).status, "disabled", "source désactivée")
+    assertEq(lastFulton(alice), nil, "aucun créneau transmis")
+    assertEq(Missions.fultonWindow("C:alice"), nil, "aucun créneau ouvert")
+end
+
+function T.fulton_update_forgets_expired_windows()
+    local alice, bob = makePlayer("alice"), makePlayer("bob")
+    call("MissionFulton", alice)
+    wait(0.25)
+    call("MissionFulton", bob)
+    wait(0.3)
+    Missions.update()
+    assertEq(STATE.missions.fulton.windows["C:alice"], nil, "échu : oublié")
+    assertTrue(STATE.missions.fulton.windows["C:bob"] ~= nil, "encore ouvert : gardé")
 end
 
 function T.report_gives_1_once_per_calendar_day()
