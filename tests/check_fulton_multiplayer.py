@@ -14,8 +14,14 @@ GameTime = {getServerTimeMills = function() return CLOCK end}
 getGameTime = function() return {getRealworldSecondsSinceLastUpdate = function() return DT end} end
 getGameSpeed = function() return SPEED end
 getCell = function() return {getGridSquare = function() return LOADED and {} or nil end} end
+ADMINS = {[1]=true, [2]=true}
+Capability = {MakeEventsAlarmGunshot = "MakeEventsAlarmGunshot"}
+checkPermissions = function(p, capability) return capability == "MakeEventsAlarmGunshot" and ADMINS[p.id] == true end
+isDebugEnabled = function() return false end
 function player(id)
     return {id=id, dead=false, x=100, y=200, z=0,
+        getUsername=function(self) return "player" .. self.id end,
+        getRole=function(self) return {hasCapability=function(_, c) return ADMINS[self.id] == true and c == "MakeEventsAlarmGunshot" end} end,
         getOnlineID=function(self) return self.id end,
         getX=function(self) return self.x end, getY=function(self) return self.y end,
         getZ=function(self) return self.z end, isDead=function(self) return self.dead end}
@@ -273,20 +279,27 @@ def check_real_launch_is_anchored_shared_and_heard_once():
     assert n.server.eval('listenerCount("OnTick")') == 0
 
 
-def check_debug_menu_hidden_without_debug():
+def check_test_menu_and_commands_are_admin_only():
     n = Network()
-    vm = n.clients[0]
-    vm.execute('getDebug = function() return false end; ADDED = 0; '
-               'CTX = {addOption = function() ADDED = ADDED + 1 end}; '
+    vm = n.clients[1]
+    vm.execute('ADMINS[2] = false; ADDED = 0; ISContextMenu = {getNew = function() return {addOption = function() end} end}; '
+               'CTX = {addOption = function() ADDED = ADDED + 1 return {} end, addSubMenu = function() end}; '
                'MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
-    assert vm.globals().ADDED == 0, "test menu only in debug mode"
+    assert vm.globals().ADDED == 0, "MP non-admin: no test menu"
+    vm.execute('ADMINS[2] = true; MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
+    assert vm.globals().ADDED == 1, "MP admin: test menu shown"
+    n.server.execute('ADMINS[2] = false')
+    n.command((1, "MilitaryDropFultonPrototype", "Start", {"request": 1}))
+    assert not n.packets, "server refuses a forged Start from a non-admin"
+    n.command((1, "MilitaryDropFultonPrototype", "Sync", {}))
+    assert n.packets, "Sync stays open to every player (needed to see real flights)"
 
 
 def run_checks():
     for check in (check_shared_ascent_and_packet_delay, check_late_join_unloaded_square_and_reload,
                   check_unordered_commands_and_snapshots, check_two_flights_pause_ownership_and_disconnect,
                   check_server_bounds_and_completion, check_real_launch_is_anchored_shared_and_heard_once,
-                  check_debug_menu_hidden_without_debug):
+                  check_test_menu_and_commands_are_admin_only):
         try:
             check()
         except Exception as exc:

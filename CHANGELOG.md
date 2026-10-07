@@ -3,6 +3,12 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## Unreleased
+
+### Fixed
+
+- The Fulton test menu (right-click in the world) is shown to admins only in multiplayer, and the server refuses its commands from other players. In singleplayer it stays a debug-mode tool.
+
 ## 0.4.0 — 2026-10-07
 
 ### Added

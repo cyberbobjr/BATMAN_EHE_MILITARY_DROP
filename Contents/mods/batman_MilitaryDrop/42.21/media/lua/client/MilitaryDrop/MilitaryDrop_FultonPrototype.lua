@@ -2,7 +2,9 @@
 -- Real launches (FULTON-07): server flights marked `real`, or a local anchored
 -- flight in solo (Prototype.startAt). Each client plays the aircraft flyby
 -- locally when a real flight starts (FULTON-06 sound, peak at 3.8 s = pickup).
--- The test menu is only offered in debug mode.
+-- The test menu is admin-only: in MP, a role with Capability.MakeEventsAlarmGunshot
+-- (same right as /chopper and the forced drop); in solo, debug mode only. The server
+-- re-checks the right for Start/Stop/Pause.
 require "MilitaryDrop/MilitaryDrop_FultonPrototypeFlight"
 local Flight = MilitaryDrop.FultonPrototypeFlight
 local previous = MilitaryDrop.FultonPrototype
@@ -243,8 +245,18 @@ end
 
 local function startFromMenu(playerNum, vanilla) Prototype.start(playerNum, { vanilla = vanilla }) end
 
+--- Right to see the test menu (display only; the server re-checks).
+function Prototype.canUse(player)
+    if not player then return false end
+    if isClient() then
+        local role = player:getRole()
+        return role ~= nil and Capability ~= nil and role:hasCapability(Capability.MakeEventsAlarmGunshot) == true
+    end
+    return isDebugEnabled ~= nil and isDebugEnabled() == true
+end
+
 function Prototype.onContext(playerNum, context, worldObjects, test)
-    if test or not getSpecificPlayer(playerNum) or not (getDebug and getDebug()) then return end
+    if test or not Prototype.canUse(getSpecificPlayer(playerNum)) then return end
     selectedPlayerNum = playerNum
     if isClient() then
         active = nil

@@ -83,6 +83,12 @@ function Server.onClientCommand(module, command, player, args)
     if module ~= Flight.MODULE or not isServer() or not player then return end
     if command == "Sync" then broadcast(player); return end
     if command ~= "Start" and command ~= "Stop" and command ~= "Pause" then return end
+    -- Test flights are admin-only (same right as /chopper and the forced drop).
+    if not checkPermissions(player, Capability.MakeEventsAlarmGunshot) then
+        print("[MilitaryDrop] Fulton prototype command " .. command .. " refused for "
+            .. tostring(player:getUsername()) .. ": not an admin")
+        return
+    end
     args = type(args) == "table" and args or {}
     local request = args.request
     if type(request) ~= "number" or request ~= request or request < 1 or request > 1e12
