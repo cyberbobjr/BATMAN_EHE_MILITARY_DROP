@@ -296,3 +296,12 @@ Ces options sont lues à chaud par `Config.get` (OPT-02). Le butin est rafraîch
 - poids de la bouteille dans le butin.
 
 **Son** : fichier prêt (§5). Il reste à le jouer depuis le client et à l'écouter en jeu.
+
+## 12. Écarts du lot 3 (2026-10-07)
+
+- **Confirmation sans chiffre** (décision de l'utilisateur) : la règle du mod est de ne jamais afficher la confiance en chiffres. La confirmation liste les objets utiles à la base et ceux qu'elle ignore (6 noms au plus, puis « et N de plus »). Elle prévient **en mots** quand le plafond du jour est atteint ou sera dépassé. L'accusé de réception donne le **nombre d'objets** exploités, jamais de points.
+- **Accusé de réception** : il s'affiche en texte au-dessus du personnage (`HaloTextHelper.addText`) et il est noté au journal du poste de l'équipe. Il ne passe pas par la radio, que le joueur n'a pas forcément en main au moment du lâcher. Un refus est dit par le personnage.
+- **Inventaire principal** : le serveur n'accepte le kit et la bouteille que dans l'inventaire principal, pas dans un sac, et pas portés ni en main. Le client les y place avant le gonflage, avec les actions vanilla (`ISUnequipAction`, `transferIfNeeded`). Ces transferts sont des transactions du serveur en MP.
+- **Son du gonflage** : aucun sifflement vanilla trouvé ; seul le bruit pour les zombies est émis (`addSound` depuis l'action côté client, relayé au serveur comme `ISBarricadeAction`).
+- **Vent** : refus au-delà de 60 km/h (`ClimateManager:getWindspeedKph`), et par orage (`getIsThunderStorming`) **[P]**.
+

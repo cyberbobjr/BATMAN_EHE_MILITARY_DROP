@@ -32,11 +32,18 @@ module MilitaryDrop
         Tooltip = Tooltip_MilitaryDrop_FultonHarnessBag,
     }
 
+    /* Sac à remplir (FULTON-07) : tout son contenu part avec le ballon. */
     item FultonKit
     {
         DisplayCategory = Tool,
-        ItemType = base:normal,
+        ItemType = base:container,
         Weight = 2.5,
+        Capacity = 10,
+        WeightReduction = 0,
+        CanHaveHoles = false,
+        OpenSound = OpenSack,
+        CloseSound = CloseSack,
+        PutInSound = StoreItemSack,
         Icon = MilitaryDrop_FultonPrototypeBag,
         WorldStaticModel = MilitaryDrop_FultonPrototypeBag,
         Tooltip = Tooltip_MilitaryDrop_FultonKit,

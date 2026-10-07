@@ -46,6 +46,10 @@ Config.addDefaults({
 })
 
 Fulton.VACCINE_MOD = "ZVirusVaccine42BETA"
+Fulton.KIT_TYPE = "MilitaryDrop.FultonKit"
+Fulton.TANK_TYPE = "MilitaryDrop.HeliumTank"
+-- Vent au-delà duquel le ballon ne peut pas être lâché (km/h, ClimateManager).
+Fulton.MAX_WIND_KPH = 60
 
 -- Valeurs de base par catégorie (décisions du 2026-10-07 ; ARI : proposition).
 Fulton.VALUES = {
@@ -247,4 +251,47 @@ end
 --- La source Fulton est activée (barème non nul).
 function Fulton.isEnabled()
     return (tonumber(Config.get("FultonValue")) or 0) > 0
+end
+
+-- ----------------------------------------------------------------------------
+-- Conditions de lâcher (FULTON-07) : client pour griser le menu, serveur pour
+-- décider. Les zones protégées (non-PvP, refuges) ne sont connues que du serveur.
+-- ----------------------------------------------------------------------------
+
+--- Motif (clé de traduction) qui empêche de lâcher un ballon depuis square, ou nil.
+function Fulton.siteReason(square)
+    if not square or not square:isOutside() then
+        return "IGUI_MilitaryDrop_Fulton_NotOutside"
+    end
+    if square:getTree() ~= nil then
+        return "IGUI_MilitaryDrop_Fulton_Tree"
+    end
+    local climate = getClimateManager and getClimateManager()
+    if climate then
+        if climate:getIsThunderStorming() then
+            return "IGUI_MilitaryDrop_Fulton_Storm"
+        end
+        if climate:getWindspeedKph() > Fulton.MAX_WIND_KPH then
+            return "IGUI_MilitaryDrop_Fulton_Wind"
+        end
+    end
+    return nil
+end
+
+--- Bouteille d'hélium avec au moins une charge.
+function Fulton.tankHasHelium(tank)
+    return tank ~= nil and tank:getFullType() == Fulton.TANK_TYPE and tank:getCurrentUses() > 0
+end
+
+--- Première bouteille d'hélium non vide de l'inventaire (sacs portés compris
+--- si recursive), ou nil.
+function Fulton.findTank(inventory, recursive)
+    local items = recursive and inventory:getAllTypeRecurse(Fulton.TANK_TYPE) or inventory:getItems()
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if Fulton.tankHasHelium(item) then
+            return item
+        end
+    end
+    return nil
 end
