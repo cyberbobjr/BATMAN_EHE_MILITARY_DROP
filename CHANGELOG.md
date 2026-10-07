@@ -7,10 +7,9 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 
 ### Added
 
-- **Fulton extraction.** Send intelligence and gear to Command by balloon and earn trust:
-  1. On a military radio, **Logistics** section: **Request a Fulton pick-up** (30 game minutes to release).
-  2. Put a **Fulton recovery kit** on the ground outside and fill it like a bag (the balloon is already inside).
-  3. Right-click the kit: **Inflate and release the Fulton**, with a **Helium tank** in your inventory. A confirmation lists what Command will use. The balloon rises, an aircraft snatches it, Command acknowledges on the radio in your hand and in the liaison post log, and the military channel announces the sector.
+- **Fulton extraction.** Send intelligence and gear to Command by balloon and earn trust.
+- How: on a military radio, **Logistics** section, **Request a Fulton pick-up** (30 game minutes to release). Put a **Fulton recovery kit** on the ground outside and fill it like a bag (the balloon is already inside). Right-click the kit, **Inflate and release the Fulton**, with a **Helium tank** in your inventory.
+- A confirmation lists what Command will use. The balloon rises, an aircraft snatches it, Command acknowledges on the radio in your hand and in the liaison post log, and the military channel announces the sector.
 - Command pays for ID cards, passports and badges of other people, paperwork, stash maps and military NBC gear, within the daily cap. With Zombie Virus Vaccine: samples and vaccines too, and the cure outside the cap.
 - Craft the kit (balloon envelope and harness bag parts, vanilla wire) or repair a damaged one found in army storage, on a downed helicopter's pilot or in a supply crate without an order. Helium tanks hold four inflations (gift and toy stores, army storage); an empty tank can be cut up with a blowtorch.
 - New sandbox options: `FultonValue`, `FultonWindowMinutes`, `FultonLootRate`.
