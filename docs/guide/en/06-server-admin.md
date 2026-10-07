@@ -55,7 +55,7 @@ The mod reads its options each time it uses them: a new value counts for the nex
 
 | Option | Key | Default | Effect |
 |---|---|---|---|
-| Daily trust cap | `TrustDailyCap` | 8 | Most trust a character earns per day from everything except drops. 0: only drops count. |
+| Daily trust cap | `TrustDailyCap` | 10 | Most trust a character earns per day from everything except drops. 0: only drops count. |
 | Command post bonus (percent) | `TrustPostBonus` | 50 | Extra trust for exchanges made from the liaison post. |
 | Line cut (days) | `TrustLineCutDays` | 3 | Days without drops when trust falls under 15. 0: never cut. |
 | Hours to recover a drop | `TrustDropLostHours` | 48 | After this, an unopened drop is lost (-10). |

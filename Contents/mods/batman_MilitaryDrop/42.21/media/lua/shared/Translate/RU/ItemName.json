@@ -12,5 +12,10 @@
     "MilitaryDrop.MetalSalvage": "Набор найденного металла",
     "MilitaryDrop.FlightRecorder": "Бортовой самописец",
     "MilitaryDrop.FultonPrototypeBalloon": "Fulton balloon (prototype)",
-    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)"
+    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)",
+    "MilitaryDrop.FultonBalloonFolded": "Сложенный аэростат «Фултон»",
+    "MilitaryDrop.FultonHarnessBag": "Мешок с подвесной системой «Фултон»",
+    "MilitaryDrop.FultonKit": "Комплект эвакуации «Фултон»",
+    "MilitaryDrop.FultonKitDamaged": "Повреждённый комплект эвакуации «Фултон»",
+    "MilitaryDrop.HeliumTank": "Баллон с гелием"
 }

@@ -1,6 +1,11 @@
 {
     "OpenMilitarySupplyCase": "打开补给箱",
-    "CraftRecipe_OpenMilitaryAvionicsSalvage": "打开回收航电包",
-    "CraftRecipe_OpenMilitaryMechanicalSalvage": "打开回收机械包",
-    "CraftRecipe_OpenMilitaryMetalSalvage": "打开回收金属包"
+    "OpenMilitaryAvionicsSalvage": "打开回收航电包",
+    "OpenMilitaryMechanicalSalvage": "打开回收机械包",
+    "OpenMilitaryMetalSalvage": "打开回收金属包",
+    "SewFultonBalloon": "缝制富尔顿气球",
+    "MakeFultonHarnessBag": "制作富尔顿吊带袋",
+    "AssembleFultonKit": "组装富尔顿回收套件",
+    "RepairFultonKit": "修理富尔顿回收套件",
+    "SalvageHeliumTank": "切割空氦气瓶"
 }

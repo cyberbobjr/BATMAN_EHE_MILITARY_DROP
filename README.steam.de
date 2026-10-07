@@ -76,7 +76,7 @@ Abwürfe ändern nur den Ruf des Anfordernden; andere Öffner erhalten 0. Sonsti
 [tr][td]Optionaler Verfall nach 24 h ohne Kontakt[/td][td]−1 / +1[/td][/tr]
 [/table]
 
-Tageslimit: +8 je Charakter außer Abwürfen. Postenbonus: Meldung +2, Marke +3, Aufklärung +5, Funkprobe +2; Säuberung +5. Ruf: 0–100; Verlust unter 15 sperrt 3 Tage. Abgelaufene Einsätze, Admin-Abwürfe, Köder: 0. Verfall (standardmäßig aus) führt zu 25.
+Tageslimit: +10 je Charakter außer Abwürfen. Postenbonus: Meldung +2, Marke +3, Aufklärung +5, Funkprobe +2; Säuberung +5. Ruf: 0–100; Verlust unter 15 sperrt 3 Tage. Abgelaufene Einsätze, Admin-Abwürfe, Köder: 0. Verfall (standardmäßig aus) führt zu 25.
 
 [h2]Einen Verbindungsposten halten[/h2]
 

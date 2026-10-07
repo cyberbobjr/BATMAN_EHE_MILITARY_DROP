@@ -1,6 +1,11 @@
 {
     "OpenMilitarySupplyCase": "Open Supply Case",
-    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Unpack recovered avionics",
-    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Unpack recovered mechanical parts",
-    "CraftRecipe_OpenMilitaryMetalSalvage": "Unpack recovered metal"
+    "OpenMilitaryAvionicsSalvage": "Unpack recovered avionics",
+    "OpenMilitaryMechanicalSalvage": "Unpack recovered mechanical parts",
+    "OpenMilitaryMetalSalvage": "Unpack recovered metal",
+    "SewFultonBalloon": "Sew Fulton balloon",
+    "MakeFultonHarnessBag": "Make Fulton harness bag",
+    "AssembleFultonKit": "Assemble Fulton recovery kit",
+    "RepairFultonKit": "Repair Fulton recovery kit",
+    "SalvageHeliumTank": "Cut up empty helium tank"
 }

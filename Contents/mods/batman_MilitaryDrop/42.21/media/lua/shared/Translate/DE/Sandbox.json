@@ -138,5 +138,11 @@
     "Sandbox_MilitaryDrop_PilotDocuments_tooltip": "Legt ein militärisches Memo und das Codebuch der Partie zur Pilotenleiche.",
     "Sandbox_MilitaryDrop_CrashFire_option1": "Keine",
     "Sandbox_MilitaryDrop_CrashFire_option2": "Rauch",
-    "Sandbox_MilitaryDrop_CrashFire_option3": "Feuer und Rauch"
+    "Sandbox_MilitaryDrop_CrashFire_option3": "Feuer und Rauch",
+    "Sandbox_MilitaryDrop_FultonValue": "Fulton: Belohnung (Prozent)",
+    "Sandbox_MilitaryDrop_FultonValue_tooltip": "Vertrauen für per Fulton geschickte Aufklärung und Ausrüstung, in Prozent der Grundwerte. Weiterhin durch die Tagesobergrenze begrenzt, außer dem Heilmittel (Zombie Virus Vaccine). 0: Fulton-Bergungen deaktiviert.",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes": "Fulton: Abholfenster (Minuten)",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "Spielminuten, in denen ein Fulton nach einer Abholanfrage per Funk gestartet werden kann.",
+    "Sandbox_MilitaryDrop_FultonLootRate": "Fulton: Fundrate (Prozent)",
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Wie oft Heliumflaschen und beschädigte Fulton-Sets in der Welt, in Wracks und Versorgungskisten zu finden sind. 0: keine."
 }

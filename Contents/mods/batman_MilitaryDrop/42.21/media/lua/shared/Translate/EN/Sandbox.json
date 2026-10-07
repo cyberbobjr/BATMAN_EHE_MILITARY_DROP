@@ -138,5 +138,11 @@
     "Sandbox_MilitaryDrop_PilotDocuments_tooltip": "Add a military memorandum and the current game codebook to the pilot corpse.",
     "Sandbox_MilitaryDrop_CrashFire_option1": "None",
     "Sandbox_MilitaryDrop_CrashFire_option2": "Smoke",
-    "Sandbox_MilitaryDrop_CrashFire_option3": "Fire and smoke"
+    "Sandbox_MilitaryDrop_CrashFire_option3": "Fire and smoke",
+    "Sandbox_MilitaryDrop_FultonValue": "Fulton: reward (percent)",
+    "Sandbox_MilitaryDrop_FultonValue_tooltip": "Trust paid for intelligence and gear sent by Fulton, in percent of the base scale. Still limited by the daily cap, except the cure (Zombie Virus Vaccine). 0: Fulton pick-ups disabled.",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes": "Fulton: pick-up window (minutes)",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "In-game minutes during which a Fulton can be released after requesting a pick-up by radio.",
+    "Sandbox_MilitaryDrop_FultonLootRate": "Fulton: loot rate (percent)",
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "How often helium tanks and damaged Fulton kits are found in the world, wrecks and supply crates. 0: none."
 }

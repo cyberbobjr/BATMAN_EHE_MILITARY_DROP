@@ -16,3 +16,11 @@ commerciale ; tous peuvent être redistribués dans le mod.
 
 Recréer les sons : placer `tapedeck.ogg`, `clickick.ogg` et `bell103_part.ogg` à
 côté du script, puis `python make_bay_sounds.py`.
+
+## Passage d'avion du Fulton (FULTON-06)
+
+| Fichier du mod | Usage | Source | Auteur | Licence |
+|---|---|---|---|---|
+| `MilitaryDrop_FultonFlyby.ogg` | Avion qui accroche le ballon (17,65 s, mono, extrait de 40,35 à 58 s, pic du passage à 3,8 s) | [ATR 72 (AT72) plane flyby at 300 m altitude landing towards airport](https://freesound.org/people/Hoscalegeek/sounds/315660/) | Hoscalegeek | CC0 1.0 |
+
+`originals/315660_2506497-lq.mp3` est l'aperçu Freesound (MP3 24 kHz stéréo, 78,7 s), copié par l'utilisateur le 2026-10-07. Recréer le son : `python make_fulton_sound.py` (ffmpeg, numpy).

@@ -129,11 +129,11 @@ function T.note_is_bounded_0_to_100()
     assertEq(Trust.get("C:alice"), 0, "minimum")
 end
 
-function T.daily_cap_limits_other_sources_to_8()
-    assertEq(Trust.add("C:alice", 5, "report"), 5, "premier gain")
-    assertEq(Trust.add("C:alice", 5, "dogtag"), 3, "plafond commun : 8 par jour")
+function T.daily_cap_limits_other_sources_to_10_by_default()
+    assertEq(Trust.add("C:alice", 6, "report"), 6, "premier gain")
+    assertEq(Trust.add("C:alice", 6, "dogtag"), 4, "plafond commun : 10 par jour par défaut")
     assertEq(Trust.add("C:alice", 1, "control"), 0, "plafond atteint")
-    assertEq(Trust.get("C:alice"), 33, "note")
+    assertEq(Trust.get("C:alice"), 35, "note")
     wait(24)
     assertEq(Trust.add("C:alice", 2, "report"), 2, "lendemain : plafond remis à zéro")
 end
@@ -149,11 +149,32 @@ function T.cap_is_an_option()
     assertEq(Trust.add("C:alice", 5, "report"), 3, "option TrustDailyCap")
 end
 
+function T.fulton_cure_is_uncapped_and_other_fulton_gains_are_capped()
+    assertEq(Trust.add("C:alice", 12, "fulton"), 10, "envoi Fulton plafonné à 10")
+    assertEq(Trust.add("C:alice", 25, "fultonCure"), 25, "remède hors plafond")
+    assertEq(Trust.get("C:alice"), 60, "note")
+    assertEq(Trust.add("C:alice", 1, "report"), 0, "le remède n'a pas consommé le plafond, l'envoi oui")
+end
+
+function T.daily_left_reports_remaining_cap_without_writing_state()
+    assertEq(Trust.dailyLeft("C:alice"), 10, "personnage inconnu : plafond entier")
+    assertEq(STATE.characterTrust["C:alice"], nil, "aucune entrée créée")
+    Trust.add("C:alice", 4, "report")
+    assertEq(Trust.dailyLeft("C:alice"), 6, "reste du jour")
+    wait(24)
+    assertEq(Trust.dailyLeft("C:alice"), 10, "lendemain : remis à zéro")
+    Trust.add("C:alice", 70, "drop")
+    assertEq(Trust.dailyLeft("C:alice"), 1, "borné par la marge jusqu'à 100")
+    SandboxVars.MilitaryDrop.TrustDailyCap = 0
+    assertEq(Trust.dailyLeft("C:alice"), 0, "plafond à 0")
+end
+
 function T.post_bonus_is_rounded_and_inside_the_cap()
     assertEq(Trust.add("C:alice", 2, "dogtag", { fromPost = true }), 3, "+50 % depuis le poste")
     assertEq(Trust.add("C:alice", 1, "report", { fromPost = true }), 2, "1,5 arrondi à 2")
     assertEq(Trust.add("C:alice", 2, "recon", { fromPost = true }), 3, "encore 3 sous le plafond")
-    assertEq(Trust.add("C:alice", 2, "recon", { fromPost = true }), 0, "plafond de 8 atteint, bonus compris")
+    assertEq(Trust.add("C:alice", 2, "recon", { fromPost = true }), 2, "2 restants sous le plafond de 10")
+    assertEq(Trust.add("C:alice", 2, "recon", { fromPost = true }), 0, "plafond de 10 atteint, bonus compris")
     SandboxVars.MilitaryDrop.TrustPostBonus = 0
     wait(24)
     assertEq(Trust.add("C:alice", 2, "recon", { fromPost = true }), 2, "bonus désactivé")

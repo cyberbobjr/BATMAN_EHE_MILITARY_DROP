@@ -139,7 +139,7 @@ option MilitaryDrop.CrateSmokeMinutes
 
 option MilitaryDrop.TrustDailyCap
 {
-    type = integer, min = 0, max = 100, default = 8,
+    type = integer, min = 0, max = 100, default = 10,
     page = MilitaryDrop, translation = MilitaryDrop_TrustDailyCap,
 }
 
@@ -364,4 +364,22 @@ option MilitaryDrop.PilotDocuments
 {
     type = boolean, default = true,
     page = MilitaryDrop, translation = MilitaryDrop_PilotDocuments,
+}
+
+option MilitaryDrop.FultonValue
+{
+    type = integer, min = 0, max = 500, default = 100,
+    page = MilitaryDrop, translation = MilitaryDrop_FultonValue,
+}
+
+option MilitaryDrop.FultonWindowMinutes
+{
+    type = integer, min = 5, max = 240, default = 30,
+    page = MilitaryDrop, translation = MilitaryDrop_FultonWindowMinutes,
+}
+
+option MilitaryDrop.FultonLootRate
+{
+    type = integer, min = 0, max = 500, default = 100,
+    page = MilitaryDrop, translation = MilitaryDrop_FultonLootRate,
 }

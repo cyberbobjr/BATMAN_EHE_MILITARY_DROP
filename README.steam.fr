@@ -76,7 +76,7 @@ Pour un largage, seul le demandeur gagne ou perd ; un autre ouvreur reçoit 0. L
 [tr][td]Érosion optionnelle après 24 h sans contact[/td][td]−1 / +1[/td][/tr]
 [/table]
 
-Plafond : +8/jour/personnage hors largages. Bonus du poste : rapport +2, plaque +3, reconnaissance +5, contrôle +2 ; nettoyage +5. Note : 0–100 ; une perte sous 15 coupe la ligne 3 jours. Missions expirées, largages admin et leurres : 0. Érosion désactivée par défaut, vers 25.
+Plafond : +10/jour/personnage hors largages. Bonus du poste : rapport +2, plaque +3, reconnaissance +5, contrôle +2 ; nettoyage +5. Note : 0–100 ; une perte sous 15 coupe la ligne 3 jours. Missions expirées, largages admin et leurres : 0. Érosion désactivée par défaut, vers 25.
 
 [h2]Tenir un poste de liaison[/h2]
 

@@ -38,4 +38,19 @@ module Base
             volume = 0.9,
         }
     }
+
+    /* Passage de l'avion qui accroche le Fulton (FULTON-06) : ATR 72 de
+       Freesound 315660 (CC0), source/sound/make_fulton_sound.py. Pic du passage
+       à 3,8 s, au milieu de la phase d'accroche si le son démarre avec le vol.
+       Catégorie World : réglable dans Options > Audio > Avancé. */
+    sound MilitaryDropFultonFlyby
+    {
+        category = World,
+        clip
+        {
+            file = media/sound/MilitaryDrop/MilitaryDrop_FultonFlyby.ogg,
+            distanceMax = 400,
+            volume = 1.0,
+        }
+    }
 }

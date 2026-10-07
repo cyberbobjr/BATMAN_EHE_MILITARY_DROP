@@ -6,5 +6,10 @@
     "Tooltip_MilitaryDrop_Codebook": "Tabela de códigos militar. Decifra o código semanal transmitido pela estação de números.",
     "Tooltip_MilitaryDrop_DecoyBeacon": "DESVIO. Este lançamento não traz suprimentos: sua sirene atrai os mortos para o caixote.",
     "Tooltip_MilitaryDrop_RequisitionCase": "Entregue pelos militares conforme sua requisição. Abra para obter os suprimentos pedidos.",
-    "Tooltip_MilitaryDrop_FlightRecorder": "Gravador recuperado de um helicóptero abatido. Leia-o na baia de leitura de uma estação de ligação e depois envie os dados para a Logística."
+    "Tooltip_MilitaryDrop_FlightRecorder": "Gravador recuperado de um helicóptero abatido. Leia-o na baia de leitura de uma estação de ligação e depois envie os dados para a Logística.",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Invólucro de lona costurado. Monte com um saco com arnês e arame.",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "Saco de carga com arnês de corda. Monte com um balão dobrado e arame.",
+    "Tooltip_MilitaryDrop_FultonKit": "Sistema de recuperação por balão, de uso único. Encher consome uma carga de um cilindro de hélio.",
+    "Tooltip_MilitaryDrop_FultonKitDamaged": "Invólucro rasgado e arnês desfiado. Pode ser consertado com linha, fita adesiva e arame.",
+    "Tooltip_MilitaryDrop_HeliumTank": "Hélio suficiente para encher quatro balões Fulton. Vazio, o cilindro de aço pode ser cortado com um maçarico."
 }

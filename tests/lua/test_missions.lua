@@ -498,12 +498,13 @@ function T.dog_tags_are_kept_when_trust_is_already_at_maximum()
 end
 
 function T.daily_cap_keeps_the_remaining_dog_tags()
+    SandboxVars.MilitaryDrop.TrustDailyCap = 8
     local alice = makePlayer("alice")
     for i = 1, 6 do
         giveTag(alice, 1000 + i, "Soldier " .. i)
     end
     call("MissionDogTags", alice)
-    assertEq(Trust.get("C:alice"), 33, "plafond de 8 par jour")
+    assertEq(Trust.get("C:alice"), 33, "plafond réglé à 8 par jour")
     assertEq(#alice.tags, 2, "plaques au-delà du plafond gardées")
     local lines = lastReply(alice).lines
     assertTrue(string.find(lines[1], "IGUI_MilitaryDrop_NamesMoreOne|Soldier 1, Soldier 2, Soldier 3", 1, true) ~= nil,

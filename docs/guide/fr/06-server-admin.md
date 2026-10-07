@@ -55,7 +55,7 @@ Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, 
 
 | Option | Clé | Défaut | Effet |
 |---|---|---|---|
-| Plafond quotidien de confiance | `TrustDailyCap` | 8 | Confiance maximale gagnée par jour, hors largages. 0 : seuls les largages comptent. |
+| Plafond quotidien de confiance | `TrustDailyCap` | 10 | Confiance maximale gagnée par jour, hors largages. 0 : seuls les largages comptent. |
 | Bonus du poste de liaison (pour cent) | `TrustPostBonus` | 50 | Confiance en plus pour les échanges faits depuis le poste de liaison. |
 | Ligne coupée (jours) | `TrustLineCutDays` | 3 | Jours sans largage quand la confiance passe sous 15. 0 : jamais coupée. |
 | Heures pour récupérer un largage | `TrustDropLostHours` | 48 | Passé ce délai, un largage non ouvert est perdu (−10). |

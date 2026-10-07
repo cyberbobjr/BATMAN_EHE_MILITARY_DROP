@@ -1,0 +1,184 @@
+/* Fulton (FULTON-02 à FULTON-04) : objets et recettes du dispositif à usage
+   unique. Fabrication en trois étapes (ballon plié, sac à harnais, assemblage)
+   ou remise en état d'un Fulton endommagé trouvé. Le gonflage au déploiement
+   consomme une utilisation de la bouteille d'hélium (déploiement pas encore
+   codé). Matériaux vanilla 42.21 : utilisations comptées pour les objets
+   drainables (Thread 1/20, Glue 1/5, DuctTape 1/4, Wire 1/10). Noms :
+   Translate/<LANG>/ItemName.json et Recipes.json. */
+module MilitaryDrop
+{
+    imports
+    {
+        Base
+    }
+
+    item FultonBalloonFolded
+    {
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 1.5,
+        Icon = MilitaryDrop_FultonPrototypeBalloon,
+        WorldStaticModel = MilitaryDrop_FultonPrototypeBalloon,
+        Tooltip = Tooltip_MilitaryDrop_FultonBalloonFolded,
+    }
+
+    item FultonHarnessBag
+    {
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 1.0,
+        Icon = MilitaryDrop_FultonPrototypeBag,
+        WorldStaticModel = MilitaryDrop_FultonPrototypeBag,
+        Tooltip = Tooltip_MilitaryDrop_FultonHarnessBag,
+    }
+
+    item FultonKit
+    {
+        DisplayCategory = Tool,
+        ItemType = base:normal,
+        Weight = 2.5,
+        Icon = MilitaryDrop_FultonPrototypeBag,
+        WorldStaticModel = MilitaryDrop_FultonPrototypeBag,
+        Tooltip = Tooltip_MilitaryDrop_FultonKit,
+    }
+
+    item FultonKitDamaged
+    {
+        DisplayCategory = Material,
+        ItemType = base:normal,
+        Weight = 2.5,
+        Icon = MilitaryDrop_FultonPrototypeBag,
+        WorldStaticModel = MilitaryDrop_FultonPrototypeBag,
+        Tooltip = Tooltip_MilitaryDrop_FultonKitDamaged,
+    }
+
+    /* Quatre gonflages ; la bouteille vide reste au joueur, comme la bouteille
+       d'oxygène vanilla (Oxygen_Tank : icône et modèle au sol réutilisés).
+       Bouteille en acier : vide, elle se découpe au chalumeau (SalvageHeliumTank). */
+    item HeliumTank
+    {
+        DisplayCategory = Material,
+        ItemType = base:drainable,
+        Weight = 6.0,
+        WeightEmpty = 5.0,
+        UseDelta = 0.25,
+        UseWhileEquipped = false,
+        cantBeConsolided = true,
+        KeepOnDeplete = true,
+        Icon = OxygenTank,
+        WorldStaticModel = Oxygen_Tank_Ground,
+        Tags = base:hasmetal;base:smeltablesteellarge,
+        Tooltip = Tooltip_MilitaryDrop_HeliumTank,
+    }
+
+    craftRecipe SewFultonBalloon
+    {
+        timedAction = SewingCloth,
+        time = 300,
+        Tags = AnySurfaceCraft,
+        category = Tailoring,
+        xpAward = Tailoring:15,
+        SkillRequired = Tailoring:3,
+        AllowBatchCraft = false,
+        inputs
+        {
+            item 1 [Base.Tarp],
+            item 6 tags[base:thread],
+            item 2 [Base.Glue],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:scissors] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 MilitaryDrop.FultonBalloonFolded,
+        }
+    }
+
+    craftRecipe MakeFultonHarnessBag
+    {
+        timedAction = Making,
+        time = 150,
+        Tags = AnySurfaceCraft,
+        category = Packing,
+        AllowBatchCraft = false,
+        inputs
+        {
+            item 1 [Base.EmptySandbag] flags[IsEmpty],
+            item 1 tags[base:rope],
+            item 2 [Base.DuctTape],
+            item 1 tags[base:scissors] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 MilitaryDrop.FultonHarnessBag,
+        }
+    }
+
+    craftRecipe AssembleFultonKit
+    {
+        timedAction = Making,
+        time = 120,
+        Tags = AnySurfaceCraft,
+        category = Assembly,
+        AllowBatchCraft = false,
+        inputs
+        {
+            item 1 [MilitaryDrop.FultonBalloonFolded],
+            item 1 [MilitaryDrop.FultonHarnessBag],
+            item 3 [Base.Wire],
+            item 1 tags[base:pliers] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 MilitaryDrop.FultonKit,
+        }
+    }
+
+    craftRecipe RepairFultonKit
+    {
+        timedAction = SewingCloth,
+        time = 200,
+        Tags = AnySurfaceCraft,
+        category = Repair,
+        xpAward = Tailoring:8,
+        SkillRequired = Tailoring:1,
+        AllowBatchCraft = false,
+        inputs
+        {
+            item 1 [MilitaryDrop.FultonKitDamaged],
+            item 4 tags[base:thread],
+            item 2 [Base.DuctTape],
+            item 2 [Base.Wire],
+            item 1 tags[base:sewingneedle] mode:keep flags[MayDegradeLight],
+            item 1 tags[base:pliers] mode:keep flags[MayDegradeVeryLight],
+        }
+        outputs
+        {
+            item 1 MilitaryDrop.FultonKit,
+        }
+    }
+
+    /* Découpe d'une bouteille vide, sur le modèle de MakeSmallMetalSheet
+       (recipes_metalWelding.txt) : 2 utilisations de chalumeau, masque conservé.
+       flags[IsEmpty] : aucune utilisation d'hélium restante (InputScript.java:1065). */
+    craftRecipe SalvageHeliumTank
+    {
+        timedAction = Welding,
+        time = 250,
+        Tags = InHandCraft;Welding,
+        category = Metalworking,
+        xpAward = MetalWelding:15,
+        AllowBatchCraft = false,
+        inputs
+        {
+            item 1 [MilitaryDrop.HeliumTank] mode:destroy flags[IsEmpty;ItemCount],
+            item 2 [Base.BlowTorch],
+            item 1 tags[base:weldingmask] mode:keep,
+        }
+        outputs
+        {
+            item 4 Base.SmallSheetMetal,
+            item 2 Base.SteelChunk,
+        }
+    }
+}

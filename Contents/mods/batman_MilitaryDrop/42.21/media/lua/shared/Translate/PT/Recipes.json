@@ -1,6 +1,11 @@
 {
     "OpenMilitarySupplyCase": "Abrir Caixa de Abastecimento",
-    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Abrir lote de aviónica",
-    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Abrir lote de mecânica",
-    "CraftRecipe_OpenMilitaryMetalSalvage": "Abrir lote de metal"
+    "OpenMilitaryAvionicsSalvage": "Abrir lote de aviónica",
+    "OpenMilitaryMechanicalSalvage": "Abrir lote de mecânica",
+    "OpenMilitaryMetalSalvage": "Abrir lote de metal",
+    "SewFultonBalloon": "Coser balão Fulton",
+    "MakeFultonHarnessBag": "Fazer saco com arnês Fulton",
+    "AssembleFultonKit": "Montar kit de extração Fulton",
+    "RepairFultonKit": "Reparar kit de extração Fulton",
+    "SalvageHeliumTank": "Cortar garrafa de hélio vazia"
 }

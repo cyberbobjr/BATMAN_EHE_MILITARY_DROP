@@ -27,13 +27,13 @@ function T.same_character_keeps_note_cap_and_lock_after_reconnect_and_reload()
     local data = {}
     local original = player("batman", data)
     local id = Trust.idFor(original)
-    Trust.add(id, 8, "report")
+    Trust.add(id, 10, "report")
     Trust.add(id, -25, "drop")
     loadMod("server/MilitaryDrop/MilitaryDrop_Trust.lua")
     Trust = MilitaryDrop.Trust
     local reconnected = player("batman", data)
     assertEq(Trust.idFor(reconnected), id, "saved identity survives reload")
-    assertEq(Trust.get(id), 8, "same note")
+    assertEq(Trust.get(id), 10, "same note")
     assertTrue(Trust.isLineCut(id), "same suspension")
     assertEq(Trust.add(id, 1, "report"), 0, "same daily cap")
 end

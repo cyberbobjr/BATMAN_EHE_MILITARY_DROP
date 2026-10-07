@@ -3,6 +3,16 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## Unreleased
+
+### Changed
+
+- The daily trust cap (`TrustDailyCap` sandbox option) now defaults to 10 instead of 8. Existing games keep their saved value.
+
+### Fixed
+
+- The recipes that unpack recovered avionics, mechanical and metal bundles now show their translated names instead of their internal recipe names.
+
 ## 0.3.3 — 2026-10-07
 
 ### Fixed

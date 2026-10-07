@@ -1,6 +1,11 @@
 {
     "OpenMilitarySupplyCase": "Открыть кейс снабжения",
-    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Открыть набор авионики",
-    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Открыть набор автодеталей",
-    "CraftRecipe_OpenMilitaryMetalSalvage": "Открыть набор металла"
+    "OpenMilitaryAvionicsSalvage": "Открыть набор авионики",
+    "OpenMilitaryMechanicalSalvage": "Открыть набор автодеталей",
+    "OpenMilitaryMetalSalvage": "Открыть набор металла",
+    "SewFultonBalloon": "Сшить аэростат «Фултон»",
+    "MakeFultonHarnessBag": "Сделать мешок с подвесной системой «Фултон»",
+    "AssembleFultonKit": "Собрать комплект эвакуации «Фултон»",
+    "RepairFultonKit": "Починить комплект эвакуации «Фултон»",
+    "SalvageHeliumTank": "Разрезать пустой баллон с гелием"
 }

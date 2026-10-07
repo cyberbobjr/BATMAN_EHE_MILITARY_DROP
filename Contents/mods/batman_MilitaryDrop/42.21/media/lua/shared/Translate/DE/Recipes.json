@@ -1,6 +1,11 @@
 {
     "OpenMilitarySupplyCase": "Versorgungskoffer öffnen",
-    "CraftRecipe_OpenMilitaryAvionicsSalvage": "Geborgene Avionik auspacken",
-    "CraftRecipe_OpenMilitaryMechanicalSalvage": "Geborgene Fahrzeugteile auspacken",
-    "CraftRecipe_OpenMilitaryMetalSalvage": "Geborgenes Metall auspacken"
+    "OpenMilitaryAvionicsSalvage": "Geborgene Avionik auspacken",
+    "OpenMilitaryMechanicalSalvage": "Geborgene Fahrzeugteile auspacken",
+    "OpenMilitaryMetalSalvage": "Geborgenes Metall auspacken",
+    "SewFultonBalloon": "Fulton-Ballon nähen",
+    "MakeFultonHarnessBag": "Fulton-Gurtsack herstellen",
+    "AssembleFultonKit": "Fulton-Bergungsset zusammenbauen",
+    "RepairFultonKit": "Fulton-Bergungsset reparieren",
+    "SalvageHeliumTank": "Leere Heliumflasche zerschneiden"
 }

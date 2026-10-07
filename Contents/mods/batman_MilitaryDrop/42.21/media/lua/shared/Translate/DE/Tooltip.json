@@ -6,5 +6,10 @@
     "Tooltip_MilitaryDrop_Codebook": "Militärische Codetabelle. Entschlüsselt den Wochencode, den der Zahlensender sendet.",
     "Tooltip_MilitaryDrop_DecoyBeacon": "ABLENKUNG. Dieser Abwurf enthält keine Vorräte: Seine Sirene lockt die Toten zur Kiste.",
     "Tooltip_MilitaryDrop_RequisitionCase": "Vom Militär auf deine Anforderung geliefert. Öffnen, um die angeforderten Vorräte zu erhalten.",
-    "Tooltip_MilitaryDrop_FlightRecorder": "Flugschreiber aus einem abgeschossenen Hubschrauber. Im Leseschacht eines Verbindungspostens auslesen und die Daten dann an die Logistik senden."
+    "Tooltip_MilitaryDrop_FlightRecorder": "Flugschreiber aus einem abgeschossenen Hubschrauber. Im Leseschacht eines Verbindungspostens auslesen und die Daten dann an die Logistik senden.",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Genähte Planenhülle. Mit einem Gurtsack und Draht zusammenbauen.",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "Lastsack mit Seilgurt. Mit einem gefalteten Ballon und Draht zusammenbauen.",
+    "Tooltip_MilitaryDrop_FultonKit": "Einweg-Ballonbergungssystem. Das Aufblasen verbraucht eine Ladung einer Heliumflasche.",
+    "Tooltip_MilitaryDrop_FultonKitDamaged": "Gerissene Hülle und ausgefranster Gurt. Mit Faden, Klebeband und Draht reparierbar.",
+    "Tooltip_MilitaryDrop_HeliumTank": "Genug Helium für vier Fulton-Ballons. Die leere Stahlflasche lässt sich mit einem Schweißbrenner zerschneiden."
 }

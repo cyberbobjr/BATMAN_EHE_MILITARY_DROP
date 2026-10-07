@@ -6,5 +6,10 @@
     "Tooltip_MilitaryDrop_Codebook": "Military code table. Deciphers the weekly code sent by the numbers station.",
     "Tooltip_MilitaryDrop_DecoyBeacon": "DIVERSION. This drop carries no supplies: its siren draws the dead toward the crate.",
     "Tooltip_MilitaryDrop_RequisitionCase": "Delivered by the military on your requisition. Open it to get the ordered supplies.",
-    "Tooltip_MilitaryDrop_FlightRecorder": "Flight recorder recovered from a downed helicopter. Read it in the reader bay of a liaison station, then send its data to Logistics."
+    "Tooltip_MilitaryDrop_FlightRecorder": "Flight recorder recovered from a downed helicopter. Read it in the reader bay of a liaison station, then send its data to Logistics.",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Sewn tarp envelope. Assemble it with a harness bag and wire.",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "Cargo bag fitted with a rope harness. Assemble it with a folded balloon and wire.",
+    "Tooltip_MilitaryDrop_FultonKit": "Single-use balloon recovery system. Inflating it takes one charge from a helium tank.",
+    "Tooltip_MilitaryDrop_FultonKitDamaged": "Torn envelope and frayed harness. Can be repaired with thread, duct tape and wire.",
+    "Tooltip_MilitaryDrop_HeliumTank": "Enough helium to inflate four Fulton balloons. The empty steel tank can be cut up with a blowtorch."
 }

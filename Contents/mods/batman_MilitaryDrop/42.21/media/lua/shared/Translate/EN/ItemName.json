@@ -12,5 +12,10 @@
     "MilitaryDrop.MetalSalvage": "Recovered metal bundle",
     "MilitaryDrop.FlightRecorder": "Flight recorder",
     "MilitaryDrop.FultonPrototypeBalloon": "Fulton balloon (prototype)",
-    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)"
+    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)",
+    "MilitaryDrop.FultonBalloonFolded": "Folded Fulton balloon",
+    "MilitaryDrop.FultonHarnessBag": "Fulton harness bag",
+    "MilitaryDrop.FultonKit": "Fulton recovery kit",
+    "MilitaryDrop.FultonKitDamaged": "Damaged Fulton recovery kit",
+    "MilitaryDrop.HeliumTank": "Helium tank"
 }

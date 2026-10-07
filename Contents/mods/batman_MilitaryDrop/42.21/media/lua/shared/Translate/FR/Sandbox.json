@@ -138,5 +138,11 @@
     "Sandbox_MilitaryDrop_PilotDocuments_tooltip": "Ajoute une note militaire et le carnet de codes de la partie sur le corps du pilote.",
     "Sandbox_MilitaryDrop_CrashFire_option1": "Aucun",
     "Sandbox_MilitaryDrop_CrashFire_option2": "Fumée",
-    "Sandbox_MilitaryDrop_CrashFire_option3": "Feu et fumée"
+    "Sandbox_MilitaryDrop_CrashFire_option3": "Feu et fumée",
+    "Sandbox_MilitaryDrop_FultonValue": "Fulton : récompense (pour cent)",
+    "Sandbox_MilitaryDrop_FultonValue_tooltip": "Confiance payée pour le renseignement et le matériel envoyés par Fulton, en pourcentage du barème. Toujours limitée par le plafond quotidien, sauf le remède (Zombie Virus Vaccine). 0 : extractions Fulton désactivées.",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes": "Fulton : créneau de passage (minutes)",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "Minutes de jeu pendant lesquelles un Fulton peut être lâché après une demande de passage par radio.",
+    "Sandbox_MilitaryDrop_FultonLootRate": "Fulton : fréquence dans le butin (pour cent)",
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Fréquence des bouteilles d'hélium et des kits Fulton endommagés dans le monde, les épaves et les caisses de largage. 0 : aucun."
 }

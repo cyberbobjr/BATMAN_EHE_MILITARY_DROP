@@ -138,5 +138,11 @@
     "Sandbox_MilitaryDrop_PilotDocuments_tooltip": "Добавляет военную записку и кодовую книгу текущей игры на тело пилота.",
     "Sandbox_MilitaryDrop_CrashFire_option1": "Нет",
     "Sandbox_MilitaryDrop_CrashFire_option2": "Дым",
-    "Sandbox_MilitaryDrop_CrashFire_option3": "Огонь и дым"
+    "Sandbox_MilitaryDrop_CrashFire_option3": "Огонь и дым",
+    "Sandbox_MilitaryDrop_FultonValue": "Фултон: награда (проценты)",
+    "Sandbox_MilitaryDrop_FultonValue_tooltip": "Доверие за разведданные и снаряжение, отправленные «Фултоном», в процентах от базовой шкалы. Ограничено дневным пределом, кроме лекарства (Zombie Virus Vaccine). 0: эвакуация «Фултоном» отключена.",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes": "Фултон: окно подбора (минуты)",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "Игровые минуты, в течение которых можно выпустить «Фултон» после запроса подбора по радио.",
+    "Sandbox_MilitaryDrop_FultonLootRate": "Фултон: частота в добыче (проценты)",
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Как часто баллоны с гелием и повреждённые комплекты «Фултон» встречаются в мире, обломках и ящиках снабжения. 0: никогда."
 }

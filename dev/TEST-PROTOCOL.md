@@ -218,7 +218,7 @@ print(id, MilitaryDrop.Trust.get(id))
 | Gagner des points, sauvegarder, quitter complètement et relancer | Même identité, même note, même plafond quotidien et même suspension éventuelle |
 | Mort puis nouveau personnage sur la même sauvegarde, avec le même nom | Nouvelle identité, note 25 ; aucune sanction ni aucun gain du personnage précédent |
 | MP : déconnexion, redémarrage serveur, reconnexion du même personnage | Identité et note conservées ; tester aussi après modification des favoris d'inventaire (ModData vanilla) |
-| MP : deux personnages dans la même faction, rapport et contrôle chacun | Récompense personnelle pour chacun ; plafond de +8 séparé |
+| MP : deux personnages dans la même faction, rapport et contrôle chacun | Récompense personnelle pour chacun ; plafond quotidien (`TrustDailyCap`, 10 par défaut) séparé |
 | Créer, rejoindre, quitter et dissoudre une faction | Identité et note de chaque personnage inchangées |
 | Poste partagé, deux personnages avec des notes différentes | Même poste et indicatif, confiance et progression propres au personnage qui ouvre la console |
 | Demander un largage puis ouvrir sa première caisse | +10 au demandeur, une seule fois |

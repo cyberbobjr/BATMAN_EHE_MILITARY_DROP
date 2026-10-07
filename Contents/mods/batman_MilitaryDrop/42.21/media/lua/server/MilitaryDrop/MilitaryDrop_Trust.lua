@@ -27,6 +27,9 @@ Trust.DROP_TAKEN = -5
 Trust.DROP_LOST = -10
 -- Enregistreur de vol lu et transmis depuis le poste (SRC-08), hors plafond quotidien.
 Trust.RECORDER = 10
+-- Sources dont les gains échappent au plafond quotidien : largages, enregistreur
+-- de vol (SRC-08), remède envoyé par Fulton (FULTON-09).
+Trust.UNCAPPED = { drop = true, recorder = true, fultonCure = true }
 Trust.FAILED_CODE_PENALTY = -2
 Trust.FAILED_CODE_LIMIT = 3
 Trust.FAILED_CODE_WINDOW_HOURS = 1
@@ -41,7 +44,7 @@ Trust.CLOSED_DROP_KEEP_HOURS = 168
 Trust.ITEM_KEY = "MilitaryDrop_dropId"
 
 Config.addDefaults({
-    TrustDailyCap = 8,
+    TrustDailyCap = 10,
     TrustPostBonus = 50,
     TrustLineCutDays = 3,
     TrustDropLostHours = 48,
@@ -154,6 +157,19 @@ function Trust.isLineCut(characterId)
     return activeLock(characterId) ~= nil
 end
 
+--- Gain encore possible aujourd'hui pour les sources plafonnées, borné par la
+--- marge jusqu'à Trust.MAX (bonus du poste non compris). Sans écriture d'état.
+function Trust.dailyLeft(characterId)
+    local cap = math.max(0, math.floor(tonumber(Config.get("TrustDailyCap")) or 0))
+    local e = characterId and state().characterTrust[characterId]
+    local gained = 0
+    if e and e.day == currentDay() then
+        gained = tonumber(e.dayGain) or 0
+    end
+    local value = e and tonumber(e.value) or Trust.START
+    return math.max(0, math.min(cap - gained, Trust.MAX - value))
+end
+
 --- Palier de 1 (<25) à 4 (≥75) : choix des répliques, jamais de chiffre.
 function Trust.tier(characterId)
     local value = Trust.get(characterId)
@@ -196,7 +212,7 @@ local function cutLine(characterId, e)
     MilitaryDrop.log("character " .. tostring(characterId) .. ": trust " .. e.value .. ", line cut for " .. days .. " days", true)
 end
 
---- Ajoute amount à la note (négatif : perte). source "drop" ou "recorder" : hors plafond ;
+--- Ajoute amount à la note (négatif : perte). Sources de Trust.UNCAPPED : hors plafond ;
 --- "code" : perte ; autres sources : gains plafonnés par jour, opts.fromPost
 --- applique le bonus du poste. Renvoie la variation réellement appliquée.
 function Trust.add(characterId, amount, source, opts)
@@ -209,7 +225,7 @@ function Trust.add(characterId, amount, source, opts)
         return 0
     end
     local e = entry(characterId)
-    local capped = amount > 0 and source ~= "drop" and source ~= "recorder"
+    local capped = amount > 0 and not Trust.UNCAPPED[source]
     if capped then
         if type(opts) == "table" and opts.fromPost then
             local bonus = math.max(0, tonumber(Config.get("TrustPostBonus")) or 0)

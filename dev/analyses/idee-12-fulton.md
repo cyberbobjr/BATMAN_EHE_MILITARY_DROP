@@ -38,3 +38,28 @@ Précisions de Mr.Mushroom :
 - Recette de fabrication : objets requis par tag ou propriété, compétences.
 - Annonce publique de la récupération, ou appareil discret.
 - Récupération limitée aux zones de largage en mode zones, ou possible partout.
+
+## 5. Décisions du 2026-10-07 (objets et recettes)
+
+- **Fabrication en plusieurs pièces** : ballon plié (bâche, fil, colle ; aiguille, ciseaux ; Couture 3), sac à harnais (sac de sable vide, corde, ruban adhésif ; ciseaux), assemblage (ballon, sac, fil de fer ; pince). Le **fil de fer vanilla remplace le câble d'acier** : aucun objet câble dans le mod.
+- **Kits endommagés à réparer** (fil, ruban adhésif, fil de fer ; aiguille, pince ; Couture 1), trouvés dans le monde.
+- **Hélium** : bouteille du mod à 4 gonflages, conservée vide ; seul le kit part avec le colis.
+- Restent à décider : lieux des kits endommagés et des bouteilles d'hélium, déploiement du kit (action, contenu du sac, appareil), valeur en confiance. Suivi : FULTON-02 à FULTON-05.
+
+## 6. Décisions du 2026-10-07 (utilisation en jeu et missions)
+
+- **Rendez-vous radio** : le joueur demande un passage sur la fréquence militaire ; le créneau s'ouvre **immédiatement** et dure **30 minutes de jeu**. Hors créneau, le lâcher est refusé. Créneau manqué : perdu, sans pénalité (proposition).
+- **Annonce** : la chaîne militaire annonce le passage **avec son secteur**, comme une caisse (l'expéditeur est exposé).
+- **Lieu** : partout, y compris en mode zones (l'idée 11 ne restreint pas le Fulton). Refus proposés : à l'intérieur, sous un toit ou un arbre, par orage ou vent violent, en zone non-PvP ou dans un refuge.
+- **Chargement** : le kit devient un **sac à remplir** (conteneur, environ 10 de capacité). Au lâcher, le serveur valide le contenu, détruit le kit et les objets, puis verse la confiance. Une charge d'hélium est consommée. Aucun sac ne reste au sol (aucune attente).
+- **Paiement** : barème par catégorie, à **valeurs élevées**. Plafond quotidien CONF-08 appliqué. Les objets sans valeur sont détruits sans gain.
+- **Objets admis**, uniquement vanilla, sans nouvel objet du mod :
+  - **renseignement** : cartes d'identité nominatives des morts (tag `base:idcard`, nom posé par le jeu ; pas celle du joueur ni une carte vierge), cartes annotées ou cartes-cachettes, `Paperwork` ;
+  - **matériel NRBC** : masques à gaz, filtres, combinaisons hazmat.
+- **Barème validé** : carte d'identité nominative +3, Paperwork +1, carte annotée ou cachette +4 ; masque à gaz +2, filtre +1, combinaison hazmat +6. Zombie Virus Vaccine : sang infecté ou contaminé +1, liquide cérébral basse/moyenne/haute +2/+3/+4, cerveau +3 (pourri ou brûlé : 0) ; vaccin simple +5, de qualité +7, avancé +10 (sous plafond), remède +25 hors plafond (comme SRC-08). Plafond quotidien : option `TrustDailyCap`, 10 par défaut depuis le 2026-10-07.
+- **Compatibilité Zombie Virus Vaccine** (Workshop 3615135168, `id=ZVirusVaccine42BETA`, module `LabItems`, variante 42.20 non testée en 42.21) : facultative, détectée par la liste des mods actifs puis par l'existence de chaque objet. Sont payés les échantillons (sang infecté ou contaminé, seringues de liquide cérébral selon leur qualité basse, moyenne ou haute, cerveaux) et les vaccins (simple < qualité < avancé), ainsi que le remède, très cher. Valeurs à fixer.
+- **Kits endommagés** : épaves Mayday, lieux militaires vanilla, et plus rarement les caisses de largage.
+- **Bouteilles d'hélium** : magasins (fêtes, cadeaux, jouets) et lieux militaires vanilla, sans lot de réquisition.
+- **Missions concernées en premier** : renseignement (A) et matériel NRBC (C). Échantillons (B), commande inverse (D), extraction contestée (E) : plus tard.
+- ⚠ À vérifier : son d'avion vanilla ; salles et listes de butin 42.21 des magasins de fêtes et des lieux militaires ; repérage d'une carte annotée (symboles de la carte) ; tags des masques, filtres et combinaisons.
+- **Conception détaillée** : [idee-12-fulton-conception.md](idee-12-fulton-conception.md). Écarts décidés le même jour : la carte annotée est illisible côté serveur, donc seules les cartes-cachettes paient ; les pièces d'identité nominatives incluent passeports, cartes de presse et badges ; les papiers sont `Paperwork` et `OfficialDocument` ; le matériel NRBC se limite au militaire.

@@ -12,5 +12,10 @@
     "MilitaryDrop.MetalSalvage": "回收金属包",
     "MilitaryDrop.FlightRecorder": "飞行记录器",
     "MilitaryDrop.FultonPrototypeBalloon": "Fulton balloon (prototype)",
-    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)"
+    "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)",
+    "MilitaryDrop.FultonBalloonFolded": "折叠的富尔顿气球",
+    "MilitaryDrop.FultonHarnessBag": "富尔顿吊带袋",
+    "MilitaryDrop.FultonKit": "富尔顿回收套件",
+    "MilitaryDrop.FultonKitDamaged": "损坏的富尔顿回收套件",
+    "MilitaryDrop.HeliumTank": "氦气瓶"
 }

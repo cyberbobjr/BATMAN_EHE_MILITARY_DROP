@@ -18,6 +18,7 @@ Les tests qui lisent les fichiers vanilla sont ignorés si le jeu est absent
 """
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -396,6 +397,64 @@ def check_tracking(report):
         report.skip("git absent ou historique tronqué : commits cités non vérifiés")
 
 
+FULTON_LUA = MOD_LUA / "shared" / "MilitaryDrop" / "MilitaryDrop_Fulton.lua"
+VACCINE_SCRIPTS = Path(os.environ.get("ZVV_SCRIPTS", "D:/SteamLibrary/steamapps/workshop/content/108600/3615135168/mods/ZVirusVaccine42BETA/42.20/media/scripts"))
+FULTON_TAGS = ("base:applyownername", "base:idcard", "base:hazmatsuit", "base:scba", "base:gasmask", "base:gasmaskfilter")
+
+
+def script_items(folder):
+    """Objets des scripts d'un dossier : { "Module.Nom": texte du bloc }."""
+    items = {}
+    for path in folder.rglob("*.txt"):
+        module = None
+        text = path.read_text(encoding="utf-8", errors="replace")
+        for match in re.finditer(r"^\s*module\s+(\w+)|^\s*item\s+(\w+)\s*\{?\s*$", text, re.M):
+            if match.group(1):
+                module = match.group(1)
+            elif module:
+                start = match.end()
+                end = text.find("}", start)
+                items[f"{module}.{match.group(2)}"] = text[start:end]
+    return items
+
+
+def check_fulton_vanilla(report):
+    """Types et tags vanilla cités par le barème Fulton (FULTON-08, FULTON-09)."""
+    report.section("Fulton : objets et tags vanilla du barème")
+    scripts = lua_harness.PZ_MEDIA / "scripts"
+    if not scripts.is_dir():
+        report.skip("jeu absent (PZ_MEDIA)")
+        return
+    source = FULTON_LUA.read_text(encoding="utf-8")
+    items = script_items(scripts)
+    every_tag = set(re.findall(r"base:\w+", "\n".join(items.values()).lower()))
+    for tag in FULTON_TAGS:
+        if tag in every_tag:
+            report.ok(f"tag {tag}")
+        else:
+            report.fail(f"tag {tag} absent des scripts vanilla")
+    for table in ("IDENTITY_TYPES", "PAPER_TYPES"):
+        block = re.search(table + r" = \{(.*?)\n\}", source, re.S).group(1)
+        for full_type in re.findall(r'\["(Base\.\w+)"\]', block):
+            body = items.get(full_type)
+            if body is None:
+                report.fail(f"{table} : {full_type} absent des scripts vanilla")
+            elif table == "IDENTITY_TYPES" and "base:applyownername" not in body.lower():
+                report.fail(f"{full_type} sans base:applyownername")
+            else:
+                report.ok(f"{table} : {full_type}")
+    if not VACCINE_SCRIPTS.is_dir():
+        report.skip("Zombie Virus Vaccine absent : types LabItems non vérifiés")
+        return
+    lab = script_items(VACCINE_SCRIPTS)
+    names = re.findall(r'"((?:Mat|Cmp|Human)\w+)"', source)
+    missing = [name for name in names if f"LabItems.{name}" not in lab]
+    if missing:
+        report.fail("types Zombie Virus Vaccine absents : " + ", ".join(missing))
+    else:
+        report.ok(f"{len(names)} types Zombie Virus Vaccine présents")
+
+
 def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -404,6 +463,7 @@ def main():
     check_radio_common(report)
     check_kahlua(report)
     check_scripts(report)
+    check_fulton_vanilla(report)
     check_references(report)
     check_translations(report)
     check_steam_descriptions(report)

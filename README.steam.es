@@ -76,7 +76,7 @@ Los lanzamientos afectan solo al solicitante; otro que abra recibe 0. Los demás
 [tr][td]Erosión opcional tras 24 h sin contacto[/td][td]−1 / +1[/td][/tr]
 [/table]
 
-Límite: +8/día/personaje salvo lanzamientos. Puesto: informe +2, placa +3, reconocimiento +5, control +2; limpieza +5. Nota: 0–100; perder puntos bajo 15 corta la línea 3 días. Misiones caducadas, lanzamientos admin y señuelos: 0. Erosión desactivada, vuelve hacia 25.
+Límite: +10/día/personaje salvo lanzamientos. Puesto: informe +2, placa +3, reconocimiento +5, control +2; limpieza +5. Nota: 0–100; perder puntos bajo 15 corta la línea 3 días. Misiones caducadas, lanzamientos admin y señuelos: 0. Erosión desactivada, vuelve hacia 25.
 
 [h2]Mantén un puesto de enlace[/h2]
 

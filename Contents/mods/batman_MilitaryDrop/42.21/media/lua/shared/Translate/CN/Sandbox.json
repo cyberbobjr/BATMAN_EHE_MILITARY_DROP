@@ -138,5 +138,11 @@
     "Sandbox_MilitaryDrop_PilotDocuments_tooltip": "在飞行员尸体上添加军方备忘录和本局密码本。",
     "Sandbox_MilitaryDrop_CrashFire_option1": "无",
     "Sandbox_MilitaryDrop_CrashFire_option2": "烟雾",
-    "Sandbox_MilitaryDrop_CrashFire_option3": "火与烟雾"
+    "Sandbox_MilitaryDrop_CrashFire_option3": "火与烟雾",
+    "Sandbox_MilitaryDrop_FultonValue": "富尔顿:奖励(百分比)",
+    "Sandbox_MilitaryDrop_FultonValue_tooltip": "通过富尔顿送出的情报和装备所得信任,按基础数值的百分比计算。仍受每日上限限制,解药(Zombie Virus Vaccine)除外。0:禁用富尔顿回收。",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes": "富尔顿:回收时段(分钟)",
+    "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "通过无线电请求回收后,可以放飞富尔顿的游戏分钟数。",
+    "Sandbox_MilitaryDrop_FultonLootRate": "富尔顿:战利品频率(百分比)",
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "氦气瓶和损坏的富尔顿套件在世界、残骸和补给箱中出现的频率。0:不出现。"
 }
