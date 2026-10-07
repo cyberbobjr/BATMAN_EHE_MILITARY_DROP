@@ -1,6 +1,6 @@
 # FAQ
 
-[Français](../fr/07-faq.md) · [Guide home](README.md) · Previous: [Server admin](06-server-admin.md) · Next: [Fulton extraction](08-fulton.md)
+[Français](../fr/08-faq.md) · [Guide home](README.md) · Previous: [Fulton extraction](07-fulton.md)
 
 **Nobody answers, only static.**
 The frequency or the code is wrong, and the base does not say which. Check the frequency circled on a memo, decode this week's code again (it changes every Monday at 00:00), and make sure you use a military radio. After 3 wrong codes in a day, the base stays silent until the next day.

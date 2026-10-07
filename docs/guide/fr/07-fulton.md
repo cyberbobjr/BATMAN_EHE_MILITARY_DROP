@@ -1,6 +1,6 @@
 # Extraction Fulton
 
-[English](../en/08-fulton.md) · [Sommaire](README.md) · Précédent : [FAQ](07-faq.md)
+[English](../en/07-fulton.md) · [Sommaire](README.md) · Précédent : [Administration](06-server-admin.md) · Suivant : [FAQ](08-faq.md)
 
 Le commandement veut du renseignement et du matériel venus de la zone infectée. Rangez-les dans un **kit d'extraction Fulton**, gonflez son ballon à l'hélium, et un avion l'accroche au passage. Le commandement vous paie en [confiance](04-trust-and-missions.md).
 

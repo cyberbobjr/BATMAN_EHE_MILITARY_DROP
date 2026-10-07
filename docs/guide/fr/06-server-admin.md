@@ -1,6 +1,6 @@
 # Administration
 
-[English](../en/06-server-admin.md) · [Sommaire du guide](README.md) · Précédent : [Poste de liaison](05-liaison-post.md) · Suivant : [FAQ](07-faq.md)
+[English](../en/06-server-admin.md) · [Sommaire du guide](README.md) · Précédent : [Poste de liaison](05-liaison-post.md) · Suivant : [Extraction Fulton](07-fulton.md)
 
 ## Options du bac à sable
 
@@ -90,7 +90,7 @@ Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, 
 
 ### Extraction Fulton
 
-Voir [Extraction Fulton](08-fulton.md).
+Voir [Extraction Fulton](07-fulton.md).
 
 | Option | Clé | Défaut | Effet |
 |---|---|---|---|

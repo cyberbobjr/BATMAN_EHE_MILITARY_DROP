@@ -1,6 +1,6 @@
 # Fulton extraction
 
-[Français](../fr/08-fulton.md) · [Guide home](README.md) · Previous: [FAQ](07-faq.md)
+[Français](../fr/07-fulton.md) · [Guide home](README.md) · Previous: [Server admin](06-server-admin.md) · Next: [FAQ](08-faq.md)
 
 Command wants intelligence and gear from the infected zone. Pack them in a **Fulton recovery kit**, inflate its balloon with helium, and an aircraft snatches it on the fly. Command pays you in [trust](04-trust-and-missions.md).
 

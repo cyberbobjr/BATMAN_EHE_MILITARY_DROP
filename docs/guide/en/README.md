@@ -12,5 +12,5 @@ Military Drop is a Project Zomboid Build 42.21 mod: call the army by radio, fill
 4. [Trust and missions](04-trust-and-missions.md): personal reputation, gains/losses table, migration from collective scores, reports, dog tags, recon, clearance and radio checks.
 5. [Liaison post](05-liaison-post.md): turn a fixed military radio into your station's console.
 6. [Server admin](06-server-admin.md): sandbox options, requisition lots file, drop zones for PvP servers, admin tools, files, debug commands.
-7. [FAQ](07-faq.md)
-8. [Fulton extraction](08-fulton.md): send intelligence and gear by balloon for trust.
+7. [Fulton extraction](07-fulton.md): send intelligence and gear by balloon for trust.
+8. [FAQ](08-faq.md)

@@ -1,6 +1,6 @@
 # Server admin
 
-[Français](../fr/06-server-admin.md) · [Guide home](README.md) · Previous: [Liaison post](05-liaison-post.md) · Next: [FAQ](07-faq.md)
+[Français](../fr/06-server-admin.md) · [Guide home](README.md) · Previous: [Liaison post](05-liaison-post.md) · Next: [Fulton extraction](07-fulton.md)
 
 ## Sandbox options
 
@@ -90,7 +90,7 @@ The mod reads its options each time it uses them: a new value counts for the nex
 
 ### Fulton extraction
 
-See [Fulton extraction](08-fulton.md).
+See [Fulton extraction](07-fulton.md).
 
 | Option | Key | Default | Effect |
 |---|---|---|---|
