@@ -482,10 +482,10 @@
     "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, hier Logistik. Fulton-Abholung genehmigt: Ballon innerhalb von %2 Minuten im Freien und ohne Hindernisse starten. Ende.",
     "IGUI_MilitaryDrop_Reply_FultonPending": "%1, hier Logistik. Ihr Fulton-Zeitfenster ist noch offen: noch %2 Minuten. Ende.",
     "IGUI_MilitaryDrop_Fulton_Launch": "Fulton aufblasen und starten",
-    "IGUI_MilitaryDrop_Fulton_NoKit": "Das Fulton-Set muss in meinem Inventar sein.",
+    "IGUI_MilitaryDrop_Fulton_NoKit": "Das Fulton-Set muss direkt neben mir auf dem Boden liegen.",
     "IGUI_MilitaryDrop_Fulton_NoHelium": "Ich brauche eine Heliumflasche, die nicht leer ist.",
     "IGUI_MilitaryDrop_Fulton_LineCut": "Die Logistik antwortet uns nicht mehr. Keine Abholung.",
-    "IGUI_MilitaryDrop_Fulton_NoWindow": "Ich muss zuerst per Funk eine Fulton-Abholung anfordern.",
+    "IGUI_MilitaryDrop_Fulton_NoWindow": "Zuerst per Funk eine Fulton-Abholung anfordern (Bereich Logistik eines Militärfunkgeräts).",
     "IGUI_MilitaryDrop_Fulton_Protected": "Nicht hier: Dieses Gebiet ist geschützt.",
     "IGUI_MilitaryDrop_Fulton_EmptyKit": "Das Set ist leer. Nichts zu verschicken.",
     "IGUI_MilitaryDrop_Fulton_NotOutside": "Ich muss draußen sein, unter freiem Himmel.",
@@ -503,5 +503,6 @@
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, hier Logistik. Fracht geborgen, aber nichts Verwertbares. Ende.",
     "IGUI_MilitaryDrop_Fulton_Cure": "Das Heilmittel ist angekommen. Höchste Priorität. Danke.",
     "IGUI_MilitaryDrop_Fulton_CapReached": "Tagesguthaben erschöpft: Ein Teil wird Ihnen nicht angerechnet.",
-    "IGUI_MilitaryDrop_BroadcastFulton": "Logistik an alle Stationen: Fulton-Bergung läuft nahe Raster %1 / %2. Ende."
+    "IGUI_MilitaryDrop_BroadcastFulton": "Logistik an alle Stationen: Fulton-Bergung läuft nahe Raster %1 / %2. Ende.",
+    "IGUI_MilitaryDrop_Fulton_PutOnGround": "Stellen Sie das Set draußen auf den Boden, um es aufzublasen."
 }

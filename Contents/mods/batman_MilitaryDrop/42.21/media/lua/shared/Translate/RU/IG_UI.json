@@ -482,10 +482,10 @@
     "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, говорит Логистика. Подбор «Фултон» разрешён: выпустите аэростат в течение %2 минут на открытом месте. Конец связи.",
     "IGUI_MilitaryDrop_Reply_FultonPending": "%1, говорит Логистика. Ваше окно «Фултон» ещё открыто: осталось %2 минут. Конец связи.",
     "IGUI_MilitaryDrop_Fulton_Launch": "Надуть и выпустить «Фултон»",
-    "IGUI_MilitaryDrop_Fulton_NoKit": "Комплект «Фултон» должен быть в моём инвентаре.",
+    "IGUI_MilitaryDrop_Fulton_NoKit": "Комплект «Фултон» должен лежать на земле прямо рядом со мной.",
     "IGUI_MilitaryDrop_Fulton_NoHelium": "Нужен баллон с гелием, и не пустой.",
     "IGUI_MilitaryDrop_Fulton_LineCut": "Логистика больше не отвечает. Подбора не будет.",
-    "IGUI_MilitaryDrop_Fulton_NoWindow": "Сначала нужно запросить подбор «Фултон» по радио.",
+    "IGUI_MilitaryDrop_Fulton_NoWindow": "Сначала запросите подбор «Фултон» по радио (раздел «Логистика» военной рации).",
     "IGUI_MilitaryDrop_Fulton_Protected": "Не здесь: эта зона защищена.",
     "IGUI_MilitaryDrop_Fulton_EmptyKit": "Комплект пуст. Нечего отправлять.",
     "IGUI_MilitaryDrop_Fulton_NotOutside": "Нужно быть снаружи, под открытым небом.",
@@ -503,5 +503,6 @@
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, говорит Логистика. Груз получен, но ничего полезного. Конец связи.",
     "IGUI_MilitaryDrop_Fulton_Cure": "Лекарство доставлено. Высший приоритет. Спасибо.",
     "IGUI_MilitaryDrop_Fulton_CapReached": "Дневной лимит исчерпан: часть не будет засчитана.",
-    "IGUI_MilitaryDrop_BroadcastFulton": "Логистика всем станциям: идёт эвакуация «Фултоном» около квадрата %1 / %2. Конец связи."
+    "IGUI_MilitaryDrop_BroadcastFulton": "Логистика всем станциям: идёт эвакуация «Фултоном» около квадрата %1 / %2. Конец связи.",
+    "IGUI_MilitaryDrop_Fulton_PutOnGround": "Положите комплект на землю под открытым небом, чтобы надуть его."
 }

@@ -50,6 +50,8 @@ Fulton.KIT_TYPE = "MilitaryDrop.FultonKit"
 Fulton.TANK_TYPE = "MilitaryDrop.HeliumTank"
 -- Vent au-delà duquel le ballon ne peut pas être lâché (km/h, ClimateManager).
 Fulton.MAX_WIND_KPH = 60
+-- Distance maximale (cases, même étage) entre le joueur et le kit posé au sol.
+Fulton.REACH = 2
 
 -- Valeurs de base par catégorie (décisions du 2026-10-07 ; ARI : proposition).
 Fulton.VALUES = {

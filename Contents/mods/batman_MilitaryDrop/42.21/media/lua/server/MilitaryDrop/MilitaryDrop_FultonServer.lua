@@ -2,16 +2,19 @@
 -- Military Drop — Fulton : lâcher et paiement (FULTON-07), serveur MP ou solo
 --
 -- Le client termine l'action « Gonfler et lâcher le Fulton »
--- (MilitaryDrop_FultonMenu.lua), puis envoie FultonLaunch { kitId, tankId }.
--- L'action reste côté client (pas de complete(), comme ExchangeAction) : toute
--- l'autorité est ici. Le serveur revérifie tout avant d'agir :
---   cadence, kit et bouteille dans l'inventaire principal (ni portés, ni en
---   main, ni accrochés), bouteille non vide, ligne ouverte, source activée,
---   créneau ouvert (Missions.fultonWindow), case extérieure sans arbre, météo
+-- (MilitaryDrop_FultonMenu.lua), puis envoie FultonLaunch { kitId, tankId, x, y, z }.
+-- Le kit est POSÉ AU SOL (décision de l'utilisateur du 2026-10-07) ; x, y, z
+-- désignent sa case. L'action reste côté client (pas de complete(), comme
+-- ExchangeAction) : toute l'autorité est ici. Le serveur revérifie tout avant d'agir :
+--   cadence, case du kit à Fulton.REACH cases au plus du joueur et au même
+--   étage, kit trouvé parmi les objets au sol de cette case (identifiant et
+--   type), bouteille dans l'inventaire principal (ni portée, ni en main, ni
+--   accrochée) et non vide, ligne ouverte, source activée, créneau ouvert
+--   (Missions.fultonWindow), case du kit extérieure sans arbre, météo
 --   (MilitaryDrop.Fulton.siteReason), hors zone non-PvP et refuge, kit non vide.
 -- Puis, dans cet ordre : une charge d'hélium (UseAndSync : synchronisée en
--- MP), retrait du kit et de son contenu (Remove puis
--- sendRemoveItemFromContainer en MP), paiement (« fulton » plafonné,
+-- MP), retrait du kit et de son contenu du sol pour tous
+-- (transmitRemoveItemFromSquare, comme ISBuildIsoEntity), paiement (« fulton » plafonné,
 -- « fultonCure » hors plafond), fermeture du créneau, réponse au joueur et
 -- ligne au journal du poste de son équipe. Les objets ne passent jamais par
 -- le sol : aucun doublon possible si une case se décharge.
@@ -91,16 +94,31 @@ local function ownItem(player, id, fullType)
     return item
 end
 
---- Retire un objet de son conteneur, chez tous les clients en MP.
-local function removeItem(item)
-    local container = item:getContainer()
-    if not container then
-        return
+--- Kit posé au sol sur la case désignée par le client, à portée du joueur :
+--- objet, objet du monde et case, ou nil.
+local function groundKit(player, args)
+    local x, y, z, id = tonumber(args.x), tonumber(args.y), tonumber(args.z), tonumber(args.kitId)
+    if not (x and y and z and id) then
+        return nil
     end
-    container:Remove(item)
-    if isServer() then
-        sendRemoveItemFromContainer(container, item)
+    if z ~= math.floor(player:getZ()) or math.abs(x - math.floor(player:getX())) > Fulton.REACH
+        or math.abs(y - math.floor(player:getY())) > Fulton.REACH then
+        return nil
     end
+    local cell = getCell()
+    local square = cell and cell:getGridSquare(x, y, z)
+    if not square then
+        return nil
+    end
+    local objects = square:getWorldObjects()
+    for i = 0, objects:size() - 1 do
+        local object = objects:get(i)
+        local item = object and object:getItem()
+        if item and item:getID() == id and item:getFullType() == Fulton.KIT_TYPE then
+            return item, object, square
+        end
+    end
+    return nil
 end
 
 --- Zone non-PvP ou refuge sur la case (zones connues du serveur seulement).
@@ -136,7 +154,7 @@ function FultonServer.launch(player, args)
     if MilitaryDrop.Guard.throttled(player, "fulton", FultonServer.INTERVAL_MS) then
         return refuse(player, "busy")
     end
-    local kit = ownItem(player, args.kitId, Fulton.KIT_TYPE)
+    local kit, kitObject, square = groundKit(player, args)
     if not kit then
         return refuse(player, "noKit")
     end
@@ -156,7 +174,6 @@ function FultonServer.launch(player, args)
     if not Missions.fultonWindow(characterId) then
         return refuse(player, "noWindow")
     end
-    local square = player:getCurrentSquare()
     local siteReason = Fulton.siteReason(square)
     if siteReason then
         return refuse(player, "site", siteReason)
@@ -172,7 +189,7 @@ function FultonServer.launch(player, args)
 
     local evaluation = Fulton.evaluate(items, player)
     tank:UseAndSync()
-    removeItem(kit)
+    square:transmitRemoveItemFromSquare(kitObject)
     local credited = Trust.add(characterId, evaluation.capped, "fulton")
     local cure = Trust.add(characterId, evaluation.uncapped, "fultonCure")
     local lost = math.max(0, evaluation.capped - credited)

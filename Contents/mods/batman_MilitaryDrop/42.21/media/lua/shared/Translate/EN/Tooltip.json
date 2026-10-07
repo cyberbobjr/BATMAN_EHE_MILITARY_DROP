@@ -7,9 +7,9 @@
     "Tooltip_MilitaryDrop_DecoyBeacon": "DIVERSION. This drop carries no supplies: its siren draws the dead toward the crate.",
     "Tooltip_MilitaryDrop_RequisitionCase": "Delivered by the military on your requisition. Open it to get the ordered supplies.",
     "Tooltip_MilitaryDrop_FlightRecorder": "Flight recorder recovered from a downed helicopter. Read it in the reader bay of a liaison station, then send its data to Logistics.",
-    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Sewn tarp envelope. Assemble it with a harness bag and wire.",
-    "Tooltip_MilitaryDrop_FultonHarnessBag": "Cargo bag fitted with a rope harness. Assemble it with a folded balloon and wire.",
-    "Tooltip_MilitaryDrop_FultonKit": "Single-use balloon recovery system. Inflating it takes one charge from a helium tank.",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Crafting part, not a Fulton yet: assemble it with a harness bag and wire to get a Fulton recovery kit.",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "Crafting part, not a Fulton yet: assemble it with a balloon envelope and wire to get a Fulton recovery kit.",
+    "Tooltip_MilitaryDrop_FultonKit": "Balloon included, single use. 1. Request a Fulton pick-up by radio (Logistics). 2. Put the kit on the ground outside and fill it with intelligence or gear. 3. Right-click the kit: Inflate and release (one helium charge).",
     "Tooltip_MilitaryDrop_FultonKitDamaged": "Torn envelope and frayed harness. Can be repaired with thread, duct tape and wire.",
     "Tooltip_MilitaryDrop_HeliumTank": "Enough helium to inflate four Fulton balloons. The empty steel tank can be cut up with a blowtorch."
 }

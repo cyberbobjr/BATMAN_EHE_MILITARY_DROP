@@ -7,9 +7,9 @@
     "Tooltip_MilitaryDrop_DecoyBeacon": "SEÑUELO. Este lanzamiento no lleva suministros: su sirena atrae a los muertos hacia la caja.",
     "Tooltip_MilitaryDrop_RequisitionCase": "Entregado por el ejército según tu requisición. Ábrelo para obtener los suministros pedidos.",
     "Tooltip_MilitaryDrop_FlightRecorder": "Registrador recuperado de un helicóptero derribado. Léelo en la bahía de lectura de un puesto de enlace y luego envía sus datos a Logística.",
-    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Envoltura de lona cosida. Ensámblala con un saco con arnés y alambre.",
-    "Tooltip_MilitaryDrop_FultonHarnessBag": "Saco de carga con arnés de cuerda. Ensámblalo con un globo plegado y alambre.",
-    "Tooltip_MilitaryDrop_FultonKit": "Sistema de recuperación por globo de un solo uso. Inflarlo gasta una carga de una bombona de helio.",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Pieza de fabricación, aún no es un Fulton: ensámblala con un saco con arnés y alambre para obtener un kit de extracción Fulton.",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "Pieza de fabricación, aún no es un Fulton: ensámblala con una envoltura de globo y alambre para obtener un kit de extracción Fulton.",
+    "Tooltip_MilitaryDrop_FultonKit": "Globo incluido, de un solo uso. 1. Pide una recogida Fulton por radio (Logística). 2. Deja el kit en el suelo al aire libre y llénalo de inteligencia o material. 3. Clic derecho en el kit: Inflar y soltar (una carga de helio).",
     "Tooltip_MilitaryDrop_FultonKitDamaged": "Envoltura rasgada y arnés deshilachado. Se repara con hilo, cinta americana y alambre.",
     "Tooltip_MilitaryDrop_HeliumTank": "Helio suficiente para inflar cuatro globos Fulton. Vacía, la bombona de acero se corta con un soplete."
 }

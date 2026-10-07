@@ -314,3 +314,13 @@ Ces options sont lues à chaud par `Config.get` (OPT-02). Le butin est rafraîch
 - **Bruit du passage** pour les zombies : rayon 40, volume 40 **[P]**, sur le serveur ou en solo.
 - **Menu de test du prototype** : seulement en mode debug.
 
+## 14. Premier essai en jeu et simplification (2026-10-07)
+
+Retour de l'utilisateur : parcours incompréhensible. Le kit posé au sol ne pouvait pas être gonflé (« le kit doit être dans mon inventaire »), et le ballon plié semblait devoir être accroché au kit. Décisions de l'utilisateur :
+- **Kit au sol seulement** : le kit se pose dehors, se remplit comme un sac au sol, puis clic droit sur le kit au sol (dans le monde ou dans la liste du sol) → « Gonfler et lâcher le Fulton ». Dans l'inventaire, l'option reste visible mais grisée, avec le motif « Posez le kit au sol, dehors, pour le gonfler ». Le personnage marche jusqu'au kit (`luautils.walkAdj`) ; la bouteille sort du sac si besoin.
+- **Serveur** : `FultonLaunch { kitId, tankId, x, y, z }`. Le kit est cherché parmi les objets au sol de la case désignée, qui doit être à `Fulton.REACH` (2) cases au plus et au même étage. La case du kit sert aux contrôles (dehors, arbre, zones protégées). Le kit est retiré par `transmitRemoveItemFromSquare` (solo et MP, comme `ISBuildIsoEntity`). Le vol part de la case du kit.
+- **Créneau radio gardé**, avec un message qui dit où le demander (section Logistique d'une radio militaire).
+- **Confirmation gardée**, toujours affichée.
+- **Objets qui s'expliquent** : le ballon plié devient « Enveloppe de ballon Fulton (pièce) » et le sac « Sac à harnais Fulton (pièce) », avec des infobulles « pièce de fabrication, pas encore un Fulton ». L'infobulle du kit donne les 3 étapes.
+- ⚠ **Sac au sol et doublons** : un sac rempli au sol, sur une case déchargée puis rechargée, peut voir son contenu dédoublé (comportement vanilla, `.claude/pz-knowledge/world-placement.md`). Le lâcher a lieu joueur présent, donc case chargée. Le risque d'exploitation est jugé faible (serveur entre amis).
+

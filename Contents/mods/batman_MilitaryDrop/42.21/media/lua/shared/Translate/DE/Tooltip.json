@@ -7,9 +7,9 @@
     "Tooltip_MilitaryDrop_DecoyBeacon": "ABLENKUNG. Dieser Abwurf enthält keine Vorräte: Seine Sirene lockt die Toten zur Kiste.",
     "Tooltip_MilitaryDrop_RequisitionCase": "Vom Militär auf deine Anforderung geliefert. Öffnen, um die angeforderten Vorräte zu erhalten.",
     "Tooltip_MilitaryDrop_FlightRecorder": "Flugschreiber aus einem abgeschossenen Hubschrauber. Im Leseschacht eines Verbindungspostens auslesen und die Daten dann an die Logistik senden.",
-    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Genähte Planenhülle. Mit einem Gurtsack und Draht zusammenbauen.",
-    "Tooltip_MilitaryDrop_FultonHarnessBag": "Lastsack mit Seilgurt. Mit einem gefalteten Ballon und Draht zusammenbauen.",
-    "Tooltip_MilitaryDrop_FultonKit": "Einweg-Ballonbergungssystem. Das Aufblasen verbraucht eine Ladung einer Heliumflasche.",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Bauteil, noch kein Fulton: mit einem Gurtsack und Draht zu einem Fulton-Bergungsset zusammenbauen.",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "Bauteil, noch kein Fulton: mit einer Ballonhülle und Draht zu einem Fulton-Bergungsset zusammenbauen.",
+    "Tooltip_MilitaryDrop_FultonKit": "Ballon enthalten, Einweg. 1. Per Funk eine Fulton-Abholung anfordern (Logistik). 2. Das Set draußen auf den Boden stellen und mit Aufklärung oder Ausrüstung füllen. 3. Rechtsklick auf das Set: Aufblasen und starten (eine Heliumladung).",
     "Tooltip_MilitaryDrop_FultonKitDamaged": "Gerissene Hülle und ausgefranster Gurt. Mit Faden, Klebeband und Draht reparierbar.",
     "Tooltip_MilitaryDrop_HeliumTank": "Genug Helium für vier Fulton-Ballons. Die leere Stahlflasche lässt sich mit einem Schweißbrenner zerschneiden."
 }

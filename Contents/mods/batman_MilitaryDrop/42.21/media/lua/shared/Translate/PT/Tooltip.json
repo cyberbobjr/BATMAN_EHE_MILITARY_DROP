@@ -7,9 +7,9 @@
     "Tooltip_MilitaryDrop_DecoyBeacon": "DIVERSÃO. Este lançamento não traz abastecimentos: a sirene atrai os mortos para o caixote.",
     "Tooltip_MilitaryDrop_RequisitionCase": "Entregue pelos militares segundo a tua requisição. Abre-a para obter os abastecimentos pedidos.",
     "Tooltip_MilitaryDrop_FlightRecorder": "Registador recuperado de um helicóptero abatido. Lê-o na baía de leitura de uma estação de ligação e depois envia os dados à Logística.",
-    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Invólucro de lona cosido. Monte-o com um saco com arnês e arame.",
-    "Tooltip_MilitaryDrop_FultonHarnessBag": "Saco de carga com arnês de corda. Monte-o com um balão dobrado e arame.",
-    "Tooltip_MilitaryDrop_FultonKit": "Sistema de recuperação por balão, de uso único. Encher consome uma carga de uma garrafa de hélio.",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Peça de fabrico, ainda não é um Fulton: monte-a com um saco com arnês e arame para obter um kit de extração Fulton.",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "Peça de fabrico, ainda não é um Fulton: monte-a com um invólucro de balão e arame para obter um kit de extração Fulton.",
+    "Tooltip_MilitaryDrop_FultonKit": "Balão incluído, uso único. 1. Peça uma recolha Fulton por rádio (Logística). 2. Pouse o kit no chão ao ar livre e encha-o de informações ou material. 3. Clique direito no kit: Encher e largar (uma carga de hélio).",
     "Tooltip_MilitaryDrop_FultonKitDamaged": "Invólucro rasgado e arnês desfiado. Repara-se com linha, fita adesiva e arame.",
     "Tooltip_MilitaryDrop_HeliumTank": "Hélio suficiente para encher quatro balões Fulton. Vazia, a garrafa de aço corta-se com um maçarico."
 }

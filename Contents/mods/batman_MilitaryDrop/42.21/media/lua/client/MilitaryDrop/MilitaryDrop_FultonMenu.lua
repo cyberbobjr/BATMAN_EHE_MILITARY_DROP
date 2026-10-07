@@ -2,17 +2,20 @@
 -- Military Drop — Fulton : menu du kit, confirmation et action de lâcher
 -- (FULTON-07), client
 --
--- Clic droit sur un kit d'extraction Fulton de l'inventaire → « Gonfler et
--- lâcher le Fulton ». L'option est grisée, avec le motif en infobulle, sans
--- créneau ouvert (MilitaryDrop_FultonClient.lua), hors d'une case extérieure
--- dégagée, par orage ou grand vent, sans bouteille d'hélium non vide, ou avec
--- un kit vide. La confirmation liste les objets que la base exploitera et ceux
--- qu'elle ignorera, sans chiffre de confiance (règle du mod) ; elle prévient en
--- mots si le plafond du jour est atteint ou sera dépassé.
--- Après confirmation : le kit est retiré des mains s'il y est, kit et
--- bouteille passent dans l'inventaire principal (actions vanilla), puis
--- l'action chronométrée gonfle le ballon (bruit pour les zombies) et envoie
--- FultonLaunch au serveur, qui revérifie tout (MilitaryDrop_FultonServer.lua).
+-- Le kit se gonfle POSÉ AU SOL (décision de l'utilisateur du 2026-10-07, après
+-- le premier essai en jeu : poser le kit dehors puis le remplir est le geste
+-- naturel). Clic droit sur le kit au sol (dans le monde, ou dans la liste du sol
+-- de la fenêtre d'inventaire) → « Gonfler et lâcher le Fulton ». Dans
+-- l'inventaire, l'option reste visible mais grisée : « Posez le kit au sol,
+-- dehors ». Autres motifs : créneau radio absent (MilitaryDrop_FultonClient.lua),
+-- kit vide, pas d'hélium, case du kit couverte ou sous un arbre, orage, vent.
+-- La confirmation, toujours affichée, liste les objets que la base exploitera
+-- et ceux qu'elle ignorera, sans chiffre de confiance (règle du mod) ; elle
+-- prévient en mots si le plafond du jour est atteint ou sera dépassé.
+-- Après confirmation : le personnage marche jusqu'au kit (luautils.walkAdj), la
+-- bouteille passe dans l'inventaire principal (action vanilla), puis l'action
+-- chronométrée gonfle le ballon (bruit pour les zombies) et envoie FultonLaunch
+-- au serveur, qui revérifie tout (MilitaryDrop_FultonServer.lua).
 -- L'action n'a pas de complete() : en MP elle reste côté client, comme
 -- MilitaryDrop.ExchangeAction.
 -- ============================================================================
@@ -39,8 +42,10 @@ FultonMenu.NOISE_VOLUME = 15
 -- Noms affichés par liste dans la confirmation avant « et N autres ».
 FultonMenu.NAMES_SHOWN = 6
 
-local function inInventory(player, item)
-    return item ~= nil and player:getInventory():getItemWithIDRecursiv(item:getID()) ~= nil
+--- Case du kit posé au sol, ou nil (kit dans un inventaire ou un conteneur).
+function FultonMenu.kitSquare(kit)
+    local object = kit and kit:getWorldItem()
+    return object and object:getSquare() or nil
 end
 
 --- Motif (clé de traduction) qui empêche de lâcher ce kit, ou nil.
@@ -48,8 +53,9 @@ function FultonMenu.reason(player, kit)
     if not Fulton.isEnabled() then
         return "IGUI_MilitaryDrop_SourceDisabled"
     end
-    if not inInventory(player, kit) then
-        return "IGUI_MilitaryDrop_Fulton_NoKit"
+    local square = FultonMenu.kitSquare(kit)
+    if not square then
+        return "IGUI_MilitaryDrop_Fulton_PutOnGround"
     end
     if not FultonClient.window(player:getPlayerNum()) then
         return "IGUI_MilitaryDrop_Fulton_NoWindow"
@@ -60,7 +66,14 @@ function FultonMenu.reason(player, kit)
     if not Fulton.findTank(player:getInventory(), true) then
         return "IGUI_MilitaryDrop_Fulton_NoHelium"
     end
-    return Fulton.siteReason(player:getCurrentSquare())
+    return Fulton.siteReason(square)
+end
+
+--- Le personnage est assez près du kit pour le gonfler (même règle que le serveur).
+function FultonMenu.isNear(player, square)
+    return square ~= nil and square:getZ() == math.floor(player:getZ())
+        and math.abs(square:getX() - math.floor(player:getX())) <= Fulton.REACH
+        and math.abs(square:getY() - math.floor(player:getY())) <= Fulton.REACH
 end
 
 --- Noms en liste, un par ligne, puis « et N autres » au-delà de NAMES_SHOWN.
@@ -111,15 +124,18 @@ if ISBaseTimedAction then
     MilitaryDrop.FultonLaunchAction = Action
 
     function Action:isValid()
-        local inventory = self.character:getInventory()
-        return inventory:contains(self.kit) and inventory:contains(self.tank)
-            and Fulton.tankHasHelium(self.tank) and FultonMenu.reason(self.character, self.kit) == nil
+        return self.character:getInventory():contains(self.tank) and Fulton.tankHasHelium(self.tank)
+            and FultonMenu.isNear(self.character, FultonMenu.kitSquare(self.kit))
+            and FultonMenu.reason(self.character, self.kit) == nil
     end
 
     function Action:start()
         self:setActionAnim("Loot")
         self.character:SetVariable("LootPosition", "Low")
-        local square = self.character:getCurrentSquare()
+        local square = FultonMenu.kitSquare(self.kit)
+        if square then
+            self.character:faceLocation(square:getX(), square:getY())
+        end
         if square and addSound then
             addSound(self.character, square:getX(), square:getY(), square:getZ(),
                 FultonMenu.NOISE_RADIUS, FultonMenu.NOISE_VOLUME)
@@ -128,8 +144,12 @@ if ISBaseTimedAction then
 
     function Action:perform()
         ISBaseTimedAction.perform(self)
-        MilitaryDrop.Net.toServer(self.character, "FultonLaunch",
-            { kitId = self.kit:getID(), tankId = self.tank:getID() })
+        local square = FultonMenu.kitSquare(self.kit)
+        if not square then
+            return
+        end
+        MilitaryDrop.Net.toServer(self.character, "FultonLaunch", { kitId = self.kit:getID(), tankId = self.tank:getID(),
+            x = square:getX(), y = square:getY(), z = square:getZ() })
     end
 
     function Action.new(_, character, kit, tank)
@@ -144,17 +164,17 @@ if ISBaseTimedAction then
     end
 end
 
---- Met en file : kit retiré des mains, kit et bouteille dans l'inventaire
---- principal, puis le gonflage.
+--- Met en file : marche jusqu'au kit, bouteille dans l'inventaire principal,
+--- puis le gonflage.
 function FultonMenu.queueLaunch(player, kit)
     local tank = Fulton.findTank(player:getInventory(), true)
-    if not tank then
+    local square = FultonMenu.kitSquare(kit)
+    if not tank or not square then
         return false
     end
-    if player:isEquipped(kit) then
-        ISTimedActionQueue.add(ISUnequipAction:new(player, kit, 50))
+    if not luautils.walkAdj(player, square, true) then
+        return false
     end
-    ISInventoryPaneContextMenu.transferIfNeeded(player, kit)
     ISInventoryPaneContextMenu.transferIfNeeded(player, tank)
     ISTimedActionQueue.add(MilitaryDrop.FultonLaunchAction.new(nil, player, kit, tank))
     return true
@@ -184,6 +204,23 @@ function FultonMenu.confirm(player, kit)
     return modal
 end
 
+--- Option « Gonfler et lâcher le Fulton » pour ce kit, grisée avec le motif.
+function FultonMenu.addOption(player, context, kit)
+    local option = context:addOption(getText("IGUI_MilitaryDrop_Fulton_Launch"), player, FultonMenu.confirm, kit)
+    local reason = FultonMenu.reason(player, kit)
+    if reason then
+        option.notAvailable = true
+        local tooltip = ISToolTip:new()
+        tooltip:initialise()
+        tooltip:setVisible(false)
+        tooltip.description = getText(reason)
+        option.toolTip = tooltip
+    end
+    return option
+end
+
+--- Fenêtre d'inventaire : kit de l'inventaire (option grisée, « posez-le au
+--- sol ») ou kit de la liste du sol.
 function FultonMenu.onFillContextMenu(playerNum, context, items)
     local player = getSpecificPlayer(playerNum)
     if not player then
@@ -195,17 +232,34 @@ function FultonMenu.onFillContextMenu(playerNum, context, items)
             item = entry.items and entry.items[1]
         end
         if item and item:getFullType() == Fulton.KIT_TYPE then
-            local option = context:addOption(getText("IGUI_MilitaryDrop_Fulton_Launch"), player, FultonMenu.confirm, item)
-            local reason = FultonMenu.reason(player, item)
-            if reason then
-                option.notAvailable = true
-                local tooltip = ISToolTip:new()
-                tooltip:initialise()
-                tooltip:setVisible(false)
-                tooltip.description = getText(reason)
-                option.toolTip = tooltip
-            end
+            FultonMenu.addOption(player, context, item)
             return
+        end
+    end
+end
+
+--- Clic droit dans le monde : premier kit posé sur les cases visées.
+function FultonMenu.onFillWorldContextMenu(playerNum, context, worldObjects, test)
+    if test then
+        return
+    end
+    local player = getSpecificPlayer(playerNum)
+    if not player then
+        return
+    end
+    local seen = {}
+    for _, object in ipairs(worldObjects) do
+        local square = object and object:getSquare()
+        if square and not seen[square] then
+            seen[square] = true
+            local objects = square:getWorldObjects()
+            for i = 0, objects:size() - 1 do
+                local item = objects:get(i):getItem()
+                if item and item:getFullType() == Fulton.KIT_TYPE then
+                    FultonMenu.addOption(player, context, item)
+                    return
+                end
+            end
         end
     end
 end
@@ -243,5 +297,6 @@ if MilitaryDrop.Client and MilitaryDrop.Client.HANDLERS then
 end
 
 Events.OnFillInventoryObjectContextMenu.Add(FultonMenu.onFillContextMenu)
+Events.OnFillWorldObjectContextMenu.Add(FultonMenu.onFillWorldContextMenu)
 
 return FultonMenu

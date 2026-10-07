@@ -1,6 +1,8 @@
--- MilitaryDrop_FultonMenu : menu du kit (motifs de grisé), confirmation sans
--- chiffre, file d'actions (mains, sacs), action de gonflage qui envoie
--- FultonLaunch, résultat du serveur (accusé en texte, refus dit par le joueur).
+-- MilitaryDrop_FultonMenu : kit POSÉ AU SOL (décision du 2026-10-07). Menu du
+-- kit au sol (monde et liste du sol) ou dans l'inventaire (grisé : « posez-le
+-- au sol »), motifs de grisé, confirmation sans chiffre, file d'actions (marche
+-- jusqu'au kit, bouteille sortie du sac), action de gonflage qui envoie
+-- FultonLaunch avec la case du kit, résultat du serveur.
 
 local T = {}
 
@@ -21,6 +23,7 @@ local function item(fullType, tags, name)
     function it.getDisplayName(self) return self.name end
     function it.getScriptItem(self) return { getDisplayName = function() return self.fullType end } end
     function it.getStashMap() return nil end
+    function it.getWorldItem(self) return self.worldItem end
     return it
 end
 
@@ -36,20 +39,6 @@ local function container(items)
             end
         end
         return false
-    end
-    function c.getItemWithIDRecursiv(self, id)
-        for _, x in ipairs(self.items) do
-            if x.id == id then
-                return x
-            end
-            if x.inner then
-                local found = x.inner:getItemWithIDRecursiv(id)
-                if found then
-                    return found
-                end
-            end
-        end
-        return nil
     end
     function c.getAllTypeRecurse(self, fullType)
         local found = {}
@@ -90,40 +79,77 @@ local function makeTank(uses)
     return tank
 end
 
+--- Case du sol (10, 20, 0) : objets posés.
+local function makeGround()
+    local sq = { objects = {}, inside = false }
+    function sq.isOutside(self) return not self.inside end
+    function sq.getTree() return nil end
+    function sq.getX() return 10 end
+    function sq.getY() return 20 end
+    function sq.getZ() return 0 end
+    function sq.getWorldObjects(self) return list(self.objects) end
+    return sq
+end
+
+local function putOnGround(kit)
+    local object = { kit = kit }
+    function object.getItem(self) return self.kit end
+    function object.getSquare() return GROUND end
+    GROUND.objects[#GROUND.objects + 1] = object
+    kit.worldItem = object
+    return object
+end
+
 local function makePlayer()
-    local p = { inventory = container({}), equipped = {}, said = {}, outside = true }
+    local p = { inventory = container({}), said = {}, x = 11.5, y = 20.5, z = 0 }
     function p.getPlayerNum() return 0 end
     function p.getUsername() return "alice" end
     function p.getInventory(self) return self.inventory end
-    function p.isEquipped(self, it) return self.equipped[it] == true end
     function p.getDescriptor()
         return { getForename = function() return "Alice" end, getSurname = function() return "Martin" end }
     end
-    function p.getCurrentSquare(self)
-        local outside = self.outside
-        return { isOutside = function() return outside end, getTree = function() return nil end,
-            getX = function() return 1 end, getY = function() return 2 end, getZ = function() return 0 end }
-    end
+    function p.getX(self) return self.x end
+    function p.getY(self) return self.y end
+    function p.getZ(self) return self.z end
+    function p.faceLocation(self, x, y) self.faced = x .. "," .. y end
     function p.Say(self, text) self.said[#self.said + 1] = text end
     function p.SetVariable() end
     return p
 end
 
---- Joueur prêt : kit au contenu donné et bouteille dans l'inventaire, créneau ouvert.
+--- Joueur prêt : kit au contenu donné posé au sol à côté, bouteille dans
+--- l'inventaire, créneau ouvert.
 local function ready(contents)
     local player = makePlayer()
     local kit, tank = makeKit(contents), makeTank(4)
-    player.inventory.items = { kit, tank }
+    putOnGround(kit)
+    player.inventory.items = { tank }
     PLAYER = player
     FultonClient.onWindow(0, { minutesLeft = 30, dailyLeft = 10 })
     return player, kit, tank
+end
+
+--- Menu contextuel simulé : options ajoutées.
+local function makeContext()
+    local context = { options = {} }
+    function context.addOption(self, name, target, fn, param)
+        local option = { name = name, target = target, fn = fn, param = param }
+        self.options[#self.options + 1] = option
+        return option
+    end
+    return context
 end
 
 function T.setup()
     SandboxVars = { MilitaryDrop = {} }
     isClient = function() return true end
     isServer = function() return false end
-    instanceof = function(object, class) return type(object) == "table" and object.kind == class end
+    instanceof = function(object, class)
+        if class == "InventoryItem" then
+            return type(object) == "table" and object.fullType ~= nil
+        end
+        return type(object) == "table" and object.kind == class
+    end
     ItemTag = { APPLY_OWNER_NAME = "base:applyownername", IDCARD = "base:idcard", HAZMAT_SUIT = "base:hazmatsuit",
         SCBA = "base:scba", GAS_MASK = "base:gasmask", GASMASK_FILTER = "base:gasmaskfilter" }
     getActivatedMods = function() return list({}) end
@@ -139,7 +165,8 @@ function T.setup()
         end
         return table.concat(parts, "|")
     end
-    QUEUE, SENT, HALO, NOISE, TRANSFERS = {}, {}, {}, {}, {}
+    QUEUE, SENT, HALO, NOISE, TRANSFERS, WALKS = {}, {}, {}, {}, {}, {}
+    GROUND = makeGround()
     ISBaseTimedAction = {}
     function ISBaseTimedAction.derive(parent, type)
         return setmetatable({ Type = type }, { __index = parent })
@@ -152,9 +179,13 @@ function T.setup()
     function ISBaseTimedAction.perform(self) self.performed = true end
     function ISBaseTimedAction.setActionAnim(self, anim) self.anim = anim end
     ISTimedActionQueue = { add = function(action) QUEUE[#QUEUE + 1] = action end }
-    ISUnequipAction = { new = function(_, character, it) return { unequip = it } end }
     ISInventoryPaneContextMenu = { transferIfNeeded = function(_, it) TRANSFERS[#TRANSFERS + 1] = it end }
-    addSound = function(source, x, y, z, radius, volume) NOISE[#NOISE + 1] = { radius = radius, volume = volume } end
+    luautils = { walkAdj = function(_, square, keep)
+        WALKS[#WALKS + 1] = { square = square, keep = keep }
+        return true
+    end }
+    ISToolTip = { new = function() return { initialise = function() end, setVisible = function() end } end }
+    addSound = function(_, x, y, z, radius, volume) NOISE[#NOISE + 1] = { x = x, y = y, radius = radius, volume = volume } end
     HaloTextHelper = { addText = function(_, text) HALO[#HALO + 1] = text end }
     getSpecificPlayer = function() return PLAYER end
     getNumActivePlayers = function() return 1 end
@@ -175,10 +206,10 @@ end
 
 function T.reasons_follow_the_launch_conditions()
     local player, kit, tank = ready({ item("Base.Paperwork") })
-    assertEq(FultonMenu.reason(player, kit), nil, "tout est prêt")
-    player.outside = false
-    assertEq(FultonMenu.reason(player, kit), "IGUI_MilitaryDrop_Fulton_NotOutside", "à l'intérieur")
-    player.outside = true
+    assertEq(FultonMenu.reason(player, kit), nil, "kit au sol, tout est prêt")
+    GROUND.inside = true
+    assertEq(FultonMenu.reason(player, kit), "IGUI_MilitaryDrop_Fulton_NotOutside", "kit à l'intérieur")
+    GROUND.inside = false
     tank.uses = 0
     assertEq(FultonMenu.reason(player, kit), "IGUI_MilitaryDrop_Fulton_NoHelium", "bouteille vide")
     tank.uses = 4
@@ -188,27 +219,49 @@ function T.reasons_follow_the_launch_conditions()
     FultonClient.reset()
     assertEq(FultonMenu.reason(player, kit), "IGUI_MilitaryDrop_Fulton_NoWindow", "pas de créneau")
     FultonClient.onWindow(0, { minutesLeft = 30, dailyLeft = 10 })
-    player.inventory.items = { tank }
-    assertEq(FultonMenu.reason(player, kit), "IGUI_MilitaryDrop_Fulton_NoKit", "kit hors de l'inventaire")
+    kit.worldItem = nil
+    assertEq(FultonMenu.reason(player, kit), "IGUI_MilitaryDrop_Fulton_PutOnGround", "kit dans l'inventaire")
     SandboxVars.MilitaryDrop.FultonValue = 0
     assertEq(FultonMenu.reason(player, kit), "IGUI_MilitaryDrop_SourceDisabled", "Fulton désactivé")
 end
 
-function T.tank_in_a_bag_is_accepted_and_moved_before_the_launch()
+function T.inventory_kit_shows_a_greyed_option_that_explains_what_to_do()
     local player = makePlayer()
     PLAYER = player
-    local kit, tank = makeKit({ item("Base.Paperwork") }), makeTank(4)
+    local kit = makeKit({ item("Base.Paperwork") })
+    player.inventory.items = { kit, makeTank(4) }
+    FultonClient.onWindow(0, { minutesLeft = 30, dailyLeft = 10 })
+    local context = makeContext()
+    FultonMenu.onFillContextMenu(0, context, { kit })
+    assertEq(#context.options, 1, "option visible")
+    assertTrue(context.options[1].notAvailable, "grisée")
+    assertEq(context.options[1].toolTip.description, "IGUI_MilitaryDrop_Fulton_PutOnGround", "posez-le au sol, dehors")
+end
+
+function T.world_right_click_finds_the_kit_on_the_ground()
+    local player, kit = ready({ item("Base.Paperwork") })
+    local context = makeContext()
+    FultonMenu.onFillWorldContextMenu(0, context, { { getSquare = function() return GROUND end } }, false)
+    assertEq(#context.options, 1, "une option")
+    assertEq(context.options[1].param, kit, "pour le kit posé")
+    assertTrue(not context.options[1].notAvailable, "disponible")
+    local empty = makeContext()
+    FultonMenu.onFillWorldContextMenu(0, empty, { { getSquare = function() return GROUND end } }, true)
+    assertEq(#empty.options, 0, "passe de test : rien")
+    assertTrue(player ~= nil, "joueur")
+end
+
+function T.queue_walks_to_the_kit_and_takes_the_tank_out_of_a_bag()
+    local player, kit, tank = ready({ item("Base.Paperwork") })
     local bag = withId(item("Base.Bag_Schoolbag"))
     bag.inner = container({ tank })
-    player.inventory.items = { kit, bag }
-    player.equipped[kit] = true
-    FultonClient.onWindow(0, { minutesLeft = 30, dailyLeft = 10 })
+    player.inventory.items = { bag }
     assertEq(FultonMenu.reason(player, kit), nil, "bouteille dans un sac porté : acceptée")
     assertTrue(FultonMenu.queueLaunch(player, kit), "mis en file")
-    assertEq(QUEUE[1].unequip, kit, "kit retiré des mains d'abord")
-    assertEq(TRANSFERS[1], kit, "kit vers l'inventaire principal si besoin")
-    assertEq(TRANSFERS[2], tank, "bouteille aussi")
-    assertEq(QUEUE[2].Type, "MilitaryDrop.FultonLaunchAction", "puis le gonflage")
+    assertEq(WALKS[1].square, GROUND, "marche jusqu'au kit")
+    assertEq(WALKS[1].keep, true, "sans vider la file")
+    assertEq(TRANSFERS[1], tank, "bouteille vers l'inventaire principal si besoin")
+    assertEq(QUEUE[1].Type, "MilitaryDrop.FultonLaunchAction", "puis le gonflage")
 end
 
 function T.confirmation_lists_items_and_warns_without_numbers()
@@ -242,18 +295,24 @@ function T.long_lists_are_shortened()
     assertTrue(text:find("IGUI_MilitaryDrop_Fulton_ConfirmMore|3", 1, true) ~= nil, "et 3 de plus")
 end
 
-function T.action_makes_noise_then_sends_the_launch()
+function T.action_faces_the_kit_makes_noise_then_sends_its_square()
     local player, kit, tank = ready({ item("Base.Paperwork") })
     local action = MilitaryDrop.FultonLaunchAction.new(nil, player, kit, tank)
-    assertTrue(action:isValid(), "valide")
+    assertTrue(action:isValid(), "valide à côté du kit")
     action:start()
-    assertEq(NOISE[1].radius, FultonMenu.NOISE_RADIUS, "bruit du gonflage pour les zombies")
+    assertEq(player.faced, "10,20", "face au kit")
+    assertEq(NOISE[1].x .. "," .. NOISE[1].y, "10,20", "bruit du gonflage à la case du kit")
+    assertEq(NOISE[1].radius, FultonMenu.NOISE_RADIUS, "rayon du bruit")
     action:perform()
+    local args = SENT[1].args
     assertEq(SENT[1].command, "FultonLaunch", "commande au serveur")
-    assertEq(SENT[1].args.kitId, kit.id, "identifiant du kit")
-    assertEq(SENT[1].args.tankId, tank.id, "identifiant de la bouteille")
-    player.outside = false
-    assertTrue(not action:isValid(), "rentré à l'intérieur : action annulée")
+    assertEq(args.kitId .. "/" .. args.tankId, kit.id .. "/" .. tank.id, "identifiants")
+    assertEq(args.x .. "," .. args.y .. "," .. args.z, "10,20,0", "case du kit")
+    player.x = 14.5
+    assertTrue(not action:isValid(), "trop loin du kit : action annulée")
+    player.x = 11.5
+    kit.worldItem = nil
+    assertTrue(not action:isValid(), "kit ramassé : action annulée")
 end
 
 function T.result_shows_base_lines_or_the_refusal()

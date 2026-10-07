@@ -482,10 +482,10 @@
     "IGUI_MilitaryDrop_Reply_FultonOpen": "%1,这里是后勤。富尔顿回收已批准:请在%2分钟内于室外开阔处放飞气球。通话结束。",
     "IGUI_MilitaryDrop_Reply_FultonPending": "%1,这里是后勤。你的富尔顿时段仍然开放:还剩%2分钟。通话结束。",
     "IGUI_MilitaryDrop_Fulton_Launch": "给富尔顿充气并放飞",
-    "IGUI_MilitaryDrop_Fulton_NoKit": "富尔顿套件必须在我的物品栏里。",
+    "IGUI_MilitaryDrop_Fulton_NoKit": "富尔顿套件必须放在我身边的地面上。",
     "IGUI_MilitaryDrop_Fulton_NoHelium": "我需要一个不是空的氦气瓶。",
     "IGUI_MilitaryDrop_Fulton_LineCut": "后勤不再回应我们。没有回收。",
-    "IGUI_MilitaryDrop_Fulton_NoWindow": "我得先用无线电请求富尔顿回收。",
+    "IGUI_MilitaryDrop_Fulton_NoWindow": "先用无线电请求富尔顿回收(军用无线电的后勤栏)。",
     "IGUI_MilitaryDrop_Fulton_Protected": "这里不行:该区域受保护。",
     "IGUI_MilitaryDrop_Fulton_EmptyKit": "套件是空的。没有东西可送。",
     "IGUI_MilitaryDrop_Fulton_NotOutside": "我需要在室外,头顶无遮挡。",
@@ -503,5 +503,6 @@
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1,这里是后勤。货物已回收,但没有有用的东西。通话结束。",
     "IGUI_MilitaryDrop_Fulton_Cure": "解药已送达。最高优先级。谢谢。",
     "IGUI_MilitaryDrop_Fulton_CapReached": "今日额度已用完:部分内容不会计入。",
-    "IGUI_MilitaryDrop_BroadcastFulton": "后勤呼叫所有电台:网格 %1 / %2 附近正在进行富尔顿回收。通话结束。"
+    "IGUI_MilitaryDrop_BroadcastFulton": "后勤呼叫所有电台:网格 %1 / %2 附近正在进行富尔顿回收。通话结束。",
+    "IGUI_MilitaryDrop_Fulton_PutOnGround": "把套件放在室外地面上才能充气。"
 }

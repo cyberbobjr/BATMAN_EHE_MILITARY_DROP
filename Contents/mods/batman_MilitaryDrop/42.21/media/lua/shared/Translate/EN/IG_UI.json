@@ -482,10 +482,10 @@
     "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, Logistics. Fulton pick-up approved: release your balloon within %2 minutes, outdoors and in the clear. Out.",
     "IGUI_MilitaryDrop_Reply_FultonPending": "%1, Logistics. Your Fulton window is still open: %2 minutes left. Out.",
     "IGUI_MilitaryDrop_Fulton_Launch": "Inflate and release the Fulton",
-    "IGUI_MilitaryDrop_Fulton_NoKit": "The Fulton kit must be in my inventory.",
+    "IGUI_MilitaryDrop_Fulton_NoKit": "The Fulton kit must be on the ground, right next to me.",
     "IGUI_MilitaryDrop_Fulton_NoHelium": "I need a helium tank that isn't empty.",
     "IGUI_MilitaryDrop_Fulton_LineCut": "Logistics isn't answering us any more. No pick-up.",
-    "IGUI_MilitaryDrop_Fulton_NoWindow": "I have to request a Fulton pick-up by radio first.",
+    "IGUI_MilitaryDrop_Fulton_NoWindow": "First request a Fulton pick-up by radio (Logistics section of a military radio).",
     "IGUI_MilitaryDrop_Fulton_Protected": "Not here: this area is protected.",
     "IGUI_MilitaryDrop_Fulton_EmptyKit": "The kit is empty. Nothing to send.",
     "IGUI_MilitaryDrop_Fulton_NotOutside": "I need to be outside, under open sky.",
@@ -503,5 +503,6 @@
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, Logistics. Cargo recovered, but nothing useful in it. Out.",
     "IGUI_MilitaryDrop_Fulton_Cure": "The cure has arrived. Top priority. Thank you.",
     "IGUI_MilitaryDrop_Fulton_CapReached": "Today's credit is used up: part of it won't count for you.",
-    "IGUI_MilitaryDrop_BroadcastFulton": "Logistics to all stations: Fulton pick-up in progress near grid %1 / %2. Out."
+    "IGUI_MilitaryDrop_BroadcastFulton": "Logistics to all stations: Fulton pick-up in progress near grid %1 / %2. Out.",
+    "IGUI_MilitaryDrop_Fulton_PutOnGround": "Put the kit on the ground, outside, to inflate it."
 }

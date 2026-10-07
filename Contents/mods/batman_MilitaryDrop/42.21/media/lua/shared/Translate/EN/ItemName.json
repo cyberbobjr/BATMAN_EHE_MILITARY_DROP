@@ -13,8 +13,8 @@
     "MilitaryDrop.FlightRecorder": "Flight recorder",
     "MilitaryDrop.FultonPrototypeBalloon": "Fulton balloon (prototype)",
     "MilitaryDrop.FultonPrototypeBag": "Fulton cargo bag (prototype)",
-    "MilitaryDrop.FultonBalloonFolded": "Folded Fulton balloon",
-    "MilitaryDrop.FultonHarnessBag": "Fulton harness bag",
+    "MilitaryDrop.FultonBalloonFolded": "Fulton balloon envelope (part)",
+    "MilitaryDrop.FultonHarnessBag": "Fulton harness bag (part)",
     "MilitaryDrop.FultonKit": "Fulton recovery kit",
     "MilitaryDrop.FultonKitDamaged": "Damaged Fulton recovery kit",
     "MilitaryDrop.HeliumTank": "Helium tank"

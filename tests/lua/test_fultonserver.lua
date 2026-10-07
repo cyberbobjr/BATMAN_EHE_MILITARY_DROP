@@ -1,7 +1,8 @@
--- MilitaryDrop_FultonServer : lâcher d'un kit Fulton (FULTON-07). Le serveur
--- revérifie tout, consomme une charge d'hélium, retire le kit et son contenu
--- (et le fait savoir aux clients en MP), paie la confiance (plafond, remède
--- hors plafond), ferme le créneau et répond au joueur sans chiffre.
+-- MilitaryDrop_FultonServer : lâcher d'un kit Fulton POSÉ AU SOL (FULTON-07,
+-- décision du 2026-10-07). Le serveur retrouve le kit sur la case désignée, à
+-- portée du joueur, revérifie tout, consomme une charge d'hélium, retire le kit
+-- du sol pour tous, paie la confiance (plafond, remède hors plafond), ferme le
+-- créneau et répond au joueur sans chiffre.
 
 local T = {}
 
@@ -25,17 +26,10 @@ local function item(fullType, tags, name)
     return it
 end
 
---- Conteneur simulé : liste d'objets, Remove.
+--- Conteneur simulé : liste d'objets.
 local function container(items)
     local c = { items = items or {} }
     function c.getItems(self) return list(self.items) end
-    function c.Remove(self, it)
-        for i = #self.items, 1, -1 do
-            if self.items[i] == it then
-                table.remove(self.items, i)
-            end
-        end
-    end
     function c.getItemWithID(self, id)
         for _, it in ipairs(self.items) do
             if it.id == id then
@@ -45,11 +39,6 @@ local function container(items)
         return nil
     end
     return c
-end
-
-local function place(parent, it)
-    parent.items[#parent.items + 1] = it
-    it.getContainer = function() return parent end
 end
 
 local function makeKit(id, contents)
@@ -66,27 +55,40 @@ local function makeTank(id, uses)
     tank.id, tank.uses = id, uses
     function tank.getID(self) return self.id end
     function tank.getCurrentUses(self) return self.uses end
-    function tank.UseAndSync(self)
-        self.uses = self.uses - 1
-        USED[#USED + 1] = self
-    end
+    function tank.UseAndSync(self) self.uses = self.uses - 1 end
     return tank
 end
 
-local function square(opts)
-    opts = opts or {}
-    return {
-        isOutside = function() return opts.inside ~= true end,
-        getTree = function() return opts.tree end,
-        getX = function() return 100 end,
-        getY = function() return 200 end,
-        getZ = function() return 0 end,
-    }
+--- Case du sol (100, 200, 0) : objets au sol, retrait transmis.
+local function makeGround()
+    local sq = { objects = {}, inside = false, tree = nil }
+    function sq.isOutside(self) return not self.inside end
+    function sq.getTree(self) return self.tree end
+    function sq.getX() return 100 end
+    function sq.getY() return 200 end
+    function sq.getZ() return 0 end
+    function sq.getWorldObjects(self) return list(self.objects) end
+    function sq.transmitRemoveItemFromSquare(self, object)
+        for i = #self.objects, 1, -1 do
+            if self.objects[i] == object then
+                table.remove(self.objects, i)
+                REMOVED[#REMOVED + 1] = object
+            end
+        end
+    end
+    return sq
+end
+
+local function putOnGround(kit)
+    local object = { kit = kit }
+    function object.getItem(self) return self.kit end
+    GROUND.objects[#GROUND.objects + 1] = object
+    return object
 end
 
 local function makePlayer(name)
     local data = { MilitaryDrop_characterId = "C:" .. name }
-    local p = { name = name, inventory = container({}), equipped = {}, sq = square() }
+    local p = { name = name, inventory = container({}), equipped = {}, x = 101.5, y = 201.5, z = 0 }
     function p.getUsername(self) return self.name end
     function p.getModData() return data end
     function p.getDescriptor()
@@ -95,24 +97,28 @@ local function makePlayer(name)
     function p.getInventory(self) return self.inventory end
     function p.isEquipped(self, it) return self.equipped[it] == true end
     function p.isAttachedItem() return false end
-    function p.getCurrentSquare(self) return self.sq end
+    function p.getX(self) return self.x end
+    function p.getY(self) return self.y end
+    function p.getZ(self) return self.z end
     return p
 end
 
---- Joueur équipé : kit (contenu donné), bouteille à 4 charges, créneau ouvert.
+--- Joueur prêt : kit (contenu donné) posé au sol à côté de lui, bouteille à 4
+--- charges dans l'inventaire, créneau ouvert.
 local function ready(contents)
     local player = makePlayer("alice")
     local kit = makeKit(11, contents)
     local tank = makeTank(12, 4)
-    place(player.inventory, kit)
-    place(player.inventory, tank)
+    putOnGround(kit)
+    player.inventory.items = { tank }
     WINDOWS["C:alice"] = { deadline = 2000 }
     return player, kit, tank
 end
 
-local function launch(player, kit, tank)
+local function launch(player, kit, tank, x, y)
     NOW_MS = NOW_MS + 5000
-    return FultonServer.launch(player, { kitId = kit and kit.id, tankId = tank and tank.id })
+    return FultonServer.launch(player, { kitId = kit and kit.id, tankId = tank and tank.id,
+        x = x or 100, y = y or 200, z = 0 })
 end
 
 local function lastResult()
@@ -128,7 +134,7 @@ function T.setup()
         SCBA = "base:scba", GAS_MASK = "base:gasmask", GASMASK_FILTER = "base:gasmaskfilter" }
     ACTIVE_MODS = { "ZVirusVaccine42BETA" }
     getActivatedMods = function() return list(ACTIVE_MODS) end
-    STATE, WINDOWS, RESULTS, REMOVED, USED, POST, LAUNCHED = {}, {}, {}, {}, {}, {}, {}
+    STATE, WINDOWS, RESULTS, REMOVED, POST, LAUNCHED = {}, {}, {}, {}, {}, {}
     WORLD_HOURS, CLOCK, NOW_MS = 1000, 24 * 100 + 12, 0
     getGameTime = function() return { getWorldAgeHours = function() return WORLD_HOURS end } end
     getTimestampMs = function() return NOW_MS end
@@ -137,7 +143,15 @@ function T.setup()
     getClimateManager = function()
         return { getIsThunderStorming = function() return STORM end, getWindspeedKph = function() return WIND end }
     end
-    sendRemoveItemFromContainer = function(c, it) REMOVED[#REMOVED + 1] = { container = c, item = it } end
+    GROUND = makeGround()
+    getCell = function()
+        return { getGridSquare = function(_, x, y, z)
+            if x == 100 and y == 200 and z == 0 then
+                return GROUND
+            end
+            return nil
+        end }
+    end
     FACTIONS = {}
     Faction = { getFactions = function() return list(FACTIONS) end }
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
@@ -176,9 +190,9 @@ function T.nominal_launch_pays_consumes_removes_and_answers_without_numbers()
     })
     assertEq(launch(player, kit, tank), "ok", "lâcher accepté")
     assertEq(tank.uses, 3, "une charge d'hélium")
-    assertEq(#player.inventory.items, 1, "kit retiré, bouteille gardée")
-    assertEq(REMOVED[1].item, kit, "retrait envoyé aux clients en MP")
-    assertEq(REMOVED[1].container, player.inventory, "depuis l'inventaire du joueur")
+    assertEq(#GROUND.objects, 0, "kit retiré du sol")
+    assertEq(REMOVED[1].kit, kit, "retrait transmis à tous (transmitRemoveItemFromSquare)")
+    assertEq(#player.inventory.items, 1, "bouteille gardée")
     assertEq(Trust.get("C:alice"), 30, "+5 plafonnés")
     assertEq(WINDOWS["C:alice"], nil, "créneau fermé")
     local result = lastResult()
@@ -188,7 +202,7 @@ function T.nominal_launch_pays_consumes_removes_and_answers_without_numbers()
     assertEq(result.args.lines[1].params[2], "2", "nombre d'objets exploités, pas de points")
     assertEq(#result.args.lines, 1, "ni plafond ni remède")
     assertEq(#POST, 1, "noté au journal du poste")
-    assertEq(LAUNCHED[1].x .. "," .. LAUNCHED[1].y .. "," .. LAUNCHED[1].z, "100,200,0", "vol au point du lâcher")
+    assertEq(LAUNCHED[1].x .. "," .. LAUNCHED[1].y .. "," .. LAUNCHED[1].z, "100,200,0", "vol depuis la case du kit")
 end
 
 function T.cure_is_uncapped_and_cap_overflow_is_announced()
@@ -216,10 +230,10 @@ function T.worthless_kit_still_flies_and_says_so()
     assertEq(tank.uses, 3, "hélium consommé quand même")
 end
 
---- Le refus ne touche à rien : kit, contenu, hélium, confiance, créneau.
-local function assertUntouched(player, kit, tank, message, uses)
+--- Le refus ne touche à rien : kit au sol, hélium, confiance, vol.
+local function assertUntouched(tank, message, uses)
     assertEq(tank.uses, uses or 4, message .. " : hélium intact")
-    assertTrue(player.inventory:getItemWithID(kit.id) == kit, message .. " : kit gardé")
+    assertEq(#GROUND.objects, 1, message .. " : kit toujours au sol")
     assertEq(#REMOVED, 0, message .. " : rien retiré")
     assertEq(Trust.get("C:alice"), 25, message .. " : confiance inchangée")
     assertEq(#LAUNCHED, 0, message .. " : pas de vol")
@@ -227,17 +241,18 @@ end
 
 function T.refusals_change_nothing()
     local cases = {
-        { "noKit", function(p, kit) kit.id = 99 end },
-        { "noKit", function(p, kit) p.equipped[kit] = true end },
-        { "noHelium", function(p, kit, tank) tank.uses = 0 end, nil, 0 },
+        { "noKit", function(_, kit) kit.id = 99 end },
+        { "noKit", function(p) p.x = 104.5 end },
+        { "noKit", function(p) p.z = 1 end },
+        { "noHelium", function(_, _, tank) tank.uses = 0 end, nil, 0 },
         { "noWindow", function() WINDOWS["C:alice"] = nil end },
         { "disabled", function() SandboxVars.MilitaryDrop.FultonValue = 0 end },
-        { "site", function(p) p.sq = square({ inside = true }) end, "IGUI_MilitaryDrop_Fulton_NotOutside" },
-        { "site", function(p) p.sq = square({ tree = {} }) end, "IGUI_MilitaryDrop_Fulton_Tree" },
+        { "site", function() GROUND.inside = true end, "IGUI_MilitaryDrop_Fulton_NotOutside" },
+        { "site", function() GROUND.tree = {} end, "IGUI_MilitaryDrop_Fulton_Tree" },
         { "site", function() STORM = true end, "IGUI_MilitaryDrop_Fulton_Storm" },
         { "site", function() WIND = 61 end, "IGUI_MilitaryDrop_Fulton_Wind" },
         { "protected", function() PROTECTED = true end },
-        { "emptyKit", function(p, kit) kit.inner.items = {} end },
+        { "emptyKit", function(_, kit) kit.inner.items = {} end },
     }
     for n, case in ipairs(cases) do
         T.setup()
@@ -245,13 +260,23 @@ function T.refusals_change_nothing()
         case[2](player, kit, tank)
         local kitId = kit.id
         kit.id = 11
-        assertEq(FultonServer.launch(player, { kitId = kitId, tankId = tank.id }), case[1], "cas " .. n)
+        NOW_MS = NOW_MS + 5000
+        assertEq(FultonServer.launch(player, { kitId = kitId, tankId = tank.id, x = 100, y = 200, z = 0 }),
+            case[1], "cas " .. n)
         if case[3] then
             assertEq(lastResult().args.reason, case[3], "cas " .. n .. " : motif")
         end
         assertEq(lastResult().args.status, case[1], "cas " .. n .. " : statut transmis")
-        assertUntouched(player, kit, tank, "cas " .. n, case[4])
+        assertUntouched(tank, "cas " .. n, case[4])
     end
+end
+
+function T.forged_coordinates_are_refused()
+    local player, kit, tank = ready({ item("Base.Paperwork") })
+    assertEq(launch(player, kit, tank, 300, 200), "noKit", "case désignée hors de portée")
+    NOW_MS = NOW_MS + 5000
+    assertEq(FultonServer.launch(player, { kitId = kit.id, tankId = tank.id }), "noKit", "sans coordonnées")
+    assertEq(#GROUND.objects, 1, "kit intact")
 end
 
 function T.line_cut_refuses()
@@ -261,32 +286,28 @@ function T.line_cut_refuses()
     assertEq(tank.uses, 4, "hélium intact")
 end
 
-function T.kit_or_tank_in_a_bag_is_refused_by_the_server()
-    local player = makePlayer("alice")
-    local bag = container({})
-    local kit, tank = makeKit(11, { item("Base.Paperwork") }), makeTank(12, 4)
-    place(bag, kit)
-    place(player.inventory, tank)
-    WINDOWS["C:alice"] = { deadline = 2000 }
-    assertEq(launch(player, kit, tank), "noKit", "le client doit d'abord le sortir du sac")
+function T.tank_in_a_bag_is_refused_by_the_server()
+    local player, kit, tank = ready({ item("Base.Paperwork") })
+    player.inventory.items = {}
+    assertEq(launch(player, kit, tank), "noHelium", "le client doit d'abord la sortir du sac")
+    assertEq(#GROUND.objects, 1, "kit intact")
 end
 
 function T.rapid_second_launch_is_throttled()
     local player, kit, tank = ready({ item("Base.Paperwork") })
     assertEq(launch(player, kit, tank), "ok", "premier lâcher")
     NOW_MS = NOW_MS + 1000
-    local kit2 = makeKit(13, { item("Base.Paperwork") })
-    place(player.inventory, kit2)
+    putOnGround(makeKit(13, { item("Base.Paperwork") }))
     WINDOWS["C:alice"] = { deadline = 2000 }
-    assertEq(FultonServer.launch(player, { kitId = 13, tankId = 12 }), "busy", "moins de 3 s après")
+    assertEq(FultonServer.launch(player, { kitId = 13, tankId = 12, x = 100, y = 200, z = 0 }), "busy",
+        "moins de 3 s après")
 end
 
-function T.solo_removes_without_network()
+function T.solo_launch_also_removes_the_kit()
     isServer = function() return false end
     local player, kit, tank = ready({ item("Base.Paperwork") })
     assertEq(launch(player, kit, tank), "ok", "solo")
-    assertEq(#REMOVED, 0, "pas d'envoi réseau en solo")
-    assertEq(player.inventory:getItemWithID(kit.id), nil, "kit retiré")
+    assertEq(#GROUND.objects, 0, "kit retiré du sol")
 end
 
 function T.default_hook_starts_the_flight_noise_and_announcement()

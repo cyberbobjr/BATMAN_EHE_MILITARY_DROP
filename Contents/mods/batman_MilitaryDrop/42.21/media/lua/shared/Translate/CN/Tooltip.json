@@ -7,9 +7,9 @@
     "Tooltip_MilitaryDrop_DecoyBeacon": "佯动。这次空投不含任何补给：它的警报器会把僵尸引向空投箱。",
     "Tooltip_MilitaryDrop_RequisitionCase": "军方根据你的申领送达。打开可获得所申领的物资。",
     "Tooltip_MilitaryDrop_FlightRecorder": "从被击落的直升机回收的记录器。在联络站的读取舱读取，然后把数据发送给后勤处。",
-    "Tooltip_MilitaryDrop_FultonBalloonFolded": "缝制的防水布气囊。与吊带袋和铁丝组装。",
-    "Tooltip_MilitaryDrop_FultonHarnessBag": "装有绳索吊带的货袋。与折叠气球和铁丝组装。",
-    "Tooltip_MilitaryDrop_FultonKit": "一次性气球回收系统。充气需消耗氦气瓶的一次充量。",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "制作零件,还不是富尔顿:与吊带袋和铁丝组装,得到富尔顿回收套件。",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "制作零件,还不是富尔顿:与气球外囊和铁丝组装,得到富尔顿回收套件。",
+    "Tooltip_MilitaryDrop_FultonKit": "内含气球,一次性使用。1. 用无线电请求富尔顿回收(后勤)。2. 把套件放在室外地面上,装入情报或装备。3. 右键点击套件:充气并放飞(消耗一次氦气)。",
     "Tooltip_MilitaryDrop_FultonKitDamaged": "气囊破损,吊带磨损。可用线、胶带和铁丝修理。",
     "Tooltip_MilitaryDrop_HeliumTank": "足够为四个富尔顿气球充气。空的钢瓶可用喷灯切割。"
 }

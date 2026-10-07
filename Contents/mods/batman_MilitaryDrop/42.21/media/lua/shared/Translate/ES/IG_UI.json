@@ -482,10 +482,10 @@
     "IGUI_MilitaryDrop_Reply_FultonOpen": "%1, aquí Logística. Recogida Fulton aprobada: suelte el globo en menos de %2 minutos, al aire libre y en terreno despejado. Corto.",
     "IGUI_MilitaryDrop_Reply_FultonPending": "%1, aquí Logística. Su ventana Fulton sigue abierta: quedan %2 minutos. Corto.",
     "IGUI_MilitaryDrop_Fulton_Launch": "Inflar y soltar el Fulton",
-    "IGUI_MilitaryDrop_Fulton_NoKit": "El kit Fulton tiene que estar en mi inventario.",
+    "IGUI_MilitaryDrop_Fulton_NoKit": "El kit Fulton tiene que estar en el suelo, justo a mi lado.",
     "IGUI_MilitaryDrop_Fulton_NoHelium": "Necesito una bombona de helio que no esté vacía.",
     "IGUI_MilitaryDrop_Fulton_LineCut": "Logística ya no nos responde. No hay recogida.",
-    "IGUI_MilitaryDrop_Fulton_NoWindow": "Primero tengo que pedir una recogida Fulton por radio.",
+    "IGUI_MilitaryDrop_Fulton_NoWindow": "Primero pide una recogida Fulton por radio (sección Logística de una radio militar).",
     "IGUI_MilitaryDrop_Fulton_Protected": "Aquí no: esta zona está protegida.",
     "IGUI_MilitaryDrop_Fulton_EmptyKit": "El kit está vacío. Nada que enviar.",
     "IGUI_MilitaryDrop_Fulton_NotOutside": "Tengo que estar fuera, a cielo abierto.",
@@ -503,5 +503,6 @@
     "IGUI_MilitaryDrop_Fulton_ReceivedNothing": "%1, aquí Logística. Carga recuperada, pero nada aprovechable. Corto.",
     "IGUI_MilitaryDrop_Fulton_Cure": "La cura ha llegado. Prioridad absoluta. Gracias.",
     "IGUI_MilitaryDrop_Fulton_CapReached": "Crédito del día agotado: una parte no se le contará.",
-    "IGUI_MilitaryDrop_BroadcastFulton": "Logística a todas las estaciones: extracción Fulton en curso cerca de la cuadrícula %1 / %2. Corto."
+    "IGUI_MilitaryDrop_BroadcastFulton": "Logística a todas las estaciones: extracción Fulton en curso cerca de la cuadrícula %1 / %2. Corto.",
+    "IGUI_MilitaryDrop_Fulton_PutOnGround": "Deja el kit en el suelo, al aire libre, para inflarlo."
 }

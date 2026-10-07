@@ -7,9 +7,9 @@
     "Tooltip_MilitaryDrop_DecoyBeacon": "DIVERSION. Ce largage ne contient aucune fourniture : sa sirène attire les morts vers la caisse.",
     "Tooltip_MilitaryDrop_RequisitionCase": "Livrée par l'armée sur votre réquisition. L'ouvrir pour obtenir les fournitures commandées.",
     "Tooltip_MilitaryDrop_FlightRecorder": "Enregistreur récupéré dans un hélicoptère abattu. Lisez-le dans la baie de lecture d'un poste de liaison, puis transmettez ses données à la Logistique.",
-    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Enveloppe en bâche cousue. À assembler avec un sac à harnais et du fil de fer.",
-    "Tooltip_MilitaryDrop_FultonHarnessBag": "Sac de charge muni d'un harnais de corde. À assembler avec un ballon plié et du fil de fer.",
-    "Tooltip_MilitaryDrop_FultonKit": "Système de récupération par ballon, à usage unique. Le gonflage prend une charge d'une bouteille d'hélium.",
+    "Tooltip_MilitaryDrop_FultonBalloonFolded": "Pièce de fabrication, pas encore un Fulton : assemblez-la avec un sac à harnais et du fil de fer pour obtenir un kit d'extraction Fulton.",
+    "Tooltip_MilitaryDrop_FultonHarnessBag": "Pièce de fabrication, pas encore un Fulton : assemblez-la avec une enveloppe de ballon et du fil de fer pour obtenir un kit d'extraction Fulton.",
+    "Tooltip_MilitaryDrop_FultonKit": "Ballon inclus, usage unique. 1. Demandez un passage Fulton par radio (Logistique). 2. Posez le kit au sol, dehors, et remplissez-le de renseignement ou de matériel. 3. Clic droit sur le kit : Gonfler et lâcher (une charge d'hélium).",
     "Tooltip_MilitaryDrop_FultonKitDamaged": "Enveloppe déchirée et harnais effiloché. Réparable avec du fil, du ruban adhésif et du fil de fer.",
     "Tooltip_MilitaryDrop_HeliumTank": "Assez d'hélium pour gonfler quatre ballons Fulton. Vide, la bouteille en acier se découpe au chalumeau."
 }

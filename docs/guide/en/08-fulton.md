@@ -14,7 +14,7 @@ The kit is single use: it leaves with the balloon.
 
 | Recipe | Uses up | Keeps | Skill |
 |---|---|---|---|
-| Sew Fulton balloon | 1 tarp, 6 uses of thread, 2 uses of glue | needle, scissors | Tailoring 3 |
+| Sew Fulton balloon (gives the balloon envelope, a part) | 1 tarp, 6 uses of thread, 2 uses of glue | needle, scissors | Tailoring 3 |
 | Make Fulton harness bag | 1 **empty** sandbag, 1 rope, 2 uses of duct tape | scissors | — |
 | Assemble Fulton recovery kit | folded balloon, harness bag, 3 uses of wire | pliers | — |
 
@@ -29,10 +29,10 @@ A **helium tank** holds four inflations. Look in gift and toy stores, and in arm
 ## Sending a Fulton
 
 1. **Ask for a pick-up.** With a military radio on the military frequency (in hand, or placed within 2 tiles), open the radio's **Logistics** section and choose **Request a Fulton pick-up**. You then have **30 minutes** of game time. Asking again tells you how long is left. Missing the window costs nothing.
-2. **Fill the kit** like a bag (capacity 10). Only items placed directly in the kit count; a bag inside the kit is lost.
-3. **Go outside**, under open sky, with no tree on your tile. Not in a thunderstorm or strong wind, not in a non-PvP zone or safehouse.
-4. Right-click the kit: **Inflate and release the Fulton**. The option is greyed out with the reason if something is missing. A confirmation lists what interests Command and what it will ignore, and warns you if today's credit is used up.
-5. Inflating takes about 10 seconds and makes noise: the dead come. It stops if you move or get attacked.
+2. **Put the kit on the ground, outside**, under open sky, with no tree on its tile. Not in a thunderstorm or strong wind, not in a non-PvP zone or safehouse.
+3. **Fill it** like any bag on the ground (capacity 10). Only items placed directly in the kit count; a bag inside the kit is lost. The balloon is already in the kit: there is nothing to attach.
+4. Right-click the kit on the ground: **Inflate and release the Fulton** (you need a helium tank in your inventory). The option is greyed out with the reason if something is missing; in your inventory it tells you to put the kit on the ground. A confirmation lists what interests Command and what it will ignore, and warns you if today's credit is used up.
+5. Your character walks to the kit and inflates it: about 10 seconds, and noise that draws the dead. It stops if you move or get attacked.
 6. The balloon rises, the aircraft passes and takes it. Command confirms how many items it could use.
 
 **Everyone hears it.** The pass is loud, and the military channel announces the 50-tile sector to every station. Choose your spot.
@@ -58,4 +58,4 @@ These gains share the **daily cap** (10 by default) with reports, dog tags and m
 
 ## Multiplayer
 
-The server checks everything again when you release: kit and tank in your main inventory, open window, spot, weather, protected zones. It also pays and removes the kit for everyone. Every player near the release point sees the balloon and hears the aircraft. The flight completes even if you die or disconnect.
+The server checks everything again when you release: kit on the ground within 2 tiles, tank in your main inventory, open window, spot, weather, protected zones. It also pays and removes the kit for everyone. Every player near the release point sees the balloon and hears the aircraft. The flight completes even if you die or disconnect.
