@@ -421,7 +421,7 @@ function PostWindow.journalText(lines)
             text = rgb("sys") .. escape(getText("IGUI_MilitaryDrop_PostSys_" .. tostring(entry.sys),
                 tostring(entry.site or "")))
         else
-            text = rgb("line") .. escape(entry.t)
+            text = rgb("line") .. escape(MilitaryDrop.Exchange.lineText(entry.t))
         end
         -- ISRichTextPanel avale les espaces autour des balises : <SPACE> sépare
         -- l'heure du texte.
@@ -1137,7 +1137,7 @@ function PostWindow.lastReceivedKey(data)
     for i = #lines, 1, -1 do
         local entry = lines[i]
         if entry.t and not entry.gap then
-            return tostring(entry.c) .. "|" .. tostring(entry.t)
+            return tostring(entry.c) .. "|" .. MilitaryDrop.Exchange.lineText(entry.t)
         end
     end
     return ""

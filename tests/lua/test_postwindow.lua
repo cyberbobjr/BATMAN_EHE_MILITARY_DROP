@@ -116,7 +116,7 @@ end
 
 function T.lamps_never_reveal_the_frequency()
     local data = sampleData()
-    data.lines = { { c = 1, t = "hello" }, { c = 2, sys = "moved" } }
+    data.lines = { { c = 1, t = { text = "hello" } }, { c = 2, sys = "moved" } }
     local lamps = W.lamps(data)
     assertTrue(lamps.on and lamps.rx and lamps.power, "allumé, dernière ligne reçue (entrée système ignorée)")
     data.lines[#data.lines + 1] = { c = 3, gap = 2 }
@@ -129,7 +129,7 @@ function T.lamps_never_reveal_the_frequency()
     data.battery = nil
     assertEq(W.lamps(data).level, "battery", "pile, charge inconnue")
     assertEq(W.lamps(data).battery, nil, "pas de jauge sans la charge")
-    assertEq(W.lastReceivedKey({ lines = { { c = 1, t = "a" }, { c = 2, gap = 1 } } }), "1|a", "dernière ligne reçue")
+    assertEq(W.lastReceivedKey({ lines = { { c = 1, t = { text = "a" } }, { c = 2, gap = 1 } } }), "1|a", "dernière ligne reçue")
 end
 
 function T.mission_orders_show_deadline_grid_and_bar()

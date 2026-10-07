@@ -233,12 +233,12 @@ local function begin(player, args, source)
     ctx.characterId = MilitaryDrop.Trust.idFor(player)
     ctx.callsign = MilitaryDrop.Teams.callsign(ctx.teamId) or ""
     if MilitaryDrop.Trust.isLineCut(ctx.characterId) then
-        reply(ctx, "lineCut", { getText("IGUI_MilitaryDrop_LineCut", ctx.callsign) })
+        reply(ctx, "lineCut", { Exchange.line("IGUI_MilitaryDrop_LineCut", ctx.callsign) })
         return nil
     end
     MilitaryDrop.Trust.touch(ctx.characterId)
     if not Exchange.isEnabled(source) then
-        reply(ctx, "disabled", { getText("IGUI_MilitaryDrop_Reply_Disabled", ctx.callsign) })
+        reply(ctx, "disabled", { Exchange.line("IGUI_MilitaryDrop_Reply_Disabled", ctx.callsign) })
         return nil
     end
     ctx.opts = { fromPost = isTeamPost(ctx.teamId, radio) }
@@ -257,12 +257,12 @@ function Missions.report(player, args)
     local reports = state().reports
     local day = currentDay()
     if reports[ctx.characterId] == day then
-        reply(ctx, "already", { getText("IGUI_MilitaryDrop_Reply_ReportAlready", ctx.callsign) })
+        reply(ctx, "already", { Exchange.line("IGUI_MilitaryDrop_Reply_ReportAlready", ctx.callsign) })
         return
     end
     reports[ctx.characterId] = day
     MilitaryDrop.Trust.add(ctx.characterId, Exchange.gain("report"), "report", ctx.opts)
-    reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_Report_" .. (ZombRand(Missions.REPORT_REPLIES) + 1),
+    reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_Report_" .. (ZombRand(Missions.REPORT_REPLIES) + 1),
         ctx.callsign) })
 end
 
@@ -338,15 +338,15 @@ end
 function Missions.dogTagReplyLines(callsign, credited, known, kept)
     local lines = {}
     if #credited > 0 then
-        lines[#lines + 1] = getText("IGUI_MilitaryDrop_Reply_DogTags", callsign, Exchange.namesText(credited))
+        lines[#lines + 1] = Exchange.line("IGUI_MilitaryDrop_Reply_DogTags", callsign, Exchange.namesLine(credited))
     end
     if #known > 0 then
-        lines[#lines + 1] = getText("IGUI_MilitaryDrop_Reply_DogTagsKnown", callsign, Exchange.namesText(known))
+        lines[#lines + 1] = Exchange.line("IGUI_MilitaryDrop_Reply_DogTagsKnown", callsign, Exchange.namesLine(known))
     end
     if kept == "full" then
-        lines[#lines + 1] = getText("IGUI_MilitaryDrop_Reply_DogTagsFull", callsign)
+        lines[#lines + 1] = Exchange.line("IGUI_MilitaryDrop_Reply_DogTagsFull", callsign)
     elseif kept then
-        lines[#lines + 1] = getText("IGUI_MilitaryDrop_Reply_DogTagsCap", callsign)
+        lines[#lines + 1] = Exchange.line("IGUI_MilitaryDrop_Reply_DogTagsCap", callsign)
     end
     return lines
 end
@@ -741,18 +741,18 @@ function Missions.confirmRecon(player, args)
     local now = hoursNow()
     local mission = Missions.openMission("recon", now)
     if not mission then
-        reply(ctx, "noMission", { getText("IGUI_MilitaryDrop_Reply_NoRecon", ctx.callsign) })
+        reply(ctx, "noMission", { Exchange.line("IGUI_MilitaryDrop_Reply_NoRecon", ctx.callsign) })
         return
     end
     local dx = player:getX() - (mission.x + 0.5)
     local dy = player:getY() - (mission.y + 0.5)
     if dx * dx + dy * dy > mission.radius * mission.radius then
-        reply(ctx, "tooFar", { getText("IGUI_MilitaryDrop_Reply_ReconFar", ctx.callsign, tostring(mission.x),
+        reply(ctx, "tooFar", { Exchange.line("IGUI_MilitaryDrop_Reply_ReconFar", ctx.callsign, tostring(mission.x),
             tostring(mission.y)) })
         return
     end
     MilitaryDrop.Trust.add(ctx.characterId, Exchange.gain("recon"), "recon", ctx.opts)
-    reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_ReconDone", ctx.callsign) })
+    reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_ReconDone", ctx.callsign) })
     close("recon", now, "done", ctx.characterId, getText("IGUI_MilitaryDrop_Broadcast_ReconDone", tostring(mission.x),
         tostring(mission.y), MilitaryDrop.Trust.name(ctx.characterId)))
 end
@@ -1007,16 +1007,16 @@ function Missions.cleanupStatus(player, args)
     end
     local mission = Missions.openMission("cleanup")
     if not mission then
-        reply(ctx, "noMission", { getText("IGUI_MilitaryDrop_Reply_NoCleanup", ctx.callsign) })
+        reply(ctx, "noMission", { Exchange.line("IGUI_MilitaryDrop_Reply_NoCleanup", ctx.callsign) })
         return
     end
     if type(mission.horde) ~= "table" then
-        reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_CleanupPending", ctx.callsign, tostring(mission.x),
+        reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_CleanupPending", ctx.callsign, tostring(mission.x),
             tostring(mission.y), tostring(mission.radius)) })
         return
     end
     local mine = tonumber(mission.counts and mission.counts[ctx.characterId]) or 0
-    reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_CleanupStatus", ctx.callsign, tostring(mine),
+    reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_CleanupStatus", ctx.callsign, tostring(mine),
         tostring(Missions.hordeLeft(mission.horde))) })
 end
 
@@ -1028,16 +1028,16 @@ function Missions.confirmControl(player, args)
     end
     local mission = Missions.openMission("control")
     if not mission then
-        reply(ctx, "noMission", { getText("IGUI_MilitaryDrop_Reply_NoControl", ctx.callsign) })
+        reply(ctx, "noMission", { Exchange.line("IGUI_MilitaryDrop_Reply_NoControl", ctx.callsign) })
         return
     end
     if mission.responded[ctx.characterId] then
-        reply(ctx, "already", { getText("IGUI_MilitaryDrop_Reply_ControlAlready", ctx.callsign) })
+        reply(ctx, "already", { Exchange.line("IGUI_MilitaryDrop_Reply_ControlAlready", ctx.callsign) })
         return
     end
     mission.responded[ctx.characterId] = true
     MilitaryDrop.Trust.add(ctx.characterId, Exchange.gain("control"), "control", ctx.opts)
-    reply(ctx, "ok", { getText("IGUI_MilitaryDrop_Reply_ControlDone", ctx.callsign) })
+    reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_ControlDone", ctx.callsign) })
 end
 
 --- Missions ouvertes et progression du personnage (console du poste de liaison) :

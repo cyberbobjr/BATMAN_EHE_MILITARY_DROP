@@ -442,14 +442,14 @@ end
 function T.loaded_post_records_what_it_receives()
     install(ALICE, RADIO)
     Post.record(nil, "Annonce 1")
-    assertEq(lastEntry("SOLO").t, "Annonce 1", "reçue")
+    assertEq(lastEntry("SOLO").t.text, "Annonce 1", "reçue")
     RADIO.data.on = false
     Post.record(nil, "Annonce 2")
     Post.record(nil, "Annonce 3")
     assertEq(lastEntry("SOLO").gap, 2, "éteint : une entrée « aucune réception » regroupée")
     RADIO.data.on = true
     Post.record(nil, "Annonce 4")
-    assertEq(lastEntry("SOLO").t, "Annonce 4", "rallumé")
+    assertEq(lastEntry("SOLO").t.text, "Annonce 4", "rallumé")
 end
 
 function T.loaded_post_needs_channel_power_and_battery()
@@ -467,7 +467,7 @@ function T.loaded_post_needs_channel_power_and_battery()
     assertEq(lastEntry("SOLO").gap, 3, "pile vide (canBePoweredHere toujours vrai sur pile)")
     RADIO.data.power = 0.3
     Post.record(nil, "d")
-    assertEq(lastEntry("SOLO").t, "d", "pile chargée")
+    assertEq(lastEntry("SOLO").t.text, "d", "pile chargée")
 end
 
 function T.same_line_recorded_twice_is_kept_once()
@@ -487,8 +487,8 @@ function T.journal_is_bounded_to_200_entries()
     end
     local lines = log("SOLO")
     assertEq(#lines, 200, "200 entrées")
-    assertEq(lines[1].t, "ligne 51", "les plus anciennes sont oubliées")
-    assertEq(lines[200].t, "ligne 250", "la plus récente est gardée")
+    assertEq(lines[1].t.text, "ligne 51", "les plus anciennes sont oubliées")
+    assertEq(lines[200].t.text, "ligne 250", "la plus récente est gardée")
 end
 
 function T.team_line_goes_only_to_that_team()
@@ -498,10 +498,10 @@ function T.team_line_goes_only_to_that_team()
     install(mallory, makeRadio(makeSquare(200, 200, 0)))
     local rangers, alone = Teams.idFor("alice"), Teams.idFor("mallory")
     Post.record(rangers, "Pour les Rangers")
-    assertEq(lastEntry(rangers).t, "Pour les Rangers", "équipe visée")
+    assertEq(lastEntry(rangers).t.text, "Pour les Rangers", "équipe visée")
     assertEq(lastEntry(alone).sys, "installed", "l'autre équipe n'a rien")
     Post.record(nil, "À toutes les stations")
-    assertEq(lastEntry(alone).t, "À toutes les stations", "toutes les stations")
+    assertEq(lastEntry(alone).t.text, "À toutes les stations", "toutes les stations")
 end
 
 function T.team_without_post_gets_nothing()
@@ -518,7 +518,7 @@ function T.unloaded_mains_post_follows_the_global_grid()
     install(ALICE, RADIO)
     LOADED = false
     Post.record(nil, "réseau en service")
-    assertEq(lastEntry("SOLO").t, "réseau en service", "secteur : réseau global en service")
+    assertEq(lastEntry("SOLO").t.text, "réseau en service", "secteur : réseau global en service")
     GRID = false
     Post.record(nil, "réseau coupé")
     assertEq(lastEntry("SOLO").gap, 1, "réseau global coupé depuis")
@@ -543,7 +543,7 @@ function T.unloaded_generator_post_projects_its_fuel()
     LOADED = false
     wait(5)
     Post.record(nil, "5 h plus tard")
-    assertEq(lastEntry("SOLO").t, "5 h plus tard", "carburant projeté : 0,5")
+    assertEq(lastEntry("SOLO").t.text, "5 h plus tard", "carburant projeté : 0,5")
     wait(6)
     Post.record(nil, "11 h plus tard")
     assertEq(lastEntry("SOLO").gap, 1, "carburant projeté épuisé")
@@ -565,7 +565,7 @@ function T.unloaded_battery_post_keeps_its_frozen_charge()
     GRID = false
     wait(500)
     Post.record(nil, "toujours")
-    assertEq(lastEntry("SOLO").t, "toujours", "pile figée hors chargement")
+    assertEq(lastEntry("SOLO").t.text, "toujours", "pile figée hors chargement")
 end
 
 function T.unloaded_empty_battery_post_receives_nothing()
@@ -662,7 +662,7 @@ function T.dog_tags_are_deposited_then_transmitted()
     assertEq(CREDITS[1].fromPost, true, "bonus du poste (POSTE-06)")
     assertEq(#STATE.postMail.SOLO, 0, "boîte vidée")
     local journal = log("SOLO")
-    assertEq(journal[#journal].t, "merci 12-345, Soldier 678", "la base cite les noms au journal")
+    assertEq(journal[#journal].t.text, "merci 12-345, Soldier 678", "la base cite les noms au journal")
     command("PostTransmit", ALICE, { radio = ref(RADIO) })
     assertEq(lastSent("PostResult").status, "emptyMail", "boîte vide")
 end
@@ -776,8 +776,8 @@ function T.console_receives_only_the_last_60_journal_lines()
     command("PostOpen", ALICE, { radio = ref(RADIO) })
     local lines = lastSent("PostData").lines
     assertEq(#lines, Post.LOG_SEND_MAX, "60 lignes envoyées")
-    assertEq(lines[1].t, "ligne 91", "les plus récentes")
-    assertEq(lines[60].t, "ligne 150", "jusqu'à la dernière")
+    assertEq(lines[1].t.text, "ligne 91", "les plus récentes")
+    assertEq(lines[60].t.text, "ligne 150", "jusqu'à la dernière")
     assertEq(#log("SOLO"), 151, "le serveur garde tout (200 au plus)")
 end
 
@@ -870,7 +870,7 @@ function T.console_texts_are_escaped_and_without_trust_number()
     -- Mercredi 14 juillet 1993, 14 h 30 (horloge du calendrier, Codes.clockHours).
     local clock = MilitaryDrop.Codes.clockHours(1993, 6, 13, 14.5)
     assertEq(PostWindow.stamp(clock), "IGUI_MilitaryDrop_PostTime|14|07", "jour, mois (et heure en %3)")
-    local text = PostWindow.journalText({ { c = clock, t = "a <LINE> b" }, { c = clock, gap = 3 } })
+    local text = PostWindow.journalText({ { c = clock, t = { text = "a <LINE> b" } }, { c = clock, gap = 3 } })
     assertTrue(not text:find("a <LINE> b", 1, true), "texte de la base échappé")
     assertTrue(text:find("IGUI_MilitaryDrop_PostGap|3", 1, true) ~= nil, "trou regroupé")
     assertEq(PostWindow.trustText({ tier = 4 }), "IGUI_MilitaryDrop_PostTrust4|nil|nil", "libellé par palier")
@@ -1110,7 +1110,7 @@ function T.recorder_is_read_while_powered_then_credited_once_out_of_the_daily_ca
     assertEq(trustOf(ALICE), before + 10, "+10 hors plafond quotidien")
     assertEq(STATE.recordersUsed.W3, "C:alice", "crédit noté pour le site")
     assertEq(Post.bayView("SOLO"), nil, "baie vide")
-    assertTrue(lastEntry("SOLO").t:find("IGUI_MilitaryDrop_Reply_Recorder", 1, true) ~= nil,
+    assertTrue(MilitaryDrop.Exchange.lineText(lastEntry("SOLO").t):find("IGUI_MilitaryDrop_Reply_Recorder", 1, true) ~= nil,
         "réponse de la base au journal")
     -- Même site une seconde fois : refusé, l'objet reste au joueur.
     ALICE.inventory = makeInventory({ makeRecorder(8, "W3") })
@@ -1357,6 +1357,32 @@ function T.changed_reading_length_keeps_the_part_already_read()
     Post.READ_HOURS = saved
     assertTrue(view.progress == 0.5 and not view.done, "durée allongée : toujours à mi-lecture")
     assertEq(view.minutesLeft, 30, "minutes restantes selon la nouvelle durée")
+end
+
+
+function T.translatable_journal_entries_keep_parameters_and_deduplicate_by_content()
+    install(ALICE, RADIO)
+    local E = MilitaryDrop.Exchange
+    local before = #log("SOLO")
+    Post.record("SOLO", E.line("IGUI_MilitaryDrop_Reply_DogTags", "Alpha",
+        E.namesLine({ "A", "B", "C", "D" })))
+    Post.record("SOLO", E.line("IGUI_MilitaryDrop_Reply_DogTags", "Alpha",
+        E.namesLine({ "A", "B", "C", "D" })))
+    assertEq(#log("SOLO"), before + 1, "tables distinctes de même contenu regroupées")
+    local line = lastEntry("SOLO").t
+    assertEq(line.key, "IGUI_MilitaryDrop_Reply_DogTags", "clé persistante")
+    assertEq(line.params[2].key, "IGUI_MilitaryDrop_NamesMoreOne", "paramètre imbriqué persistant")
+    local W = loadWindow()
+    getText = function(translationKey, a, b)
+        if translationKey == "IGUI_MilitaryDrop_NamesMoreOne" then return a .. " et un autre" end
+        return "Merci " .. a .. ": " .. b
+    end
+    assertTrue(W.journalText({ { c = 0, t = line } }):find("Merci Alpha: A, B, C et un autre", 1, true) ~= nil,
+        "journal traduit à l'affichage")
+    local receivedKey = W.lastReceivedKey({ lines = { { c = 0, t = line } } })
+    local copy = E.line("IGUI_MilitaryDrop_Reply_DogTags", "Alpha", E.namesLine({ "A", "B", "C", "D" }))
+    assertEq(W.lastReceivedKey({ lines = { { c = 0, t = copy } } }), receivedKey,
+        "rafraîchissement réseau identique : pas de faux clignotement")
 end
 
 return T

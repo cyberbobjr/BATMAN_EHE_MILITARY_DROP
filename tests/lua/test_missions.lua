@@ -191,7 +191,12 @@ end
 local function lastReply(player)
     for i = #SENT, 1, -1 do
         if SENT[i].player == player and SENT[i].command == "ExchangeReply" then
-            return SENT[i].args
+            local args = SENT[i].args
+            local displayed = { status = args.status, exchangeId = args.exchangeId, lines = {} }
+            for n, line in ipairs(args.lines or {}) do
+                displayed.lines[n] = MilitaryDrop.Exchange.lineText(line)
+            end
+            return displayed
         end
     end
     return nil
@@ -1193,6 +1198,21 @@ function T.admin_launches_a_mission_on_demand()
     assertEq(Missions.adminLaunch(alice, { kind = "cleanup", action = "close" }), "none", "rien à clore")
     MilitaryDrop.Net.toPlayer = toPlayer
     MilitaryDrop.Server.canForce = canForce
+end
+
+
+function T.private_report_payload_never_uses_server_translations()
+    local alice = makePlayer("alice")
+    getText = function() error("server must not translate private replies") end
+    call("MissionReport", alice)
+    call("MissionReport", alice)
+    local args = SENT[#SENT].args
+    assertEq(args.status, "already", "second rapport le même jour")
+    assertEq(args.lines[1].key, "IGUI_MilitaryDrop_Reply_ReportAlready", "clé réseau")
+    assertEq(args.lines[1].params[1], Teams.callsign("P:alice"), "indicatif conservé")
+    getText = function(key, callsign) return "FR: " .. callsign .. " — rapport déjà reçu" end
+    assertTrue(MilitaryDrop.Exchange.lineText(args.lines[1]):find("rapport déjà reçu", 1, true) ~= nil,
+        "résolution par le client après réception")
 end
 
 return T
