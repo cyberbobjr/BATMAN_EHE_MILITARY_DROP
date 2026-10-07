@@ -100,6 +100,10 @@ PostWindow.SITE_KEY = "MilitaryDrop_crashSite"
 PostWindow.BAY_SEGMENTS = 10
 -- Durée totale d'une mission par type, si le serveur ne l'envoie pas (heures).
 PostWindow.HOURS_OPTIONS = { recon = "ReconHours", cleanup = "CleanupHours", control = "ControlHours" }
+-- Titre d'une mission, traduit ici dans la langue du joueur (le serveur
+-- n'envoie que kind).
+PostWindow.MISSION_TITLES = { recon = "IGUI_MilitaryDrop_Mission_Recon",
+    cleanup = "IGUI_MilitaryDrop_Mission_Cleanup", control = "IGUI_MilitaryDrop_Mission_Control" }
 -- Langues dont l'alphabet tient dans la police à chasse fixe du jeu (Latin-1) :
 -- journal et plaques en caractères de téléimprimeur ; sinon police normale.
 PostWindow.MONO_LANGUAGES = {
@@ -524,7 +528,9 @@ end
 --- Ordre de mission affiché : titre, échéance, ligne secondaire, barre.
 --- bar = { fraction 0..1, label, kind = "progress" | "time", urgent }.
 function PostWindow.missionView(mission)
-    local view = { title = tostring(mission.title or mission.kind or ""), due = "", sub = "" }
+    local titleKey = PostWindow.MISSION_TITLES[mission.kind]
+    local view = { title = titleKey and getText(titleKey) or tostring(mission.title or mission.kind or ""),
+        due = "", sub = "" }
     local remaining = tonumber(mission.remaining)
     if remaining then
         if remaining >= 1 then

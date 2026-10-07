@@ -347,10 +347,13 @@ end
 function Flights.groundFire(player)
     if MilitaryDrop.Config.get("CrashGunfire") ~= true or player:isDead() or math.floor(player:getZ()) ~= 0
         or MilitaryDrop.Guard.throttled(player, "GroundFire", 500) then return false end
+    -- Pas de contrôle des munitions ni de l'enrayage : la copie serveur de l'arme
+    -- n'est décomptée que pour un tir qui touche un personnage
+    -- (ISReloadWeaponAction.lua:514, OnWeaponSwingHitPoint serveur) ; un tir dans
+    -- le vide vers l'appareil la laisse périmée. Le client ne signale qu'un vrai tir.
     local weapon = player:getPrimaryHandItem()
     if not weapon or not instanceof(weapon, "HandWeapon") or not weapon:isRanged()
-        or weapon:getMaxDamage() <= 0 or weapon:isJammed()
-        or (weapon:getCurrentAmmoCount() <= 0 and not weapon:isRoundChambered()) then return false end
+        or weapon:getMaxDamage() <= 0 then return false end
     local best, bestDistance
     for _, flight in ipairs(state().flights) do
         if flight.started and not flight.crash and not flight.dropped and not flight.forced then

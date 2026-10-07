@@ -116,8 +116,6 @@ local KILL_KEY = "MilitaryDrop_cleanup"
 local HOURS_OPTIONS = { recon = "ReconHours", cleanup = "CleanupHours", control = "ControlHours" }
 local INTERVAL_OPTIONS = { recon = "ReconIntervalHours", cleanup = "CleanupIntervalHours",
     control = "ControlIntervalHours" }
-local TITLES = { recon = "IGUI_MilitaryDrop_Mission_Recon", cleanup = "IGUI_MilitaryDrop_Mission_Cleanup",
-    control = "IGUI_MilitaryDrop_Mission_Control" }
 
 local function hoursNow()
     return getGameTime():getWorldAgeHours()
@@ -1126,17 +1124,19 @@ function Missions.confirmControl(player, args)
 end
 
 --- Missions ouvertes et progression du personnage (console du poste de liaison) :
---- liste de { kind, title, text, deadlineHours (heures restantes), deadline
+--- liste de { kind, text, deadlineHours (heures restantes), deadline
 --- (heure absolue), x, y, radius, progress, quota } ; nettoyage : progress
 --- (zombies de la horde abattus par le personnage), spotted (horde apparue), left
 --- (reste à abattre avant la clôture), down (morts), target (objectif).
+--- Pas de titre : le client le traduit d'après kind dans la langue du joueur
+--- (PostWindow.MISSION_TITLES) ; un getText du serveur sortirait dans sa langue.
 function Missions.listForCharacter(characterId)
     local now = hoursNow()
     local list = {}
     for _, kind in ipairs(Missions.KINDS) do
         local mission = Missions.openMission(kind, now)
         if mission then
-            local entry = { kind = kind, title = getText(TITLES[kind]), text = mission.text,
+            local entry = { kind = kind, text = mission.text,
                 deadlineHours = math.max(0, mission.deadline - now), deadline = mission.deadline,
                 hours = mission.deadline - mission.openedHours,
                 x = mission.x, y = mission.y, radius = mission.radius }

@@ -3,6 +3,14 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.4.3 — 2026-10-07
+
+### Fixed
+
+- Multiplayer: a server whose world was wiped kept the secrets of the previous world (military and numbers station frequencies, codebook table, weekly and fixed codes), because they are stored under the server name. A new world now draws new ones; a world that goes on keeps its own. Servers wiped before this update: see the admin guide (delete the two secret files once).
+- Multiplayer, "Helicopters can be shot down by players" option (off by default): a shot could be ignored because the server judged ammunition from a stale copy of the weapon. The server now counts any real shot, still checking the weapon, distance and heading.
+- Multiplayer: mission titles on the liaison post console were shown in the server's language (or as raw keys); they now follow each player's language.
+
 ## 0.4.2 — 2026-10-07
 
 ### Fixed

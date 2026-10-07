@@ -133,7 +133,8 @@ function T.lamps_never_reveal_the_frequency()
 end
 
 function T.mission_orders_show_deadline_grid_and_bar()
-    local recon = W.missionView({ kind = "recon", title = "Recon", remaining = 31.2, x = 10874, y = 9512 })
+    local recon = W.missionView({ kind = "recon", remaining = 31.2, x = 10874, y = 9512 })
+    assertEq(recon.title, "IGUI_MilitaryDrop_Mission_Recon|nil|nil", "titre traduit par le client d'après kind")
     assertEq(recon.due, "IGUI_MilitaryDrop_PostDue|32|nil", "échéance arrondie au-dessus")
     assertEq(recon.sub, "IGUI_MilitaryDrop_PostGrid|10874|9512", "grille")
     assertEq(recon.bar.kind, "time", "barre du temps restant")
@@ -381,7 +382,7 @@ function T.affairs_list_recorders_tags_then_orders()
     assertEq(list[3].cx, 10, "point du crash lu sur l'objet")
     assertEq(list[4].icon, "Base.Necklace_DogTag", "icône de la plaque vanilla")
     assertEq(list[4].sub, "IGUI_MilitaryDrop_PostTagsCount|1|2", "au poste, sur moi")
-    assertEq(list[6].title, "Recon", "ordre de la base")
+    assertEq(list[6].title, "IGUI_MilitaryDrop_Mission_Recon|nil|nil", "ordre de la base, titre traduit d'après kind")
     data.bay.paused = true
     assertEq(W.affairs(data, {}, 0)[2].lamp, "red", "voyant rouge en pause")
     data.bay.done = true

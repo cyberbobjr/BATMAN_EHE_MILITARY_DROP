@@ -397,7 +397,7 @@ function T.admin_and_decoy_flights_are_not_randomly_crashed()
     assertEq(decoy.crash,nil)
 end
 
-function T.gunfire_checks_its_option_weapon_ammo_heading_and_distance()
+function T.gunfire_checks_its_option_weapon_heading_and_distance()
     maydaySetup()
     SandboxVars.MilitaryDrop.CrashChance = 0
     SandboxVars.MilitaryDrop.CrashGunfireChance = 100
@@ -405,9 +405,10 @@ function T.gunfire_checks_its_option_weapon_ammo_heading_and_distance()
     flight.started, flight.elapsed = true, 35
     MilitaryDrop.Guard.throttled = function() return false end
     instanceof = function(_, cls) return cls=="HandWeapon" end
-    local px, ammo, heading = 300, 1, 1
+    -- Copie serveur de l'arme vide et enrayée (périmée) : le tir compte quand même.
+    local px, ammo, heading = 300, 0, 1
     local weapon = { isRanged=function() return true end, getMaxDamage=function() return 1 end,
-        isJammed=function() return false end, getCurrentAmmoCount=function() return ammo end,
+        isJammed=function() return true end, getCurrentAmmoCount=function() return ammo end,
         isRoundChambered=function() return false end }
     local player = { isDead=function() return false end, getZ=function() return 0 end,
         getX=function() return px end, getY=function() return 600.5 end,
@@ -417,9 +418,7 @@ function T.gunfire_checks_its_option_weapon_ammo_heading_and_distance()
     SandboxVars.MilitaryDrop.CrashGunfire = true
     px = 1
     assertEq(MilitaryDrop.Flights.groundFire(player),false)
-    px, ammo = 300, 0
-    assertEq(MilitaryDrop.Flights.groundFire(player),false)
-    ammo, heading = 1, -1
+    px, heading = 300, -1
     assertEq(MilitaryDrop.Flights.groundFire(player),false)
     heading = 1
     assertTrue(MilitaryDrop.Flights.groundFire(player))

@@ -12,6 +12,18 @@
 -- La graine est lue dès OnLoadRadioScripts (station de chiffres, chaîne
 -- militaire), avant le chargement de la ModData : elle n'en dépend pas.
 --
+-- Monde neuf : les fichiers sont nommés par le mode et le nom de la partie.
+-- En MP, ce nom est celui du serveur (Core.gameSaveWorld = GameServer.serverName,
+-- IsoWorld.java:1690) : il survit à l'effacement de Saves/Multiplayer/<serveur>,
+-- et l'ancienne graine (fréquences, carnet, codes) resservirait au monde
+-- suivant. OnLoadRadioScripts reçoit en second argument « nouvelle partie »
+-- (ZomboidRadio.java:246 : savedWorldVersion == -1, soit map_t.bin absent sur
+-- un serveur, map_ver.bin absent en solo, IsoWorld.readWorldVersion) : la
+-- graine et le code fixe sont alors tirés de nouveau et les fichiers réécrits
+-- (Secrets.onLoadRadioScripts, inscrit avant les modules qui lisent la
+-- graine, car ils requièrent ce fichier). Un monde qui continue garde ses
+-- fichiers.
+--
 -- État privé de la v1.3 (équipes, confiance, largages, missions, plaques,
 -- postes de liaison) : une table de ModData globale dont le nom est tiré de la
 -- graine (Secrets.privateTag). ModData.request ne rend une table qu'à qui en
@@ -41,6 +53,9 @@ Secrets.PRIVATE_PREFIX = "MilitaryDrop_"
 local fixedCode = nil
 local seed = nil
 local privateTag = nil
+-- Monde neuf : ne pas relire les fichiers d'un monde précédent.
+local renewSeed = false
+local renewCode = false
 
 --- Fichier propre à la partie (dossier Lua du serveur ou du joueur).
 function Secrets.file(suffix)
@@ -80,7 +95,8 @@ function Secrets.getFixedCode()
     end
     local file = Secrets.file("code")
     local state = ModData.getOrCreate(Secrets.MODDATA_TAG)
-    fixedCode = readLine(file)
+    fixedCode = not renewCode and readLine(file) or nil
+    renewCode = false
     if not fixedCode then
         -- Reprise d'une version de développement qui le gardait en ModData.
         fixedCode = type(state.code) == "string" and state.code ~= "" and state.code or Codes.generate()
@@ -96,7 +112,8 @@ function Secrets.getSeed()
         return seed
     end
     local file = Secrets.file("seed")
-    seed = Codes.validSeed(readLine(file))
+    seed = not renewSeed and Codes.validSeed(readLine(file)) or nil
+    renewSeed = false
     if not seed then
         -- ZombRand est borné aux entiers Java : deux tirages combinés.
         seed = ZombRand(46340) * 46340 + ZombRand(46340) + 1
@@ -115,11 +132,30 @@ function Secrets.privateTag()
     return privateTag
 end
 
+--- Début du chargement du monde (OnLoadRadioScripts, avant toute lecture de
+--- la graine par la station et la chaîne militaire) : monde neuf, secrets neufs.
+function Secrets.onLoadRadioScripts(_, isNewGame)
+    if not isNewGame then
+        return
+    end
+    renewSeed = true
+    renewCode = true
+    fixedCode = nil
+    seed = nil
+    privateTag = nil
+    MilitaryDrop.log("new world: the code seed and the fixed code are drawn again (" .. Secrets.file("seed") .. ")", true)
+    -- Tirée et écrite tout de suite ; le code fixe l'est à sa première lecture
+    -- (OnInitGlobalModData, après le chargement de la ModData).
+    Secrets.getSeed()
+end
+
 --- État privé de la partie (jamais transmis aux clients). Relu à chaque usage :
 --- la ModData globale est vidée puis relue juste avant OnInitGlobalModData
 --- (GlobalModData.init), une table gardée d'avant serait perdue.
 function Secrets.privateState()
     return ModData.getOrCreate(Secrets.privateTag())
 end
+
+Events.OnLoadRadioScripts.Add(Secrets.onLoadRadioScripts)
 
 return Secrets

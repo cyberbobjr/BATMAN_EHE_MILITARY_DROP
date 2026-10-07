@@ -304,6 +304,8 @@ Les zones de largage ont leur propre outil, dans le panneau d'admin du jeu : voi
 
 Ne partagez ni ne supprimez jamais la graine en cours de partie : les notes et carnets déjà trouvés ne correspondraient plus. Confiance, stations, missions et postes sont sauvegardés avec le monde, dans des données que les clients ne peuvent pas lire.
 
+Un monde neuf reçoit des secrets neufs (depuis la 0.4.3). Sur un serveur multijoueur, la partie `<partie>` de ces noms est le nom du serveur, qui ne change pas quand on efface le monde. Quand le jeu crée un monde neuf (pas de `map_t.bin` dans la sauvegarde, `map_ver.bin` en solo), le mod tire une nouvelle graine et un nouveau code fixe et réécrit les deux fichiers ; le journal du serveur affiche `[MilitaryDrop] new world: the code seed and the fixed code are drawn again`. Un monde qui continue garde ses fichiers. Un serveur remis à zéro avant la 0.4.3 utilise encore la graine de son monde précédent : arrêtez le serveur et supprimez les deux fichiers pour en tirer de nouveaux, avant que les joueurs trouvent mémos ou carnets.
+
 ## Caisse au contenu inattendu
 
 Le serveur écrit toujours ces lignes, même sans le journal de débogage, dans `Zomboid/console.txt` (solo), `Zomboid/server-console.txt` (serveur dédié) ou `Zomboid/coop-console.txt` (partie hébergée). Cherchez `crate contents` :

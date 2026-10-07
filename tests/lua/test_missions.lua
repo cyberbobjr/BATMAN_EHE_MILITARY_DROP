@@ -1249,7 +1249,7 @@ function T.list_for_team_gives_open_missions_and_progress()
     assertEq(list[1].left, 4, "reste à abattre : 5 sur 5 (90 %, arrondi au supérieur) moins 1")
     assertEq(list[1].down, 1, "morts de la horde")
     assertEq(list[1].target, 5, "objectif")
-    assertEq(#Missions.listForCharacter("C:bob")[1].title > 0, true, "titre")
+    assertEq(Missions.listForCharacter("C:bob")[1].title, nil, "titre traduit par le client, pas par le serveur")
     assertEq(Missions.listForCharacter("C:bob")[1].progress, 0, "autre équipe : rien")
     assertEq(Missions.listForCharacter("C:bob")[2].progress, 0, "autre équipe : rien")
 end

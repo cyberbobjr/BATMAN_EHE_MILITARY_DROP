@@ -304,6 +304,8 @@ Drop zones have their own tool, in the game's admin panel: see [In-game tool](#i
 
 Never share or delete the seed file during a game: memos and codebooks already found would no longer match. Trust, stations, missions and posts are saved with the world, in data that clients cannot read.
 
+A new world gets new secrets (since 0.4.3). On a multiplayer server the `<save>` part of these names is the server name, which stays the same when the world is wiped. When the game creates a new world (no `map_t.bin` in the save, `map_ver.bin` in singleplayer), the mod draws a new seed and a new fixed code and overwrites both files; the server log shows `[MilitaryDrop] new world: the code seed and the fixed code are drawn again`. A world that goes on keeps its files. A server wiped before 0.4.3 still uses the seed of its previous world: stop the server and delete both files to draw new ones, before players find memos or codebooks.
+
 ## Crate with unexpected contents
 
 The server always writes these lines, even with the debug log off, to `Zomboid/console.txt` (single player), `Zomboid/server-console.txt` (dedicated server) or `Zomboid/coop-console.txt` (hosted game). Search for `crate contents`:

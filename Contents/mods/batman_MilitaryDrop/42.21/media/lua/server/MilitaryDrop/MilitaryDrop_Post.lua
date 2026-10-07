@@ -744,7 +744,6 @@ function Post.missions(characterId)
             local remaining = deadline and deadline - now or tonumber(mission.deadlineHours)
             out[#out + 1] = {
                 kind = shortText(mission.kind),
-                title = shortText(mission.title),
                 text = shortText(mission.text),
                 remaining = remaining and math.max(0, remaining) or nil,
                 progress = tonumber(mission.progress),
