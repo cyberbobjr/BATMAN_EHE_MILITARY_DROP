@@ -3,7 +3,7 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
-## Unreleased
+## 0.4.1 — 2026-10-07
 
 ### Fixed
 
