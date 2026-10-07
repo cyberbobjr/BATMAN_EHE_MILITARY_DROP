@@ -1,6 +1,6 @@
 # FAQ
 
-[English](../en/07-faq.md) · [Sommaire du guide](README.md) · Précédent : [Administration](06-server-admin.md)
+[English](../en/07-faq.md) · [Sommaire du guide](README.md) · Précédent : [Administration](06-server-admin.md) · Suivant : [Extraction Fulton](08-fulton.md)
 
 **Personne ne répond, seulement des grésillements.**
 La fréquence ou le code est faux, et la base ne dit pas lequel. Vérifiez la fréquence entourée sur une note, redéchiffrez le code de la semaine (il change chaque lundi à 00:00), et assurez-vous d'utiliser une radio militaire. Après 3 codes faux dans la journée, la base se tait jusqu'au lendemain.

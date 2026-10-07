@@ -16,6 +16,7 @@ These files are the source of the wiki pages. / Ces fichiers sont la source des 
 | [5. Liaison post](en/05-liaison-post.md) | [5. Poste de liaison](fr/05-liaison-post.md) |
 | [6. Server admin](en/06-server-admin.md) | [6. Administration](fr/06-server-admin.md) |
 | [7. FAQ](en/07-faq.md) | [7. FAQ](fr/07-faq.md) |
+| [8. Fulton extraction](en/08-fulton.md) | [8. Extraction Fulton](fr/08-fulton.md) |
 
 Build 42.21 · single player and multiplayer / solo et multijoueur.
 

@@ -5,6 +5,10 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 
 ## Unreleased
 
+### Added
+
+- **Fulton extraction (in development).** Send intelligence and gear to Command by balloon and earn trust. Craft a Fulton recovery kit (tarp balloon, sandbag harness, vanilla wire) or repair a damaged one found in army storage, on a downed helicopter's pilot or in a supply crate. Helium tanks hold four inflations (gift and toy stores, army storage); an empty tank can be cut up with a blowtorch. Request a pick-up on the radio's Logistics section, fill the kit, go outside and release it: the balloon rises, an aircraft snatches it, and the military channel announces the sector. Command pays for ID cards, passports and badges of other people, paperwork, stash maps and military NBC gear, within the daily cap; with Zombie Virus Vaccine, samples and vaccines too, and the cure outside the cap. Three new sandbox options: `FultonValue`, `FultonWindowMinutes`, `FultonLootRate`. Multiplayer: everything is checked and paid by the server; every nearby player sees the balloon and hears the aircraft.
+
 ### Changed
 
 - The daily trust cap (`TrustDailyCap` sandbox option) now defaults to 10 instead of 8. Existing games keep their saved value.

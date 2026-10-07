@@ -88,6 +88,16 @@ The mod reads its options each time it uses them: a new value counts for the nex
 | Decoy siren duration (hours) | `DecoySirenHours` | 6 | |
 | Decoy siren noise radius (tiles) | `DecoyNoiseRadius` | 120 | Only while the area around the crate is loaded. |
 
+### Fulton extraction (in development)
+
+See [Fulton extraction](08-fulton.md).
+
+| Option | Key | Default | Effect |
+|---|---|---|---|
+| Fulton: reward (percent) | `FultonValue` | 100 | Scales the trust paid for items sent by Fulton. Still limited by the daily cap, except the cure (Zombie Virus Vaccine). 0: Fulton pick-ups disabled (radio button greyed out). |
+| Fulton: pick-up window (minutes) | `FultonWindowMinutes` | 30 | Game minutes to release a Fulton after a radio request. At least 5. |
+| Fulton: loot rate (percent) | `FultonLootRate` | 100 | Helium tanks (gift and toy stores, army storage) and damaged kits (army storage, Mayday wreck pilot 25 %, supply crate without an order 5 %). 0: none. Applied to containers filled after a change. |
+
 ### Helicopter crash (Mayday branch)
 
 | Option | Key | Default | Effect |

@@ -434,3 +434,40 @@ Préparation :
 | Z22 | Clics consommés (cause de la refonte du 2026-10-06) : **Ajouter une zone**, puis pendant le tracé, une arme en main, cliquer (gauche) sur une porte fermée, puis sur un zombie, puis sur une case libre loin du personnage ; recommencer en deux clics en posant le second coin sur une porte ; après le second coin, faire un clic droit sur le rectangle figé | Rien ne se passe dans le monde : porte non ouverte, ni attaque ni swing, personnage immobile, aucun menu contextuel, aucune surbrillance d'objet ; seuls les coins se fixent ; le clic droit sur le rectangle figé ne déplace pas ses coins ; après le tracé, les clics reviennent au jeu normalement (la molette zoome pendant tout le tracé) |
 | Z24 | Surbrillance, cas limites : passer le curseur d'une action vanilla qui surligne le sol (pose d'un meuble, construction) sur une case éclairée ; mettre le jeu en pause (vitesse 0) puis modifier une zone ; meubles, murs, clôtures et végétation sur des cases du pourtour ; écran partagé (2e joueur à la manette) ; 50 zones ou plus autour de soi ; mourir fenêtre ouverte, case cochée | La case retrouve sa couleur de zone dans la seconde qui suit le passage du curseur ; en pause, la surbrillance suit la modification ; objets du pourtour dessinés normalement (ni doublés, ni assombris, ni par-dessus les personnages) ; seul l'écran de l'admin voit la surbrillance ; pas de chute d'images notable ; après la mort, plus rien au sol |
 | Z27 | Secteur choisi par le joueur, cas limites : un seul secteur actif ; `DropZoneMinDistance = 300` en appelant depuis une zone de Louisville ; feuille ouverte, repasser l'option à *Le plus proche du demandeur* puis transmettre ; **Forcer un largage (admin)** ; une zone de West Point entièrement sur un lac approché, seule dans son secteur, puis choisir West Point ; nom de secteur de 32 caractères, grande police, anglais puis français ; écran partagé avec beaucoup de lots (feuille paginée) | Secteur unique imprimé sans flèches, choisi d'office, **Transmettre** actif dès qu'un lot est choisi ; Louisville absent de la liste (trop proche) ; option changée : « Réquisition non conforme, rien ne part. Rappelez », l'appel suivant n'a plus de champ ; feuille ADMIN avec le même champ, caisse dans le secteur choisi ; lac : « Aucun point de largage dans ce secteur. Choisissez un autre secteur », feuille rouverte remplie, autre secteur accepté sans rappeler (secteur unique : « … pour l'instant. Rappelez plus tard ») ; nom raccourci « ... » dans le champ, complet dans l'infobulle, libellé et note lisibles ; champ au pied de chaque page, la manette ne change pas de page sur la ligne des secteurs |
+
+## Fulton — branche prototype/fulton-ascent (à valider en jeu)
+
+FULTON-02 à FULTON-10 (idée 12, `dev/analyses/idee-12-fulton-conception.md`). Aucun cas n'a encore été joué. Parcours nominal d'abord ; cas limites ensuite. Redémarrer complètement le jeu (scripts d'objets, son et options chargés au démarrage seulement) et vérifier `version=42.21.0` dans le journal de la session. Guide : `docs/guide/fr/08-fulton.md`.
+
+Préparation (solo debug, nouvelle partie, page **Military Drop** : **Journal de débogage** activé) : un talkie militaire allumé sur la fréquence militaire, puis dans la console Lua :
+
+```lua
+local inv = getPlayer():getInventory()
+for _, t in ipairs({ "MilitaryDrop.FultonKit", "MilitaryDrop.HeliumTank", "Base.Paperwork", "Base.Hat_GasMask",
+    "Base.Note", "Base.Tarp", "Base.Thread", "Base.Glue", "Base.Needle", "Base.Scissors", "Base.EmptySandbag",
+    "Base.Rope", "Base.DuctTape", "Base.Wire", "Base.Pliers", "MilitaryDrop.FultonKitDamaged", "Base.BlowTorch",
+    "Base.WeldingMask" }) do inv:AddItem(t) end
+```
+
+Couture 3 pour la recette du ballon (`getPlayer():getPerkLevel(Perks.Tailoring)`, menu de debug pour l'augmenter).
+
+### Parcours nominal, solo
+
+| # | Action | Attendu |
+|---|---|---|
+| F1 | Fenêtre d'artisanat : coudre un ballon, fabriquer le sac à harnais, assembler le kit ; réparer le kit endommagé ; vider une bouteille d'hélium (`tank:setCurrentUses(0)` en console) puis la découper au chalumeau | Noms traduits (« Coudre un ballon Fulton »…) ; utilisations consommées (fil 6, colle 2, ruban 2, fil de fer 3), outils conservés ; sac de sable plein refusé ; bouteille non vide refusée à la découpe ; 4 petites tôles et 2 morceaux d'acier |
+| F2 | Module **Logistique** de la radio › **Demander un passage Fulton** ; redemander 10 minutes de jeu plus tard | Bouton avant « Faire le point » ; « Passage Fulton accordé : lâchez votre ballon dans les 30 minutes… » ; puis « …toujours ouvert : 20 minutes restantes » ; ligne au journal du poste s'il existe |
+| F3 | Mettre dans le kit : papiers, masque à gaz, une note ; sortir à découvert ; clic droit sur le kit › **Gonfler et lâcher le Fulton** › Oui | Confirmation sans chiffre : « Utile à la base : - Paperasse - Masque à gaz », « Sans intérêt… : - Note » ; gonflage de 10 s, les zombies proches approchent ; texte vert « Colis Fulton récupéré : 2 objets exploitables » ; kit disparu, bouteille 3/4 ; `console.txt` : « Fulton launched by … 2 paid, 1 unpaid, +3 capped » |
+| F5 | Pendant F3 : regarder et écouter | Le ballon monte du point de lâcher pendant 3 s, puis part avec le sac en 1,5 s ; le passage de l'avion culmine au moment de l'accroche, puis s'éloigne ; annonce sur la radio militaire « extraction Fulton en cours près de la grille X / Y » (secteur de 50 cases) |
+| F4 | Atteindre le plafond du jour (rapports, plaques), puis demander un passage et ouvrir la confirmation d'un kit rempli | Avertissement « La base a déjà reçu tout ce qu'elle peut porter à votre crédit aujourd'hui… » ; après le lâcher, ligne « Crédit du jour épuisé… » |
+| F6 | Refus : clic droit sur le kit sans créneau, à l'intérieur, sous un arbre, kit vide, sans hélium ; bouger pendant le gonflage | Option grisée avec le motif en infobulle à chaque fois ; gonflage interrompu en bougeant, rien de consommé |
+| F7 | Butin en debug : vider puis remplir des conteneurs d'un magasin de jouets et d'une réserve de l'armée (outil de distribution du menu de debug) ; abattre un hélicoptère (Mayday) | Bouteilles d'hélium et kits endommagés présents à l'occasion ; un kit endommagé parfois sur le pilote ; aucun conteneur interrompu par le poids de la bouteille (vérifier qu'il reste d'autres objets) |
+| F8 | Avec Zombie Virus Vaccine actif (variante 42.20) : envoyer une seringue de remède et un vaccin | Remède compté hors plafond (`console.txt` : « +25 cure ») ; ligne « Le remède est arrivé… » ; aucune erreur au chargement du mod |
+
+### Parcours nominal, MP (serveur dédié `C:\pzserver`, 2 clients)
+
+| # | Action | Attendu |
+|---|---|---|
+| F9 | Client 1 demande un passage et lâche un kit ; client 2 se tient à 30 cases | Client 2 voit le ballon monter et entend l'avion une fois ; les deux entendent l'annonce ; le kit disparaît de l'inventaire du client 1 chez tous ; bouteille à 3/4 après reconnexion |
+| F10 | Client 1 se déconnecte juste après le lâcher | Le vol continue chez le client 2 jusqu'à son terme ; aucune erreur côté serveur |
+| F11 | Client 2 sans créneau : commande forgée `FultonLaunch` (console) | Refus « noWindow » au journal du serveur ; rien consommé |

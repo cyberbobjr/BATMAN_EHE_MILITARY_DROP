@@ -88,6 +88,16 @@ Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, 
 | Durée de la sirène du leurre (heures) | `DecoySirenHours` | 6 | |
 | Portée du bruit de la sirène (cases) | `DecoyNoiseRadius` | 120 | Seulement quand la zone autour de la caisse est chargée. |
 
+### Extraction Fulton (en développement)
+
+Voir [Extraction Fulton](08-fulton.md).
+
+| Option | Clé | Défaut | Effet |
+|---|---|---|---|
+| Fulton : récompense (pour cent) | `FultonValue` | 100 | Multiplie la confiance payée pour les objets envoyés par Fulton. Toujours limitée par le plafond quotidien, sauf le remède (Zombie Virus Vaccine). 0 : extractions Fulton désactivées (bouton radio grisé). |
+| Fulton : créneau de passage (minutes) | `FultonWindowMinutes` | 30 | Minutes de jeu pour lâcher un Fulton après une demande radio. 5 au moins. |
+| Fulton : fréquence dans le butin (pour cent) | `FultonLootRate` | 100 | Bouteilles d'hélium (magasins de cadeaux et de jouets, réserves de l'armée) et kits endommagés (réserves de l'armée, pilote d'une épave Mayday 25 %, caisse sans commande 5 %). 0 : aucun. S'applique aux conteneurs remplis après un changement. |
+
 ### Hélicoptère abattu (branche Mayday)
 
 | Option | Clé | Défaut | Effet |
