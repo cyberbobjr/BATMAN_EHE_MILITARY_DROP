@@ -3,6 +3,12 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.4.2 — 2026-10-07
+
+### Fixed
+
+- Multiplayer (dedicated and hosted servers): the numbers station, military memos, codebooks and handwritten notes showed translation keys such as `IGUI_MilitaryDrop_Numbers_Group` instead of text. They are now written in the server's language. Documents created before this update keep their old text: new ones are correct.
+
 ## 0.4.1 — 2026-10-07
 
 ### Fixed
