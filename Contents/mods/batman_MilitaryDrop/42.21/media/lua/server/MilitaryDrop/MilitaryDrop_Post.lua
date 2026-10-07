@@ -421,7 +421,7 @@ end
 local function addLine(teamId, text, clock)
     local lines = logOf(teamId)
     local last = lines[#lines]
-    if last and last.t == text and math.abs(clock - (tonumber(last.c) or 0)) < Post.DEDUP_HOURS then
+    if last and Exchange.sameLine(last.t, text) and math.abs(clock - (tonumber(last.c) or 0)) < Post.DEDUP_HOURS then
         return
     end
     push(lines, { c = clock, t = text })
@@ -431,7 +431,7 @@ local function addGap(teamId, text, clock)
     local lines = logOf(teamId)
     local last = lines[#lines]
     if last and last.gap then
-        if last.lt == text and math.abs(clock - (tonumber(last.c2) or 0)) < Post.DEDUP_HOURS then
+        if Exchange.sameLine(last.lt, text) and math.abs(clock - (tonumber(last.c2) or 0)) < Post.DEDUP_HOURS then
             return
         end
         last.gap = last.gap + 1
@@ -521,8 +521,13 @@ end
 --- Ligne de la base pour l'équipe teamId, ou pour toutes les stations (nil) :
 --- au journal de chaque équipe dont le poste la reçoit, sinon « aucune réception ».
 function Post.record(teamId, text)
-    text = shortText(text)
-    if not text or text == "" then
+    if type(text) == "string" then
+        local literal = shortText(text)
+        if not literal or literal == "" then
+            return
+        end
+        text = { text = literal }
+    elseif type(text) ~= "table" or type(text.key) ~= "string" or type(text.params) ~= "table" then
         return
     end
     local s = state()
@@ -1132,7 +1137,7 @@ function Post.transmitRecorder(player, args)
     end
     s.recordersUsed[bay.site] = characterId
     local gain = MilitaryDrop.Trust.add(characterId, MilitaryDrop.Trust.RECORDER, "recorder")
-    Post.record(teamId, getText("IGUI_MilitaryDrop_Reply_Recorder", Teams.callsign(teamId) or "", bay.site))
+    Post.record(teamId, Exchange.line("IGUI_MilitaryDrop_Reply_Recorder", Teams.callsign(teamId) or "", bay.site))
     MilitaryDrop.log(string.format("team %s: recorder %s transmitted by %s, trust +%d", tostring(teamId), bay.site,
         tostring(characterId), gain))
     reply(player, "recorderSent")

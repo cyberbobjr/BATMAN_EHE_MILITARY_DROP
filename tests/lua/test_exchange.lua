@@ -257,12 +257,12 @@ function T.send_carries_the_radio_reference_and_shows_the_base_lines()
     assertEq(sent.args.radio.id, 7, "référence de la radio")
     assertEq(sent.args.extra, 1, "paramètres conservés")
     Exchange.onServerCommand("MilitaryDrop", "ExchangeReply",
-        { exchangeId = sent.args.exchangeId, status = "ok", lines = { "line 1", "line 2" } })
+        { exchangeId = sent.args.exchangeId, status = "ok", lines = { { text = "line 1" }, { text = "line 2" } } })
     assertEq(#shown, 2, "deux lignes de la base")
     assertEq(shown[1][1], radio, "par la radio")
     assertEq(shown[2][2], "line 2", "dans l'ordre")
     assertEq(replied.status, "ok", "rappel du demandeur")
-    Exchange.onServerCommand("MilitaryDrop", "ExchangeReply", { exchangeId = sent.args.exchangeId, lines = { "x" } })
+    Exchange.onServerCommand("MilitaryDrop", "ExchangeReply", { exchangeId = sent.args.exchangeId, lines = { { text = "x" } } })
     assertEq(#shown, 2, "réponse déjà traitée : ignorée")
 end
 
@@ -445,6 +445,37 @@ function T.logistics_submenu_is_no_longer_in_the_context_menu()
     local Menu = MilitaryDrop.ExchangeMenu
     assertTrue(type(Menu.reason) == "function" and type(Menu.onOption) == "function"
         and type(Menu.tooltipText) == "function", "fonctions gardées pour la fenêtre radio")
+end
+
+
+function T.private_reply_is_translated_in_each_receiving_client_language()
+    isClient = function() return true end
+    local shown = {}
+    MilitaryDrop.Client = {
+        later = function(_, fn) fn() end,
+        radioSay = function(_, text) shown[#shown + 1] = text end,
+    }
+    local radio = makeRadio()
+    local player = makePlayer(radio)
+    getSpecificPlayer = function() return player end
+    -- Le serveur construit le message sans aucun dictionnaire de traduction.
+    getText = function() error("server dictionary unavailable") end
+    local line = Exchange.line("IGUI_MilitaryDrop_Reply_DogTags", "Alpha",
+        Exchange.namesLine({ "A", "B", "C", "D" }))
+    for _, language in ipairs({ "FR", "EN" }) do
+        getText = function(key, a, b)
+            if key == "IGUI_MilitaryDrop_NamesMoreOne" then
+                return a .. (language == "FR" and " et un autre" or " and one other")
+            end
+            return language .. ": " .. a .. " / " .. b
+        end
+        Exchange.send(player, radio, "MissionDogTags", {}, nil)
+        QUEUE[#QUEUE]:perform()
+        Exchange.onReply({ exchangeId = SENT[#SENT].args.exchangeId, lines = { line }, status = "ok" })
+    end
+    assertEq(shown[1], "FR: Alpha / A, B, C et un autre", "client français, paramètre imbriqué")
+    assertEq(shown[2], "EN: Alpha / A, B, C and one other", "client anglais, même message réseau")
+    assertEq(line.params[2].key, "IGUI_MilitaryDrop_NamesMoreOne", "résolution sans mutation du message")
 end
 
 return T

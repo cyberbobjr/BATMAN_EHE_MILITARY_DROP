@@ -25,9 +25,9 @@
 -- ne la reconstruit jamais. Toute l'autorité est dans la commande, que le
 -- serveur revérifie entièrement (Exchange.checkRadio, équipe, échéances).
 --
--- Réponses : le serveur écrit les lignes de la base dans sa langue (getText
--- côté serveur) et les envoie au seul joueur (Exchange.toPlayer, commande
--- Exchange.REPLY) ; le client les affiche par la radio
+-- Réponses : le serveur envoie les clés et paramètres au seul joueur
+-- (Exchange.toPlayer, commande Exchange.REPLY) ; le client les traduit dans
+-- sa langue puis les affiche par la radio
 -- (MilitaryDrop.Client.radioSay). En solo, Exchange.toPlayer appelle
 -- directement le gestionnaire client (sendServerCommand n'y fait rien).
 -- D'autres modules (poste de liaison) inscrivent leurs gestionnaires dans
@@ -230,8 +230,49 @@ function Exchange.findDogTags(player, max)
     return found
 end
 
---- Liste de noms lisible : les max premiers (3 par défaut), puis « et N autres ».
-function Exchange.namesText(names, max)
+--- Ligne traduisible, sérialisable et persistante, sans résolution côté serveur.
+function Exchange.line(key, ...)
+    return { key = key, params = { ... } }
+end
+
+--- Résolution côté client ; les paramètres peuvent être eux-mêmes traduisibles.
+--- Une ligne littérale porte explicitement text (annonces déjà composées).
+function Exchange.lineText(line)
+    if line.text then
+        return line.text
+    end
+    local params = {}
+    for i, value in ipairs(line.params) do
+        params[i] = type(value) == "table" and Exchange.lineText(value) or value
+    end
+    return getText(line.key, unpack(params))
+end
+
+--- Égalité du contenu, indépendante de la langue et de l'identité des tables.
+function Exchange.sameLine(a, b)
+    if type(a) ~= type(b) then
+        return false
+    end
+    if type(a) ~= "table" then
+        return a == b
+    end
+    if a.key ~= b.key or a.text ~= b.text then
+        return false
+    end
+    local ap, bp = a.params or {}, b.params or {}
+    if #ap ~= #bp then
+        return false
+    end
+    for i, value in ipairs(ap) do
+        if not Exchange.sameLine(value, bp[i]) then
+            return false
+        end
+    end
+    return true
+end
+
+--- Liste de noms : les max premiers (3 par défaut), puis « et N autres ».
+function Exchange.namesLine(names, max)
     max = max or 3
     local shown = {}
     for i = 1, math.min(#names, max) do
@@ -240,11 +281,15 @@ function Exchange.namesText(names, max)
     local text = table.concat(shown, ", ")
     local more = #names - #shown
     if more == 1 then
-        return getText("IGUI_MilitaryDrop_NamesMoreOne", text)
+        return Exchange.line("IGUI_MilitaryDrop_NamesMoreOne", text)
     elseif more > 1 then
-        return getText("IGUI_MilitaryDrop_NamesMore", text, tostring(more))
+        return Exchange.line("IGUI_MilitaryDrop_NamesMore", text, tostring(more))
     end
-    return text
+    return { text = text }
+end
+
+function Exchange.namesText(names, max)
+    return Exchange.lineText(Exchange.namesLine(names, max))
 end
 
 -- ----------------------------------------------------------------------------
@@ -434,8 +479,9 @@ function Exchange.onReply(args)
     pending[args.exchangeId] = nil
     local lines = type(args.lines) == "table" and args.lines or {}
     local count = 0
-    for _, text in ipairs(lines) do
-        if type(text) == "string" then
+    for _, line in ipairs(lines) do
+        if type(line) == "table" then
+            local text = Exchange.lineText(line)
             local delay = Exchange.REPLY_DELAY_MS + count * Exchange.LINE_DELAY_MS
             count = count + 1
             later(delay, function() radioSay(request, text) end)

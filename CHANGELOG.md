@@ -3,6 +3,13 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.3.3 — 2026-10-07
+
+### Fixed
+
+- Private radio replies from Logistics now display normal dialogue in hosted multiplayer games instead of translation keys such as `IGUI_MilitaryDrop_Reply_ReportAlready`. Replies are translated on each player's client, in their chosen language, rather than on the server. This covers situation reports, dog tags, reconnaissance, cleanup status and radio checks.
+- New liaison-post journal entries keep the reply's translation key and parameters and are translated when viewed, including lists of soldiers' names and flight-recorder acknowledgements. Repeated entries still group correctly. Older journal entries are not migrated or supported by the new format.
+
 ## 0.3.2 — 2026-10-06
 
 ### Fixed
