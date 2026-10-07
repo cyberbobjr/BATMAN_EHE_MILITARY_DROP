@@ -4,102 +4,42 @@
 
 [b]Build 42.21 · Solo et multijoueur · Autonome[/b]
 
-[i]Multijoueur : conçu pour les serveurs dédiés (le serveur décide de tout), testé seulement en solo pour l'instant. Signalez tout problème.[/i]
+[i]Conçu pour les serveurs dédiés (le serveur décide de tout), testé surtout en solo pour l'instant. Signalez tout problème en multijoueur.[/i]
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent... et le bruit attire les morts.
 
-[b]BREAKING CHANGE — 0.1.2 :[/b] réputation par personnage ; anciennes notes collectives non transférées (départ à 25).
-
-[h2]Trouver la fréquence et le code[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
-
-Les notes des zombies militaires et policiers révèlent la fréquence. Chaque lundi, déchiffrez la station de chiffres sur ondes courtes avec le carnet de codes.
-
-[h2]Appeler depuis votre radio[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
+[h2]Comment ça marche[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
-Clic droit sur une radio militaire, [b]Options de l'appareil[/b], section [b]Logistique[/b] : tapez le code, puis [b]Demander un largage[/b]. Talkie-walkie en main, à la ceinture ou dans un sac, ou radio posée.
+[olist]
+[*][b]Trouvez la fréquence et le code.[/b] Les notes militaires et de police donnent la fréquence ; chaque lundi, déchiffrez la station de chiffres en ondes courtes avec le carnet de codes militaire.
+[*][b]Appelez depuis une radio militaire.[/b] Clic droit, [b]Options de l'appareil[/b], section [b]Logistique[/b] : tapez le code, puis [b]Demander un largage[/b].
+[*][b]Remplissez le formulaire de réquisition.[/b] 18 lots tirés des tables de butin (vos mods compris), dans un budget fixé par votre confiance. Ou un leurre à sirène pour éloigner les hordes.
+[*][b]Atteignez la caisse.[/b] Elle tombe à 150 à 400 cases, gardée par une horde. Gardez une radio sur la fréquence militaire : la grille est répétée jusqu'à l'ouverture d'une caisse.
+[/olist]
 
-[h2]Remplir la réquisition[/h2]
+[h2]Nouveau : l'extraction Fulton[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
+Envoyez du renseignement à l'armée par ballon. Demandez un passage avec [b]Demander un passage Fulton[/b], posez un [b]Kit d'extraction Fulton[/b] au sol dehors, remplissez-le de cartes d'identité, de paperasse, de cartes-cachettes ou de matériel NRBC, puis [b]Gonfler et lâcher le Fulton[/b] avec une [b]Bouteille d'hélium[/b]. Un avion l'emporte et la base vous paie en confiance. Fabriquez le kit, ou réparez un kit endommagé trouvé dans les réserves de l'armée, les épaves ou les caisses.
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
+[h2]Gagnez la confiance de la base[/h2]
 
-Répartissez vos points sur 18 lots de butin, mods compris. Ou commandez un leurre à sirène pour détourner les hordes.
-
-[h2]Rejoindre la caisse[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
-
-Rejoignez la grille à 150–400 cases ; une horde garde la caisse. La caisse vide se démonte pour son bois.
-
-[b]Gardez une radio allumée sur la fréquence militaire.[/b] Grille et repère arrivent au largage puis toutes les 6 h jusqu'à ouverture. Radio éteinte ou autre chaîne : aucune annonce ni repère. Sauvegardez avec [b]Ajouter un préréglage[/b].
-
-[h2]Quand un hélicoptère s'écrase[/h2]
-
-Un hélicoptère peut s'écraser, plus souvent par orage ; son MAYDAY donne un secteur. Le pilote porte une note, un carnet de codes et l'[b]enregistreur de vol[/b] ; démontez puis découpez l'épave. La commande est perdue, sauf option du serveur.
-
-[h2]Gagner la confiance de la base[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
-
-La confiance personnelle raccourcit l'attente et augmente les réquisitions. Départ à 25 ; la note survit aux sauvegardes, reconnexions et changements de faction.
-
-[h3]Réputation : gains et pertes[/h3]
-
-Pour un largage, seul le demandeur gagne ou perd ; un autre ouvreur reçoit 0. Les autres gains vont au personnage qui agit. Durées en jeu, valeurs par défaut.
-
-[table]
-[tr][td][b]Cause[/b][/td][td][b]Variation[/b][/td][/tr]
-[tr][td]Le demandeur ouvre la première caisse[/td][td]+10[/td][/tr]
-[tr][td]Un membre de sa faction ouvre la première caisse[/td][td]+5[/td][/tr]
-[tr][td]Un personnage extérieur ouvre la première caisse[/td][td]−5[/td][/tr]
-[tr][td]Aucune caisse ouverte 48 h après livraison[/td][td]−10[/td][/tr]
-[tr][td]Enregistreur de vol lu et transmis, une fois par crash, hors plafond[/td][td]+10[/td][/tr]
-[tr][td]Premier rapport de situation du jour[/td][td]+1[/td][/tr]
-[tr][td]Chaque plaque nominative valide et inédite[/td][td]+2[/td][/tr]
-[tr][td]Première reconnaissance confirmée à 25 cases / sous 48 h[/td][td]+3[/td][/tr]
-[tr][td]Plus de victimes dans la horde de nettoyage, morte à 90 %[/td][td]+5[/td][/tr]
-[tr][td]Contrôle confirmé sous 4 h, une fois par personnage[/td][td]+1[/td][/tr]
-[tr][td]3 codes faux / appels sur mauvaise fréquence en 1 h[/td][td]−2[/td][/tr]
-[tr][td]Érosion optionnelle après 24 h sans contact[/td][td]−1 / +1[/td][/tr]
-[/table]
-
-Plafond : +10/jour/personnage hors largages. Bonus du poste : rapport +2, plaque +3, reconnaissance +5, contrôle +2 ; nettoyage +5. Note : 0–100 ; une perte sous 15 coupe la ligne 3 jours. Missions expirées, largages admin et leurres : 0. Érosion désactivée par défaut, vers 25.
-
-[h2]Tenir un poste de liaison[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
-
-Une radioamateur militaire fixe devient la console partagée de la station : affaires (enregistreurs, plaques), ordres, journal et largages. Sa baie de lecture lit un enregistreur de vol en 10 minutes avant l'envoi à la base. Indicatif par faction, confiance personnelle.
-
-[h2]Zones de largage disputées (PvP)[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
-
-Serveurs PvP : l'admin choisit où tombent les caisses, en zones groupées par secteurs (parc, centre commercial, immeubles de Louisville). Secteur le plus proche ou au hasard, puis zone au poids : impossible de camper le point. L'annonce la nomme (« zone Central Park, grille... ») ; en option, le joueur choisit le secteur, leurre compris. Jamais dans l'eau, un bâtiment, une zone non-PvP ou un refuge.
-
-Panneau d'admin en jeu ([b]Zones de largage[/b]) : tracé à la souris, secteur et poids, [b]Surbrillance[/b] au sol, modification, désactivation, téléportation. Désactivé par défaut.
-
-[h2]Pour les admins[/h2]
+Chaque personnage a sa propre réputation, jamais affichée en chiffres. Elle raccourcit l'attente entre deux largages et débloque de plus grosses réquisitions.
 
 [list]
-[*]60 options du bac à sable, appliquées sans redémarrer (sauf fréquences) : attente entre largages (une semaine par défaut, tout le serveur), distance, horde, mode du code, confiance, missions, réquisition, leurre, crashs, zones.
-[*]Lots de réquisition à modifier, désactiver ou ajouter dans Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Les admins peuvent forcer un largage, faire s'écraser le prochain hélicoptère et lancer des missions depuis une radio militaire.
+[*]Ouvrez le premier votre propre largage, envoyez l'enregistreur de vol d'une épave.
+[*]Rapports du jour, plaques des soldats tombés, reconnaissances, nettoyages, appels de contrôle, envois par Fulton.
+[*]Vous la perdez quand d'autres ouvrent vos largages ou quand un largage est perdu.
+[/list]
+
+[h2]Et aussi[/h2]
+
+[list]
+[*][b]Hélicoptères abattus[/b], plus souvent par orage : un MAYDAY donne le secteur ; l'épave contient des pièces, des documents et un enregistreur de vol.
+[*][b]Poste de liaison[/b] : une radio militaire fixe devient la console de votre station (affaires, ordres, journal, baie de lecture).
+[*][b]Zones de largage disputées[/b] pour les serveurs PvP, tracées en jeu par l'admin.
+[*]60 options du bac à sable, appliquées sans redémarrer ; multijoueur où le serveur décide ; outils d'admin depuis une radio militaire.
 [/list]
 
 [h2]Compatibilité[/h2]
@@ -108,8 +48,8 @@ Panneau d'admin en jeu ([b]Zones de largage[/b]) : tracé à la souris, secteur 
 [*]Aucun autre mod requis.
 [*]Conçu pour cohabiter avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], une fumée verte signale la caisse.
-[*]Compatible avec Better Walkie Talkies : appui pour parler, voix et pile conservés.
-[*]Les objets de vos mods apparaissent dans les caisses.
+[*]Avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url], échantillons et vaccins peuvent partir par Fulton.
+[*]Better Walkie Talkies est pris en charge ; les objets de vos mods apparaissent dans les caisses.
 [/list]
 
 [h2]Guide[/h2]

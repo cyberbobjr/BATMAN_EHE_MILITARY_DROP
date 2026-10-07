@@ -2,123 +2,63 @@
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
-[b]Build 42.21 · Um jogador e multijogador · Autónomo[/b]
+[b]Build 42.21 · Um jogador e multijogador · Independente[/b]
 
-[i]Multijogador: concebido para servidores dedicados (o servidor decide tudo), mas até agora só testado em modo de um jogador. Comunica qualquer problema.[/i]
+[i]Feito para servidores dedicados (o servidor decide tudo), testado sobretudo em um jogador por agora. Reporta qualquer problema em multijogador.[/i]
 
-Sintoniza um rádio militar na frequência certa, indica o código da semana e requisita abastecimentos. Um helicóptero larga um caixote ao longe e anuncia a quadrícula a todos os que estão à escuta... e o barulho atrai os mortos.
+Sintoniza um rádio militar na frequência certa, dá o código da semana e requisita abastecimentos. Um helicóptero larga uma caixa ao longe e anuncia a quadrícula a todos os que escutam... e o barulho atrai os mortos.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Reputação por personagem. Notas coletivas não são transferidas: personagens existentes começam com 25.
-
-[h2]Encontrar a frequência e o código[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
-
-Memorandos militares e policiais revelam a frequência. À segunda-feira, o livro de códigos decifra a emissão numérica em ondas curtas.
-
-[h2]Chamar a partir do teu rádio[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
+[h2]Como funciona[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
-Botão direito num rádio militar, [b]Opções do Dispositivo[/b], secção [b]Logística[/b]: escreve o código e prime [b]Pedir abastecimento aéreo[/b]. Walkie-talkie na mão, à cintura ou num saco, ou um rádio pousado.
+[olist]
+[*][b]Encontra a frequência e o código.[/b] As notas militares e da polícia dão a frequência; todas as segundas-feiras, decifra a estação de números em onda curta com o livro de códigos militar.
+[*][b]Chama de um rádio militar.[/b] Botão direito, [b]Opções do Dispositivo[/b], secção [b]Logística[/b]: escreve o código e prime [b]Pedir abastecimento aéreo[/b].
+[*][b]Preenche o formulário de requisição.[/b] 18 lotes tirados das tabelas de saque (os teus mods incluídos), dentro de um orçamento definido pela tua confiança. Ou um engodo com sirene para afastar as hordas.
+[*][b]Chega à caixa.[/b] Cai a 150-400 quadrados, guardada por uma horda. Mantém um rádio na frequência militar: a quadrícula é repetida até se abrir uma caixa.
+[/olist]
 
-[h2]Preencher a requisição[/h2]
+[h2]Novidade: extração Fulton[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
+Envia informações ao exército por balão. Pede uma passagem com [b]Pedir uma recolha Fulton[/b], pousa um [b]Kit de extração Fulton[/b] no chão ao ar livre, enche-o de documentos de identificação, papelada, mapas de esconderijo ou material NBQ, e depois [b]Encher e largar o Fulton[/b] com uma [b]Garrafa de hélio[/b]. Um avião leva-o e a base paga-te em confiança. Fabrica o kit ou repara um danificado encontrado em armazéns do exército, destroços ou caixas.
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
+[h2]Ganha a confiança da base[/h2]
 
-Distribui pontos por 18 lotes de saque, incluindo mods. Ou pede um isco com sirene para desviar hordas.
-
-[h2]Chegar ao caixote[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
-
-Chega ao caixote a 150–400 quadrados; uma horda guarda-o. Caixotes vazios dão madeira.
-
-[b]Mantém um rádio ligado na frequência militar.[/b] Quadrícula e marcador na aterragem e a cada 6 h até abrir. Desligado ou noutro canal: sem anúncio nem marcador. Guarda com [b]Adicionar predefinição[/b].
-
-[h2]Quando um helicóptero cai[/h2]
-
-Um helicóptero de abastecimento pode despenhar-se, mais vezes com trovoada. O seu MAYDAY indica um setor. O piloto leva um memorando, um livro de códigos e o [b]registador de voo[/b]; recupera as peças dos destroços e depois desmancha-os. A encomenda perde-se, salvo opção do servidor.
-
-[h2]Ganhar a confiança da base[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
-
-Confiança pessoal reduz a espera e aumenta requisições. Começa com 25; guardar, reconectar ou mudar de fação mantém a nota.
-
-[h3]Reputação: ganhos e perdas[/h3]
-
-Os lançamentos afetam apenas o requerente; outro que abra recebe 0. As restantes recompensas vão para quem age. Tempo de jogo, valores predefinidos.
-
-[table]
-[tr][td][b]Causa[/b][/td][td][b]Variação[/b][/td][/tr]
-[tr][td]Requerente abre a primeira caixa[/td][td]+10[/td][/tr]
-[tr][td]Outro membro da fação da chamada abre primeiro[/td][td]+5[/td][/tr]
-[tr][td]Alguém de fora abre primeiro[/td][td]−5[/td][/tr]
-[tr][td]Nenhuma caixa aberta em 48 h após entrega[/td][td]−10[/td][/tr]
-[tr][td]Registador de voo lido e enviado, uma vez por queda, sem limite[/td][td]+10[/td][/tr]
-[tr][td]Primeiro relatório diário[/td][td]+1[/td][/tr]
-[tr][td]Cada placa com nome válida e inédita[/td][td]+2[/td][/tr]
-[tr][td]Primeiro reconhecimento: 25 quadrados / 48 h[/td][td]+3[/td][/tr]
-[tr][td]Mais mortes da horda, 90% morta[/td][td]+5[/td][/tr]
-[tr][td]Verificação de rádio em 4 h, uma vez por personagem[/td][td]+1[/td][/tr]
-[tr][td]3 códigos errados / chamadas na frequência errada em 1 h[/td][td]−2[/td][/tr]
-[tr][td]Erosão opcional após 24 h sem contacto[/td][td]−1 / +1[/td][/tr]
-[/table]
-
-Limite: +10/dia/personagem exceto lançamentos. Posto: relatório +2, placa +3, reconhecimento +5, rádio +2; limpeza +5. Nota: 0–100; perda abaixo de 15 corta a linha 3 dias. Missões expiradas, lançamentos admin e iscos: 0. Erosão desligada, regressa a 25.
-
-[h2]Manter um posto de ligação[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
-
-Um rádio militar fixo torna-se consola partilhada: assuntos a tratar (registadores de voo, placas), ordens, registo e lançamentos. A sua baía de leitura lê um registador de voo em 10 minutos antes do envio à base. Indicativo por fação, confiança pessoal.
-
-[h2]Zonas de lançamento disputadas (PvP)[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
-
-Em servidores PvP, o administrador escolhe onde caem os caixotes: zonas agrupadas em setores (parque, centro comercial, prédios em Louisville). Cada lançamento usa o setor mais próximo ou um ao acaso e depois uma zona pelo peso: ninguém pode acampar no ponto. O anúncio nomeia-a («zona Central Park, quadrícula...»); opcionalmente, o jogador escolhe o setor, isco incluído. Nunca na água, num edifício, numa zona sem JvJ ou num asilo.
-
-Painel de administração no jogo ([b]Zonas de lançamento[/b]): desenha zonas com o rato, setor e peso, [b]Destacar[/b] no chão, editar, desativar, teletransportar. Desligado por predefinição.
-
-[h2]Para administradores de servidores[/h2]
+Cada personagem tem a sua própria reputação, nunca mostrada em números. Encurta a espera entre abastecimentos e desbloqueia requisições maiores.
 
 [list]
-[*]60 opções sandbox, aplicadas sem reiniciar (exceto frequências): espera entre lançamentos (uma semana por predefinição, para todo o servidor), distância, horda, modo do código, confiança, missões, requisição, isco, quedas, zonas.
-[*]Os lotes de requisição podem ser editados, desativados ou acrescentados em Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Os administradores podem forçar um lançamento, fazer cair o próximo helicóptero e iniciar missões a partir de um rádio militar.
+[*]Abre primeiro o teu próprio abastecimento, envia a caixa negra de uns destroços.
+[*]Relatórios diários, placas de soldados caídos, reconhecimentos, limpezas, verificações de rádio, envios Fulton.
+[*]Perdes confiança se outros abrirem os teus abastecimentos ou se um abastecimento se perder.
+[/list]
+
+[h2]E também[/h2]
+
+[list]
+[*][b]Helicópteros abatidos[/b], mais vezes com trovoada: um MAYDAY dá o setor; os destroços guardam peças, documentos e uma caixa negra.
+[*][b]Posto de ligação[/b]: um rádio militar fixo torna-se a consola da tua estação (assuntos, ordens, registo, leitor).
+[*][b]Zonas de largada disputadas[/b] para servidores PvP, traçadas no jogo pelo administrador.
+[*]60 opções de sandbox, aplicadas sem reiniciar; multijogador em que o servidor decide; ferramentas de administração a partir de um rádio militar.
 [/list]
 
 [h2]Compatibilidade[/h2]
 
 [list]
 [*]Nenhum outro mod necessário.
-[*]Concebido para coexistir com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
-[*]Com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], fumo verde assinala o caixote.
-[*]Funciona com Better Walkie Talkies: as suas regras de premir para falar, voz e bateria mantêm-se.
-[*]Os itens dos teus mods aparecem nos caixotes.
+[*]Feito para conviver com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
+[*]Com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], um fumo verde assinala a caixa.
+[*]Com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url], amostras e vacinas podem ser enviadas por Fulton.
+[*]Better Walkie Talkies é suportado; os objetos dos teus mods aparecem nas caixas.
 [/list]
 
 [h2]Guia[/h2]
 
-Tudo em pormenor, com capturas: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
+Tudo em detalhe, com capturas: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]guia completo (inglês)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
 
 [h2]Apoiar o projeto[/h2]
 
-Um café ajuda a financiar novas funcionalidades e traduções.
+Gostas do mod? Um café ajuda a financiar novas funcionalidades e traduções.
 [url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
 
 [h2]Créditos[/h2]

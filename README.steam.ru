@@ -1,126 +1,66 @@
-[h1]Military Drop - сброс снабжения по рации[/h1]
+[h1]Military Drop - Сброс снабжения по радио[/h1]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
-[b]Build 42.21 · Соло и сеть · Без зависимостей[/b]
+[b]Build 42.21 · Одиночная и сетевая игра · Самостоятельный мод[/b]
 
-[i]Для выделенных серверов; проверено только соло. Пишите о сетевых ошибках.[/i]
+[i]Создан для выделенных серверов (всё решает сервер), пока в основном проверен в одиночной игре. Сообщайте о проблемах в сетевой игре.[/i]
 
-Военная рация и код недели вызывают снабжение. Координаты слышат все; шум манит мертвецов.
+Настройте военную рацию на нужную частоту, назовите код недели и запросите снабжение. Вертолёт сбрасывает ящик вдали и сообщает квадрат всем, кто слушает... а шум привлекает мертвецов.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] репутация личная, старые оценки не переносятся (старт 25).
-
-[h2]Частота и код[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
-
-Частота — в записках военных и полиции. По понедельникам кодовая книга расшифровывает КВ-передачу.
-
-[h2]Вызов по рации[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
+[h2]Как это работает[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
-ПКМ по военной рации → [b]Настроить устройство[/b] → [b]Снабжение[/b] → код → [b]Запросить сброс груза[/b].
+[olist]
+[*][b]Найдите частоту и код.[/b] Военные и полицейские записки сообщают частоту; каждый понедельник расшифровывайте коротковолновую числовую станцию военной кодовой книгой.
+[*][b]Вызовите с военной рации.[/b] ПКМ → [b]Настроить устройство[/b] → [b]Снабжение[/b]: введите код и нажмите [b]Запросить сброс груза[/b].
+[*][b]Заполните заявку.[/b] 18 наборов из таблиц добычи (включая ваши моды) в пределах бюджета, зависящего от доверия. Или приманка с сиреной, чтобы увести орды.
+[*][b]Доберитесь до ящика.[/b] Он падает в 150–400 клетках, его охраняет орда. Держите рацию на военной частоте: квадрат повторяется, пока ящик не откроют.
+[/olist]
 
-[h2]Заявка[/h2]
+[h2]Новое: эвакуация «Фултоном»[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
+Отправляйте армии разведданные на аэростате. Запросите пролёт кнопкой [b]Запросить подбор «Фултон»[/b], положите [b]Комплект эвакуации «Фултон»[/b] на землю снаружи, наполните его удостоверениями, бумагами, картами тайников или снаряжением РХБЗ, затем [b]Надуть и выпустить «Фултон»[/b] с [b]Баллоном с гелием[/b]. Самолёт подхватит его, а база заплатит доверием. Соберите комплект или почините повреждённый из армейских складов, обломков или ящиков.
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
+[h2]Заслужите доверие базы[/h2]
 
-18 позиций добычи (и из модов) на очки. Или приманка с сиреной для отвода орд.
-
-[h2]К ящику[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
-
-Ящик в 150–400 клетках охраняет орда. Пустые ящики дают древесину.
-
-[b]Держите рацию на военной частоте.[/b] Координаты и метка — при посадке и каждые 6 ч до открытия. Сохранить: [b]Добавить[/b].
-
-[h2]Крушение вертолёта[/h2]
-
-Вертолёт может разбиться, чаще в грозу; MAYDAY даёт сектор. У пилота — записка, кодовая книга и [b]бортовой самописец[/b]; обломки разбираются. Заказ теряется (опция сервера).
-
-[h2]Доверие базы[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
-
-Личное доверие сокращает ожидание и расширяет заявки. Старт 25; смена фракции не влияет.
-
-[h3]Репутация[/h3]
-
-Сброс — только заказчику, прочее — действующему. Время игровое, значения по умолчанию.
-
-[table]
-[tr][td][b]Причина[/b][/td][td][b]Изменение[/b][/td][/tr]
-[tr][td]Заказчик открывает первый кейс[/td][td]+10[/td][/tr]
-[tr][td]Член его фракции открывает первым[/td][td]+5[/td][/tr]
-[tr][td]Посторонний открывает первым[/td][td]−5[/td][/tr]
-[tr][td]Не открыто за 48 ч после доставки[/td][td]−10[/td][/tr]
-[tr][td]Самописец передан, раз на крушение, вне лимита[/td][td]+10[/td][/tr]
-[tr][td]Первый доклад за день[/td][td]+1[/td][/tr]
-[tr][td]Каждый новый именной жетон[/td][td]+2[/td][/tr]
-[tr][td]Первая разведка: 25 клеток / 48 ч[/td][td]+3[/td][/tr]
-[tr][td]Больше всего убийств орды, 90% мертвы[/td][td]+5[/td][/tr]
-[tr][td]Проверка связи за 4 ч, раз на персонажа[/td][td]+1[/td][/tr]
-[tr][td]3 ошибки кода или частоты за 1 ч[/td][td]−2[/td][/tr]
-[tr][td]Эрозия после 24 ч без связи (опция)[/td][td]−1 / +1[/td][/tr]
-[/table]
-
-Лимит +10/день без сбросов. Пост: доклад +2, жетон +3, разведка +5, связь +2. Шкала 0–100; ниже 15 — без связи 3 дня. Админ, приманки: 0. Эрозия (выкл.) — к 25.
-
-[h2]Пост связи[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
-
-Стационарная военная рация — общий пульт: дела, приказы, журнал, сбросы. Самописец читается за 10 минут. Позывной у фракции, доверие личное.
-
-[h2]Зоны сброса (PvP)[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
-
-PvP: админ задаёт места сброса — зоны по секторам (парк, ТЦ, дома в Луисвилле). Ближайший или случайный сектор, затем зона по весу: место не закемпить. В эфире — имя зоны; по опции игрок выбирает сектор (и для приманки). Не в воде, зданиях, зонах без PvP и убежищах.
-
-Панель в игре ([b]Зоны сброса[/b]): рисование мышью, сектор, вес, [b]Подсветка[/b], правка, телепорт. Выкл. по умолчанию.
-
-[h2]Админам[/h2]
+У каждого персонажа своя репутация, никогда не показываемая числом. Она сокращает ожидание между сбросами и открывает крупные заявки.
 
 [list]
-[*]60 настроек, без перезапуска (кроме частот); ожидание сброса — неделя на весь сервер.
-[*]Позиции заявки: Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Админ с рации: сброс, крушение, задания.
+[*]Первым откройте свой сброс, отправьте бортовой самописец с обломков.
+[*]Ежедневные доклады, жетоны павших солдат, разведка, зачистки, проверки связи, отправки «Фултоном».
+[*]Доверие падает, если ваши сбросы открывают чужие или сброс потерян.
+[/list]
+
+[h2]А также[/h2]
+
+[list]
+[*][b]Крушения вертолётов[/b], чаще в грозу: MAYDAY сообщает сектор; в обломках детали, документы и бортовой самописец.
+[*][b]Пост связи[/b]: стационарная военная рация становится консолью вашей станции (дела, приказы, журнал, считыватель).
+[*][b]Спорные зоны сброса[/b] для PvP-серверов, которые админ рисует в игре.
+[*]60 настроек песочницы без перезапуска; сетевая игра, где всё решает сервер; инструменты админа с военной рации.
 [/list]
 
 [h2]Совместимость[/h2]
 
 [list]
-[*]Другие моды не требуются.
-[*]Совместим с [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
+[*]Другие моды не нужны.
+[*]Создан для совместной работы с [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]С [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] ящик отмечает зелёный дым.
-[*]Совместим с Better Walkie Talkies (его PTT, голос и батарея).
-[*]Предметы из ваших модов появляются в ящиках.
+[*]С [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url] образцы и вакцины можно отправлять «Фултоном».
+[*]Поддерживается Better Walkie Talkies; предметы из ваших модов появляются в ящиках.
 [/list]
 
-[h2]Гайд[/h2]
+[h2]Руководство[/h2]
 
-Подробно: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]full guide (English)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
+Всё подробно, со скриншотами: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]полное руководство (английский)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url].
 
-[h2]Поддержка[/h2]
+[h2]Поддержать проект[/h2]
 
-Кофе поможет проекту.
+Нравится мод? Кофе помогает финансировать новые функции и переводы.
 [url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
 
 [h2]Благодарности[/h2]
 
-Версия B42 мода [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url] (Build 41). Код (MIT) на [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url].
+Переработка для Build 42 мода [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url] (Build 41). Исходный код (MIT) на [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url].

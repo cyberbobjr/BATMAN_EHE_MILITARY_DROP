@@ -88,7 +88,7 @@ Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, 
 | Durée de la sirène du leurre (heures) | `DecoySirenHours` | 6 | |
 | Portée du bruit de la sirène (cases) | `DecoyNoiseRadius` | 120 | Seulement quand la zone autour de la caisse est chargée. |
 
-### Extraction Fulton (en développement)
+### Extraction Fulton
 
 Voir [Extraction Fulton](08-fulton.md).
 

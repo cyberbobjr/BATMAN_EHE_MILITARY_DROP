@@ -4,8 +4,6 @@
 
 Command wants intelligence and gear from the infected zone. Pack them in a **Fulton recovery kit**, inflate its balloon with helium, and an aircraft snatches it on the fly. Command pays you in [trust](04-trust-and-missions.md).
 
-> In development (prototype branch): not in a published version yet.
-
 ## Getting a kit
 
 The kit is single use: it leaves with the balloon.

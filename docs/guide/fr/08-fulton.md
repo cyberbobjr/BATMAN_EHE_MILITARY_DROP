@@ -4,8 +4,6 @@
 
 Le commandement veut du renseignement et du matériel venus de la zone infectée. Rangez-les dans un **kit d'extraction Fulton**, gonflez son ballon à l'hélium, et un avion l'accroche au passage. Le commandement vous paie en [confiance](04-trust-and-missions.md).
 
-> En développement (branche prototype) : pas encore dans une version publiée.
-
 ## Obtenir un kit
 
 Le kit est à usage unique : il part avec le ballon.

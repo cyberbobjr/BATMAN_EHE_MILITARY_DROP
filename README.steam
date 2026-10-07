@@ -4,102 +4,42 @@
 
 [b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]
 
-[i]Multiplayer: the mod is built for dedicated servers (the server decides everything), but it has only been tested in singleplayer so far. Please report any multiplayer issue.[/i]
+[i]Built for dedicated servers (the server decides everything), mostly tested in singleplayer so far. Please report any multiplayer issue.[/i]
 
-Tune a military radio to the right frequency, give this week's code and requisition military supplies. A helicopter drops a crate far away and announces the grid to everyone listening... and the noise draws the dead.
+Tune a military radio to the right frequency, give this week's code and requisition supplies. A helicopter drops a crate far away and announces the grid to everyone listening... and the noise draws the dead.
 
-[b]BREAKING CHANGE — 0.1.2:[/b] Reputation belongs to each character. Old collective scores were not transferred: existing characters start at 25.
-
-[h2]Find the frequency and the code[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
-
-Military and police memos reveal the frequency. Every Monday, decipher the shortwave numbers broadcast with the military codebook.
-
-[h2]Call from your radio[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
+[h2]How it works[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
-Right-click a military radio, [b]Device Options[/b], [b]Logistics[/b] section: type the code and press [b]Request a supply drop[/b]. Walkie-talkie in hand, on the belt or in a bag, or a placed radio.
+[olist]
+[*][b]Find the frequency and the code.[/b] Military and police memos give the frequency; every Monday, decipher the shortwave numbers station with the military codebook.
+[*][b]Call from a military radio.[/b] Right-click it, [b]Device Options[/b], [b]Logistics[/b] section: type the code and press [b]Request a supply drop[/b].
+[*][b]Fill the requisition form.[/b] 18 lots built from the loot tables (your mods included), within a budget set by your trust. Or a siren decoy to lure hordes away.
+[*][b]Reach the crate.[/b] It lands 150 to 400 tiles away, guarded by a horde. Keep a radio on the military frequency: the grid is repeated until a case is opened.
+[/olist]
 
-[h2]Fill the requisition[/h2]
+[h2]New: Fulton extraction[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
-
-Choose from 18 loot-table lots, mods included, within your point budget. Or request a siren decoy to draw hordes away.
-
-[h2]Reach the crate[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
-
-Reach the grid 150–400 tiles away; a horde guards the crate. Empty crates can be dismantled for wood.
-
-[b]Keep a radio on the military frequency.[/b] The grid and map marker arrive at landing and every 6 h until a case is opened. Off or on another channel: no announcement or marker. Save the frequency with [b]Add preset[/b].
-
-[h2]When a helicopter goes down[/h2]
-
-A supply helicopter can crash, more often in storms. Its MAYDAY gives a sector on the military frequency. At the wreck, the pilot carries a memo, a codebook and the [b]flight recorder[/b]; strip the wreck for parts, then cut it up. The order is lost with it, unless the server says otherwise.
+Send intelligence to the army by balloon. Request a pick-up with [b]Request a Fulton pick-up[/b], put a [b]Fulton recovery kit[/b] on the ground outside, fill it with ID cards, paperwork, stash maps or NBC gear, then [b]Inflate and release the Fulton[/b] with a [b]Helium tank[/b]. An aircraft snatches it and the base pays you in trust. Craft the kit or repair a damaged one found in army storage, wrecks or crates.
 
 [h2]Earn the base's trust[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
-
-Personal trust shortens the wait and unlocks bigger requisitions. A new character starts at 25; saving, reconnecting or changing factions keeps their score.
-
-[h3]Reputation: gains and losses[/h3]
-
-Drop changes apply only to the requesting character; a different opener gets 0. Other rewards go to the acting character. Times are game time; values are defaults.
-
-[table]
-[tr][td][b]Cause[/b][/td][td][b]Change[/b][/td][/tr]
-[tr][td]Requester opens first case[/td][td]+10[/td][/tr]
-[tr][td]Another member of the calling faction opens first case[/td][td]+5[/td][/tr]
-[tr][td]Outsider opens first case[/td][td]−5[/td][/tr]
-[tr][td]No case opened within 48 h of delivery[/td][td]−10[/td][/tr]
-[tr][td]Flight recorder read and sent, once per crash site, no cap[/td][td]+10[/td][/tr]
-[tr][td]First daily situation report[/td][td]+1[/td][/tr]
-[tr][td]Each valid, unused named dog tag[/td][td]+2[/td][/tr]
-[tr][td]First recon confirmation within 25 tiles / 48 h[/td][td]+3[/td][/tr]
-[tr][td]Most kills in clearance horde, 90% dead[/td][td]+5[/td][/tr]
-[tr][td]Radio check answered within 4 h, once per character[/td][td]+1[/td][/tr]
-[tr][td]3 wrong codes / wrong-frequency calls in 1 h[/td][td]−2[/td][/tr]
-[tr][td]Optional erosion after 24 h without contact[/td][td]−1 / +1[/td][/tr]
-[/table]
-
-Daily cap: +10 per character, excluding drops. Liaison post bonus: report +2, tag +3, recon +5, radio check +2; clearance stays +5. Scores: 0–100; a loss below 15 cuts the line for 3 days. Expired missions, admin drops and decoys: 0. Erosion is off by default and moves the score toward 25.
-
-[h2]Hold a liaison post[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
-
-A fixed military ham radio becomes a shared station console: tasks to handle (flight recorders, dog tags), orders, log and drops. Its reading bay reads a flight recorder in 10 minutes before you send it to the base. Each faction has a call sign; standing is personal.
-
-[h2]Contested drop zones (PvP)[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
-
-On PvP servers, the admin picks where crates fall: zones grouped into sectors (a park, a mall, flats in Louisville). Each drop takes the nearest or a random sector, then a zone by weight: nobody can camp the spot. The announcement names it ("LZ Central Park, grid..."); players can optionally choose the sector in the form, decoy included. The crate never lands in water, inside a building, in a non-PvP zone or a safehouse.
-
-Admin panel in game ([b]Military Drop Zones[/b]): draw zones with the mouse, set sector and weight, [b]Highlight[/b] them on the ground, edit, disable, teleport. Off by default.
-
-[h2]For server admins[/h2]
+Each character has a personal reputation, never shown as a number. It shortens the wait between drops and unlocks bigger requisitions.
 
 [list]
-[*]60 sandbox options, applied without restarting (except frequencies): wait between drops (one week by default, for the whole server), distance, horde, code mode, trust, missions, requisition, decoy, crashes, drop zones.
-[*]Requisition lots can be edited, disabled or added in Zomboid/Lua/MilitaryDrop/requisition.txt.
-[*]Server-authoritative multiplayer. Admins can force a drop, crash the next helicopter and launch missions from a military radio.
+[*]Open your own drop first, send a flight recorder from a wreck.
+[*]Daily reports, dog tags of fallen soldiers, recon, clearance orders, radio checks, Fulton shipments.
+[*]Lose it when outsiders open your drops or when a drop is lost.
+[/list]
+
+[h2]And also[/h2]
+
+[list]
+[*][b]Helicopter crashes[/b], more frequent in storms: a MAYDAY gives the sector; the wreck holds parts, documents and a flight recorder.
+[*][b]Liaison post[/b]: a fixed military radio becomes your station's console (tasks, orders, log, recorder bay).
+[*][b]Contested drop zones[/b] for PvP servers, drawn in game by the admin.
+[*]60 sandbox options, applied without restarting; server-authoritative multiplayer; admin tools from a military radio.
 [/list]
 
 [h2]Compatibility[/h2]
@@ -108,8 +48,8 @@ Admin panel in game ([b]Military Drop Zones[/b]): draw zones with the mouse, set
 [*]No other mod required.
 [*]Designed to coexist with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]With [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], green smoke marks the crate.
-[*]Works with Better Walkie Talkies: its push-to-talk, voice and battery rules are kept.
-[*]Items from your weapon and item mods appear in the crates.
+[*]With [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url], samples and vaccines can be sent by Fulton.
+[*]Better Walkie Talkies is supported; items from your mods appear in the crates.
 [/list]
 
 [h2]Guide[/h2]

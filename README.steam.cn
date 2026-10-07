@@ -1,126 +1,66 @@
-[h1]Military Drop - 无线电呼叫补给空投[/h1]
+[h1]Military Drop - 无线电补给空投[/h1]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
 [b]Build 42.21 · 单人与多人 · 独立运行[/b]
 
-[i]多人模式：本模组为专用服务器设计（一切由服务器决定），但目前只在单人模式下测试过。如遇多人模式问题，欢迎反馈。[/i]
+[i]专为专用服务器设计(一切由服务器决定),目前主要在单人模式下测试。如遇多人问题请反馈。[/i]
 
-把军用无线电调到正确的频率，报出本周的认证码，申领军用物资。直升机会把空投箱投放到远处，并向所有收听者通报坐标……而噪音会引来死人。
+把军用无线电调到正确频率,报出本周认证码并申请补给。直升机会在远处投下补给箱,并向所有收听者播报网格坐标……而噪音会引来死者。
 
-[b]BREAKING CHANGE — 0.1.2：[/b]声望归角色所有，与账号和派系无关。旧集体声望不转移：现有角色从25开始。旧空投不影响新声望。
-
-[h2]找到频率和认证码[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-code.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/codebook-memo.png[/img]
-
-军警备忘录提供频率。每周一，用军用密码本破译短波数字广播。
-
-[h2]用你的无线电呼叫[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-radio.png[/img]
+[h2]玩法[/h2]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
 
-右键点击军用无线电，[b]设备选项[/b]，[b]后勤处[/b]栏：输入认证码，然后按[b]请求空投补给[/b]。对讲机可以拿在手上、挂在腰带上或放在包里，也可以使用放置好的无线电。
+[olist]
+[*][b]找到频率和认证码。[/b]军方和警方便条写有频率;每周一用军用密码本破译短波数字电台。
+[*][b]用军用无线电呼叫。[/b]右键点击,[b]设备选项[/b],[b]后勤处[/b]栏:输入认证码,然后按[b]请求空投补给[/b]。
+[*][b]填写申请表。[/b]从战利品表中挑选 18 种物资包(包括你的模组物品),预算取决于你的信任度。也可以申请警报诱饵引走尸群。
+[*][b]抵达补给箱。[/b]它会落在 150–400 格外,有尸群看守。把一台无线电留在军用频率上:网格会不断重复,直到有人打开补给箱。
+[/olist]
 
-[h2]填写申领单[/h2]
+[h2]新内容:富尔顿回收[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-requisition.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/requisition-form.png[/img]
-
-点数可兑换18类战利品（含模组物品），或申领警报诱饵引走僵尸群。
-
-[h2]赶到空投箱[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-crate.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/crate-trunk.png[/img]
-
-前往150–400格外的空投箱，那里有僵尸群守卫。空箱可拆成木材。
-
-[b]无线电须开启并调到军用频率。[/b]落地及每6小时播报坐标和地图标记，直到开箱。关闭或其他频道：无播报也无标记。用[b]添加频道[/b]保存频率。
-
-[h2]直升机坠毁[/h2]
-
-补给直升机可能坠毁，雷暴天更常见。它的 MAYDAY 会在军用频率上报出大致区域。飞行员身上有备忘录、密码本和[b]飞行记录器[/b]；回收残骸零件后再拆解残骸。订购的补给会随之损失，除非服务器另行设置。
+用气球把情报送给军方。用[b]请求富尔顿回收[/b]申请通过,把[b]富尔顿回收套件[/b]放在室外地面上,装入身份证、文件、藏宝图或防化装备,然后用[b]氦气瓶[/b][b]给富尔顿充气并放飞[/b]。飞机会把它带走,基地用信任度回报你。可以自己制作套件,也可以修理在军队仓库、残骸或补给箱中找到的损坏套件。
 
 [h2]赢得基地的信任[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-trust.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console-missions.png[/img]
-
-个人信任缩短等待并增加申领预算。新角色从25开始；存档、重连或换派系保留声望。
-
-[h3]声望增减表[/h3]
-
-空投只影响申请角色；其他打开者获得0。其他奖励归执行角色。均为游戏时间和默认值。
-
-[table]
-[tr][td][b]原因[/b][/td][td][b]变化[/b][/td][/tr]
-[tr][td]申请者打开第一个补给箱[/td][td]+10[/td][/tr]
-[tr][td]呼叫时所属派系的另一成员先打开[/td][td]+5[/td][/tr]
-[tr][td]派系外角色先打开[/td][td]−5[/td][/tr]
-[tr][td]落地后48小时内无人打开[/td][td]−10[/td][/tr]
-[tr][td]读取并发送飞行记录器，每个坠毁点一次，不计上限[/td][td]+10[/td][/tr]
-[tr][td]每天首次情况报告[/td][td]+1[/td][/tr]
-[tr][td]每个有效且未上报的实名狗牌[/td][td]+2[/td][/tr]
-[tr][td]首次侦察确认：25格内 / 48小时[/td][td]+3[/td][/tr]
-[tr][td]清剿群死亡90%时击杀最多[/td][td]+5[/td][/tr]
-[tr][td]4小时内确认通信检查，每角色一次[/td][td]+1[/td][/tr]
-[tr][td]1小时内3次错误认证码或错误频率呼叫[/td][td]−2[/td][/tr]
-[tr][td]24小时无联系后可选声望回归[/td][td]−1 / +1[/td][/tr]
-[/table]
-
-每日上限：每角色+10，空投除外。联络站加成：报告+2、狗牌+3、侦察+5、通信+2；清剿仍+5。声望0–100；扣分后低于15则断线3天。过期任务、管理员空投和诱饵：0。回归默认关闭，每日向25靠近。
-
-[h2]设立联络站[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/art-post.png[/img]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/console.png[/img]
-
-固定军用无线电成为共享控制台：待办事项（飞行记录器、狗牌）、命令、记录和空投。读取舱用 10 分钟读取飞行记录器，然后发送给基地。每个派系有自己的呼号，信任归个人。
-
-[h2]争夺空投区（PvP）[/h2]
-
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/zones-add.png[/img]
-
-在 PvP 服务器上，管理员决定空投箱落在哪里：空投区按扇区分组（例如路易斯维尔的公园、商场和公寓楼）。每次空投先取最近或随机的扇区，再按权重抽取其中一个空投区：没人能蹲守确切地点。播报会说出空投区名称（“空投区 Central Park，坐标……”）；可选让玩家在申领单中选择扇区，警报诱饵同样适用。空投箱绝不会落在水里、建筑内、非PVP区域或安全屋。
-
-游戏内管理面板（[b]空投区[/b]）：用鼠标绘制空投区，设置扇区和权重，在地面[b]高亮显示[/b]所有空投区，可编辑、禁用或传送。默认关闭。
-
-[h2]服务器管理员[/h2]
+每个角色都有自己的声望,从不以数字显示。它能缩短空投间隔,并解锁更大的申请。
 
 [list]
-[*]60 个沙盒选项，修改后无需重启即可生效（频率除外）：空投间隔（默认一周，对整个服务器生效）、距离、僵尸群、认证码模式、信任度、任务、申领、诱饵、直升机坠毁、空投区。
-[*]可以在 Zomboid/Lua/MilitaryDrop/requisition.txt 中修改、禁用或添加申领物资。
-[*]多人模式由服务器做主。管理员可以用军用无线电强制空投、让下一架直升机坠毁和发起任务。
+[*]第一个打开自己的空投,送回残骸中的飞行记录仪。
+[*]每日报告、阵亡士兵的狗牌、侦察、清剿、通信检查、富尔顿投送。
+[*]别人打开你的空投或空投丢失时,信任度会下降。
+[/list]
+
+[h2]此外[/h2]
+
+[list]
+[*][b]直升机坠毁[/b],雷雨时更常见:MAYDAY 会给出区域;残骸里有零件、文件和飞行记录仪。
+[*][b]联络站[/b]:固定式军用无线电会变成你站点的控制台(事务、命令、日志、读取槽)。
+[*]面向 PvP 服务器的[b]争夺空投区[/b],由管理员在游戏中绘制。
+[*]60 项沙盒选项,无需重启即可生效;多人模式由服务器决定一切;可通过军用无线电使用管理员工具。
 [/list]
 
 [h2]兼容性[/h2]
 
 [list]
 [*]不需要其他模组。
-[*]设计上可与 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url] 共存。
-[*]搭配 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] 时，绿色烟雾会标出空投箱。
-[*]兼容 Better Walkie Talkies：保留其按键通话、语音和电池规则。
-[*]你的武器和物品模组中的物品也会出现在补给箱里。
+[*]设计为可与 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url] 共存。
+[*]配合 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url],绿色烟雾会标出补给箱。
+[*]配合 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url],可以用富尔顿送出样本和疫苗。
+[*]支持 Better Walkie Talkies;你的模组物品也会出现在补给箱中。
 [/list]
 
 [h2]指南[/h2]
 
-所有细节和截图：[url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]完整指南（英文）[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet（法文）[/url]。
+完整说明与截图:[url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]完整指南(英文)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (français)[/url]。
 
 [h2]支持本项目[/h2]
 
-喜欢这个模组吗？一杯咖啡可以支持新功能和新翻译的开发。
+喜欢这个模组吗?一杯咖啡有助于资助新功能和翻译。
 [url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
 
-[h2]致谢[/h2]
+[h2]鸣谢[/h2]
 
-本模组是 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url]（Build 41）的 Build 42 重写版。源代码（MIT）在 [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url] 上。
+[url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url](Build 41)的 Build 42 重写版。源代码(MIT)位于 [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url]。

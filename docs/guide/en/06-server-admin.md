@@ -88,7 +88,7 @@ The mod reads its options each time it uses them: a new value counts for the nex
 | Decoy siren duration (hours) | `DecoySirenHours` | 6 | |
 | Decoy siren noise radius (tiles) | `DecoyNoiseRadius` | 120 | Only while the area around the crate is loaded. |
 
-### Fulton extraction (in development)
+### Fulton extraction
 
 See [Fulton extraction](08-fulton.md).
 

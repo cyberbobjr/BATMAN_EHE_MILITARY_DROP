@@ -3,11 +3,18 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
-## Unreleased
+## 0.4.0 — 2026-10-07
 
 ### Added
 
-- **Fulton extraction (in development).** Send intelligence and gear to Command by balloon and earn trust. Craft a Fulton recovery kit (tarp balloon, sandbag harness, vanilla wire) or repair a damaged one found in army storage, on a downed helicopter's pilot or in a supply crate. Helium tanks hold four inflations (gift and toy stores, army storage); an empty tank can be cut up with a blowtorch. Request a pick-up on the radio's Logistics section, fill the kit, go outside and release it: the balloon rises, an aircraft snatches it, and the military channel announces the sector. Command pays for ID cards, passports and badges of other people, paperwork, stash maps and military NBC gear, within the daily cap; with Zombie Virus Vaccine, samples and vaccines too, and the cure outside the cap. Three new sandbox options: `FultonValue`, `FultonWindowMinutes`, `FultonLootRate`. Multiplayer: everything is checked and paid by the server; every nearby player sees the balloon and hears the aircraft.
+- **Fulton extraction.** Send intelligence and gear to Command by balloon and earn trust:
+  1. On a military radio, **Logistics** section: **Request a Fulton pick-up** (30 game minutes to release).
+  2. Put a **Fulton recovery kit** on the ground outside and fill it like a bag (the balloon is already inside).
+  3. Right-click the kit: **Inflate and release the Fulton**, with a **Helium tank** in your inventory. A confirmation lists what Command will use. The balloon rises, an aircraft snatches it, Command acknowledges on the radio in your hand and in the liaison post log, and the military channel announces the sector.
+- Command pays for ID cards, passports and badges of other people, paperwork, stash maps and military NBC gear, within the daily cap. With Zombie Virus Vaccine: samples and vaccines too, and the cure outside the cap.
+- Craft the kit (balloon envelope and harness bag parts, vanilla wire) or repair a damaged one found in army storage, on a downed helicopter's pilot or in a supply crate without an order. Helium tanks hold four inflations (gift and toy stores, army storage); an empty tank can be cut up with a blowtorch.
+- New sandbox options: `FultonValue`, `FultonWindowMinutes`, `FultonLootRate`.
+- Simpler Workshop page: fewer screenshots, the full guide stays on the wiki.
 
 ### Changed
 
