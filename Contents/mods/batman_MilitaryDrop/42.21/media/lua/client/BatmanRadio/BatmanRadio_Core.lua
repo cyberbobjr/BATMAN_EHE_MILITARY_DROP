@@ -1,7 +1,8 @@
 -- SOURCE COMMUNE : MilitaryDrop/source/radio/lua ; copies générées par sync_radio.py.
 -- Un seul menu, wrapper de fenêtre et récepteur solo, même avec Artemis + MilitaryDrop.
 -- Les stations viennent du registre vanilla ; les scénarios inscrivent leurs options.
--- En MP, réception et VOIP restent gérées par le vanilla / Better Walkie Talkies.
+-- En MP, réception et VOIP restent gérées par le vanilla / Better Walkie Talkies ;
+-- seule la bulle d'une ligne de nos chaînes reçue par une radio non tenue est ajoutée.
 
 require "ISUI/ISRadioAndTvMenu"
 require "RadioCom/ISRadioWindow"
@@ -19,6 +20,7 @@ if BeltRadio.onGameStart then Events.OnGameStart.Remove(BeltRadio.onGameStart) e
 if BeltRadio.onFillInventoryContextMenu then
     Events.OnFillInventoryObjectContextMenu.Remove(BeltRadio.onFillInventoryContextMenu)
 end
+if BeltRadio.onDeviceTextMP then Events.OnDeviceText.Remove(BeltRadio.onDeviceTextMP) end
 if BeltRadio.reset then
     Events.OnDisconnect.Remove(BeltRadio.reset)
     Events.OnMainMenuEnter.Remove(BeltRadio.reset)
@@ -236,9 +238,14 @@ function BeltRadio.deliver(line, frequency)
                 -- il consomme le hasard et modifie l'état interne du moteur radio.
                 -- La réception d'une radio en main reste ainsi entièrement native.
                 if text == nil then text, r, g, b, codes = BeltRadio.weathered(line) end
-                -- Même surcharge que DistributeToPlayerInternal : ChatManager,
-                -- trait sourd, parasites et OnDeviceText restent au moteur.
-                radio:AddDeviceText(player, text, r, g, b, nil, codes, -1)
+                -- Surcharge à 7 arguments, texte en premier (Radio.java:77-89) :
+                -- SayRadio dessine la bulle « radio » au-dessus du propriétaire
+                -- et passe au chat radio (ChatManager), sourd exclu, puis
+                -- OnDeviceText (codes non nil). Pas celle à 8 arguments de
+                -- DistributeToPlayerInternal (WaveSignalDevice.java:41-62) : sa
+                -- bulle exige player:isEquipped(radio), jamais vrai à la ceinture,
+                -- et le chat radio n'existe pas en solo (ISChat : MP seulement).
+                radio:AddDeviceText(text, r, g, b, nil, codes, -1)
             end
         end
     end
@@ -247,6 +254,9 @@ end
 -- Par chaîne suivie : diffusion en cours et nombre de ses lignes déjà traitées.
 local followed = BeltRadio.followed or {}
 BeltRadio.followed = followed
+-- Par joueur local : dernière bulle MP ajoutée (texte, horodatage), section 4.
+local lastBubble = BeltRadio.lastBubble or {}
+BeltRadio.lastBubble = lastBubble
 -- Les fournisseurs sont remplacés par ID lors d'un rechargement.
 function BeltRadio.register(id, provider)
     providers[id] = provider
@@ -371,8 +381,78 @@ end
 
 function BeltRadio.reset()
     for channel in pairs(followed) do followed[channel] = nil end
+    for playerNum in pairs(lastBubble) do lastBubble[playerNum] = nil end
     Events.OnTick.Remove(BeltRadio.onTick)
     BeltRadio.listening = false
+end
+
+-- ----------------------------------------------------------------------------
+-- 4. Bulle en MP pour une radio non tenue
+-- ----------------------------------------------------------------------------
+
+-- Client MP : ZomboidRadio.DistributeToPlayerOnClient sert toutes les radios
+-- allumées de l'inventaire principal (VoiceManager), ceinture comprise, par la
+-- surcharge à 8 arguments : pour une radio ni en main ni portée, la ligne
+-- n'arrive qu'au chat radio, sans bulle, puis OnDeviceText. Les lignes des
+-- chaînes scriptées (RadioChannel.java:223-225) ont toujours des codes non nil
+-- et une portée -1 (aucune déformation, donc jamais la surcharge à 7
+-- arguments) ; les réponses directes de nos mods (7 arguments, codes nil) ne
+-- déclenchent pas l'événement et ont déjà leur bulle.
+BeltRadio.MP_BUBBLE_DEDUP_MS = 2000
+
+--- Fréquences de nos chaînes connues de ce client, avec leur couleur :
+--- fréquence -> { r, g, b }. Le gestionnaire de chaînes vaut nil sur un client
+--- MP : chaque fournisseur déclare ce qu'il sait (frequencies), sinon ses
+--- chaînes si elles existent (solo, hôte).
+function BeltRadio.scenarioFrequencies()
+    local known = {}
+    for _, provider in pairs(providers) do
+        for _, entry in ipairs(provider.frequencies and provider.frequencies() or {}) do
+            if entry.frequency then known[entry.frequency] = entry end
+        end
+        for _, channel in ipairs(provider.channels and provider.channels() or {}) do
+            local frequency = channel:GetFrequency()
+            known[frequency] = known[frequency] or { frequency = frequency }
+        end
+    end
+    return known
+end
+
+--- OnDeviceText sur un client MP : bulle « radio » au-dessus du joueur, comme
+--- pour une radio en main, si la radio de l'inventaire principal qui reçoit
+--- une ligne de nos chaînes n'est pas tenue et que la radio équipée ne reçoit
+--- pas déjà la fréquence (le vanilla dessine alors la bulle) ; une seule fois
+--- si plusieurs radios reçoivent la même ligne. Le sourd n'arrive jamais ici
+--- (WaveSignalDevice.java:46). La couleur de la ligne n'est pas transmise à
+--- l'événement : celle que déclare le fournisseur (brouillage gris perdu).
+function BeltRadio.onDeviceTextMP(_guid, codes, _x, _y, _z, line, device)
+    if codes == nil or type(line) ~= "string" or line == "" or not Compat.features().mpBubble then
+        return
+    end
+    if not BeltRadio.isPortableRadio(device) then
+        return
+    end
+    local data = device:getDeviceData()
+    local frequency = data:getChannel()
+    local entry = BeltRadio.scenarioFrequencies()[frequency]
+    if not entry then
+        return
+    end
+    for playerNum = 0, getNumActivePlayers() - 1 do
+        local player = getSpecificPlayer(playerNum)
+        if player and not player:isDead() and device:getContainer() == player:getInventory() then
+            if player:isEquipped(device) then return end
+            local equipped = player:getEquipedRadio()
+            if equipped and BeltRadio.receives(equipped, frequency) then return end
+            local now = getTimestampMs()
+            local last = lastBubble[playerNum]
+            if last and last.text == line and now - last.ms < BeltRadio.MP_BUBBLE_DEDUP_MS then return end
+            lastBubble[playerNum] = { text = line, ms = now }
+            player:addLineChatElement(line, entry.r or 1, entry.g or 1, entry.b or 1, UIFont.Medium,
+                data:getDeviceVolumeRange(), "radio", true, true, true, false, false, true)
+            return
+        end
+    end
 end
 
 --- Solo seulement : sur un client MP, le vanilla sert déjà les radios de
@@ -389,6 +469,7 @@ BeltRadio.installWindowWrapper()
 if BeltRadio.listening and Compat.features().scenarioReception then Events.OnTick.Add(BeltRadio.onTick) end
 Events.OnGameStart.Add(BeltRadio.onGameStart)
 Events.OnFillInventoryObjectContextMenu.Add(BeltRadio.onFillInventoryContextMenu)
+Events.OnDeviceText.Add(BeltRadio.onDeviceTextMP)
 Events.OnDisconnect.Add(BeltRadio.reset)
 Events.OnMainMenuEnter.Add(BeltRadio.reset)
 

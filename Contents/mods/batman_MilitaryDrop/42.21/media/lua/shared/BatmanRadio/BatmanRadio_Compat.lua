@@ -25,6 +25,10 @@ function Compat.features()
         beltBattery = not server and not active,
         -- BWT ne remplace pas la réception des stations à la ceinture en solo.
         scenarioReception = not client and not server,
+        -- Bulle MP d'une radio non tenue (BatmanRadio_Core.onDeviceTextMP).
+        -- BWT n'affiche aucune ligne de chaîne (ni AddDeviceText ni bulle dans
+        -- ses Lua 42.20) mais garde ses radios en MP : rien d'ajouté avec lui.
+        mpBubble = client and not server and not active,
         -- La fonction peut apparaître après le chargement de notre module.
         radioTextBridge = type(bridge) == "function" and bridge or nil,
     }

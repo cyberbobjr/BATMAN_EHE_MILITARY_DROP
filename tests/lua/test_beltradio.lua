@@ -11,7 +11,7 @@ local function makeRadio(opts)
     local data = {}
     local values = {
         getIsPortable = true, getIsTurnedOn = true, getIsTelevision = false, getChannel = FREQ,
-        getDeviceVolume = 0.5, isPlayingMedia = false, isNoTransmit = false,
+        getDeviceVolume = 0.5, getDeviceVolumeRange = 12, isPlayingMedia = false, isNoTransmit = false,
         getIsBatteryPowered = true, getHasBattery = true, getPower = 0.8,
     }
     for name, value in pairs(values) do
@@ -21,13 +21,32 @@ local function makeRadio(opts)
         end
         data[name] = function() return v end
     end
-    local radio = { kind = "Radio", said = {} }
+    local radio = { kind = "Radio", said = {}, shown = {} }
     data.update = function() end -- batterie native couverte par test_beltbattery
     radio.getDeviceData = function() return data end
     radio.getContainer = function() return opts.container or INVENTORY end
-    radio.AddDeviceText = function(self, player, text, r, g, b, guid, codes, distance)
-        assertEq(player, PLAYER, "surcharge vanilla avec joueur")
-        self.said[#self.said + 1] = { text = text, r = r, codes = codes, distance = distance }
+    -- Doublure fidèle des deux surcharges Java (volume > 0 et sourd exclus dans les deux).
+    -- 8 arguments, joueur en premier (WaveSignalDevice.java:41-62) : bulle seulement si
+    -- player:isEquipped(radio) (mains ou vêtement porté, jamais la ceinture), le reste au chat
+    -- radio, absent en solo. 7 arguments, texte en premier (Radio.java:77-89) : SayRadio, bulle
+    -- « radio » au-dessus du propriétaire (getPlayer : conteneur parent). Puis OnDeviceText
+    -- si codes ~= nil. said : lignes reçues (OnDeviceText) ; shown : bulles à l'écran.
+    radio.AddDeviceText = function(self, first, ...)
+        local player, text, r, guid, codes, distance, shown, _
+        if type(first) == "string" then
+            text, r, _, _, guid, codes, distance = first, ...
+            player = self:getContainer() == INVENTORY and PLAYER or nil
+            shown = player ~= nil
+        else
+            player = first
+            text, r, _, _, guid, codes, distance = ...
+            shown = player:isEquipped(self)
+        end
+        if not player or self:getDeviceData():getDeviceVolume() <= 0 or player.deaf then return end
+        if shown then self.shown[#self.shown + 1] = text end
+        if codes ~= nil then
+            self.said[#self.said + 1] = { text = text, r = r, codes = codes, distance = distance, guid = guid }
+        end
     end
     return radio
 end
@@ -46,6 +65,12 @@ local function makePlayer()
     player.getSecondaryHandItem = function(self) return self.hands[2] end
     player.getClothingItem_Back = function(self) return self.back end
     player.getEquipedRadio = function(self) return self.equipped end
+    player.isEquipped = function(self, item) return item == self.hands[1] or item == self.hands[2] end
+    player.bubbles = {}
+    -- IsoGameCharacter.addLineChatElement (12 arguments) : bulle ajoutée directement.
+    player.addLineChatElement = function(self, text, r, g, b, font, range, tag)
+        self.bubbles[#self.bubbles + 1] = { text = text, r = r, g = g, b = b, font = font, range = range, tag = tag }
+    end
     player.getInventory = function() return INVENTORY end
     player.isDead = function() return false end
     player.getAttachedItems = function(self)
@@ -315,6 +340,8 @@ function T.belt_radio_hears_each_line_when_it_airs()
     assertEq(radio.said[1].codes, "MDRP", "codes de la ligne (OnDeviceText, repère)")
     assertEq(radio.said[1].r, 0.45, "couleur 0-1")
     assertEq(radio.said[1].distance, -1, "sans distorsion")
+    assertEq(#radio.shown, 1, "ligne affichée au-dessus du joueur (surcharge à 7 arguments)")
+    assertEq(radio.shown[1], "grille 1", "texte de la bulle")
     AIRING.count = 4
     triggerEvent("OnTick")
     assertEq(#radio.said, 3, "répétition identique comptée, compteur borné")
@@ -480,6 +507,103 @@ function T.world_restart_releases_broadcasts_and_keeps_one_receiver()
     triggerEvent("OnTick")
     assertEq(#radio.said, 2, "nouvelle diffusion reçue une seule fois")
     assertEq(listenerCount("OnTick"), 2, "un récepteur et une batterie")
+end
+
+function T.belt_line_is_shown_once_and_never_doubled_after_taking_the_radio_in_hand()
+    local radio = makeRadio()
+    PLAYER.attached = { radio }
+    startListening()
+    AIRING = makeBroadcast({ { "a" }, { "b" } })
+    AIRING.count = 1
+    triggerEvent("OnTick")
+    assertEq(#radio.shown, 1, "ceinture, mains vides : une bulle")
+    -- Reprise en main : le vanilla (radio équipée) reçoit seul la ligne suivante.
+    PLAYER.attached, PLAYER.hands[1], PLAYER.equipped = {}, radio, radio
+    AIRING.count = 2
+    triggerEvent("OnTick")
+    assertEq(#radio.shown, 1, "radio en main : rien ajouté par le récepteur")
+end
+
+function T.deaf_player_sees_and_hears_nothing_at_the_belt()
+    local radio = makeRadio()
+    PLAYER.attached, PLAYER.deaf = { radio }, true
+    startListening()
+    AIRING = makeBroadcast({ { "a", "MDRP" } })
+    AIRING.count = 1
+    triggerEvent("OnTick")
+    assertEq(#radio.shown + #radio.said, 0, "sourd : ni bulle ni OnDeviceText (Radio.java:83)")
+end
+
+-- MP : bulle d'une radio non tenue (BatmanRadio_Core.onDeviceTextMP).
+local function mpSetup(frequencyOption)
+    SOLO = false
+    SandboxVars = { MilitaryDrop = { Frequency = frequencyOption } }
+    MilitaryDrop.Broadcast = { COLOR = { r = 0.45, g = 0.85, b = 0.45 } } -- client MP : pas de chaîne
+    UIFont = { Medium = "Medium" }
+    NOW = 1000
+    getTimestampMs = function() return NOW end
+    getActivatedMods = function() return { size = function() return 0 end } end
+end
+
+--- Ligne d'une chaîne scriptée servie par ZomboidRadio.DistributeToPlayerOnClient :
+--- surcharge à 8 arguments pour chaque radio de l'inventaire principal sur la fréquence.
+local function vanillaMpLine(radios, text)
+    for _, radio in ipairs(radios) do
+        radio:AddDeviceText(PLAYER, text, 0.45, 0.85, 0.45, nil, "", -1)
+        triggerEvent("OnDeviceText", nil, "", -1, -1, -1, text, radio)
+    end
+end
+
+function T.mp_belt_radio_on_a_public_channel_gets_one_bubble()
+    mpSetup(151.4)
+    local a, b = makeRadio(), makeRadio()
+    PLAYER.attached = { a }
+    vanillaMpLine({ a, b }, "grille 1")
+    assertEq(#a.shown + #b.shown, 0, "vanilla : chat radio seulement")
+    assertEq(#PLAYER.bubbles, 1, "une seule bulle pour deux radios non tenues")
+    assertEq(PLAYER.bubbles[1].tag, "radio", "bulle radio")
+    assertEq(PLAYER.bubbles[1].r, 0.45, "couleur de la chaîne")
+    assertEq(PLAYER.bubbles[1].range, 12, "portée du volume")
+    NOW = NOW + 5000
+    vanillaMpLine({ a }, "grille 1")
+    assertEq(#PLAYER.bubbles, 2, "même texte plus tard : nouvelle transmission")
+end
+
+function T.mp_bubble_skipped_for_held_radio_other_channel_secret_frequency_bwt_and_solo()
+    mpSetup(151.4)
+    local hand, belt = makeRadio(), makeRadio()
+    PLAYER.hands[1], PLAYER.equipped, PLAYER.attached = hand, hand, { belt }
+    vanillaMpLine({ hand, belt }, "en main")
+    assertEq(#hand.shown, 1, "radio en main : bulle vanilla")
+    assertEq(#PLAYER.bubbles, 0, "rien ajouté si la radio équipée reçoit")
+    PLAYER.hands[1], PLAYER.equipped = nil, nil
+    local other = makeRadio({ getChannel = 98000 })
+    vanillaMpLine({ other }, "météo")
+    assertEq(#PLAYER.bubbles, 0, "chaîne vanilla : laissée au vanilla")
+    mpSetup(0)
+    vanillaMpLine({ belt }, "secrète")
+    assertEq(#PLAYER.bubbles, 0, "fréquence libre tirée par le serveur : inconnue du client")
+    mpSetup(151.4)
+    getActivatedMods = function()
+        return { size = function() return 1 end, get = function() return "BetterWalkieTalkies" end }
+    end
+    vanillaMpLine({ belt }, "bwt")
+    assertEq(#PLAYER.bubbles, 0, "Better Walkie Talkies actif : rien ajouté")
+    mpSetup(151.4)
+    SOLO = true
+    triggerEvent("OnDeviceText", nil, "", -1, -1, -1, "solo", belt)
+    assertEq(#PLAYER.bubbles, 0, "solo : la livraison du récepteur affiche déjà")
+end
+
+function T.mp_direct_reply_without_codes_adds_no_bubble()
+    mpSetup(151.4)
+    local belt = makeRadio()
+    PLAYER.attached = { belt }
+    -- Réponse directe (MilitaryDrop_Client.radioSay) : 7 arguments, codes nil, pas d'OnDeviceText.
+    belt:AddDeviceText("Reçu.", 0.45, 0.85, 0.45, nil, nil, -1)
+    triggerEvent("OnDeviceText", nil, nil, -1, -1, -1, "Reçu.", belt) -- appel sans codes ignoré
+    assertEq(#belt.shown, 1, "bulle de la surcharge à 7 arguments")
+    assertEq(#PLAYER.bubbles, 0, "aucune seconde bulle")
 end
 
 return T

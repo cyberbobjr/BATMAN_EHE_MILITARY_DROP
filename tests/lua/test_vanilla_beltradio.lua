@@ -44,14 +44,28 @@ local function radio(frequency)
     data.getIsBatteryPowered = function() return true end
     data.getHasBattery = function() return true end
     data.getPower = function() return 1 end
-    local item = { kind = "Radio", said = {}, data = data }
+    local item = { kind = "Radio", said = {}, shown = {}, data = data }
     item.getDeviceData = function() return data end
     item.getContainer = function() return INVENTORY end
-    item.AddDeviceText = function(_, player, text, r, g, b, guid, codes, distance)
-        eq(player, PLAYER) -- surcharge utilisée par DistributeToPlayerInternal
+    -- Doublure fidèle des deux surcharges Java. 8 arguments (WaveSignalDevice.java:41-62) :
+    -- bulle seulement si player:isEquipped(radio), jamais à la ceinture ; le reste au chat
+    -- radio, absent en solo. 7 arguments, texte en premier (Radio.java:77-89) : SayRadio,
+    -- bulle au-dessus du propriétaire. Puis OnDeviceText (said) si codes ~= nil.
+    item.AddDeviceText = function(self, first, ...)
+        local text, r, g, b, guid, codes, distance, shown
+        if type(first) == "string" then
+            text, r, g, b, guid, codes, distance = first, ...
+            shown = true -- getPlayer() : PLAYER, parent du conteneur INVENTORY
+        else
+            text, r, g, b, guid, codes, distance = ...
+            shown = first:isEquipped(self)
+        end
         eq(guid, nil)
         eq(distance, -1)
-        item.said[#item.said + 1] = { text = text, r = r, g = g, b = b, codes = codes }
+        if shown then self.shown[#self.shown + 1] = text end
+        if codes ~= nil then
+            self.said[#self.said + 1] = { text = text, r = r, g = g, b = b, codes = codes }
+        end
     end
     return item
 end
@@ -80,6 +94,7 @@ function T.setup()
     PLAYER.getAttachedItems = function() return list(PLAYER.attached) end
     PLAYER.getEquipedRadio = function() return PLAYER.equipped end
     PLAYER.getPrimaryHandItem = function() return PLAYER.equipped end
+    PLAYER.isEquipped = function(_, item) return item == PLAYER.equipped end
     PLAYER.getSecondaryHandItem = function() end
     PLAYER.getClothingItem_Back = function() end
     PLAYER.isDead = function() return false end
@@ -131,6 +146,7 @@ function T.vanilla_schedule_is_started_by_belt_listening_without_scenario_provid
     eq(#item.said, 1)
     eq(item.said[1].codes, "MAPTEST")
     eq(item.said[1].r, 0.7)
+    eq(#item.shown, 1) -- affichée à l'écran, pas seulement OnDeviceText
 end
 
 function T.random_aebs_frequency_and_late_channel_registration_are_discovered()

@@ -41,8 +41,44 @@ function BeltRadio.channels()
     return list
 end
 
+--- Fréquences des chaînes connues de ce client, pour la bulle MP d'une radio
+--- non tenue (BatmanRadio_Core.onDeviceTextMP). Chaîne créée (solo, hôte) :
+--- sa fréquence. Client MP : seulement celles que fixent les options sandbox,
+--- publiques (Config.isFixedFrequency) ; une fréquence libre tirée par le
+--- serveur reste secrète (Config.getChannel ne doit pas servir ici : elle
+--- calculerait un candidat sans la graine du serveur), donc pas de bulle.
+function BeltRadio.frequencies()
+    local Config = MilitaryDrop.Config
+    local broadcast = MilitaryDrop.Broadcast
+    local station = MilitaryDrop.NumbersStation
+    local list = {}
+    -- Couleur des lignes de la chaîne (fichiers server/, chargés aussi par un client MP).
+    local function add(frequency, module)
+        local color = module and module.COLOR or {}
+        if frequency then
+            list[#list + 1] = { frequency = frequency, r = color.r, g = color.g, b = color.b }
+        end
+    end
+    local military = broadcast and broadcast.frequency
+    if not military and Config.isFixedFrequency() then
+        military = Config.toChannel(Config.get("Frequency"))
+    end
+    add(military, broadcast)
+    local numbers = station and station.frequency
+    local configured = tonumber(Config.get("NumbersStationFrequency")) or 0
+    if not numbers and configured > 0 and Config.codeMode() == MilitaryDrop.Codes.MODE_WEEKLY_CIPHER then
+        numbers = Config.toChannel(configured)
+        if numbers == military then -- même décalage que NumbersStation.candidates
+            numbers = Config.toChannel((numbers + Config.CHANNEL_STEP) / 1000)
+        end
+    end
+    add(numbers, station)
+    return list
+end
+
 Support.register("MilitaryDrop", {
     channels = BeltRadio.channels,
+    frequencies = BeltRadio.frequencies,
     isStowed = BeltRadio.isStowedMilitary,
     open = BeltRadio.takeAndOpen,
     takingActions = { ["MilitaryDrop.ExchangeAction"] = "device" },
