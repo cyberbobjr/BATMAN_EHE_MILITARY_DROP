@@ -3,6 +3,12 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.5.2 — 2026-10-10
+
+### Changed
+
+- The encrypted memos now say which radio can receive the numbers station: it broadcasts on shortwave (10-25 MHz), so use a military or ham radio.
+
 ## 0.5.1 — 2026-10-10
 
 ### Changed
