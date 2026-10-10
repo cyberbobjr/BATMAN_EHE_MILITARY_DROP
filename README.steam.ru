@@ -1,7 +1,7 @@
 [h1]Military Drop - Сброс снабжения по радио[/h1]
 
 [h1]НЕСОВМЕСТИМОЕ ИЗМЕНЕНИЕ — версия 0.5.1 (2026-10-10)[/h1]
-[b]Теперь этому моду требуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]. Подпишитесь на него и включите вместе с этим модом. Выделенные серверы: добавьте 3817018338 в WorkshopItems= и batman_BeltRadio в Mods=, иначе игра не загрузит этот мод (в журнале будет только предупреждение).[/b]
+[b]Теперь этому моду требуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]. Подпишитесь на оба и включите их вместе с этим модом. Выделенные серверы: добавьте 3817018338;3694097672 в WorkshopItems= и batman_BeltRadio;TooltipLib в Mods=, иначе игра не загрузит этот мод (в журнале будет только предупреждение).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 

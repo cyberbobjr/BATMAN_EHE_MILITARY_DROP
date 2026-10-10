@@ -1,7 +1,7 @@
 [h1]Military Drop - Largages de ravitaillement par radio[/h1]
 
 [h1]CHANGEMENT INCOMPATIBLE — version 0.5.1 (2026-10-10)[/h1]
-[b]Ce mod nécessite désormais [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]. Abonnez-vous et activez-le avec ce mod. Serveurs dédiés : ajoutez 3817018338 à WorkshopItems= et batman_BeltRadio à Mods=, sinon le jeu ne charge pas ce mod (seul un avertissement apparaît dans le journal).[/b]
+[b]Ce mod nécessite désormais [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]. Abonnez-vous aux deux et activez-les avec ce mod. Serveurs dédiés : ajoutez 3817018338;3694097672 à WorkshopItems= et batman_BeltRadio;TooltipLib à Mods=, sinon le jeu ne charge pas ce mod (seul un avertissement apparaît dans le journal).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
