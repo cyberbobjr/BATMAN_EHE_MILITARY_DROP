@@ -5,6 +5,9 @@ tags=Build 42;Military;Multiplayer;Items
 visibility=public
 description=[h1]Military Drop - Radio Supply Airdrops[/h1]
 description=
+description=[h1]BREAKING CHANGE — version 0.5.1 (2026-10-10)[/h1]
+description=[b]This mod now requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]. Subscribe to it and enable it together with this mod. Dedicated servers: add 3817018338 to WorkshopItems= and batman_BeltRadio to Mods=, otherwise the game does not load this mod (only a warning in the log).[/b]
+description=
 description=[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 description=
 description=[b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]

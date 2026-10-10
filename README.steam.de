@@ -1,5 +1,8 @@
 [h1]Military Drop - Versorgungsabwürfe per Funk[/h1]
 
+[h1]INKOMPATIBLE ÄNDERUNG — Version 0.5.1 (2026-10-10)[/h1]
+[b]Diese Mod benötigt jetzt [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]. Abonniere sie und aktiviere sie zusammen mit dieser Mod. Dedizierte Server: 3817018338 zu WorkshopItems= und batman_BeltRadio zu Mods= hinzufügen, sonst lädt das Spiel diese Mod nicht (nur eine Warnung im Log).[/b]
+
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
 [b]Build 42.21 · Einzelspieler & Mehrspieler · Eigenständig[/b]

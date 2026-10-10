@@ -1,5 +1,8 @@
 [h1]Military Drop - Lançamentos de suprimentos por rádio[/h1]
 
+[h1]MUDANÇA INCOMPATÍVEL — versão 0.5.1 (2026-10-10)[/h1]
+[b]Este mod agora exige [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]. Inscreva-se e ative-o junto com este mod. Servidores dedicados: adicione 3817018338 em WorkshopItems= e batman_BeltRadio em Mods=; senão, o jogo não carrega este mod (só um aviso no log).[/b]
+
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
 
 [b]Build 42.21 · Um jogador e multijogador · Independente[/b]
