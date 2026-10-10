@@ -3,6 +3,12 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.5.1 — 2026-10-10
+
+### Changed
+
+- [Belt Walkie-Talkie](https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338) (mod ID `batman_BeltRadio`) is now **required**: subscribe to it and enable it with this mod. On a dedicated server, add `3817018338` to `WorkshopItems=` and `batman_BeltRadio` to `Mods=`, otherwise the game does not load this mod.
+
 ## 0.5.0 — 2026-10-10
 
 ### Changed

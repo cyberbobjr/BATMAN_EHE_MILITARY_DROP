@@ -51,7 +51,7 @@ description=[h2]Compatibility[/h2]
 description=
 description=[list]
 description=[*]No other mod required.
-description=[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] (optional) is recommended: one shared belt walkie-talkie behaviour for all the mods that use it. Without it, the same behaviour is built in.
+description=[*]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: the shared belt walkie-talkie behaviour of all the mods that use it.
 description=[*]Designed to coexist with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 description=[*]With [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], green smoke marks the crate.
 description=[*]With [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url], samples and vaccines can be sent by Fulton.

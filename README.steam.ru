@@ -46,7 +46,7 @@
 
 [list]
 [*]Другие моды не нужны.
-[*]Рекомендуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] (необязательно): единое поведение рации на поясе для всех модов, которые его используют. Без него это поведение встроено в мод.
+[*]Требуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: единое поведение рации на поясе для всех модов, которые его используют.
 [*]Создан для совместной работы с [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]С [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] ящик отмечает зелёный дым.
 [*]С [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url] образцы и вакцины можно отправлять «Фултоном».
