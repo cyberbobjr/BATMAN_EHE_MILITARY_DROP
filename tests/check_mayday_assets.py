@@ -6,8 +6,10 @@ Ne constitue pas un test du chargement par le moteur du jeu.
 """
 import io
 import json
+import os
 import re
 import struct
+import xml.etree.ElementTree as ET
 import zlib
 from pathlib import Path
 from PIL import Image
@@ -132,7 +134,6 @@ def main():
             py = round((oz+length/2-raw[i+2]/100)/length*1024)
             assert alpha.getpixel((px,py)) > 10, 'Projected vertex outside the shadow'
         print(f'{name}: fitted shadow silhouette, bounds, offset and UV orientation verified')
-    import os
     vanilla = Path(os.environ.get('PZ_MEDIA', r'D:\SteamLibrary\steamapps\common\ProjectZomboid\media'))
     if vanilla.is_dir():
         outfit_xml = ET.parse(vanilla/'clothing/clothing.xml').getroot()
