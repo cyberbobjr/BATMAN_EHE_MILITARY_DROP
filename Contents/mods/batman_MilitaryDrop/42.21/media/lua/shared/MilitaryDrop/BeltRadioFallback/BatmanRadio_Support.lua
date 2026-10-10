@@ -1,4 +1,4 @@
--- Copie de secours de Belt Walkie-Talkie (batman_BeltRadio 0.1.1), générée par
+-- Copie de secours de Belt Walkie-Talkie (batman_BeltRadio 1.0.0), générée par
 -- BeltRadio/tools/sync_fallback.py depuis media/lua/shared/BatmanRadio/BatmanRadio_Support.lua :
 -- ne pas modifier ici. Elle ne fait rien si batman_BeltRadio est activé (le mod
 -- commun s'en charge) ; sinon elle garde les globales BatmanRadioSupport et
