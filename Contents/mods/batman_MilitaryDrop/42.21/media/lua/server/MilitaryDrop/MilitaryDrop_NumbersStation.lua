@@ -38,6 +38,9 @@ Station.BAND_MAX = 25000
 Station.REPEATS = 3
 Station.INTERVAL_MINUTES = 30
 Station.COLOR = { r = 0.85, g = 0.75, b = 0.45 }
+-- Code des lignes : reconnues par le client MP sans la fréquence secrète
+-- (MilitaryDrop_BeltRadio.recognize) ; 4 caractères, ignoré par le vanilla.
+Station.CODE = "MDNS"
 
 local serial = 0
 local lastSlot = nil
@@ -117,7 +120,7 @@ function Station.air(clock)
     local bc = RadioBroadCast.new("MDNS-" .. serial, -1, -1)
     local c = Station.COLOR
     for _, text in ipairs(Station.message(clock)) do
-        bc:AddRadioLine(RadioLine.new(text, c.r, c.g, c.b))
+        bc:AddRadioLine(RadioLine.new(text, c.r, c.g, c.b, Station.CODE))
     end
     channel:setAiringBroadcast(bc)
     return true

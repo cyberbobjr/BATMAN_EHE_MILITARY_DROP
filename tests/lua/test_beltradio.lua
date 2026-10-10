@@ -547,10 +547,11 @@ end
 
 --- Ligne d'une chaîne scriptée servie par ZomboidRadio.DistributeToPlayerOnClient :
 --- surcharge à 8 arguments pour chaque radio de l'inventaire principal sur la fréquence.
-local function vanillaMpLine(radios, text)
+local function vanillaMpLine(radios, text, codes)
+    codes = codes or ""
     for _, radio in ipairs(radios) do
-        radio:AddDeviceText(PLAYER, text, 0.45, 0.85, 0.45, nil, "", -1)
-        triggerEvent("OnDeviceText", nil, "", -1, -1, -1, text, radio)
+        radio:AddDeviceText(PLAYER, text, 0.45, 0.85, 0.45, nil, codes, -1)
+        triggerEvent("OnDeviceText", nil, codes, -1, -1, -1, text, radio)
     end
 end
 
@@ -581,8 +582,8 @@ function T.mp_bubble_skipped_for_held_radio_other_channel_secret_frequency_bwt_a
     vanillaMpLine({ other }, "météo")
     assertEq(#PLAYER.bubbles, 0, "chaîne vanilla : laissée au vanilla")
     mpSetup(0)
-    vanillaMpLine({ belt }, "secrète")
-    assertEq(#PLAYER.bubbles, 0, "fréquence libre tirée par le serveur : inconnue du client")
+    vanillaMpLine({ belt }, "secrète, brouillée")
+    assertEq(#PLAYER.bubbles, 0, "fréquence libre jamais reconnue, ligne sans code : rien")
     mpSetup(151.4)
     getActivatedMods = function()
         return { size = function() return 1 end, get = function() return "BetterWalkieTalkies" end }
@@ -593,6 +594,32 @@ function T.mp_bubble_skipped_for_held_radio_other_channel_secret_frequency_bwt_a
     SOLO = true
     triggerEvent("OnDeviceText", nil, "", -1, -1, -1, "solo", belt)
     assertEq(#PLAYER.bubbles, 0, "solo : la livraison du récepteur affiche déjà")
+end
+
+function T.mp_secret_frequency_is_learned_from_the_first_marked_line()
+    mpSetup(0) -- fréquence libre tirée par le serveur : aucune fréquence connue du client
+    MilitaryDrop.NumbersStation = { COLOR = { r = 0.85, g = 0.75, b = 0.45 } }
+    local belt = makeRadio({ getChannel = 133400 })
+    PLAYER.attached = { belt }
+    vanillaMpLine({ belt }, "Base à toutes les stations", "MDTX")
+    assertEq(#PLAYER.bubbles, 1, "ligne marquée du mod : bulle")
+    assertEq(PLAYER.bubbles[1].g, 0.85, "couleur de la chaîne militaire")
+    NOW = NOW + 5000
+    vanillaMpLine({ belt }, "bzzt brouillée", "")
+    assertEq(#PLAYER.bubbles, 2, "orage (codes vidés) : fréquence déjà reconnue")
+    local station = makeRadio({ getChannel = 14200 })
+    PLAYER.attached = { station }
+    vanillaMpLine({ station }, "Groupe 17-04-58", "MDNS")
+    assertEq(PLAYER.bubbles[3].r, 0.85, "station de chiffres : sa couleur")
+    local vanillaRadio = makeRadio({ getChannel = 98000 })
+    vanillaMpLine({ vanillaRadio }, "Météo", "")
+    vanillaMpLine({ vanillaRadio }, "Musique", "MOR+5")
+    assertEq(#PLAYER.bubbles, 3, "autres chaînes et codes vanilla : rien")
+    triggerEvent("OnDisconnect")
+    NOW = NOW + 5000
+    PLAYER.attached = { belt }
+    vanillaMpLine({ belt }, "bzzt après reconnexion", "")
+    assertEq(#PLAYER.bubbles, 3, "déconnexion : fréquences reconnues oubliées")
 end
 
 function T.mp_direct_reply_without_codes_adds_no_bubble()

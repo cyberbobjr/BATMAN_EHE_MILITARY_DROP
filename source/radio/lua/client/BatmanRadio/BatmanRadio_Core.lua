@@ -257,6 +257,9 @@ BeltRadio.followed = followed
 -- Par joueur local : dernière bulle MP ajoutée (texte, horodatage), section 4.
 local lastBubble = BeltRadio.lastBubble or {}
 BeltRadio.lastBubble = lastBubble
+-- Client MP : fréquences reconnues à une ligne reçue (fréquence -> entrée), section 4.
+local learned = BeltRadio.learned or {}
+BeltRadio.learned = learned
 -- Les fournisseurs sont remplacés par ID lors d'un rechargement.
 function BeltRadio.register(id, provider)
     providers[id] = provider
@@ -382,6 +385,7 @@ end
 function BeltRadio.reset()
     for channel in pairs(followed) do followed[channel] = nil end
     for playerNum in pairs(lastBubble) do lastBubble[playerNum] = nil end
+    for frequency in pairs(learned) do learned[frequency] = nil end
     Events.OnTick.Remove(BeltRadio.onTick)
     BeltRadio.listening = false
 end
@@ -401,11 +405,13 @@ end
 BeltRadio.MP_BUBBLE_DEDUP_MS = 2000
 
 --- Fréquences de nos chaînes connues de ce client, avec leur couleur :
---- fréquence -> { r, g, b }. Le gestionnaire de chaînes vaut nil sur un client
---- MP : chaque fournisseur déclare ce qu'il sait (frequencies), sinon ses
---- chaînes si elles existent (solo, hôte).
+--- fréquence -> { frequency, r, g, b }. Le gestionnaire de chaînes vaut nil
+--- sur un client MP : chaque fournisseur déclare ce qu'il sait (frequencies :
+--- options publiques), sinon ses chaînes si elles existent (solo, hôte), plus
+--- les fréquences reconnues pendant la session (BeltRadio.recognize).
 function BeltRadio.scenarioFrequencies()
     local known = {}
+    for frequency, entry in pairs(learned) do known[frequency] = entry end
     for _, provider in pairs(providers) do
         for _, entry in ipairs(provider.frequencies and provider.frequencies() or {}) do
             if entry.frequency then known[entry.frequency] = entry end
@@ -416,6 +422,27 @@ function BeltRadio.scenarioFrequencies()
         end
     end
     return known
+end
+
+--- Fréquence secrète (tirée par le serveur, jamais envoyée) : un fournisseur
+--- reconnaît ses lignes à leurs codes (recognize(codes) -> couleur ou nil), que
+--- le paquet de la ligne transmet au client. La fréquence où la radio vient de
+--- recevoir une telle ligne est retenue jusqu'à la déconnexion : les lignes
+--- suivantes, y compris brouillées par l'orage (codes vidés), sont reconnues.
+--- Le client n'apprend ainsi que la fréquence qu'il écoute déjà.
+function BeltRadio.recognize(frequency, codes)
+    if type(codes) ~= "string" or codes == "" then
+        return nil
+    end
+    for _, provider in pairs(providers) do
+        local color = provider.recognize and provider.recognize(codes)
+        if color then
+            local entry = { frequency = frequency, r = color.r, g = color.g, b = color.b }
+            learned[frequency] = entry
+            return entry
+        end
+    end
+    return nil
 end
 
 --- OnDeviceText sur un client MP : bulle « radio » au-dessus du joueur, comme
@@ -434,7 +461,7 @@ function BeltRadio.onDeviceTextMP(_guid, codes, _x, _y, _z, line, device)
     end
     local data = device:getDeviceData()
     local frequency = data:getChannel()
-    local entry = BeltRadio.scenarioFrequencies()[frequency]
+    local entry = BeltRadio.scenarioFrequencies()[frequency] or BeltRadio.recognize(frequency, codes)
     if not entry then
         return
     end

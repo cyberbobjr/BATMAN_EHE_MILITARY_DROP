@@ -44,9 +44,10 @@ end
 --- Fréquences des chaînes connues de ce client, pour la bulle MP d'une radio
 --- non tenue (BatmanRadio_Core.onDeviceTextMP). Chaîne créée (solo, hôte) :
 --- sa fréquence. Client MP : seulement celles que fixent les options sandbox,
---- publiques (Config.isFixedFrequency) ; une fréquence libre tirée par le
+--- publiques (Config.isFixedFrequency). Une fréquence libre tirée par le
 --- serveur reste secrète (Config.getChannel ne doit pas servir ici : elle
---- calculerait un candidat sans la graine du serveur), donc pas de bulle.
+--- calculerait un candidat sans la graine du serveur) : elle est reconnue à la
+--- première ligne reçue (BeltRadio.recognize).
 function BeltRadio.frequencies()
     local Config = MilitaryDrop.Config
     local broadcast = MilitaryDrop.Broadcast
@@ -76,9 +77,26 @@ function BeltRadio.frequencies()
     return list
 end
 
+-- Codes portés par les lignes des deux chaînes (MilitaryDrop_Broadcast.lua,
+-- MilitaryDrop_NumbersStation.lua, MilitaryDrop_Announce.lua) -> chaîne.
+BeltRadio.LINE_CODES = { MDRP = "broadcast", MDRC = "broadcast", MDCU = "broadcast", MDAY = "broadcast",
+    MDTX = "broadcast", MDNS = "station" }
+
+--- Couleur d'une ligne du mod reconnue à ses codes, ou nil : la fréquence
+--- libre reste secrète, le client reconnaît la chaîne à la ligne reçue.
+function BeltRadio.recognize(codes)
+    local kind = BeltRadio.LINE_CODES[string.sub(codes, 1, 4)]
+    if not kind then
+        return nil
+    end
+    local module = kind == "station" and MilitaryDrop.NumbersStation or MilitaryDrop.Broadcast
+    return module and module.COLOR or {}
+end
+
 Support.register("MilitaryDrop", {
     channels = BeltRadio.channels,
     frequencies = BeltRadio.frequencies,
+    recognize = BeltRadio.recognize,
     isStowed = BeltRadio.isStowedMilitary,
     open = BeltRadio.takeAndOpen,
     takingActions = { ["MilitaryDrop.ExchangeAction"] = "device" },

@@ -76,7 +76,7 @@ function T.pending_grids_go_out_in_one_message_then_on_the_channel()
     assertEq(#AIRED.lines, 5, "deux lignes par grille, puis fin de message")
     assertEq(AIRED.lines[3].text, "IGUI_MilitaryDrop_BroadcastPending|30|40", "seconde grille")
     assertEq(AIRED.lines[3].codes, "MDRP", "code du repère")
-    assertEq(AIRED.lines[5].codes, nil, "fin de message sans code")
+    assertEq(AIRED.lines[5].codes, "MDTX", "fin de message : code neutre, sans repère")
 end
 
 function T.channel_on_military_frequency()
@@ -94,7 +94,7 @@ function T.dropped_repeats_coordinates_with_code()
     assertEq(#AIRED.lines, MilitaryDrop.Broadcast.REPEATS + 1, "trois répétitions et fin")
     assertEq(AIRED.lines[1].text, "IGUI_MilitaryDrop_BroadcastDropped|115|200", "coordonnées dans le texte")
     assertEq(AIRED.lines[1].codes, "MDRP", "code du repère de carte")
-    assertEq(AIRED.lines[#AIRED.lines].codes, nil, "fin sans code")
+    assertEq(AIRED.lines[#AIRED.lines].codes, "MDTX", "fin : code neutre, sans repère")
 end
 
 function T.fulton_announces_a_50_tile_sector_to_all_stations()
@@ -105,7 +105,7 @@ function T.fulton_announces_a_50_tile_sector_to_all_stations()
     assertEq(x .. "," .. y, "1225,5675", "secteur de 50 cases, pas la case exacte")
     assertEq(#AIRED.lines, 3, "deux annonces et fin")
     assertEq(AIRED.lines[1].text, "IGUI_MilitaryDrop_BroadcastFulton|1225|5675", "grille du secteur")
-    assertEq(AIRED.lines[1].codes, nil, "pas de repère de carte")
+    assertEq(AIRED.lines[1].codes, "MDTX", "code neutre : pas de repère de carte")
     assertEq(recorded[1].team, nil, "journal de toutes les stations")
     assertEq(#SENT, 0, "rien envoyé aux clients en dehors de la chaîne")
 end
@@ -114,7 +114,7 @@ function T.inbound_has_no_coordinates_or_code()
     triggerEvent("OnLoadRadioScripts", SCRIPT_MANAGER, false)
     MilitaryDrop.Broadcast.inbound()
     assertEq(#AIRED.lines, 1, "une ligne")
-    assertEq(AIRED.lines[1].codes, nil, "pas de repère")
+    assertEq(AIRED.lines[1].codes, "MDTX", "code neutre : pas de repère")
 end
 
 function T.second_drop_is_appended_to_the_airing_broadcast()

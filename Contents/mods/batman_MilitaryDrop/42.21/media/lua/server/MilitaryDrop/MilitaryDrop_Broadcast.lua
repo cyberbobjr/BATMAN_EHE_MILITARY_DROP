@@ -54,6 +54,10 @@ Broadcast.RECON_CODE = "MDRC"
 -- Annonce d'un nettoyage (SRC-04) : repère « Skull » chez qui l'entend
 -- (MilitaryDrop.Announce.CLEANUP_CODE, même valeur).
 Broadcast.CLEANUP_CODE = "MDCU"
+-- Code des autres lignes de la chaîne : le client MP reconnaît ainsi une ligne
+-- du mod sans connaître la fréquence secrète (MilitaryDrop_BeltRadio.recognize).
+-- 4 caractères : ignoré par le vanilla (ISRadioInteractions.lua:216).
+Broadcast.LINE_CODE = "MDTX"
 Broadcast.REPEATS = 3
 -- Rappel de la grille d'un largage en attente (Broadcast.pending).
 Broadcast.PENDING_REPEATS = 2
@@ -140,7 +144,7 @@ function Broadcast.air(lines)
     end
     local c = Broadcast.COLOR
     for _, line in ipairs(lines) do
-        bc:AddRadioLine(RadioLine.new(line[1], c.r, c.g, c.b, line[2]))
+        bc:AddRadioLine(RadioLine.new(line[1], c.r, c.g, c.b, line[2] or Broadcast.LINE_CODE))
     end
     if not airing then
         Broadcast.channel:setAiringBroadcast(bc)

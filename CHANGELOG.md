@@ -8,7 +8,7 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 ### Fixed
 
 - Singleplayer: a walkie-talkie switched on and clipped to the belt received the mod's broadcasts (military channel, numbers station) but showed nothing on screen. Each line is shown again above your character, once, as with a radio in hand. Deaf characters still hear nothing.
-- Multiplayer: a radio carried in the main inventory but not held (belt included) now also shows the lines of the mod's channels above your character, once, instead of only in the radio chat. This works for frequencies set in the sandbox options; with the default random military frequency, which only the server knows, the lines stay in the radio chat. Nothing is added when Better Walkie Talkies is active.
+- Multiplayer: a radio carried in the main inventory but not held (belt included) now also shows the lines of the mod's channels above your character, once, instead of only in the radio chat. This also works with the default random frequencies, which stay secret: the radio recognises the mod's lines when it receives them. During a storm, the first line heard may stay in the radio chat only. Nothing is added when Better Walkie Talkies is active.
 
 ## 0.4.3 — 2026-10-07
 

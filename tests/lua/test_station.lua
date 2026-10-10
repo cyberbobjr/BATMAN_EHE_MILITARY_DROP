@@ -151,6 +151,9 @@ function T.one_broadcast_per_half_hour()
     triggerEvent("EveryTenMinutes")
     assertTrue(AIRED ~= nil, "première diffusion")
     assertEq(#AIRED.lines, 5, "message complet")
+    for i, line in ipairs(AIRED.lines) do
+        assertEq(line.codes, "MDNS", "ligne " .. i .. " : code de reconnaissance (client MP)")
+    end
     local first = AIRED
     AIRED = nil
     DATE.hour = 12 + 10 / 60
