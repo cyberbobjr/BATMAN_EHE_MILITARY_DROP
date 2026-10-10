@@ -1,9 +1,17 @@
 -- MilitaryDrop inscrit ses chaînes et l'ouverture des radios rangées dans le
 -- gestionnaire commun. Aucun second menu, wrapper, récepteur ou drain de pile.
+-- Gestionnaire commun : Belt Walkie-Talkie s'il est activé, sinon la copie de
+-- secours embarquée (MilitaryDrop.RadioLib, RADIO-08) ; même globale
+-- BatmanRadioSupport dans les deux cas.
 require "MilitaryDrop/MilitaryDrop_Core"
 require "MilitaryDrop/MilitaryDrop_Exchange"
-local Support = require "BatmanRadio/BatmanRadio_Core"
-local BeltRadio = setmetatable({}, { __index = Support })
+require "MilitaryDrop/MilitaryDrop_RadioLib"
+-- Charge le récepteur (mod commun ou copie de secours) avant l'inscription.
+MilitaryDrop.RadioLib.receiver()
+-- Aides du gestionnaire (isPortableRadio...) lues sur la globale à l'appel.
+local BeltRadio = setmetatable({}, { __index = function(_, key)
+    return BatmanRadioSupport and BatmanRadioSupport[key]
+end })
 MilitaryDrop.BeltRadio = BeltRadio
 
 --- Radio militaire portative rangée dans l'inventaire du joueur (sacs portés
@@ -93,13 +101,34 @@ function BeltRadio.recognize(codes)
     return module and module.COLOR or {}
 end
 
-Support.register("MilitaryDrop", {
+local PROVIDER = {
     channels = BeltRadio.channels,
     frequencies = BeltRadio.frequencies,
     recognize = BeltRadio.recognize,
     isStowed = BeltRadio.isStowedMilitary,
     open = BeltRadio.takeAndOpen,
     takingActions = { ["MilitaryDrop.ExchangeAction"] = "device" },
-})
+}
+
+--- Inscription auprès du gestionnaire ; false s'il n'est pas (encore) chargé.
+function BeltRadio.registerProvider()
+    local support = BatmanRadioSupport
+    if not (support and support.register) then
+        return false
+    end
+    support.register("MilitaryDrop", PROVIDER)
+    return true
+end
+
+if not BeltRadio.registerProvider() then
+    -- Gestionnaire absent au chargement (ordre inattendu) : nouvel essai au
+    -- début de la partie, puis abandon signalé dans le journal.
+    Events.OnGameStart.Add(function()
+        if not BeltRadio.registerProvider() then
+            print("[MilitaryDrop] WARN: shared walkie-talkie receiver (BatmanRadioSupport) not loaded;"
+                .. " belt walkie-talkie features are unavailable.")
+        end
+    end)
+end
 
 return BeltRadio

@@ -72,15 +72,31 @@ def mod_lua_files():
     return sorted(MOD_LUA.rglob("*.lua"))
 
 
+BELT_RADIO = REPO.parent / "BeltRadio"
+
+
 def check_radio_common(report):
-    report.section("Modules radio communs")
-    source = REPO / "source/radio/lua"
-    for path in sorted(source.rglob("*.lua")):
-        packaged = MOD_LUA / path.relative_to(source)
-        if packaged.is_file() and packaged.read_bytes() == path.read_bytes():
-            report.ok(str(path.relative_to(source)))
-        else:
-            report.fail(f"module radio divergent : {packaged}")
+    """Copie de secours de Belt Walkie-Talkie identique à ce qu'en génère
+    BeltRadio/tools/sync_fallback.py (RADIO-08) ; ignoré sans le dépôt BeltRadio."""
+    report.section("Copie de secours de Belt Walkie-Talkie")
+    for scope in ("client", "shared", "server"):
+        if (MOD_LUA / scope / "BatmanRadio").exists():
+            report.fail(f"{scope}/BatmanRadio : chemin du mod commun, masquerait Belt Walkie-Talkie")
+    tool = BELT_RADIO / "tools" / "sync_fallback.py"
+    if not tool.is_file():
+        report.skip("dépôt BeltRadio absent : égalité des copies non vérifiée")
+        return
+    sys.path.insert(0, str(tool.parent))
+    try:
+        import sync_fallback  # noqa: E402
+    finally:
+        sys.path.pop(0)
+    errors = sync_fallback.check("MilitaryDrop")
+    for error in errors:
+        report.fail(error + " (python ../BeltRadio/tools/sync_fallback.py MilitaryDrop)")
+    if not errors:
+        report.ok("MilitaryDrop/BeltRadioFallback identique à Belt Walkie-Talkie "
+                  + sync_fallback.version())
 
 
 def strip_comments(line):

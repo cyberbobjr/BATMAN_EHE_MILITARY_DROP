@@ -1,5 +1,7 @@
 -- MilitaryDrop_BeltRadio : talkie accroché à la ceinture (menu de réglage,
--- fenêtre qui ne l'éteint plus, écoute de la chaîne militaire en solo).
+-- fenêtre qui ne l'éteint plus, écoute de la chaîne militaire en solo, bulle
+-- MP), avec la copie de secours de Belt Walkie-Talkie (mod commun absent).
+-- Le récepteur lui-même est testé dans le dépôt BeltRadio.
 
 local T = {}
 
@@ -570,6 +572,21 @@ function T.mp_belt_radio_on_a_public_channel_gets_one_bubble()
     assertEq(#PLAYER.bubbles, 2, "même texte plus tard : nouvelle transmission")
 end
 
+function T.mp_stowed_radio_gets_no_bubble()
+    -- Belt Walkie-Talkie 0.1.1 (copie de secours) : une radio rangée ne reçoit
+    -- rien (décision 3) ; en MP le vanilla la sert quand même au chat radio,
+    -- sans bulle ajoutée. Seul le talkie accroché à la ceinture en a une.
+    mpSetup(151.4)
+    local stowed, belt = makeRadio(), makeRadio()
+    PLAYER.attached = {}
+    vanillaMpLine({ stowed }, "rangée")
+    assertEq(#PLAYER.bubbles, 0, "radio rangée seule : chat radio seulement")
+    PLAYER.attached = { belt }
+    NOW = NOW + 5000
+    vanillaMpLine({ stowed, belt }, "ceinture")
+    assertEq(#PLAYER.bubbles, 1, "rangée puis ceinture : une bulle, celle de la ceinture")
+end
+
 function T.mp_bubble_skipped_for_held_radio_other_channel_secret_frequency_bwt_and_solo()
     mpSetup(151.4)
     local hand, belt = makeRadio(), makeRadio()
@@ -615,6 +632,7 @@ function T.mp_secret_frequency_is_learned_from_the_first_marked_line()
     vanillaMpLine({ station }, "Groupe 17-04-58", "MDNS")
     assertEq(PLAYER.bubbles[3].r, 0.85, "station de chiffres : sa couleur")
     local vanillaRadio = makeRadio({ getChannel = 98000 })
+    PLAYER.attached = { vanillaRadio }
     vanillaMpLine({ vanillaRadio }, "Musique", "MOR+5")
     assertEq(PLAYER.bubbles[4].r, 1, "code vanilla : chaîne inconnue, couleur par défaut")
     triggerEvent("OnDisconnect")

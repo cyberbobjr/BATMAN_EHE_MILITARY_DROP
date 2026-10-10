@@ -17,6 +17,12 @@ local function makeRadio(channel, on, container)
     function data.getIsTurnedOn(self) return self.on end
     function data.getChannel(self) return self.channel end
     function data.getDeviceVolume() return 0.5 end
+    -- Lus par le prédicat commun BatmanRadioSupport.canTransmitWith (talkie militaire).
+    function data.getIsTelevision() return false end
+    function data.getIsTwoWay() return true end
+    function data.isNoTransmit() return false end
+    function data.getIsBatteryPowered() return false end
+    function data.getMicIsMuted() return false end
     function data.setIsTurnedOn(self, value) self.sent[#self.sent + 1] = "on:" .. tostring(value) end
     function data.setChannel(self, value) self.sent[#self.sent + 1] = "channel:" .. tostring(value) end
     return {
@@ -190,8 +196,22 @@ function T.radio_on_the_belt_never_transmits()
     assertEq(#EQUIPPED, 0, "pas de prise en main automatique")
     assertEq(#QUEUE, 0, "aucune action d'échange")
     assertEq(#player.said, 0, "le personnage ne parle pas")
+    assertEq(Exchange.unavailableReason(player, radio), "IGUI_MilitaryDrop_TakeInHand", "même message qu'avant")
+    local ok, reason = MilitaryDrop.RadioLib.canTransmitWith(player, radio)
+    assertEq(ok, false, "prédicat commun : refus")
+    assertEq(reason, "belt", "raison belt (RADIO-08)")
     player.where = "hand"
     assertTrue(Exchange.run(player, radio, "hello", function() end), "prise en main par le joueur : appel possible")
+end
+
+function T.belt_refusal_comes_from_the_shared_predicate()
+    -- Exchange.isOnBelt suit BatmanRadioSupport.canTransmitWith (Belt
+    -- Walkie-Talkie ou copie de secours), sans règle de ceinture propre.
+    local radio = makeRadio(CHANNEL, true, makeContainer(true))
+    local player = makePlayer(radio, "belt")
+    assertTrue(Exchange.isOnBelt(player, radio), "copie de secours : ceinture refusée")
+    BatmanRadioSupport.canTransmitWith = function() return false, "stowed" end
+    assertEq(Exchange.isOnBelt(player, radio), false, "raison lue dans le prédicat commun")
 end
 
 function T.stowed_radio_is_taken_in_hand_then_resent_in_multiplayer()

@@ -46,6 +46,7 @@ Chaque personnage a sa propre réputation, jamais affichée en chiffres. Elle ra
 
 [list]
 [*]Aucun autre mod requis.
+[*][b]Belt Walkie-Talkie[/b] (facultatif) est recommandé : un même comportement du talkie-walkie à la ceinture pour tous les mods qui l'utilisent. Sans lui, ce comportement est intégré.
 [*]Conçu pour cohabiter avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], une fumée verte signale la caisse.
 [*]Avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url], échantillons et vaccins peuvent partir par Fulton.

@@ -43,11 +43,13 @@ require "TimedActions/ISBaseTimedAction"
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Fulton"
-local RadioCompat = require "BatmanRadio/BatmanRadio_Compat"
+-- Récepteur commun : Belt Walkie-Talkie s'il est activé, sinon la copie de secours (RADIO-08).
+require "MilitaryDrop/MilitaryDrop_RadioLib"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
 local Radio = MilitaryDrop.Radio
+local RadioLib = MilitaryDrop.RadioLib
 
 local Exchange = {}
 MilitaryDrop.Exchange = Exchange
@@ -327,9 +329,14 @@ end
 
 --- Radio accrochée (ceinture), ni en main ni sur le dos : elle reçoit mais
 --- n'émet pas (décision de l'utilisateur du 2026-10-10, AUTH-03 abandonné) ;
---- le joueur la prend lui-même en main pour appeler.
+--- le joueur la prend lui-même en main pour appeler. Prédicat commun à tous
+--- les mods (BatmanRadioSupport.canTransmitWith, raison "belt", RADIO-08).
 function Exchange.isOnBelt(player, device)
-    return Radio.isInventoryRadio(device) and player:isAttachedItem(device) and not Radio.isCarried(player, device)
+    if not Radio.isInventoryRadio(device) or Radio.isCarried(player, device) then
+        return false
+    end
+    local _, reason = RadioLib.canTransmitWith(player, device)
+    return reason == "belt"
 end
 
 --- Motif d'indisponibilité affichable (clé de traduction), sans révéler la
@@ -384,7 +391,7 @@ if ISBaseTimedAction then
             Exchange.resync(self.device)
         end
         if self.speech then
-            RadioCompat.say(self.character, self.speech)
+            RadioLib.compat().say(self.character, self.speech)
         end
     end
 

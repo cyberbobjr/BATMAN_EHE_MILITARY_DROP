@@ -229,8 +229,10 @@ print(id, MilitaryDrop.Trust.get(id))
 
 ## Batterie des talkies accrochés — 2026-10-03
 
-Le module `client/BatmanRadio/BatmanRadio_BeltBattery.lua` est commun à Artemis
-et MilitaryDrop, livré avec des copies identiques au même chemin relatif.
+Le module `BatmanRadio_BeltBattery.lua` est commun à Artemis et MilitaryDrop.
+Depuis 0.5.0 (RADIO-08), il vient de Belt Walkie-Talkie (`batman_BeltRadio`)
+s'il est activé, sinon de la copie de secours de chaque mod
+(`client/MilitaryDrop/BeltRadioFallback/`, `client/Artemis/BeltRadioFallback/`).
 Il appelle `DeviceData.update(false, true)` à l'allumage puis chaque minute de
 jeu pour les radios à pile accrochées, hors main/dos. Le compteur de temps
 vanilla avance avec la consommation : aucun deuxième décompte à la reprise
@@ -257,9 +259,12 @@ API Java simulées ; aucun test en jeu effectué. Redémarrage complet requis.
 
 ## Compatibilité Better Walkie Talkies et code commun — 2026-10-03
 
-La source unique des fonctions de ceinture, batterie et compatibilité se trouve
-dans `source/radio/lua`. `python source/radio/sync_radio.py` génère les copies
-embarquées dans les deux projets ; `--check` vérifie leur égalité. Ces copies
+Depuis 0.5.0 (RADIO-08), la source unique des fonctions de ceinture, batterie et
+compatibilité est le mod Belt Walkie-Talkie (dépôt `BeltRadio`).
+`python ../BeltRadio/tools/sync_fallback.py` génère les copies de secours de
+Military Drop et d'Artemis (chemins propres à chaque mod, garde « mod commun
+activé ») ; `tests/run_tests.py` vérifie leur égalité. Avant 0.5.0 :
+`source/radio/sync_radio.py`, supprimé. Ces copies
 identiques permettent à chaque mod de fonctionner indépendamment, sans ajouter
 une dépendance chargeable ni entretenir deux implémentations. Artemis inscrit
 sa chaîne par UUID ; MilitaryDrop inscrit ses deux chaînes et son ouverture des
@@ -471,3 +476,15 @@ Couture 3 pour la recette du ballon (`getPlayer():getPerkLevel(Perks.Tailoring)`
 | F9 | Client 1 demande un passage et lâche un kit ; client 2 se tient à 30 cases | Client 2 voit le ballon monter et entend l'avion une fois ; les deux entendent l'annonce ; le kit disparaît de l'inventaire du client 1 chez tous ; bouteille à 3/4 après reconnexion |
 | F10 | Client 1 se déconnecte juste après le lâcher | Le vol continue chez le client 2 jusqu'à son terme ; aucune erreur côté serveur |
 | F11 | Client 2 sans créneau : commande forgée `FultonLaunch` (console) | Refus « noWindow » au journal du serveur ; rien consommé |
+
+## Belt Walkie-Talkie facultatif (RADIO-08) — 2026-10-10
+
+Redémarrage complet du jeu entre deux listes de mods. Dans `console.txt`,
+vérifier les mods chargés et l'absence de ligne `overrides media/lua/client/BatmanRadio`.
+
+| N° | Cas | Attendu |
+|---|---|---|
+| R8-1 | Solo, Military Drop seul. Talkie militaire allumé à la ceinture sur la fréquence militaire, appel de largage | « Options de l'appareil » ; lignes de la base au-dessus du personnage ; « Logistique » grisé (« prenez la radio en main ») ; appel possible une fois en main |
+| R8-2 | Solo, Military Drop + Belt Walkie-Talkie | Même comportement ; page d'options sandbox **Belt Walkie-Talkie** présente ; aucune ligne `WARN` de Military Drop |
+| R8-3 | Solo, Military Drop + Opération Artemis, sans Belt Walkie-Talkie | Une seule ligne par message à la ceinture (pas de doublon), pile qui baisse au débit vanilla |
+| R8-4 | MP en fin (dédié + 2 clients) : talkie à la ceinture puis rangé dans l'inventaire | Ceinture : bulle radio ; rangé : ligne au chat radio seulement ; émission refusée à la ceinture |

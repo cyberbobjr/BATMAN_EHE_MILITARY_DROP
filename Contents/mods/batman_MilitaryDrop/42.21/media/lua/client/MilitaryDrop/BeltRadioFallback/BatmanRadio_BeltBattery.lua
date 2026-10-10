@@ -1,4 +1,22 @@
--- SOURCE COMMUNE : MilitaryDrop/source/radio/lua ; copies générées par sync_radio.py.
+-- Copie de secours de Belt Walkie-Talkie (batman_BeltRadio 0.1.1), générée par
+-- BeltRadio/tools/sync_fallback.py depuis media/lua/client/BatmanRadio/BatmanRadio_BeltBattery.lua :
+-- ne pas modifier ici. Elle ne fait rien si batman_BeltRadio est activé (le mod
+-- commun s'en charge) ; sinon elle garde les globales BatmanRadioSupport et
+-- BatmanBeltRadioBattery, si bien que deux copies de secours (deux mods sans
+-- batman_BeltRadio) se remplacent au lieu de s'additionner.
+local beltRadioActive = false
+do
+    local mods = getActivatedMods and getActivatedMods()
+    for i = 0, (mods and mods:size() or 0) - 1 do
+        if string.gsub(mods:get(i), "^\\", "") == "batman_BeltRadio" then beltRadioActive = true end
+    end
+end
+if beltRadioActive then return end
+
+-- Belt Walkie-Talkie (batman_BeltRadio), source unique du récepteur commun BatmanRadio.
+-- Usure de la pile d'un talkie accroché à la ceinture (option sandbox
+-- BeltRadio.BeltBattery ; fausse : comportement vanilla, pile figée à la
+-- ceinture puis consommation rattrapée par Radio.update à la reprise en main).
 -- Un seul gestionnaire global, quel que soit le fichier gagnant / l'ordre des mods.
 -- Implémentation propre : utilise DeviceData.update de 42.21, sans copier BWT.
 -- Radio.update ne le fait que pour getEquipedRadio() (main/dos). À la ceinture,
@@ -17,7 +35,8 @@ if Battery.reset then
     Events.OnMainMenuEnter.Remove(Battery.reset)
 end
 
-local Compat = require "BatmanRadio/BatmanRadio_Compat"
+local Compat = require "MilitaryDrop/BeltRadioFallback/BatmanRadio_Compat"
+local Support = require "MilitaryDrop/BeltRadioFallback/BatmanRadio_Support"
 
 local function attachedDevice(player, item)
     if not item or not instanceof(item, "Radio") or not player:isAttachedItem(item)
@@ -35,7 +54,8 @@ end
 function Battery.onTick()
     -- Les clients mettent à jour leurs propres appareils ; jamais les joueurs
     -- distants ou le serveur dédié. Si BWT gère la pile, lui laisser la main.
-    if not Compat.features().beltBattery then
+    -- Option désactivée : rien (relue à chaque tick, changement en cours de partie).
+    if not Compat.features().beltBattery or not Support.enabled("BeltBattery") then
         Battery.reset()
         return
     end

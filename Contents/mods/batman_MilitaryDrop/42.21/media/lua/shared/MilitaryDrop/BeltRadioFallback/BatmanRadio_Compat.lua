@@ -1,4 +1,19 @@
--- SOURCE COMMUNE : MilitaryDrop/source/radio/lua ; copies générées par sync_radio.py.
+-- Copie de secours de Belt Walkie-Talkie (batman_BeltRadio 0.1.1), générée par
+-- BeltRadio/tools/sync_fallback.py depuis media/lua/shared/BatmanRadio/BatmanRadio_Compat.lua :
+-- ne pas modifier ici. Elle ne fait rien si batman_BeltRadio est activé (le mod
+-- commun s'en charge) ; sinon elle garde les globales BatmanRadioSupport et
+-- BatmanBeltRadioBattery, si bien que deux copies de secours (deux mods sans
+-- batman_BeltRadio) se remplacent au lieu de s'additionner.
+local beltRadioActive = false
+do
+    local mods = getActivatedMods and getActivatedMods()
+    for i = 0, (mods and mods:size() or 0) - 1 do
+        if string.gsub(mods:get(i), "^\\", "") == "batman_BeltRadio" then beltRadioActive = true end
+    end
+end
+if beltRadioActive then return end
+
+-- Belt Walkie-Talkie (batman_BeltRadio), source unique du récepteur commun BatmanRadio.
 -- Adaptation de nos scénarios à BWT, sans modifier ses fichiers ni sa VOIP.
 local Compat = {}
 

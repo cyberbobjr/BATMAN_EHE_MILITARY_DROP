@@ -26,6 +26,7 @@ MOD_COMMON = REPO / "Contents" / "mods" / "batman_MilitaryDrop" / "common"
 PZ_MEDIA = Path(os.environ.get(
     "PZ_MEDIA", r"D:\SteamLibrary\steamapps\common\ProjectZomboid\media"))
 VANILLA_LUA = PZ_MEDIA / "lua"
+ARTEMIS_LUA = REPO.parent / "OperationArtemis/Contents/mods/batman_OperationArtemis/42.21/media/lua"
 BWT_LUA = Path(os.environ.get("BWT_LUA", r"D:\SteamLibrary\steamapps\workshop\content\108600\3779480293\mods\BetterWalkieTalkies\42.20\media\lua"))
 
 PRELUDE = r"""
@@ -49,16 +50,30 @@ function loadMod(rel)
     return run(readModFile(rel), rel)
 end
 
--- Charger réellement les seuls modules communs de radio ; les autres require
--- gardent les simulations propres à chaque fichier de test.
+-- Charger réellement les seuls modules du récepteur radio commun (copie de
+-- secours MilitaryDrop/BeltRadioFallback et MilitaryDrop_RadioLib), une fois
+-- chacun comme RunLuaInternal ; les autres require gardent les simulations
+-- propres à chaque fichier de test. MODULE_STUBS[nom] : module simulé (par
+-- exemple BatmanRadio/... de Belt Walkie-Talkie activé) ; un nom
+-- BatmanRadio/... sans simulation renvoie nil, comme un require qui échoue.
+MODULE_STUBS = {}
 local radioModules = {}
+local SHARED_RADIO = { BatmanRadio_Compat = true, BatmanRadio_Support = true }
 require = function(name)
-    if not name:find("BatmanRadio/", 1, true) then return end
-    if not radioModules[name] then
-        local scope = name == "BatmanRadio/BatmanRadio_Compat" and "shared/" or "client/"
-        radioModules[name] = loadMod(scope .. name .. ".lua")
+    if MODULE_STUBS[name] ~= nil then return MODULE_STUBS[name] end
+    local rel
+    if name == "MilitaryDrop/MilitaryDrop_RadioLib" then
+        rel = "shared/" .. name .. ".lua"
+    elseif name:find("MilitaryDrop/BeltRadioFallback/", 1, true) == 1 then
+        local base = name:sub(#"MilitaryDrop/BeltRadioFallback/" + 1)
+        rel = (SHARED_RADIO[base] and "shared/" or "client/") .. name .. ".lua"
+    else
+        return
     end
-    return radioModules[name]
+    if radioModules[name] == nil then
+        radioModules[name] = loadMod(rel) or false
+    end
+    return radioModules[name] or nil
 end
 
 --- Fichier vanilla (lua/...) ; nil si le jeu n'est pas installé.
@@ -215,7 +230,7 @@ def new_runtime():
     globals_.hasVanilla = VANILLA_LUA.is_dir()
     globals_.hasBWT = (BWT_LUA / "client/BetterWalkieTalkies/RadioPTT.lua").is_file()
     globals_.readBWTFile = lambda rel: _read(BWT_LUA, rel)
-    globals_.readArtemisFile = lambda rel: _read(REPO.parent / "OperationArtemis/Contents/mods/batman_OperationArtemis/42.21/media/lua", rel)
+    globals_.readArtemisFile = lambda rel: _read(ARTEMIS_LUA, rel)
     lua.execute(PRELUDE)
     return lua
 
