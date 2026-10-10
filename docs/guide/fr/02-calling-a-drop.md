@@ -66,7 +66,7 @@ Un bouton grisé donne sa raison dans son infobulle (radio éteinte, code manqua
 Où peut être la radio :
 
 - **en main** ;
-- **à la ceinture** : le mod ajoute **Options de l'appareil** au talkie accroché. Il reste allumé, et votre personnage le prend en main pour parler ;
+- **à la ceinture** : écoute seulement. Le mod ajoute **Options de l'appareil** au talkie accroché ; il reste allumé et affiche ce qu'il reçoit au-dessus de votre personnage, mais les boutons d'appel sont grisés : prenez-le en main pour parler ;
 - **dans un sac** : **Options de l'appareil** le prend en main et ouvre sa fenêtre ;
 - **sur le dos** : en solo. En multijoueur, votre personnage la prend en main ;
 - **posée au sol**, à 2 cases au plus.

@@ -18,9 +18,10 @@
 -- (args.tier, 1 à 4) et son indicatif ; la réplique de la base en dépend. Aucun
 -- chiffre n'est jamais affiché.
 --
--- AUTH-03 (v1.3) : un talkie à la ceinture, sur le dos ou dans un sac n'est
--- plus un motif de refus. Après la saisie du code, le personnage le prend en
--- main (MilitaryDrop.Exchange.run : action vanilla), puis appelle ; en MP,
+-- AUTH-04 (2026-10-10, remplace AUTH-03) : un talkie à la ceinture reçoit
+-- mais n'émet pas (refus « prenez la radio en main », Exchange.isOnBelt). Sur
+-- le dos (MP) ou dans un sac, le personnage le prend en main
+-- (MilitaryDrop.Exchange.run : action vanilla), puis appelle ; en MP,
 -- l'état de toute radio d'inventaire est renvoyé au serveur avant l'appel,
 -- même déjà en main. Le serveur ne connaît l'état d'une radio d'inventaire
 -- que si elle est en main au moment du réglage.
@@ -281,9 +282,10 @@ function Client.sendRequest(player, device, code, force, opts)
     Net.toServer(player, "Request", args)
 end
 
---- Appel par la radio : prise en main du talkie si besoin (AUTH-03), puis
---- demande. Le largage admin n'exige pas la radio : envoyé aussitôt. Renvoie
---- false si la radio n'est pas utilisable (rien n'est envoyé). opts : voir
+--- Appel par la radio : prise en main d'une radio rangée si besoin, jamais
+--- d'un talkie à la ceinture (Exchange.isOnBelt : refus), puis demande. Le
+--- largage admin n'exige pas la radio : envoyé aussitôt. Renvoie false si la
+--- radio n'est pas utilisable (rien n'est envoyé). opts : voir
 --- Client.sendRequest.
 function Client.call(player, device, code, force, opts)
     if code then

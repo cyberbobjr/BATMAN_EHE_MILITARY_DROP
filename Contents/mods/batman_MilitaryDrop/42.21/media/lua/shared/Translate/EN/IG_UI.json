@@ -113,6 +113,7 @@
     "IGUI_MilitaryDrop_Exchange_Control": "Confirm reception",
     "IGUI_MilitaryDrop_Exchange_ControlTooltip": "Answer the base's radio check while it lasts.",
     "IGUI_MilitaryDrop_NotInInventory": "The radio must be in your inventory.",
+    "IGUI_MilitaryDrop_TakeInHand": "Take the radio in hand to transmit.",
     "IGUI_MilitaryDrop_NoDogTags": "I have no fallen soldier's dog tags to announce.",
     "IGUI_MilitaryDrop_SourceDisabled": "The base does not handle this on this server.",
     "IGUI_MilitaryDrop_Say_Report_1": "Logistics, situation report: position holding, nothing unusual. Over.",

@@ -5,10 +5,14 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 
 ## 0.4.4 — 2026-10-09
 
+### Changed
+
+- A walkie-talkie clipped to the belt now only listens: calls, reports and other exchanges with the base are greyed out ("Take the radio in hand to transmit."). Take it in hand to talk. A radio in a bag is still taken in hand automatically.
+
 ### Fixed
 
 - Singleplayer: a walkie-talkie switched on and clipped to the belt received the mod's broadcasts (military channel, numbers station) but showed nothing on screen. Each line is shown again above your character, once, as with a radio in hand. Deaf characters still hear nothing.
-- Multiplayer: a radio carried in the main inventory but not held (belt included) now also shows the lines of the mod's channels above your character, once, instead of only in the radio chat. This also works with the default random frequencies, which stay secret: the radio recognises the mod's lines when it receives them. During a storm, the first line heard may stay in the radio chat only. Nothing is added when Better Walkie Talkies is active.
+- Multiplayer: a radio carried in the main inventory but not held (belt included) now also shows the lines of the mod's channels above your character, once, instead of only in the radio chat, for every channel (game stations, emergency broadcast, the mod's channels and other mods' channels). Messages from other players stay in the radio chat. Nothing is added when Better Walkie Talkies is active.
 
 ## 0.4.3 — 2026-10-07
 

@@ -7,8 +7,9 @@
 -- ou le poste de liaison. Le code de la semaine ne sert qu'aux largages
 -- (AUTH-01 sans objet).
 --
--- Côté client (AUTH-03) : si le talkie est à la ceinture, sur le dos ou dans
--- un sac, le personnage le prend en main par l'action vanilla d'équipement
+-- Côté client (AUTH-03, AUTH-04) : à la ceinture, le talkie reçoit mais
+-- n'émet pas (Exchange.isOnBelt : refus). Sur le dos (MP) ou dans un sac, le
+-- personnage le prend en main par l'action vanilla d'équipement
 -- (ISInventoryPaneContextMenu.equipWeapon), puis le garde en main. En MP, le
 -- serveur n'applique l'état d'une radio d'inventaire (allumage, canal) que si
 -- elle est en main au moment du changement (GameServer.java:3499-3519), et la
@@ -324,11 +325,21 @@ function Exchange.canEmit(player, device)
     return Radio.isWorldRadio(device) and Radio.isNear(player, device)
 end
 
+--- Radio accrochée (ceinture), ni en main ni sur le dos : elle reçoit mais
+--- n'émet pas (décision de l'utilisateur du 2026-10-10, AUTH-03 abandonné) ;
+--- le joueur la prend lui-même en main pour appeler.
+function Exchange.isOnBelt(player, device)
+    return Radio.isInventoryRadio(device) and player:isAttachedItem(device) and not Radio.isCarried(player, device)
+end
+
 --- Motif d'indisponibilité affichable (clé de traduction), sans révéler la
---- fréquence, ou nil. Une radio d'inventaire hors des mains n'est pas un
---- motif : le personnage la prendra en main.
+--- fréquence, ou nil. Une radio rangée (inventaire, sac) n'est pas un motif :
+--- le personnage la prendra en main ; une radio à la ceinture, si.
 function Exchange.unavailableReason(player, device)
     if Radio.isInventoryRadio(device) then
+        if Exchange.isOnBelt(player, device) then
+            return "IGUI_MilitaryDrop_TakeInHand"
+        end
         if not Radio.isCarried(player, device) and not Exchange.canTake(player, device) then
             return "IGUI_MilitaryDrop_NotInInventory"
         end
@@ -398,10 +409,14 @@ if ISBaseTimedAction then
     end
 end
 
---- Prend la radio en main si besoin, puis lance l'action d'échange : speech
---- (facultatif) au début, callback à la fin. Renvoie false si la radio n'est
---- pas utilisable.
+--- Prend la radio en main si besoin (rangée dans l'inventaire ou un sac,
+--- jamais à la ceinture : Exchange.isOnBelt), puis lance l'action d'échange :
+--- speech (facultatif) au début, callback à la fin. Renvoie false si la radio
+--- n'est pas utilisable.
 function Exchange.run(player, device, speech, callback)
+    if Exchange.isOnBelt(player, device) then
+        return false
+    end
     if Radio.isInventoryRadio(device) and not Radio.isCarried(player, device) then
         if not Exchange.canTake(player, device) then
             return false

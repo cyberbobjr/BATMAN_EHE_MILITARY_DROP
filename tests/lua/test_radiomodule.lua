@@ -213,6 +213,7 @@ function T.setup()
         getPrimaryHandItem = function() return RADIO end,
         getSecondaryHandItem = function() return nil end,
         getClothingItem_Back = function() return nil end,
+        isAttachedItem = function() return false end,
         getX = function() return 10.5 end,
         getY = function() return 10.5 end,
         getZ = function() return 0 end,

@@ -17,8 +17,9 @@
 -- station, reste ; sans gain). Le client ne décide rien : il grise une option
 -- avec la raison visible (radio hors de l'inventaire ou trop loin, éteinte,
 -- source désactivée sur le serveur, aucune plaque, aucun nettoyage en cours),
--- puis passe par MilitaryDrop.Exchange : prise en main du talkie si besoin
--- (AUTH-03), parole du personnage, commande au serveur, réponse de la base
+-- puis passe par MilitaryDrop.Exchange : prise en main d'une radio rangée si
+-- besoin (jamais à la ceinture, AUTH-04), parole du personnage, commande au
+-- serveur, réponse de la base
 -- par la radio.
 --
 -- Comme pour l'appel de largage, la fréquence n'est jamais vérifiée ici, ni

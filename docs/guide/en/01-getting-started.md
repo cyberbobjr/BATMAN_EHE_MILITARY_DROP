@@ -17,7 +17,7 @@ No other mod is required. You can add the mod to an existing save: military note
 ## What you need
 
 - **A military radio.** Only these can call the base:
-  - US Army Walkie Talkie (in hand, on the belt, in a bag, or placed on the ground);
+  - US Army Walkie Talkie (in hand, in a bag, or placed on the ground; clipped to the belt it only listens);
   - US Army Manpack Radio;
   - US Army Ham Radio (placed). It can also become your [liaison post](05-liaison-post.md).
 - **The military frequency.** It is written on military memos carried by military and police zombies. It is different in every game.

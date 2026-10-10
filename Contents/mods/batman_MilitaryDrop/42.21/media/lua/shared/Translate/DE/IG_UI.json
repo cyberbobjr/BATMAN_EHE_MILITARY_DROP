@@ -113,6 +113,7 @@
     "IGUI_MilitaryDrop_Exchange_Control": "Empfang bestätigen",
     "IGUI_MilitaryDrop_Exchange_ControlTooltip": "Auf die Funkprobe der Basis antworten, solange sie läuft.",
     "IGUI_MilitaryDrop_NotInInventory": "Das Funkgerät muss in deinem Inventar sein.",
+    "IGUI_MilitaryDrop_TakeInHand": "Nimm das Funkgerät in die Hand, um zu senden.",
     "IGUI_MilitaryDrop_NoDogTags": "Ich habe keine Hundemarken gefallener Soldaten zu melden.",
     "IGUI_MilitaryDrop_SourceDisabled": "Die Basis kümmert sich auf diesem Server nicht darum.",
     "IGUI_MilitaryDrop_Say_Report_1": "Logistik, Lagemeldung: Stellung gehalten, keine besonderen Vorkommnisse. Kommen.",

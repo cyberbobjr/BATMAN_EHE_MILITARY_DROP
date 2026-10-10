@@ -113,6 +113,7 @@
     "IGUI_MilitaryDrop_Exchange_Control": "Подтвердить приём",
     "IGUI_MilitaryDrop_Exchange_ControlTooltip": "Ответить на проверку связи от базы, пока она идёт.",
     "IGUI_MilitaryDrop_NotInInventory": "Рация должна быть у вас в инвентаре.",
+    "IGUI_MilitaryDrop_TakeInHand": "Возьмите рацию в руку, чтобы передавать.",
     "IGUI_MilitaryDrop_NoDogTags": "У меня нет жетонов павших солдат, нечего зачитывать.",
     "IGUI_MilitaryDrop_SourceDisabled": "На этом сервере база этим не занимается.",
     "IGUI_MilitaryDrop_Say_Report_1": "Снабжение, доклад обстановки: позицию удерживаем, без происшествий. Приём.",

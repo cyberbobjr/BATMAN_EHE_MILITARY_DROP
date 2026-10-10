@@ -113,6 +113,7 @@
     "IGUI_MilitaryDrop_Exchange_Control": "确认收到",
     "IGUI_MilitaryDrop_Exchange_ControlTooltip": "在基地的通信检查期间作出应答。",
     "IGUI_MilitaryDrop_NotInInventory": "无线电必须在你的物品栏中。",
+    "IGUI_MilitaryDrop_TakeInHand": "必须手持无线电才能发送。",
     "IGUI_MilitaryDrop_NoDogTags": "我没有阵亡士兵的狗牌可以通报。",
     "IGUI_MilitaryDrop_SourceDisabled": "在这个服务器上，基地不处理这项事务。",
     "IGUI_MilitaryDrop_Say_Report_1": "后勤处，情况报告：阵地守住，无异常。完毕。",

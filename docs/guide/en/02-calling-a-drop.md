@@ -62,7 +62,7 @@ A greyed button tells you why in its tooltip (radio off, code missing...). Your 
 Where the radio can be:
 
 - **in your hands**;
-- **on your belt**: the mod adds **Device Options** to a clipped walkie-talkie. It stays on, and your character takes it in hand to talk;
+- **on your belt**: listening only. The mod adds **Device Options** to a clipped walkie-talkie; it stays on and shows what it receives above your character, but the call buttons are greyed: take it in hand to talk;
 - **in a bag**: **Device Options** takes it in hand and opens its window;
 - **on your back**: in single player. In multiplayer your character takes it in hand;
 - **placed on the ground**, within 2 tiles.

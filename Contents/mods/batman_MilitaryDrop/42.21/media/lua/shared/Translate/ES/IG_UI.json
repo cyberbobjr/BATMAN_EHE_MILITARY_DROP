@@ -113,6 +113,7 @@
     "IGUI_MilitaryDrop_Exchange_Control": "Confirmar recepción",
     "IGUI_MilitaryDrop_Exchange_ControlTooltip": "Responde al control de radio de la base mientras dure.",
     "IGUI_MilitaryDrop_NotInInventory": "La radio tiene que estar en tu inventario.",
+    "IGUI_MilitaryDrop_TakeInHand": "Toma la radio en la mano para transmitir.",
     "IGUI_MilitaryDrop_NoDogTags": "No llevo placas militares de soldados caídos que anunciar.",
     "IGUI_MilitaryDrop_SourceDisabled": "La base no gestiona esto en este servidor.",
     "IGUI_MilitaryDrop_Say_Report_1": "Logística, parte de situación: mantenemos la posición, sin novedad. Cambio.",

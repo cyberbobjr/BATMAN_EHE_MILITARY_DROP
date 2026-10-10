@@ -579,11 +579,14 @@ function T.mp_bubble_skipped_for_held_radio_other_channel_secret_frequency_bwt_a
     assertEq(#PLAYER.bubbles, 0, "rien ajouté si la radio équipée reçoit")
     PLAYER.hands[1], PLAYER.equipped = nil, nil
     local other = makeRadio({ getChannel = 98000 })
+    PLAYER.attached = { other }
     vanillaMpLine({ other }, "météo")
-    assertEq(#PLAYER.bubbles, 0, "chaîne vanilla : laissée au vanilla")
-    mpSetup(0)
-    vanillaMpLine({ belt }, "secrète, brouillée")
-    assertEq(#PLAYER.bubbles, 0, "fréquence libre jamais reconnue, ligne sans code : rien")
+    assertEq(#PLAYER.bubbles, 1, "chaîne vanilla : bulle aussi (toutes les chaînes)")
+    assertEq(PLAYER.bubbles[1].r, 1, "couleur par défaut d'une chaîne inconnue")
+    PLAYER.bubbles, PLAYER.attached = {}, { belt }
+    -- Phrase radio d'un autre joueur : ChatMessage, sans codes, laissée au chat radio.
+    triggerEvent("OnDeviceText", nil, nil, -1, -1, -1, { getText = function() return "salut" end }, belt)
+    assertEq(#PLAYER.bubbles, 0, "phrase d'un joueur : rien ajouté")
     mpSetup(151.4)
     getActivatedMods = function()
         return { size = function() return 1 end, get = function() return "BetterWalkieTalkies" end }
@@ -612,14 +615,13 @@ function T.mp_secret_frequency_is_learned_from_the_first_marked_line()
     vanillaMpLine({ station }, "Groupe 17-04-58", "MDNS")
     assertEq(PLAYER.bubbles[3].r, 0.85, "station de chiffres : sa couleur")
     local vanillaRadio = makeRadio({ getChannel = 98000 })
-    vanillaMpLine({ vanillaRadio }, "Météo", "")
     vanillaMpLine({ vanillaRadio }, "Musique", "MOR+5")
-    assertEq(#PLAYER.bubbles, 3, "autres chaînes et codes vanilla : rien")
+    assertEq(PLAYER.bubbles[4].r, 1, "code vanilla : chaîne inconnue, couleur par défaut")
     triggerEvent("OnDisconnect")
     NOW = NOW + 5000
     PLAYER.attached = { belt }
     vanillaMpLine({ belt }, "bzzt après reconnexion", "")
-    assertEq(#PLAYER.bubbles, 3, "déconnexion : fréquences reconnues oubliées")
+    assertEq(PLAYER.bubbles[5].r, 1, "déconnexion : fréquence oubliée, couleur par défaut")
 end
 
 function T.mp_direct_reply_without_codes_adds_no_bubble()

@@ -2,7 +2,7 @@
 -- Un seul menu, wrapper de fenêtre et récepteur solo, même avec Artemis + MilitaryDrop.
 -- Les stations viennent du registre vanilla ; les scénarios inscrivent leurs options.
 -- En MP, réception et VOIP restent gérées par le vanilla / Better Walkie Talkies ;
--- seule la bulle d'une ligne de nos chaînes reçue par une radio non tenue est ajoutée.
+-- seule la bulle d'une ligne de chaîne reçue par une radio non tenue est ajoutée.
 
 require "ISUI/ISRadioAndTvMenu"
 require "RadioCom/ISRadioWindow"
@@ -424,8 +424,8 @@ function BeltRadio.scenarioFrequencies()
     return known
 end
 
---- Fréquence secrète (tirée par le serveur, jamais envoyée) : un fournisseur
---- reconnaît ses lignes à leurs codes (recognize(codes) -> couleur ou nil), que
+--- Couleur d'une fréquence secrète (tirée par le serveur, jamais envoyée) : un
+--- fournisseur reconnaît ses lignes à leurs codes (recognize(codes) -> couleur ou nil), que
 --- le paquet de la ligne transmet au client. La fréquence où la radio vient de
 --- recevoir une telle ligne est retenue jusqu'à la déconnexion : les lignes
 --- suivantes, y compris brouillées par l'orage (codes vidés), sont reconnues.
@@ -445,13 +445,20 @@ function BeltRadio.recognize(frequency, codes)
     return nil
 end
 
+-- Couleur d'une ligne d'une chaîne inconnue de nos fournisseurs (vanilla,
+-- autres mods) : l'événement ne transmet pas celle de la ligne.
+BeltRadio.DEFAULT_LINE_COLOR = { r = 1, g = 1, b = 1 }
+
 --- OnDeviceText sur un client MP : bulle « radio » au-dessus du joueur, comme
 --- pour une radio en main, si la radio de l'inventaire principal qui reçoit
---- une ligne de nos chaînes n'est pas tenue et que la radio équipée ne reçoit
---- pas déjà la fréquence (le vanilla dessine alors la bulle) ; une seule fois
---- si plusieurs radios reçoivent la même ligne. Le sourd n'arrive jamais ici
+--- une ligne de chaîne (toutes les chaînes : décision de l'utilisateur du
+--- 2026-10-10) n'est pas tenue et que la radio équipée ne reçoit pas déjà la
+--- fréquence (le vanilla dessine alors la bulle) ; une seule fois si plusieurs
+--- radios reçoivent la même ligne. Phrases radio des autres joueurs exclues
+--- (ChatMessage, codes nil : chat radio). Le sourd n'arrive jamais ici
 --- (WaveSignalDevice.java:46). La couleur de la ligne n'est pas transmise à
---- l'événement : celle que déclare le fournisseur (brouillage gris perdu).
+--- l'événement : celle que déclare le fournisseur pour nos chaînes, sinon
+--- DEFAULT_LINE_COLOR (brouillage gris perdu).
 function BeltRadio.onDeviceTextMP(_guid, codes, _x, _y, _z, line, device)
     if codes == nil or type(line) ~= "string" or line == "" or not Compat.features().mpBubble then
         return
@@ -462,9 +469,7 @@ function BeltRadio.onDeviceTextMP(_guid, codes, _x, _y, _z, line, device)
     local data = device:getDeviceData()
     local frequency = data:getChannel()
     local entry = BeltRadio.scenarioFrequencies()[frequency] or BeltRadio.recognize(frequency, codes)
-    if not entry then
-        return
-    end
+        or BeltRadio.DEFAULT_LINE_COLOR
     for playerNum = 0, getNumActivePlayers() - 1 do
         local player = getSpecificPlayer(playerNum)
         if player and not player:isDead() and device:getContainer() == player:getInventory() then

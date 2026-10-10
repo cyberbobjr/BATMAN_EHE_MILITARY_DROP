@@ -30,7 +30,7 @@ local function makeRadio(channel, on, container)
     }
 end
 
---- Joueur simulé ; where = "hand", "back" ou "belt".
+--- Joueur simulé ; where = "hand", "back", "belt" (accrochée) ou "bag" (rangée).
 local function makePlayer(radio, where)
     local player = { where = where or "hand", said = {} }
     function player.getUsername() return "tester" end
@@ -41,6 +41,7 @@ local function makePlayer(radio, where)
     function player.getPrimaryHandItem(self) return self.where == "hand" and radio or nil end
     function player.getSecondaryHandItem() return nil end
     function player.getClothingItem_Back(self) return self.where == "back" and radio or nil end
+    function player.isAttachedItem(self, item) return self.where == "belt" and item == radio end
     function player.Say(self, text) self.said[#self.said + 1] = text end
     return player
 end
@@ -159,15 +160,18 @@ end
 -- ----------------------------------------------------------------------------
 
 function T.radio_anywhere_in_the_inventory_can_be_used()
+    local bag = makeRadio(CHANNEL, true, makeContainer(true))
+    assertEq(Exchange.unavailableReason(makePlayer(bag, "bag"), bag), nil, "inventaire ou sac : il la prendra en main")
     local belt = makeRadio(CHANNEL, true, makeContainer(true))
-    assertEq(Exchange.unavailableReason(makePlayer(belt, "belt"), belt), nil, "ceinture ou sac : il la prendra en main")
+    assertEq(Exchange.unavailableReason(makePlayer(belt, "belt"), belt), "IGUI_MilitaryDrop_TakeInHand",
+        "ceinture : reçoit, n'émet pas")
     local floor = makeRadio(CHANNEL, true, makeContainer(false))
-    assertEq(Exchange.unavailableReason(makePlayer(floor, "belt"), floor), "IGUI_MilitaryDrop_NotInInventory",
+    assertEq(Exchange.unavailableReason(makePlayer(floor, "bag"), floor), "IGUI_MilitaryDrop_NotInInventory",
         "radio hors de l'inventaire")
     local off = makeRadio(CHANNEL, false, makeContainer(true))
-    assertEq(Exchange.unavailableReason(makePlayer(off, "belt"), off), "IGUI_MilitaryDrop_TurnOn", "éteinte")
+    assertEq(Exchange.unavailableReason(makePlayer(off, "bag"), off), "IGUI_MilitaryDrop_TurnOn", "éteinte")
     local wrong = makeRadio(CHANNEL + 200, true, makeContainer(true))
-    assertEq(Exchange.unavailableReason(makePlayer(wrong, "belt"), wrong), nil,
+    assertEq(Exchange.unavailableReason(makePlayer(wrong, "bag"), wrong), nil,
         "la fréquence n'est jamais vérifiée par le client")
 end
 
@@ -179,10 +183,21 @@ function T.placed_radio_must_be_near()
     assertEq(Exchange.unavailableReason(makePlayer(nil), placed), "IGUI_MilitaryDrop_TooFar", "à 10 cases")
 end
 
-function T.radio_on_the_belt_is_taken_in_hand_then_resent_in_multiplayer()
-    isClient = function() return true end
+function T.radio_on_the_belt_never_transmits()
     local radio = makeRadio(CHANNEL, true, makeContainer(true))
     local player = makePlayer(radio, "belt")
+    assertEq(Exchange.run(player, radio, "hello", function() end), false, "refusé à la ceinture")
+    assertEq(#EQUIPPED, 0, "pas de prise en main automatique")
+    assertEq(#QUEUE, 0, "aucune action d'échange")
+    assertEq(#player.said, 0, "le personnage ne parle pas")
+    player.where = "hand"
+    assertTrue(Exchange.run(player, radio, "hello", function() end), "prise en main par le joueur : appel possible")
+end
+
+function T.stowed_radio_is_taken_in_hand_then_resent_in_multiplayer()
+    isClient = function() return true end
+    local radio = makeRadio(CHANNEL, true, makeContainer(true))
+    local player = makePlayer(radio, "bag")
     local done = false
     assertTrue(Exchange.run(player, radio, "hello", function() done = true end), "échange lancé")
     assertEq(#EQUIPPED, 1, "action vanilla d'équipement")
@@ -235,7 +250,7 @@ end
 
 function T.radio_out_of_the_inventory_is_not_used()
     local radio = makeRadio(CHANNEL, true, makeContainer(false))
-    assertEq(Exchange.run(makePlayer(radio, "belt"), radio, nil, function() end), false, "refusé")
+    assertEq(Exchange.run(makePlayer(radio, "bag"), radio, nil, function() end), false, "refusé")
     assertEq(#QUEUE, 0, "aucune action")
 end
 

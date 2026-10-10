@@ -29,8 +29,9 @@
 --     gardé par personnage, y compris après un rechargement
 --     (MilitaryDrop.Client.rememberCode : fichier du client, jamais envoyé
 --     ailleurs qu'à l'appel) ;
---   * « Demander un largage » : MilitaryDrop.Client.call (prise en main du
---     talkie, AUTH-03), sans boîte de saisie ;
+--   * « Demander un largage » : MilitaryDrop.Client.call (prise en main d'une
+--     radio rangée ; talkie à la ceinture : boutons grisés, AUTH-04), sans
+--     boîte de saisie ;
 --     la feuille de réquisition s'ouvre collée à la fenêtre radio ;
 --   * rapport, matricules (avec le nombre de plaques), reconnaissance,
 --     confirmation de réception, « Faire le point » sur le nettoyage (grisé

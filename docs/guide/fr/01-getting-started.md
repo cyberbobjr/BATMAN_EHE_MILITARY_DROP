@@ -17,7 +17,7 @@ Aucun autre mod n'est nécessaire. Vous pouvez ajouter le mod à une partie en c
 ## Ce qu'il vous faut
 
 - **Une radio militaire.** Elles seules peuvent appeler la base :
-  - Talkie-Walkie de l'Armée américaine (en main, à la ceinture, dans un sac ou posé au sol) ;
+  - Talkie-Walkie de l'Armée américaine (en main, dans un sac ou posé au sol ; accroché à la ceinture, il écoute seulement) ;
   - Poste radio nomade de l'Armée américaine ;
   - Radioamateur de l'Armée américaine (posé). Il peut aussi devenir votre [poste de liaison](05-liaison-post.md).
 - **La fréquence militaire.** Elle est écrite sur les notes de service portées par les zombies militaires et policiers. Elle change à chaque partie.
