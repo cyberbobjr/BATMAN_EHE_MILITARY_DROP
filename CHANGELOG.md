@@ -3,6 +3,16 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.5.3 — 2026-10-15
+
+### Added
+
+- New sandbox option **Code change** (`CodePeriod`): the rotating authentication code (in clear or encrypted) can now change every week (Monday), every two weeks (every other Monday) or every month (1st day), at 00:00. Useful on servers where game days pass quickly. The previous code is still accepted for 24 hours, the codebook stays the same, and memos found after the switch give the new schedule. Default: every week, so current games keep their codes.
+
+### Changed
+
+- The "Weekly code" choices of the Authentication code option are now called "Rotating code".
+
 ## 0.5.2 — 2026-10-10
 
 ### Changed

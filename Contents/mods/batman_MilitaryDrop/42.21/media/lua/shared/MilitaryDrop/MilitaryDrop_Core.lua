@@ -59,6 +59,9 @@ local DEFAULTS = {
     -- 1 aucun, 2 fixe en clair, 3 de la semaine en clair, 4 de la semaine chiffré
     -- (MilitaryDrop.Codes.MODE_*).
     AuthCode = 4,
+    -- Changement du code (modes 3 et 4) : 1 chaque lundi, 2 un lundi sur deux,
+    -- 3 chaque 1er du mois (MilitaryDrop.Codes.PERIOD_*).
+    CodePeriod = 1,
     -- 0 : fréquence libre tirée dans la bande de la station (MilitaryDrop_NumbersStation.lua).
     NumbersStationFrequency = 0,
     CodebookDropRate = 3,
@@ -174,6 +177,12 @@ end
 function Config.codeMode()
     local mode = math.floor(tonumber(Config.get("AuthCode")) or DEFAULTS.AuthCode)
     return math.max(1, math.min(4, mode))
+end
+
+--- Période du code (MilitaryDrop.Codes.PERIOD_*), bornée à 1-3.
+function Config.codePeriod()
+    local period = math.floor(tonumber(Config.get("CodePeriod")) or DEFAULTS.CodePeriod)
+    return math.max(1, math.min(3, period))
 end
 
 --- Liste d'une option texte « a;b;c » : mots en minuscules, sans vides.

@@ -42,7 +42,8 @@ The mod reads its options each time it uses them: a new value counts for the nex
 
 | Option | Key | Default | Effect |
 |---|---|---|---|
-| Authentication code | `AuthCode` | Weekly code, encrypted | None / Fixed code, in clear on the notes / Weekly code, in clear on the notes / Weekly code, encrypted (numbers station and codebook). 3 wrong codes in a day: the base ignores the caller until the next day. |
+| Authentication code | `AuthCode` | Rotating code, encrypted | None / Fixed code, in clear on the notes / Rotating code, in clear on the notes / Rotating code, encrypted (numbers station and codebook). 3 wrong codes in a day: the base ignores the caller until the next day. |
+| Code change | `CodePeriod` | Every week (Monday) | When the rotating code changes (game calendar): every Monday at 00:00, every other Monday at 00:00, or on the 1st of each month at 00:00. The previous code is still accepted for 24 hours. Pick a longer period on servers where game days pass quickly. The codebook never changes. |
 | Numbers station frequency (MHz) | `NumbersStationFrequency` | 0 | 0: random free shortwave frequency, 10 to 25 MHz. Encrypted mode only. Restart required. |
 | Military notes drop rate | `NoteDropRate` | Normal (1/50) | Extremely rare 1/1000, Very rare 1/500, Rare 1/100, Normal 1/50, Common 1/25, Debug 1/2. |
 | Notes only on military and police zombies | `NotesOnlyArmyPolice` | true | Only outfits from the list below carry memos. |

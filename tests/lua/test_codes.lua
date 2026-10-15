@@ -81,6 +81,81 @@ function T.previous_week_accepted_for_24_hours()
     assertEq(#Codes.acceptedWeeks(monday + 100), 1, "milieu de semaine")
 end
 
+function T.weekly_period_matches_the_week_functions()
+    local Codes = MilitaryDrop.Codes
+    local clock = Codes.clockHours(1993, 6, 13, 14.5)
+    local week = Codes.weekOf(clock)
+    assertEq(Codes.periodOf(clock, Codes.PERIOD_WEEK), week, "même numéro de semaine")
+    assertEq(Codes.periodCode(777, week, Codes.PERIOD_WEEK), Codes.weeklyCode(777, week),
+        "même code qu'avant l'option : parties en cours inchangées")
+    assertEq(Codes.periodLastDay(week, Codes.PERIOD_WEEK), Codes.weekStartDay(week) + 6, "dimanche")
+end
+
+function T.two_week_code_changes_every_other_monday()
+    local Codes = MilitaryDrop.Codes
+    local P = Codes.PERIOD_TWO_WEEKS
+    local changes = 0
+    for k = 0, 9 do
+        local monday = Codes.clockHours(1993, 6, 4 + 7 * k, 0) -- lundis à partir du 5 juillet (jours depuis 0)
+        local index = Codes.periodOf(monday, P)
+        changes = changes + (index ~= Codes.periodOf(monday - 0.1, P) and 1 or 0)
+        assertEq(Codes.periodOf(monday + 6 * 24 + 23.9, P), index, "inchangé jusqu'au dimanche soir")
+    end
+    assertEq(changes, 5, "un lundi sur deux")
+    local index = Codes.periodOf(Codes.clockHours(1993, 6, 13, 12), P)
+    local y, m, d = Codes.civilFromDays(math.floor(Codes.periodStartClock(index, P) / 24) - 3)
+    assertEq(y * 10000 + m * 100 + d, 19930712, "quinzaine du mercredi 14 : lundi 12 juillet")
+    y, m, d = Codes.civilFromDays(Codes.periodLastDay(index, P))
+    assertEq(y * 10000 + m * 100 + d, 19930725, "jusqu'au dimanche 25")
+    local start = Codes.periodStartClock(index, P)
+    assertEq(#Codes.acceptedPeriods(start + 23.9, P), 2, "grâce de 24 h")
+    assertEq(#Codes.acceptedPeriods(start + 7 * 24 + 1, P), 1, "lundi du milieu : pas de changement")
+    assertTrue(Codes.periodCode(777, index, P) ~= Codes.periodCode(777, index + 1, P), "nouveau code")
+    assertTrue(Codes.periodCode(777, index, P) ~= Codes.periodCode(777, index, Codes.PERIOD_WEEK),
+        "tirage distinct du code de la semaine")
+end
+
+function T.month_changes_on_the_first_at_midnight()
+    local Codes = MilitaryDrop.Codes
+    local P = Codes.PERIOD_MONTH
+    local lastJuly = Codes.clockHours(1993, 6, 30, 23.9)
+    local firstAugust = Codes.clockHours(1993, 7, 0, 0)
+    assertEq(Codes.periodOf(firstAugust, P), Codes.periodOf(lastJuly, P) + 1, "1er août 00:00 : nouveau mois")
+    assertEq(Codes.periodOf(Codes.clockHours(1993, 6, 0, 0), P), Codes.periodOf(lastJuly, P), "tout juillet")
+    assertEq(Codes.periodStartClock(Codes.periodOf(lastJuly, P), P), Codes.clockHours(1993, 6, 0, 0), "début de juillet")
+    local y, m, d = Codes.civilFromDays(Codes.periodLastDay(Codes.periodOf(lastJuly, P), P))
+    assertEq(y * 10000 + m * 100 + d, 19930731, "dernier jour : 31 juillet")
+    y, m, d = Codes.civilFromDays(Codes.periodLastDay(Codes.periodOf(Codes.clockHours(1992, 1, 3, 0), P), P))
+    assertEq(y * 10000 + m * 100 + d, 19920229, "février bissextile")
+    local dec = Codes.periodOf(Codes.clockHours(1993, 11, 20, 0), P)
+    assertEq(Codes.periodOf(Codes.clockHours(1994, 0, 0, 0), P), dec + 1, "changement d'année")
+end
+
+function T.previous_month_accepted_for_24_hours()
+    local Codes = MilitaryDrop.Codes
+    local P = Codes.PERIOD_MONTH
+    local first = Codes.clockHours(1993, 7, 0, 0)
+    local accepted = Codes.acceptedPeriods(first + 23.9, P)
+    assertEq(#accepted, 2, "grâce : deux mois")
+    assertEq(accepted[2], Codes.periodOf(first, P) - 1, "le précédent")
+    assertEq(#Codes.acceptedPeriods(first + 24, P), 1, "fin de la grâce")
+    assertEq(#Codes.acceptedPeriods(Codes.clockHours(1993, 7, 9, 0), P), 1, "milieu du mois, même un lundi")
+end
+
+function T.monthly_code_is_stable_then_changes()
+    local Codes = MilitaryDrop.Codes
+    local P = Codes.PERIOD_MONTH
+    local month = Codes.periodOf(Codes.clockHours(1993, 6, 13, 12), P)
+    assertEq(Codes.periodCode(777, month, P), Codes.periodCode(777, month, P), "même mois, même code")
+    local changes = 0
+    for m = month, month + 19 do
+        local code = Codes.periodCode(777, m, P)
+        assertTrue(code:match("^%u+%-%u+%-%d%d$") ~= nil, "format MOT-MOT-NN : " .. code)
+        changes = changes + (code ~= Codes.periodCode(777, m + 1, P) and 1 or 0)
+    end
+    assertEq(changes, 20, "le code change chaque mois")
+end
+
 function T.random_is_reproducible_and_bounded()
     local Codes = MilitaryDrop.Codes
     local a, b, c = Codes.newRandom(12345, 1, 7), Codes.newRandom(12345, 1, 7), Codes.newRandom(12346, 1, 7)

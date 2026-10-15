@@ -17,7 +17,7 @@ Les zombies militaires et policiers portent parfois une **Note de service milita
 
 Un code se compose de deux mots de l'alphabet militaire et de deux chiffres, par exemple `BRAVO-KILO-42`. Majuscules, espaces et tirets n'ont pas d'importance.
 
-Le code change **chaque lundi à 00:00** (calendrier du jeu). Le précédent reste accepté pendant 24 heures.
+Le code change **chaque lundi à 00:00** (calendrier du jeu), **un lundi sur deux**, ou le **1er de chaque mois à 00:00**, selon le choix du serveur (option `CodePeriod`). Le précédent reste accepté pendant 24 heures. Les notes indiquent le bon rythme.
 
 ### La station de chiffres
 

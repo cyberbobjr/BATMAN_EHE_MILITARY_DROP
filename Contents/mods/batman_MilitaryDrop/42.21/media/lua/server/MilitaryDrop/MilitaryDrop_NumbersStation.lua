@@ -2,9 +2,10 @@
 -- Military Drop — station de chiffres (serveur MP ou solo, AuthCode 4)
 --
 -- Une chaîne dynamique diffuse toutes les 30 minutes de jeu le code de la
--- semaine chiffré avec la table de la partie : « 17-04-58 » (x3). Le carnet
--- de codes déchiffre les deux premiers groupes (MilitaryDrop_Codes.lua) ;
--- aucun secret n'est envoyé aux clients, qui ne reçoivent que le texte chiffré.
+-- période (semaine, deux semaines ou mois) chiffré avec la table de la
+-- partie : « 17-04-58 » (x3). Le carnet de codes déchiffre les deux premiers
+-- groupes (MilitaryDrop_Codes.lua) ; aucun secret n'est envoyé aux clients,
+-- qui ne reçoivent que le texte chiffré.
 --
 -- Fréquence : option NumbersStationFrequency, ou 0 pour une fréquence libre
 -- des ondes courtes (BAND_MIN-BAND_MAX : radios militaires, radioamateur et
@@ -93,10 +94,12 @@ function Station.onLoadRadioScripts(scriptManager)
     MilitaryDrop.log("numbers station not created: no free frequency", true)
 end
 
---- Groupes chiffrés du code de la semaine : « 74-46-74 ».
+--- Groupes chiffrés du code de la période : « 74-46-74 ».
 function Station.cipher(clock)
     local seed = Secrets.getSeed()
-    return Codes.encrypt(Codes.weeklyCode(seed, Codes.weekOf(clock)), Codes.cipherTable(seed))
+    local period = Config.codePeriod()
+    local code = Codes.periodCode(seed, Codes.periodOf(clock, period), period)
+    return Codes.encrypt(code, Codes.cipherTable(seed))
 end
 
 --- Lignes du message pour cette heure du calendrier : appel, puis code chiffré répété.

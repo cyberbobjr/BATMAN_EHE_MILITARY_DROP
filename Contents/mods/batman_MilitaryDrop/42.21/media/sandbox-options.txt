@@ -69,6 +69,13 @@ option MilitaryDrop.AuthCode
     valueTranslation = MilitaryDrop_AuthCode,
 }
 
+option MilitaryDrop.CodePeriod
+{
+    type = enum, numValues = 3, default = 1,
+    page = MilitaryDrop, translation = MilitaryDrop_CodePeriod,
+    valueTranslation = MilitaryDrop_CodePeriod,
+}
+
 option MilitaryDrop.NumbersStationFrequency
 {
     type = double, min = 0.0, max = 1000.0, default = 0.0,

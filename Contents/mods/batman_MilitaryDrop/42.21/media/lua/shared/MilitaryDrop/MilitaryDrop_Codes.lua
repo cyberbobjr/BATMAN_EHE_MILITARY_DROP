@@ -7,8 +7,9 @@
 --
 -- Option AuthCode (MODE_*) :
 --   * code fixe : tiré une fois par partie (fichier du serveur) ;
---   * code de la semaine : dérivé d'une graine secrète du serveur et du
---     numéro de semaine ; il change chaque lundi à 00:00 (calendrier du jeu)
+--   * code périodique : dérivé d'une graine secrète du serveur et du numéro
+--     de période (option CodePeriod, PERIOD_*) ; il change chaque lundi, un
+--     lundi sur deux ou le 1er de chaque mois, à 00:00 (calendrier du jeu),
 --     et l'ancien reste accepté pendant GRACE_HOURS ;
 --   * chiffré : une station de chiffres diffuse « 17-04-58 » ; le carnet de
 --     codes donne la table qui déchiffre les deux mots (17 → BRAVO,
@@ -41,6 +42,11 @@ Codes.MODE_NONE = 1
 Codes.MODE_FIXED = 2
 Codes.MODE_WEEKLY_PLAIN = 3
 Codes.MODE_WEEKLY_CIPHER = 4
+
+-- Valeurs de l'option sandbox CodePeriod (modes 3 et 4).
+Codes.PERIOD_WEEK = 1
+Codes.PERIOD_TWO_WEEKS = 2
+Codes.PERIOD_MONTH = 3
 
 Codes.HOURS_PER_WEEK = 168
 Codes.GRACE_HOURS = 24
@@ -193,7 +199,61 @@ function Codes.acceptedWeeks(clock)
 end
 
 -- ----------------------------------------------------------------------------
--- Code de la semaine et chiffrement
+-- Calendrier : mois du 1er à 00:00
+-- ----------------------------------------------------------------------------
+
+--- Numéro du mois : année × 12 + mois (0 à 11).
+function Codes.monthOf(clock)
+    local y, m = Codes.civilFromDays(math.floor(clock / 24) - 3)
+    return y * 12 + m - 1
+end
+
+--- Horloge du 1er du mois à 00:00.
+function Codes.monthStartClock(month)
+    return Codes.clockHours(math.floor(month / 12), month % 12, 0, 0)
+end
+
+-- ----------------------------------------------------------------------------
+-- Périodes du code (semaine, deux semaines ou mois, option CodePeriod)
+-- Les quinzaines sont des paires de semaines (semaines 2n et 2n + 1).
+-- ----------------------------------------------------------------------------
+
+function Codes.periodOf(clock, period)
+    if period == Codes.PERIOD_MONTH then
+        return Codes.monthOf(clock)
+    elseif period == Codes.PERIOD_TWO_WEEKS then
+        return math.floor(Codes.weekOf(clock) / 2)
+    end
+    return Codes.weekOf(clock)
+end
+
+--- Horloge du début de la période (lundi ou 1er du mois, 00:00).
+function Codes.periodStartClock(index, period)
+    if period == Codes.PERIOD_MONTH then
+        return Codes.monthStartClock(index)
+    elseif period == Codes.PERIOD_TWO_WEEKS then
+        return index * 2 * Codes.HOURS_PER_WEEK
+    end
+    return index * Codes.HOURS_PER_WEEK
+end
+
+--- Dernier jour (depuis le 1970-01-01) de la période.
+function Codes.periodLastDay(index, period)
+    return math.floor(Codes.periodStartClock(index + 1, period) / 24) - 3 - 1
+end
+
+--- Périodes dont le code est accepté : la période en cours, et la précédente
+--- pendant les GRACE_HOURS qui suivent le changement.
+function Codes.acceptedPeriods(clock, period)
+    local index = Codes.periodOf(clock, period)
+    if clock - Codes.periodStartClock(index, period) < Codes.GRACE_HOURS then
+        return { index, index - 1 }
+    end
+    return { index }
+end
+
+-- ----------------------------------------------------------------------------
+-- Code de la période et chiffrement
 -- ----------------------------------------------------------------------------
 
 -- Usages distincts du générateur, pour que code et table ne se recoupent pas.
@@ -206,9 +266,25 @@ Codes.USE_STATION = 3
 -- Fréquence militaire libre (option Frequency à 0) et nom de la ModData privée.
 Codes.USE_MILITARY_CHANNEL = 4
 Codes.USE_PRIVATE_STATE = 5
+Codes.USE_MONTHLY_CODE = 6
+Codes.USE_TWO_WEEK_CODE = 7
 
 function Codes.weeklyCode(seed, week)
     return Codes.generate(Codes.newRandom(seed, Codes.USE_WEEKLY_CODE, week))
+end
+
+function Codes.monthlyCode(seed, month)
+    return Codes.generate(Codes.newRandom(seed, Codes.USE_MONTHLY_CODE, month))
+end
+
+--- Code de la période n° index (semaine, deux semaines ou mois).
+function Codes.periodCode(seed, index, period)
+    if period == Codes.PERIOD_MONTH then
+        return Codes.monthlyCode(seed, index)
+    elseif period == Codes.PERIOD_TWO_WEEKS then
+        return Codes.generate(Codes.newRandom(seed, Codes.USE_TWO_WEEK_CODE, index))
+    end
+    return Codes.weeklyCode(seed, index)
 end
 
 --- Table de la partie : numbers[i] = nombre (0 à 99) du mot Codes.WORDS[i],

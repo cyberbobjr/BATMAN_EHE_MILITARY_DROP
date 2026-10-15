@@ -42,7 +42,8 @@ Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, 
 
 | Option | Clé | Défaut | Effet |
 |---|---|---|---|
-| Code d'authentification | `AuthCode` | Code de la semaine, chiffré | Aucun / Code fixe, en clair sur les notes / Code de la semaine, en clair sur les notes / Code de la semaine, chiffré (station de chiffres et carnet). 3 codes faux dans la journée : la base ignore l'appelant jusqu'au lendemain. |
+| Code d'authentification | `AuthCode` | Code périodique, chiffré | Aucun / Code fixe, en clair sur les notes / Code périodique, en clair sur les notes / Code périodique, chiffré (station de chiffres et carnet). 3 codes faux dans la journée : la base ignore l'appelant jusqu'au lendemain. |
+| Changement du code | `CodePeriod` | Chaque semaine (lundi) | Quand le code périodique change (calendrier du jeu) : chaque lundi à 00:00, un lundi sur deux à 00:00, ou le 1er de chaque mois à 00:00. Le précédent reste accepté pendant 24 heures. Choisir une période plus longue sur les serveurs où les jours de jeu passent vite. Le carnet ne change jamais. |
 | Fréquence de la station de chiffres (MHz) | `NumbersStationFrequency` | 0 | 0 : fréquence libre des ondes courtes tirée au hasard, de 10 à 25 MHz. Mode chiffré seulement. Redémarrage requis. |
 | Fréquence des notes militaires | `NoteDropRate` | Normale (1/50) | Extrêmement rare 1/1000, Très rare 1/500, Rare 1/100, Normale 1/50, Courante 1/25, Débogage 1/2. |
 | Notes seulement sur les zombies militaires et policiers | `NotesOnlyArmyPolice` | vrai | Seules les tenues de la liste ci-dessous portent des notes. |

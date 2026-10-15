@@ -17,7 +17,7 @@ Military and police zombies sometimes carry a **Military Memo** (about 1 in 50 b
 
 A code is two words of the military alphabet and two digits, for example `BRAVO-KILO-42`. Case, spaces and hyphens do not matter.
 
-The code changes **every Monday at 00:00** (game calendar). The previous code is still accepted for 24 hours.
+The code changes **every Monday at 00:00** (game calendar), **every other Monday**, or on the **1st of each month at 00:00**, depending on the server's choice (`CodePeriod` option). The previous code is still accepted for 24 hours. The memos give the right schedule.
 
 ### The numbers station
 

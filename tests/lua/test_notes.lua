@@ -363,6 +363,33 @@ function T.memo_text_follows_the_code_option()
         "chiffré : fréquence de la station, sans code")
 end
 
+function T.memo_text_follows_the_monthly_period()
+    SandboxVars.MilitaryDrop.CodePeriod = MilitaryDrop.Codes.PERIOD_MONTH
+    SandboxVars.MilitaryDrop.AuthCode = 3
+    local code = MilitaryDrop.Server.getCode()
+    assertEq(MilitaryDrop.Notes.memoText(1), "IGUI_MilitaryDrop_NoteMonth_1|151.4|" .. code .. "|31 IGUI_MilitaryDrop_Month_7",
+        "code du mois, valable jusqu'au 31 juillet")
+    assertEq(MilitaryDrop.Notes.memoHand(), "IGUI_MilitaryDrop_Doc_Memo_Hand_Week|" .. code .. "|31 IGUI_MilitaryDrop_Month_7",
+        "annotation : même date de fin")
+    SandboxVars.MilitaryDrop.AuthCode = 4
+    MilitaryDrop.NumbersStation.frequency = 14600
+    assertEq(MilitaryDrop.Notes.memoText(2), "IGUI_MilitaryDrop_NoteCipherMonth_2|151.4|14.6", "chiffré, textes du mois")
+    SandboxVars.MilitaryDrop.AuthCode = 1
+    assertEq(MilitaryDrop.Notes.memoText(2), "IGUI_MilitaryDrop_NoteOpen_2|151.4", "sans code : option sans effet")
+end
+
+function T.memo_text_follows_the_two_week_period()
+    SandboxVars.MilitaryDrop.CodePeriod = MilitaryDrop.Codes.PERIOD_TWO_WEEKS
+    SandboxVars.MilitaryDrop.AuthCode = 3
+    local code = MilitaryDrop.Server.getCode()
+    assertEq(MilitaryDrop.Notes.memoText(4), "IGUI_MilitaryDrop_NoteTwoWeeks_4|151.4|" .. code .. "|25 IGUI_MilitaryDrop_Month_7",
+        "code de la quinzaine, valable jusqu'au dimanche 25 juillet")
+    SandboxVars.MilitaryDrop.AuthCode = 4
+    MilitaryDrop.NumbersStation.frequency = 14600
+    assertEq(MilitaryDrop.Notes.memoText(1), "IGUI_MilitaryDrop_NoteCipherTwoWeeks_1|151.4|14.6",
+        "chiffré, textes de la quinzaine")
+end
+
 local function codebooks(zombie)
     local n = 0
     for _, item in ipairs(zombie.items) do

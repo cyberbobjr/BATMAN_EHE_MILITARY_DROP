@@ -274,6 +274,30 @@ function T.weekly_code_changes_on_monday_with_24_hours_of_grace()
     assertEq(evaluate(makeRadio(true, CHANNEL), request(old)), "noAnswer", "ancien code après 24 h")
 end
 
+function T.monthly_code_changes_on_the_first_with_24_hours_of_grace()
+    local Codes = MilitaryDrop.Codes
+    SandboxVars.MilitaryDrop.AuthCode = 3
+    SandboxVars.MilitaryDrop.CodePeriod = Codes.PERIOD_MONTH
+    FILES["MilitaryDrop/Sandbox_Test_Save_seed.txt"] = tostring(SEED)
+    local function monthlyCode()
+        local clock = Codes.clockHours(DATE.year, DATE.month, DATE.day, DATE.hour)
+        return Codes.periodCode(SEED, Codes.periodOf(clock, Codes.PERIOD_MONTH), Codes.PERIOD_MONTH)
+    end
+    DATE.day, DATE.hour = 17, 23.5 -- dimanche 18 juillet, 23:30
+    local old = monthlyCode()
+    assertEq(MilitaryDrop.Server.getCode(), old, "code du mois")
+    DATE.day, DATE.hour = 18, 1 -- lundi 19 juillet : pas de changement
+    assertEq(MilitaryDrop.Server.getCode(), old, "même code le lundi")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(old)), "accepted", "code du mois")
+    DATE.month, DATE.day, DATE.hour = 7, 0, 1 -- 1er août, 01:00
+    local new = monthlyCode()
+    assertTrue(new ~= old, "nouveau code le 1er")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(new)), "accepted", "nouveau code")
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(old)), "accepted", "ancien code pendant la grâce")
+    DATE.day, DATE.hour = 1, 0.5 -- 2 août, 00:30
+    assertEq(evaluate(makeRadio(true, CHANNEL), request(old)), "noAnswer", "ancien code après 24 h")
+end
+
 function T.three_wrong_codes_silence_the_caller_until_the_next_day()
     for i = 1, MilitaryDrop.Server.FAILED_CODE_LIMIT do
         assertEq(evaluate(makeRadio(true, CHANNEL), request("ALPHA-ALPHA-0" .. i)), "noAnswer", "code faux " .. i)

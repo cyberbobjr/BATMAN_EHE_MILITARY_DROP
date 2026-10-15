@@ -146,6 +146,22 @@ function T.message_is_encrypted_with_the_game_table()
         "même table un mois plus tard")
 end
 
+function T.monthly_period_sends_the_code_of_the_month()
+    local Codes = MilitaryDrop.Codes
+    local P = Codes.PERIOD_MONTH
+    SandboxVars.MilitaryDrop.CodePeriod = P
+    local function sent()
+        local cipher = MilitaryDrop.NumbersStation.message(clock())[2]:match("|(.+)$")
+        return Codes.decrypt(cipher, Codes.cipherTable(SEED))
+    end
+    local july = sent()
+    assertEq(july, Codes.periodCode(SEED, Codes.periodOf(clock(), P), P), "code du mois")
+    DATE.month, DATE.day = 6, 30 -- 31 juillet : même mois
+    assertEq(sent(), july, "inchangé jusqu'à la fin du mois")
+    DATE.month, DATE.day = 7, 0 -- 1er août
+    assertTrue(sent() ~= july, "nouveau code le 1er")
+end
+
 function T.one_broadcast_per_half_hour()
     load()
     triggerEvent("EveryTenMinutes")

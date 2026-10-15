@@ -5,11 +5,12 @@
 -- MilitaryDrop_Documents.lua), écrits par le serveur à la création de l'objet
 -- dans modData.printMedia, donc dans sa langue :
 --   * note (MilitaryDrop.MilitaryMemo) : fréquence militaire et, selon
---     l'option AuthCode : 1 aucun code ; 2 code fixe ; 3 code de la semaine et
---     sa date de fin ; 4 fréquence de la station de chiffres ;
+--     l'option AuthCode : 1 aucun code ; 2 code fixe ; 3 code de la période
+--     (semaine, deux semaines ou mois, option CodePeriod) et sa date de fin ; 4 fréquence de
+--     la station de chiffres ;
 --   * carnet (MilitaryDrop.Codebook, AuthCode 4) : la table qui déchiffre les
 --     groupes de la station. Un seul carnet par partie : la table est fixe,
---     seul le code change chaque semaine. Le déchiffrement se fait de tête :
+--     seul le code change à chaque période. Le déchiffrement se fait de tête :
 --     la graine ne quitte jamais le serveur.
 --
 -- Note et carnet sont ajoutés à l'inventaire du zombie dans OnZombieDead,
@@ -52,6 +53,18 @@ Notes.FAMILIES = {
     [Codes.MODE_FIXED] = { prefix = "IGUI_MilitaryDrop_Note_", count = 8 },
     [Codes.MODE_WEEKLY_PLAIN] = { prefix = "IGUI_MilitaryDrop_NoteWeek_", count = 4 },
     [Codes.MODE_WEEKLY_CIPHER] = { prefix = "IGUI_MilitaryDrop_NoteCipher_", count = 4 },
+}
+-- Textes des modes 3 et 4 selon la période du code (option CodePeriod), hors
+-- semaine.
+Notes.PERIOD_FAMILIES = {
+    [Codes.PERIOD_TWO_WEEKS] = {
+        [Codes.MODE_WEEKLY_PLAIN] = { prefix = "IGUI_MilitaryDrop_NoteTwoWeeks_", count = 4 },
+        [Codes.MODE_WEEKLY_CIPHER] = { prefix = "IGUI_MilitaryDrop_NoteCipherTwoWeeks_", count = 4 },
+    },
+    [Codes.PERIOD_MONTH] = {
+        [Codes.MODE_WEEKLY_PLAIN] = { prefix = "IGUI_MilitaryDrop_NoteMonth_", count = 4 },
+        [Codes.MODE_WEEKLY_CIPHER] = { prefix = "IGUI_MilitaryDrop_NoteCipherMonth_", count = 4 },
+    },
 }
 -- Listes de butin de l'armée qui reçoivent le carnet, avec un poids
 -- CODEBOOK_LOOT_FACTOR / N (N : option CodebookDropRate).
@@ -134,10 +147,18 @@ function Notes.stationText()
     return station and Config.formatChannel(station) or "?"
 end
 
+--- Dernier jour de validité du code en vigueur (fin de la période).
+function Notes.codeLastDay(clock)
+    local period = Config.codePeriod()
+    return Codes.periodLastDay(Codes.periodOf(clock, period), period)
+end
+
 --- Texte n° index de la note, selon le mode du code.
 function Notes.memoText(index)
     local mode = Config.codeMode()
     local family = Notes.FAMILIES[mode]
+    local byPeriod = Notes.PERIOD_FAMILIES[Config.codePeriod()]
+    family = byPeriod and byPeriod[mode] or family
     local key = family.prefix .. ((index - 1) % family.count + 1)
     local frequency = Config.formatChannel(Config.getChannel())
     if mode == Codes.MODE_NONE then
@@ -146,8 +167,7 @@ function Notes.memoText(index)
         return getText(key, frequency, MilitaryDrop.Server.getCode())
     elseif mode == Codes.MODE_WEEKLY_PLAIN then
         local clock = MilitaryDrop.Server.clock()
-        local lastDay = Codes.weekStartDay(Codes.weekOf(clock)) + 6
-        return getText(key, frequency, MilitaryDrop.Server.getCode(clock), Notes.formatDay(lastDay))
+        return getText(key, frequency, MilitaryDrop.Server.getCode(clock), Notes.formatDay(Notes.codeLastDay(clock)))
     end
     return getText(key, frequency, Notes.stationText())
 end
@@ -161,9 +181,8 @@ function Notes.memoHand()
         return getText("IGUI_MilitaryDrop_Doc_Memo_Hand_Code", MilitaryDrop.Server.getCode())
     elseif mode == Codes.MODE_WEEKLY_PLAIN then
         local clock = MilitaryDrop.Server.clock()
-        local lastDay = Codes.weekStartDay(Codes.weekOf(clock)) + 6
         return getText("IGUI_MilitaryDrop_Doc_Memo_Hand_Week", MilitaryDrop.Server.getCode(clock),
-            Notes.formatDay(lastDay))
+            Notes.formatDay(Notes.codeLastDay(clock)))
     end
     return getText("IGUI_MilitaryDrop_Doc_Memo_Hand_Station", Notes.stationText())
 end

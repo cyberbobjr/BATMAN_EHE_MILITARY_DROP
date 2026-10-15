@@ -10,12 +10,12 @@
 -- justes. Fréquence : option Frequency, ou fréquence libre secrète tirée par
 -- le serveur (MilitaryDrop_Broadcast.lua).
 --
--- Code (option AuthCode) : aucun, fixe, ou celui de la semaine (le précédent
--- reste accepté 24 h). Après FAILED_CODE_LIMIT codes faux dans la même
--- journée de jeu, la base ne répond plus à ce joueur jusqu'au lendemain,
--- même avec le bon code : la réponse reste « noAnswer », rien ne trahit le
--- silence (parade à la force brute : 676 codes quand les chiffres sont
--- connus). Le compteur reste en mémoire du serveur : dans la ModData, il
+-- Code (option AuthCode) : aucun, fixe, ou celui de la semaine, des deux
+-- semaines ou du mois (option CodePeriod ; le précédent reste accepté 24 h).
+-- Après FAILED_CODE_LIMIT codes faux dans la même journée de jeu, la base ne
+-- répond plus à ce joueur jusqu'au lendemain, même avec le bon code : la
+-- réponse reste « noAnswer », rien ne trahit le silence (parade à la force
+-- brute : 676 codes quand les chiffres sont connus). Le compteur reste en mémoire du serveur : dans la ModData, il
 -- distinguerait un mauvais code (compté) d'un mauvais canal (non compté) et
 -- révélerait la fréquence. Un redémarrage le remet à zéro.
 --
@@ -135,16 +135,18 @@ local function isWeekly(mode)
     return mode == Codes.MODE_WEEKLY_PLAIN or mode == Codes.MODE_WEEKLY_CIPHER
 end
 
---- Code en vigueur (notes, console) : celui de la semaine, ou le code fixe.
+--- Code en vigueur (notes, console) : celui de la période (semaine, deux
+--- semaines ou mois, option CodePeriod), ou le code fixe.
 function Server.getCode(clock)
     if isWeekly(Config.codeMode()) then
-        return Codes.weeklyCode(Secrets.getSeed(), Codes.weekOf(clock or Server.clock()))
+        local period = Config.codePeriod()
+        return Codes.periodCode(Secrets.getSeed(), Codes.periodOf(clock or Server.clock(), period), period)
     end
     return Secrets.getFixedCode()
 end
 
---- Codes acceptés à cette heure : celui de la semaine et, pendant la grâce,
---- celui de la semaine précédente ; ou le code fixe.
+--- Codes acceptés à cette heure : celui de la période et, pendant la grâce,
+--- celui de la période précédente ; ou le code fixe.
 function Server.acceptedCodes(clock)
     local mode = Config.codeMode()
     if mode == Codes.MODE_NONE then
@@ -153,9 +155,10 @@ function Server.acceptedCodes(clock)
     if not isWeekly(mode) then
         return { Secrets.getFixedCode() }
     end
+    local period = Config.codePeriod()
     local codes = {}
-    for i, week in ipairs(Codes.acceptedWeeks(clock)) do
-        codes[i] = Codes.weeklyCode(Secrets.getSeed(), week)
+    for i, index in ipairs(Codes.acceptedPeriods(clock, period)) do
+        codes[i] = Codes.periodCode(Secrets.getSeed(), index, period)
     end
     return codes
 end
