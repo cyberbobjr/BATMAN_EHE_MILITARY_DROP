@@ -4,5 +4,5 @@ description=Call in military supply airdrops by radio. Build 42.21, singleplayer
 poster=poster.png
 icon=icon.png
 versionMin=42.21
-modversion=0.5.3
+modversion=0.5.4
 require=\batman_BeltRadio
