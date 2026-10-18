@@ -246,8 +246,10 @@ end
 local function startFromMenu(playerNum, vanilla) Prototype.start(playerNum, { vanilla = vanilla }) end
 
 --- Right to see the test menu (display only; the server re-checks).
+--- Development tool: debug mode always, plus an admin role in MP.
 function Prototype.canUse(player)
     if not player then return false end
+    if isDebugEnabled == nil or isDebugEnabled() ~= true then return false end
     if isClient() then
         local role = player:getRole()
         return role ~= nil and Capability ~= nil and role:hasCapability(Capability.MakeEventsAlarmGunshot) == true

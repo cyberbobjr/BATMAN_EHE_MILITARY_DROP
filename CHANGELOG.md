@@ -3,6 +3,12 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## Unreleased
+
+### Fixed
+
+- Multiplayer: server admins no longer see an untranslated Fulton test menu on every right-click. This development tool now only appears in debug mode.
+
 ## 0.5.3 — 2026-10-15
 
 ### Added

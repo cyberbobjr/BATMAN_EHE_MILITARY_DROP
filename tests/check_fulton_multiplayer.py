@@ -287,7 +287,12 @@ def check_test_menu_and_commands_are_admin_only():
                'MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
     assert vm.globals().ADDED == 0, "MP non-admin: no test menu"
     vm.execute('ADMINS[2] = true; MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
-    assert vm.globals().ADDED == 1, "MP admin: test menu shown"
+    assert vm.globals().ADDED == 0, "MP admin without debug mode: no test menu"
+    vm.execute('isDebugEnabled = function() return true end; MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
+    assert vm.globals().ADDED == 1, "MP admin in debug mode: test menu shown"
+    vm.execute('ADMINS[2] = false; ADDED = 0; MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false); '
+               'ADMINS[2] = true; isDebugEnabled = function() return false end')
+    assert vm.globals().ADDED == 0, "MP non-admin in debug mode: no test menu"
     n.server.execute('ADMINS[2] = false')
     n.command((1, "MilitaryDropFultonPrototype", "Start", {"request": 1}))
     assert not n.packets, "server refuses a forged Start from a non-admin"
