@@ -18,8 +18,10 @@
   // Client hooks: whole path in solo (authority + client view), client view only in mp (client 1, --client-run).
   // Server hooks (mp): authority path with the first connected player.
   "hooks": "autotest/md_hooks.lua",
-  // deliverySec: wait for the helicopter (600 squares at 12 squares/s + hover); clientWaitSec: client 1 in mp.
-  "params": {"deliverySec": "240", "clientWaitSec": "420"},
+  // deliverySec: wait for the helicopter (600 squares at 12 squares/s + hover); clientWaitSec: client 1 in mp;
+  // crateWaitSec: crate vehicle visible from the squares after its first update; serverLeadSec: mp server delay
+  // before the request so that client 1 (started a few seconds later) receives the "Result" reply.
+  "params": {"deliverySec": "240", "clientWaitSec": "420", "crateWaitSec": "30", "serverLeadSec": "20"},
   "sp": {
     "save": "2026-10-17_17-50-04",
     "gameMode": "Sandbox",

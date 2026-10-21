@@ -122,7 +122,7 @@
 - **Preuves** : `docs/annexes/plans/SUIVI.md`, tableau « Vue d'ensemble » ; `docs/annexes/tests/test-protocol.md` (protocoles M1-M8, Z13-Z14…).
 - **Risque** : bugs MP découverts par les joueurs (historique : 0.3.3, 0.4.2, 0.4.3 ont corrigé des clés brutes et des états périmés propres au MP).
 - **Correction** : outiller les parcours nominaux avec `pz-autotest` (`--mp`, serveur dédié + 2 clients) : appel, annonce entendue par l'un seulement, ouverture de caisse par l'autre (confiance), Fulton, crash et récupération ; la règle de l'utilisateur fait d'une suite MP automatisée verte la preuve « testé MP ».
-- **Statut** : **outillé (commit dedd363) : parcours nominal `pz-autotest` sp/mp (`autotest.json`, `autotest/md_hooks.lua`), suites non lancées, à vérifier en jeu.** Reste : second client qui écoute, ouverture par un autre joueur, Fulton complet, crash. **Priorité haute, effort M.**
+- **Statut** : **outillé (commit dedd363) : parcours nominal `pz-autotest` sp/mp (`autotest.json`, `autotest/md_hooks.lua`), suites non lancées, à vérifier en jeu.** Solo réel 15/15 ; MP réel 10/12 par défauts du hook seulement (caisse cherchée dans l'image de sa création, client démarré après la réponse), hook corrigé, MP à relancer. Reste : second client qui écoute, ouverture par un autre joueur, Fulton complet, crash. **Priorité haute, effort M.**
 
 ### C14 — `Post.onLoadChunk` relit chaque poste à chaque chunk chargé
 

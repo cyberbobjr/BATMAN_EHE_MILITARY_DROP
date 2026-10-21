@@ -18,7 +18,9 @@ Authority (solo client, or mp server with the first connected player), through t
 Client view (solo: same Lua; mp: client 1 with --client-run): MilitaryDrop server commands received ("Result"
 accepted, "PostResult" installed) and the crate vehicle seen near the player.
 
-Parameters (ctx.params, text): deliverySec (default 240), clientWaitSec (mp client, default 420).
+Parameters (ctx.params, text): deliverySec (default 240), clientWaitSec (mp client, default 420), crateWaitSec
+(crate vehicle or ground cases after the delivery, default 30), serverLeadSec (mp server, delay before step 1 so
+that client 1 observes the "Result" reply, default 20).
 Run state: MilitaryDrop's world state of the COPIED save only (pz-autotest copies the save and the server).
 ]]
 
@@ -110,19 +112,54 @@ local function isCrateVehicle(vehicle)
     return name ~= nil and string.find(tostring(name), "MilitaryDrop_", 1, true) ~= nil
 end
 
--- Crate vehicle within radius squares of (x, y), level 0.
+-- Crate vehicle within radius squares of (x, y), level 0, and the list of distinct crate vehicles seen.
+-- IsoGridSquare.getVehicleContainer only finds a vehicle once its first update ran: addVehicleDebug ->
+-- createPhysics only queues it in IsoCell.addVehicles (BaseVehicle.java:883), and isIntersectingSquare is false
+-- while BaseVehicle.current is nil (set by postupdate, BaseVehicle.java:3591 and 5318). Poll, never conclude at once.
 local function crateNear(x, y, radius)
     local cell = getCell()
+    local first, seen, list = nil, {}, {}
     for dx = -radius, radius do
         for dy = -radius, radius do
             local square = cell:getGridSquare(x + dx, y + dy, 0)
             local vehicle = square and square:getVehicleContainer()
-            if isCrateVehicle(vehicle) then
-                return vehicle
+            if isCrateVehicle(vehicle) and not seen[vehicle] then
+                seen[vehicle] = true
+                list[#list + 1] = vehicle
+                if not first then first = vehicle end
             end
         end
     end
-    return nil
+    return first, list
+end
+
+-- Ground items marked with dropId within radius squares of (x, y), level 0 (ground fallback of Server.deliver).
+local function markedGround(x, y, radius, dropId, key)
+    local cell = getCell()
+    local found, types = {}, {}
+    for dx = -radius, radius do
+        for dy = -radius, radius do
+            local square = cell:getGridSquare(x + dx, y + dy, 0)
+            local objects = square and square:getWorldObjects()
+            for i = 0, (objects and objects:size() or 0) - 1 do
+                local item = objects:get(i):getItem()
+                if item and item:getModData()[key] == dropId then
+                    found[#found + 1] = item
+                    types[#types + 1] = item:getFullType()
+                end
+            end
+        end
+    end
+    return found, types
+end
+
+local function describeVehicles(list)
+    local parts = {}
+    for _, vehicle in ipairs(list) do
+        parts[#parts + 1] = tostring(vehicle:getScriptName()) .. "@" .. math.floor(vehicle:getX()) .. ","
+            .. math.floor(vehicle:getY())
+    end
+    return #parts > 0 and table.concat(parts, " ") or "none"
 end
 
 -- Items of the vehicle marked with dropId (MilitaryDrop.Trust.ITEM_KEY), list of full types.
@@ -226,10 +263,21 @@ end
 
 -- ------------------------------------------------------------------ authority path
 
-local function addAuthoritySteps(player, deliveryMs)
+local function addAuthoritySteps(player, deliveryMs, crateWaitMs, leadMs)
     local MD = MilitaryDrop
     local Server, Trust, Config = MD.Server, MD.Trust, MD.Config
     local S = {}
+
+    -- mp server: the client hooks start a few seconds after the server's (control file read later); the
+    -- "Result" reply of launchDrop is only sent once, so the client observer must be installed before it.
+    if leadMs > 0 then
+        addStep("wait for the client hooks", function()
+            S.leadSince = S.leadSince or nowMs()
+            if nowMs() - S.leadSince < leadMs then return false end
+            info("server waited " .. math.floor(leadMs / 1000) .. " s for the client hooks")
+            return true
+        end, leadMs + 5000)
+    end
 
     addStep("setup", function()
         S.channel = Config.getChannel()
@@ -269,6 +317,7 @@ local function addAuthoritySteps(player, deliveryMs)
             rec(false, "drop launched near the player", "no landing square near the player")
             return true
         end
+        S.point = { x = square:getX(), y = square:getY() }
         S.dropId = Server.launchDrop(player, REQUEST_ID, false, { point = { x = square:getX(), y = square:getY() } })
         rec(type(S.dropId) == "string", "drop launched near the player", "dropId=" .. tostring(S.dropId)
             .. " point=" .. square:getX() .. "," .. square:getY())
@@ -297,22 +346,42 @@ local function addAuthoritySteps(player, deliveryMs)
         return true
     end, deliveryMs)
 
+    -- Polled (crateWaitMs): the vehicle is only found by the squares after its first update (crateNear).
+    -- Ground fallback of Server.deliver (no free place for the crate, intended): marked cases on the ground pass.
     addStep("crate vehicle and marked contents", function()
         if not S.placed or type(S.placed.x) ~= "number" then
             rec(false, "crate vehicle and marked contents", "no delivery point")
             return true
         end
-        S.vehicle = crateNear(S.placed.x, S.placed.y, 2)
-        if not S.vehicle then
-            rec(false, "crate vehicle and marked contents", "no crate vehicle near the point (ground fallback?)")
-            return true
+        local px, py = S.placed.x, S.placed.y
+        local vehicle = crateNear(px, py, 2)
+        local ground, groundTypes = markedGround(px, py, 2, S.dropId, Trust.ITEM_KEY)
+        local waited = nowMs() - (S.crateSince or nowMs())
+        S.crateSince = S.crateSince or nowMs()
+        if not vehicle and #ground == 0 and waited < crateWaitMs then
+            return false
         end
-        local marked, types = markedItems(S.vehicle, S.dropId, Trust.ITEM_KEY)
-        S.case = marked[1]
-        rec(#marked > 0, "crate vehicle and marked contents", tostring(S.vehicle:getScriptName()) .. ": "
-            .. #marked .. " marked of " .. #types .. " (" .. table.concat(types, " ") .. ")")
+        local _, wide = crateNear(px, py, 10)
+        info("crate search: point " .. tostring(S.point and S.point.x) .. "," .. tostring(S.point and S.point.y)
+            .. ", landed " .. px .. "," .. py .. ", after " .. math.floor(waited / 1000) .. " s, crate vehicles"
+            .. " within 10: " .. describeVehicles(wide) .. ", marked items on the ground within 2: " .. #ground
+            .. (#ground > 0 and (" (" .. table.concat(groundTypes, " ") .. ")") or ""))
+        if vehicle then
+            S.vehicle = vehicle
+            local marked, types = markedItems(vehicle, S.dropId, Trust.ITEM_KEY)
+            S.case = marked[1]
+            rec(#marked > 0, "crate vehicle and marked contents", tostring(vehicle:getScriptName()) .. ": "
+                .. #marked .. " marked of " .. #types .. " (" .. table.concat(types, " ") .. ")")
+        elseif #ground > 0 then
+            S.case = ground[1]
+            rec(true, "crate vehicle and marked contents", "ground fallback: " .. #ground .. " marked case(s) on the"
+                .. " ground (" .. table.concat(groundTypes, " ") .. ")")
+        else
+            rec(false, "crate vehicle and marked contents", "neither crate vehicle nor marked ground case near "
+                .. px .. "," .. py .. " after " .. math.floor(waited / 1000) .. " s")
+        end
         return true
-    end)
+    end, crateWaitMs + 5000)
 
     addStep("trust: first supply case opened by the caller", function()
         if not S.case then
@@ -387,7 +456,7 @@ function H.client.start(ctx)
         addClientSteps(player, seconds(ctx.params.clientWaitSec, 420))
     else
         if not MilitaryDrop.Server then return false, "MilitaryDrop.Server missing in solo" end
-        addAuthoritySteps(player, seconds(ctx.params.deliverySec, 240))
+        addAuthoritySteps(player, seconds(ctx.params.deliverySec, 240), seconds(ctx.params.crateWaitSec, 30), 0)
         addClientSteps(player, 10000)
     end
     return true
@@ -408,7 +477,8 @@ function H.server.start(ctx)
     if not MilitaryDrop or not MilitaryDrop.Server then return false, "MilitaryDrop.Server missing" end
     local player = ctx.players()[1]
     if not player then return false, "no connected player (mode server alone: use mp)" end
-    addAuthoritySteps(player, seconds(ctx.params.deliverySec, 240))
+    addAuthoritySteps(player, seconds(ctx.params.deliverySec, 240), seconds(ctx.params.crateWaitSec, 30),
+        seconds(ctx.params.serverLeadSec, 20))
     return true
 end
 
