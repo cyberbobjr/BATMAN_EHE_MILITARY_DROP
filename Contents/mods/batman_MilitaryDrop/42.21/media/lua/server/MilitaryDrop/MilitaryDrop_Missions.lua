@@ -940,15 +940,14 @@ end
 --- zone, santé selon les options, comme la horde d'un largage), puis le
 --- zombie créé, dernier ajouté à la liste des zombies de la cellule
 --- (VirtualZombieManager.createRealZombieAlways, VirtualZombieManager.java:
---- 208-211, après OnZombieCreate). spawnHorde ne rend rien ; protégé par
---- pcall : création de zombies désactivée → zombie nul → erreur Java.
+--- 208-211, après OnZombieCreate). spawnHorde ne rend rien ; un zombie
+--- impossible (création désactivée, plus d'identifiant) lève une NPE Java
+--- journalisée sans erreur Lua : seule la taille de la liste le révèle.
 local function spawnOne(cell, square)
     local x, y = square:getX(), square:getY()
     local list = cell:getZombieList()
     local before = list:size()
-    if not pcall(spawnHorde, x + 0.5, y + 0.5, x + 0.5, y + 0.5, 0, 1) then
-        return nil
-    end
+    spawnHorde(x + 0.5, y + 0.5, x + 0.5, y + 0.5, 0, 1)
     local after = list:size()
     if after <= before then
         return nil

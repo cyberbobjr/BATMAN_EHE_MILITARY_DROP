@@ -3,6 +3,12 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## Unreleased
+
+### Fixed
+
+- Drop and helicopter crash hordes near water (rivers, lakes, the Ohio shore) now spawn in full: zombies no longer stop appearing at the first water tile, and no more Java error in the console.
+
 ## 0.5.4 — 2026-10-18
 
 ### Fixed

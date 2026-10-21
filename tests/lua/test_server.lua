@@ -990,4 +990,56 @@ function T.horde_and_distance_options_changed_during_the_game_apply_at_once()
     assertEq(x, 150, "50 cases : changé de nouveau")
 end
 
+
+--- Monde de la horde : cases d'eau (WATER_AT), case refusée par isFree,
+--- zombies créés dans ZLIST ; création refusée après LIMIT zombies.
+local function hordeWorld(waterAt, limit)
+    local zlist, calls = {}, {}
+    local list = { size = function() return #zlist end }
+    getCell = function()
+        return {
+            getGridSquare = function(_, x, y, z)
+                assertEq(z, 0, "niveau 0")
+                return {
+                    getX = function() return x end, getY = function() return y end,
+                    isWaterSquare = function() return waterAt(x, y) end,
+                    isFree = function(_, count) assertEq(count, false); return true end,
+                }
+            end,
+            getZombieList = function() return list end,
+        }
+    end
+    spawnHorde = function(x1, y1, x2, y2, z, count)
+        assertEq(x1 .. "," .. y1 .. "," .. z .. "," .. count, x2 .. "," .. y2 .. ",0,1", "une case, un zombie")
+        calls[#calls + 1] = { x = math.floor(x1), y = math.floor(y1) }
+        -- Java : zombie nul sur l'eau ou au-delà de la limite (NPE journalisée).
+        if not waterAt(math.floor(x1), math.floor(y1)) and #zlist < limit then
+            zlist[#zlist + 1] = true
+        end
+    end
+    return calls
+end
+
+function T.horde_skips_water_squares_and_spawns_every_zombie()
+    local n = 0
+    ZombRand = function(max) n = n + 1; return n % max end
+    -- Moitié ouest du carré dans l'eau.
+    local calls = hordeWorld(function(x) return x < 100 end, 1000)
+    assertEq(MilitaryDrop.Server.spawnHordeAround(100, 200, 4, 12), 12, "horde complète malgré l'eau")
+    assertEq(#calls, 12, "un appel par zombie")
+    for _, c in ipairs(calls) do
+        assert(c.x >= 100 and c.x <= 104 and c.y >= 196 and c.y <= 204, "case du carré, hors de l'eau")
+    end
+end
+
+function T.horde_stops_at_the_first_refused_zombie()
+    ZombRand = function() return 0 end
+    local calls = hordeWorld(function() return false end, 3)
+    assertEq(MilitaryDrop.Server.spawnHordeAround(100, 200, 4, 10), 3, "trois zombies, puis refus")
+    assertEq(#calls, 4, "arrêt au premier refus : une seule trace Java")
+    calls = hordeWorld(function() return true end, 1000)
+    assertEq(MilitaryDrop.Server.spawnHordeAround(100, 200, 4, 10), 0, "tout dans l'eau : aucun zombie")
+    assertEq(#calls, 0, "aucun appel sur l'eau")
+end
+
 return T

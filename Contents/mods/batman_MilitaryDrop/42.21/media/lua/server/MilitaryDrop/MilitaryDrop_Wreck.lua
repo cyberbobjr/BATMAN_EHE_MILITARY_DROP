@@ -214,7 +214,7 @@ function Wreck.effects(site, square)
     component(site, "horde", function()
         addSound(nil, square:getX(), square:getY(), 0, 200, 100)
         if site.zombies > 0 then
-            spawnHorde(site.x - 15, site.y - 15, site.x + 15, site.y + 15, 0, site.zombies)
+            MilitaryDrop.Server.spawnHordeAround(site.x, site.y, 15, site.zombies)
         end
         return true
     end)

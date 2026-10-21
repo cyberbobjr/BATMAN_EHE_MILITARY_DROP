@@ -93,6 +93,11 @@ function T.setup()
         clock = function() return 2412.5 end,
         findOpenGroundNear = function(x,y) return not WATER and getCell():getGridSquare(x,y,0) end,
         hordeSize = function() return 6 end,
+        spawnHordeAround = function(_, _, r, count)
+            assertEq(r .. "," .. count, "15,6", "carré de 31 × 31, horde de l'option")
+            HORDES = HORDES + 1
+            return count
+        end,
         deliver = function(_, _, _, _, opts)
             assertEq(opts.crash,true)
             if DELIVERY_FAIL then return false end

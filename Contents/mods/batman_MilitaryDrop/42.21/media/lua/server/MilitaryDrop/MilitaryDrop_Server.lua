@@ -603,6 +603,52 @@ function Server.hordeSize()
     return ZombRand(low, high + 1)
 end
 
+--- Fait apparaître count zombies au niveau 0 dans le carré (x - r .. x + r,
+--- y - r .. y + r) et renvoie le nombre créé. Les cases sont choisies en Lua
+--- (chargées, hors de l'eau, isFree(false)), puis spawnHorde est appelé case
+--- par case pour un zombie : spawnHorde sur un rectangle tire les cases sans
+--- contrôle et lève une NPE Java dès qu'un zombie ne peut pas naître (eau,
+--- création désactivée, plus d'identifiant : createZombieOutsideWorld rend
+--- null, LuaManager.java:4395-4406, VirtualZombieManager.java:215-261), ce
+--- qui arrête toute la boucle. L'exception est journalisée par Java sans
+--- erreur Lua (pcall inutile) : la croissance de la liste des zombies de la
+--- cellule dit si le zombie est né ; au premier échec, on s'arrête (la cause
+--- restante vaut pour toute la horde).
+function Server.spawnHordeAround(x, y, r, count)
+    local cell = getCell()
+    if not cell or count <= 0 then
+        return 0
+    end
+    local squares = {}
+    for sx = x - r, x + r do
+        for sy = y - r, y + r do
+            local square = cell:getGridSquare(sx, sy, 0)
+            if square and not square:isWaterSquare() and square:isFree(false) then
+                squares[#squares + 1] = square
+            end
+        end
+    end
+    if #squares == 0 then
+        MilitaryDrop.log(string.format("no square for zombies near %d,%d", x, y), true)
+        return 0
+    end
+    local list = cell:getZombieList()
+    local spawned = 0
+    for _ = 1, count do
+        local square = squares[ZombRand(#squares) + 1]
+        local sx, sy = square:getX() + 0.5, square:getY() + 0.5
+        local before = list:size()
+        spawnHorde(sx, sy, sx, sy, 0, 1)
+        if list:size() <= before then
+            MilitaryDrop.log(string.format("zombie creation refused near %d,%d: %d of %d spawned",
+                x, y, spawned, count), true)
+            break
+        end
+        spawned = spawned + 1
+    end
+    return spawned
+end
+
 --- Joueur connecté par son nom (serveur MP ou joueurs locaux), ou nil.
 function Server.findPlayer(username)
     if isServer() then
@@ -675,8 +721,7 @@ function Server.deliver(x, y, requester, dropId, opts)
     if not opts.crash then MilitaryDrop.Smoke.markCrate(x, y) end
     local zombies = opts.crash and 0 or Server.hordeSize()
     if zombies > 0 then
-        local r = Server.HORDE_RADIUS
-        spawnHorde(x - r, y - r, x + r, y + r, 0, zombies)
+        zombies = Server.spawnHordeAround(x, y, Server.HORDE_RADIUS, zombies)
     end
     local state = Server.getState()
     state.lastDrop = { x = x, y = y, hours = getGameTime():getWorldAgeHours() }
