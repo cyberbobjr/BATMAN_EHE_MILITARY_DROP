@@ -17,7 +17,7 @@ if beltRadioActive then return end
 -- BatmanRadioSupport, chargée en solo, sur un client MP et sur un serveur
 -- dédié (qui n'exécute pas media/lua/client). Le récepteur (client) est dans
 -- client/BatmanRadio/BatmanRadio_Core.lua, qui complète la même table.
--- Documentation de l'API : docs/API.md du dépôt.
+-- Documentation de l'API : docs/specifications-techniques/api-publique.md du dépôt.
 
 local Compat = require "MilitaryDrop/BeltRadioFallback/BatmanRadio_Compat"
 
@@ -26,7 +26,7 @@ BatmanRadioSupport = BatmanRadioSupport or {}
 local Support = BatmanRadioSupport
 
 --- Niveau d'API, entier croissant : augmenté à chaque ajout ou changement de
---- l'API publique (docs/API.md). Un mod qui en dépend compare
+--- l'API publique (docs/specifications-techniques/api-publique.md). Un mod qui en dépend compare
 --- (BatmanRadioSupport.VERSION or 0) >= niveau requis.
 Support.VERSION = 1
 Support.MOD_ID = "batman_BeltRadio"

@@ -79,7 +79,7 @@ end
 
 --- Prédicat d'émission commun (décision 4 : jamais depuis la ceinture).
 --- Renvoie true, ou false et une raison ("belt", "stowed"...) : voir
---- BatmanRadioSupport.canTransmitWith (docs/API.md de Belt Walkie-Talkie).
+--- BatmanRadioSupport.canTransmitWith (docs/specifications-techniques/api-publique.md de Belt Walkie-Talkie).
 function RadioLib.canTransmitWith(player, radio)
     local support = RadioLib.support()
     if support and support.canTransmitWith then

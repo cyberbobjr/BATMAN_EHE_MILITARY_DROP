@@ -1,0 +1,24 @@
+# Military Drop: guide / guide du joueur
+
+Online wiki / Wiki en ligne : [English](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home) · [Français](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home).
+
+These files are the source of the wiki pages. / Ces fichiers sont la source des pages du wiki.
+
+![Military Drop](../images/screenshots/header.png)
+
+| English | Français |
+|---|---|
+| [Guide home](en/Home.md) | [Sommaire](fr/Home.md) |
+| [1. Getting started](en/01-getting-started.md) | [1. Démarrer](fr/01-getting-started.md) |
+| [2. Calling a drop](en/02-calling-a-drop.md) | [2. Appeler un largage](fr/02-calling-a-drop.md) |
+| [3. Requisition form](en/03-requisition-form.md) | [3. Formulaire de réquisition](fr/03-requisition-form.md) |
+| [4. Trust and missions](en/04-trust-and-missions.md) | [4. Confiance et missions](fr/04-trust-and-missions.md) |
+| [5. Liaison post](en/05-liaison-post.md) | [5. Poste de liaison](fr/05-liaison-post.md) |
+| [6. Server admin](en/06-server-admin.md) | [6. Administration](fr/06-server-admin.md) |
+| [7. Fulton extraction](en/07-fulton.md) | [7. Extraction Fulton](fr/07-fulton.md) |
+| [8. FAQ](en/08-faq.md) | [8. FAQ](fr/08-faq.md) |
+| [9. Helicopter crash](en/09-helicopter-crash.md) | [9. Hélicoptère abattu](fr/09-helicopter-crash.md) |
+
+Build 42.21 · single player and multiplayer / solo et multijoueur.
+
+Pictures marked "out-of-game render" come from the mod's preview tools (`source/*/preview.py`); the others are in-game screenshots. / Les images marquées « rendu hors jeu » viennent des outils d'aperçu du mod ; les autres sont des captures en jeu.

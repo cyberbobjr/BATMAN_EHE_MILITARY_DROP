@@ -29,7 +29,7 @@
 -- La fréquence militaire n'est connue du client MP que si l'option Frequency
 -- la fixe ; par défaut, elle est tirée par le serveur et lue sur les notes.
 --
--- Réquisition (v1.4, dev/PLAN-V14.md) : un appel accepté peut recevoir
+-- Réquisition (v1.4, docs/annexes/plans/plan-v14.md) : un appel accepté peut recevoir
 -- Result « form » au lieu de « accepted ». La base le dit à la radio, puis le
 -- formulaire s'ouvre (MilitaryDrop.RequisitionWindow) ; la demande reste en
 -- attente jusqu'à la commande (RequisitionOrder, même requestId et même

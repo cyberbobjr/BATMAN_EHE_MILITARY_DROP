@@ -2,7 +2,7 @@
 -- Military Drop — formulaire de réquisition (client, v1.4)
 --
 -- Ouvert quand le serveur accepte un appel et répond « form » (contrat de
--- dev/PLAN-V14.md) : feuille dactylographiée pincée sur une planchette de
+-- docs/annexes/plans/plan-v14.md) : feuille dactylographiée pincée sur une planchette de
 -- tôle olive. Lots groupés par palier (I, II, III) puis « Commande spéciale »
 -- (le leurre, v1.5) ; chaque ligne : libellé, coût, boutons − et +, quantité
 -- écrite à la main. Lots non permis grisés avec leur raison. Budget, points

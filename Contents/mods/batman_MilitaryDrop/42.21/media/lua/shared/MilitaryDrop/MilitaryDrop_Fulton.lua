@@ -5,7 +5,7 @@
 -- Le serveur fait autorité (solo, ou serveur MP) : il classe le contenu du kit
 -- au lâcher et paie. Le client n'utilise ce module que pour l'aperçu avant
 -- confirmation ; ses noms d'objets traduits peuvent différer de ceux du serveur.
--- Conception : dev/analyses/idee-12-fulton-conception.md §2.
+-- Conception : docs/annexes/recherches/idee-12-fulton-conception.md §2.
 --
 -- Seuls les objets directement dans le kit comptent ; un conteneur imbriqué part
 -- avec le kit sans être payé. Tout ce qui est envoyé est détruit : aucun registre

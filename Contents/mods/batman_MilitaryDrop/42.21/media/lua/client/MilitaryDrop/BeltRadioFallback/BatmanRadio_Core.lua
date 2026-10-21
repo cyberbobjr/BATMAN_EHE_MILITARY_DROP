@@ -17,7 +17,7 @@ if beltRadioActive then return end
 -- Un seul menu, wrapper de fenêtre et récepteur solo, quel que soit le nombre de
 -- mods qui s'inscrivent (Military Drop, Opération Artemis, Radio Survivor...).
 -- Les stations viennent du registre vanilla ; les mods inscrivent leurs chaînes
--- (BatmanRadioSupport.register, docs/API.md).
+-- (BatmanRadioSupport.register, docs/specifications-techniques/api-publique.md).
 -- Seule une radio accrochée (ceinture) est servie en solo : une radio rangée
 -- (inventaire, sac) n'entend rien, comme en vanilla (décision 3).
 -- En MP, réception et VOIP restent gérées par le vanilla / Better Walkie Talkies ;

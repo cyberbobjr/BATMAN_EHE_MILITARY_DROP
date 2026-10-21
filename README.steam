@@ -3,7 +3,7 @@
 [h1]BREAKING CHANGE — version 0.5.1 (2026-10-10)[/h1]
 [b]This mod now requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]. Subscribe to both and enable them together with this mod. Dedicated servers: add 3817018338;3694097672 to WorkshopItems= and batman_BeltRadio;TooltipLib to Mods=, otherwise the game does not load this mod (only a warning in the log).[/b]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
 [b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]
 
@@ -13,7 +13,7 @@ Tune a military radio to the right frequency, give this week's code and requisit
 
 [h2]How it works[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/screenshots/walkie-logistics.png[/img]
 
 [olist]
 [*][b]Find the frequency and the code.[/b] Military and police memos give the frequency; every Monday, decipher the shortwave numbers station with the military codebook.

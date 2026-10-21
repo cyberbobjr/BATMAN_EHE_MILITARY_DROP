@@ -3,7 +3,7 @@
 [h1]CAMBIO INCOMPATIBLE — versión 0.5.1 (2026-10-10)[/h1]
 [b]Este mod ahora requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]. Suscríbete a ambos y actívalos junto con este mod. Servidores dedicados: añade 3817018338;3694097672 a WorkshopItems= y batman_BeltRadio;TooltipLib a Mods=; si no, el juego no carga este mod (solo un aviso en el registro).[/b]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/banner.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
 [b]Build 42.21 · Un jugador y multijugador · Independiente[/b]
 
@@ -13,7 +13,7 @@ Sintoniza una radio militar en la frecuencia correcta, da el código de la seman
 
 [h2]Cómo funciona[/h2]
 
-[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/steam/walkie-logistics.png[/img]
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/screenshots/walkie-logistics.png[/img]
 
 [olist]
 [*][b]Encuentra la frecuencia y el código.[/b] Las notas militares y policiales dan la frecuencia; cada lunes, descifra la estación de números en onda corta con el libro de códigos militar.
