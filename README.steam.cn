@@ -1,6 +1,7 @@
 [h1]Military Drop - 无线电补给空投[/h1]
 
-[h1]不兼容变更 — 版本 0.5.1（2026-10-10）[/h1]
+[h1]⚠ 不兼容变更 — 版本 0.6.0（2026-10-21）⚠[/h1]
+[h1]现在必须安装 SIGNAL SMOKE[/h1]
 [b]本模组现在需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]。请订阅这三个模组并与本模组一起启用。专用服务器：将 3817018338;3694097672;3811010882 加入 WorkshopItems=，将 batman_BeltRadio;TooltipLib;batman_SignalSmoke 加入 Mods=，否则游戏不会加载本模组（日志中只有一条警告）。[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]

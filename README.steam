@@ -1,6 +1,7 @@
 [h1]Military Drop - Radio Supply Airdrops[/h1]
 
-[h1]BREAKING CHANGE — version 0.5.1 (2026-10-10)[/h1]
+[h1]⚠ BREAKING CHANGE — version 0.6.0 (2026-10-21) ⚠[/h1]
+[h1]SIGNAL SMOKE IS NOW REQUIRED[/h1]
 [b]This mod now requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Subscribe to all three and enable them together with this mod. Dedicated servers: add 3817018338;3694097672;3811010882 to WorkshopItems= and batman_BeltRadio;TooltipLib;batman_SignalSmoke to Mods=, otherwise the game does not load this mod (only a warning in the log).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]

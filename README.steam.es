@@ -1,6 +1,7 @@
 [h1]Military Drop - Lanzamientos de suministros por radio[/h1]
 
-[h1]CAMBIO INCOMPATIBLE — versión 0.5.1 (2026-10-10)[/h1]
+[h1]⚠ CAMBIO INCOMPATIBLE — versión 0.6.0 (2026-10-21) ⚠[/h1]
+[h1]SIGNAL SMOKE AHORA ES OBLIGATORIO[/h1]
 [b]Este mod ahora requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Suscríbete a los tres y actívalos junto con este mod. Servidores dedicados: añade 3817018338;3694097672;3811010882 a WorkshopItems= y batman_BeltRadio;TooltipLib;batman_SignalSmoke a Mods=; si no, el juego no carga este mod (solo un aviso en el registro).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]

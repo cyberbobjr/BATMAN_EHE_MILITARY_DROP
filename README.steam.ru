@@ -1,6 +1,7 @@
 [h1]Military Drop - Сброс снабжения по радио[/h1]
 
-[h1]НЕСОВМЕСТИМОЕ ИЗМЕНЕНИЕ — версия 0.5.1 (2026-10-10)[/h1]
+[h1]⚠ НЕСОВМЕСТИМОЕ ИЗМЕНЕНИЕ — версия 0.6.0 (2026-10-21) ⚠[/h1]
+[h1]ТЕПЕРЬ ТРЕБУЕТСЯ SIGNAL SMOKE[/h1]
 [b]Теперь этому моду требуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Подпишитесь на все три и включите их вместе с этим модом. Выделенные серверы: добавьте 3817018338;3694097672;3811010882 в WorkshopItems= и batman_BeltRadio;TooltipLib;batman_SignalSmoke в Mods=, иначе игра не загрузит этот мод (в журнале будет только предупреждение).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
