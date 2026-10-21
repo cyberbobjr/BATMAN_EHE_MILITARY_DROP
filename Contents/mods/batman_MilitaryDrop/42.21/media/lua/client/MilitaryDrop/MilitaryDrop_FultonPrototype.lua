@@ -122,7 +122,10 @@ function Prototype.onTick()
         local pose = Flight.pose(e.elapsed, e)
         if pose.phase ~= e.phase then
             e.phase = pose.phase
-            print("[MilitaryDrop Fulton prototype] " .. tostring(id) .. " " .. pose.phase)
+            -- Phase changes are development traces: debug mode only.
+            if isDebugEnabled ~= nil and isDebugEnabled() == true then
+                print("[MilitaryDrop Fulton prototype] " .. tostring(id) .. " " .. pose.phase)
+            end
         end
         if pose.phase == "done" then finished[#finished + 1] = id end
     end
@@ -266,20 +269,20 @@ function Prototype.onContext(playerNum, context, worldObjects, test)
             if e.owner == getSpecificPlayer(playerNum):getOnlineID() then active = e end
         end
     end
-    local option = context:addOption("Fulton - prototype visuel")
+    local option = context:addOption("Fulton - visual test (debug)")
     local sub = ISContextMenu:getNew(context)
     context:addSubMenu(option, sub)
-    sub:addOption("Lancer la montee du ballon", playerNum, startFromMenu, false)
-    sub:addOption("Comparer avec le flotteur vanilla", playerNum, startFromMenu, true)
+    sub:addOption("Launch the balloon ascent", playerNum, startFromMenu, false)
+    sub:addOption("Compare with the vanilla floating item", playerNum, startFromMenu, true)
     if active then
-        sub:addOption(active.paused and "Reprendre l'animation" or "Figer l'animation", nil, Prototype.togglePause)
-        sub:addOption("Arreter le prototype", nil, Prototype.stop)
+        sub:addOption(active.paused and "Resume the animation" or "Freeze the animation", nil, Prototype.togglePause)
+        sub:addOption("Stop the test flight", nil, Prototype.stop)
     end
     if Prototype.count() > 0 then
-        sub:addOption("Afficher / masquer le cable", nil, Prototype.toggleCable)
-        sub:addOption("Rendu automatique (avec secours)", "auto", Prototype.setMode)
-        sub:addOption("Rendu monde uniquement (flotteur vanilla)", "world", Prototype.setMode)
-        sub:addOption("Rendu apres le monde uniquement", "post", Prototype.setMode)
+        sub:addOption("Show / hide the cable", nil, Prototype.toggleCable)
+        sub:addOption("Automatic rendering (with fallback)", "auto", Prototype.setMode)
+        sub:addOption("World rendering only (vanilla floating item)", "world", Prototype.setMode)
+        sub:addOption("Post-world rendering only", "post", Prototype.setMode)
     end
 end
 
