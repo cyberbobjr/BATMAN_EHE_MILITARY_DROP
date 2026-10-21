@@ -44,7 +44,7 @@ All values below are defaults; all durations are game time.
 | Optional erosion after 24 h without contact | Idle character | −1 / +1 |
 
 - Only the first supply case opened counts per drop. Another opener earns **0**; faction membership is checked at opening against the faction recorded when the drop was requested.
-- Positive gains except drops share a **+8/day/character** cap. Scores stay within **0–100**.
+- Positive gains except drops share a daily cap per character (**+10/day** by default, server option `TrustDailyCap`). Scores stay within **0–100**.
 - From the liaison post, the 50% bonus rounds up: report **+2**, dog tag **+3**, recon **+5**, radio check **+2**. These still share the cap. Clearance stays **+5**.
 - Three wrong-code or wrong-frequency calls within one hour trigger **−2**, applied at the next hourly update, at most once per hour.
 - Erosion is **disabled by default**. After 24 hours without contact, it moves the score one point per day toward 25 (−1 above, +1 below, 0 at 25).

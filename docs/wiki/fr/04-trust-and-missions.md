@@ -44,7 +44,7 @@ Valeurs par défaut et durées en jeu.
 | Érosion optionnelle après 24 h sans contact | Personnage sans contact | −1 / +1 |
 
 - Seule la première caisse de ravitaillement ouverte compte par largage. Un autre ouvreur reçoit **0** ; son appartenance est vérifiée à l’ouverture dans la faction enregistrée lors de l’appel.
-- Les gains positifs hors largages partagent un plafond de **+8/jour/personnage**. La note reste entre **0 et 100**.
+- Les gains positifs hors largages partagent un plafond quotidien par personnage (**+10/jour** par défaut, option serveur `TrustDailyCap`). La note reste entre **0 et 100**.
 - Depuis le poste, le bonus de 50 % est arrondi : rapport **+2**, plaque **+3**, reconnaissance **+5**, contrôle **+2**. Ces gains restent plafonnés. Le nettoyage reste à **+5**.
 - Trois appels avec code faux ou mauvaise fréquence en moins d’une heure entraînent **−2**, au prochain changement d’heure, au maximum une fois par heure.
 - L’érosion est **désactivée par défaut**. Après 24 h sans contact, elle rapproche la note de 25 d’un point par jour (−1 au-dessus, +1 en dessous, 0 à 25).
