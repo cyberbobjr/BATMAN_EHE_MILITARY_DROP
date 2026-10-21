@@ -206,10 +206,10 @@ end
 
 function T.belt_refusal_comes_from_the_shared_predicate()
     -- Exchange.isOnBelt suit BatmanRadioSupport.canTransmitWith (Belt
-    -- Walkie-Talkie ou copie de secours), sans règle de ceinture propre.
+    -- Walkie-Talkie, dépôt voisin ../BeltRadio), sans règle de ceinture propre.
     local radio = makeRadio(CHANNEL, true, makeContainer(true))
     local player = makePlayer(radio, "belt")
-    assertTrue(Exchange.isOnBelt(player, radio), "copie de secours : ceinture refusée")
+    assertTrue(Exchange.isOnBelt(player, radio), "Belt Walkie-Talkie : ceinture refusée")
     BatmanRadioSupport.canTransmitWith = function() return false, "stowed" end
     assertEq(Exchange.isOnBelt(player, radio), false, "raison lue dans le prédicat commun")
 end

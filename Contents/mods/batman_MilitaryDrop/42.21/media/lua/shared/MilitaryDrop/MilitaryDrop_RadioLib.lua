@@ -1,12 +1,9 @@
 -- ============================================================================
 -- Military Drop — récepteur commun des talkies-walkies (RADIO-08)
 --
--- Belt Walkie-Talkie (batman_BeltRadio) est facultatif, sans require= dans
--- mod.info : s'il est activé, Military Drop utilise ses modules
--- (BatmanRadio/...) ; sinon la copie de secours embarquée
--- (MilitaryDrop/BeltRadioFallback/..., générée par
--- BeltRadio/tools/sync_fallback.py), qui ne fait rien quand le mod commun est
--- activé. Les deux remplissent la même globale BatmanRadioSupport.
+-- Belt Walkie-Talkie (batman_BeltRadio) est un prérequis (require= dans
+-- mod.info) : Military Drop utilise ses modules (BatmanRadio/...) et sa
+-- globale BatmanRadioSupport.
 -- Chargé partout (shared) : canTransmitWith sert aussi au serveur.
 -- ============================================================================
 
@@ -16,37 +13,19 @@ local RadioLib = {}
 MilitaryDrop.RadioLib = RadioLib
 
 RadioLib.MOD_ID = "batman_BeltRadio"
-RadioLib.FALLBACK = "MilitaryDrop/BeltRadioFallback/"
 -- Niveau d'API attendu de Belt Walkie-Talkie (BatmanRadioSupport.VERSION).
 RadioLib.REQUIRED_VERSION = 1
 
-local active = nil
 local warned = false
 
---- batman_BeltRadio est activé (liste fixe pendant une partie : mise en cache).
-function RadioLib.beltRadioActive()
-    if active == nil then
-        active = false
-        local mods = getActivatedMods and getActivatedMods()
-        for i = 0, (mods and mods:size() or 0) - 1 do
-            if string.gsub(mods:get(i), "^\\", "") == RadioLib.MOD_ID then
-                active = true
-            end
-        end
-    end
-    return active
-end
-
---- Module du récepteur (BatmanRadio_Compat, _Support, _Core) : celui du mod
---- commun s'il est activé, sinon la copie de secours.
+--- Module du récepteur de Belt Walkie-Talkie (BatmanRadio_Compat, _Support, _Core).
 function RadioLib.module(name)
-    local prefix = RadioLib.beltRadioActive() and "BatmanRadio/" or RadioLib.FALLBACK
-    return require(prefix .. name)
+    return require("BatmanRadio/" .. name)
 end
 
---- Mod commun activé mais trop ancien : une ligne WARN dans le journal, une fois.
+--- Belt Walkie-Talkie trop ancien : une ligne WARN dans le journal, une fois.
 function RadioLib.checkVersion()
-    if warned or not RadioLib.beltRadioActive() then
+    if warned then
         return
     end
     local version = BatmanRadioSupport and BatmanRadioSupport.VERSION

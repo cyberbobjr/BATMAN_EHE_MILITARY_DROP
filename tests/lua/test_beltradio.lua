@@ -1,9 +1,11 @@
 -- MilitaryDrop_BeltRadio : talkie accroché à la ceinture (menu de réglage,
 -- fenêtre qui ne l'éteint plus, écoute de la chaîne militaire en solo, bulle
--- MP), avec la copie de secours de Belt Walkie-Talkie (mod commun absent).
--- Le récepteur lui-même est testé dans le dépôt BeltRadio.
+-- MP), avec le vrai récepteur de Belt Walkie-Talkie (prérequis, dépôt voisin
+-- ../BeltRadio ; cas ignorés sans lui). Le récepteur lui-même est testé dans
+-- le dépôt BeltRadio ; son et bruit à la ceinture (BeltAudio, BeltNoise) coupés ici.
 
 local T = {}
+T.skip = not hasBeltRadio and "dépôt BeltRadio absent (prérequis Belt Walkie-Talkie)" or nil
 
 local FREQ = 151400
 
@@ -24,7 +26,11 @@ local function makeRadio(opts)
         data[name] = function() return v end
     end
     local radio = { kind = "Radio", said = {}, shown = {} }
+    NEXT_ID = (NEXT_ID or 0) + 1
+    local id = NEXT_ID
+    radio.getID = function() return id end
     data.update = function() end -- batterie native couverte par test_beltbattery
+    data.cleanSoundsAndEmitter = function() end
     radio.getDeviceData = function() return data end
     radio.getContainer = function() return opts.container or INVENTORY end
     -- Doublure fidèle des deux surcharges Java (volume > 0 et sourd exclus dans les deux).
@@ -104,7 +110,7 @@ end
 
 function T.setup()
     getGameTime = function() return { getMinutesStamp = function() return 100 end } end
-    SandboxVars = {}
+    SandboxVars = { BeltRadio = { BeltAudio = false, BeltNoise = false } }
     SOLO = true
     isClient = function() return not SOLO end
     isServer = function() return false end
@@ -143,6 +149,8 @@ function T.setup()
     AIRING = nil
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_BeltRadio.lua")
+    -- Gestionnaires OnTick permanents de Belt Walkie-Talkie (pile, son) avant la partie.
+    BASE_TICKS = listenerCount("OnTick")
     MilitaryDrop.Broadcast = { channel = {
         getAiringBroadcast = function() return AIRING end,
         GetFrequency = function() return FREQ end,
@@ -495,11 +503,11 @@ end
 function T.multiplayer_client_is_left_to_vanilla()
     SOLO = false
     startListening()
-    assertEq(listenerCount("OnTick"), 1, "client MP : batterie seulement, pas d'écoute ajoutée")
+    assertEq(listenerCount("OnTick"), BASE_TICKS, "client MP : pas d'écoute ajoutée")
     SOLO = true
     startListening()
     startListening()
-    assertEq(listenerCount("OnTick"), 2, "solo : batterie et un seul récepteur")
+    assertEq(listenerCount("OnTick"), BASE_TICKS + 1, "solo : un seul récepteur ajouté")
 end
 
 function T.no_channel_no_delivery()
@@ -520,14 +528,14 @@ function T.world_restart_releases_broadcasts_and_keeps_one_receiver()
     triggerEvent("OnTick")
     assertEq(#radio.said, 1, "premier monde")
     triggerEvent("OnMainMenuEnter")
-    assertEq(listenerCount("OnTick"), 1, "retour au menu : plus de récepteur, batterie seule")
+    assertEq(listenerCount("OnTick"), BASE_TICKS, "retour au menu : plus de récepteur")
     AIRING = makeBroadcast({ { "second monde" } })
     AIRING.count = 1
     startListening()
     startListening()
     triggerEvent("OnTick")
     assertEq(#radio.said, 2, "nouvelle diffusion reçue une seule fois")
-    assertEq(listenerCount("OnTick"), 2, "un récepteur et une batterie")
+    assertEq(listenerCount("OnTick"), BASE_TICKS + 1, "un seul récepteur")
 end
 
 function T.belt_line_is_shown_once_and_never_doubled_after_taking_the_radio_in_hand()
@@ -558,7 +566,7 @@ end
 -- MP : bulle d'une radio non tenue (BatmanRadio_Core.onDeviceTextMP).
 local function mpSetup(frequencyOption)
     SOLO = false
-    SandboxVars = { MilitaryDrop = { Frequency = frequencyOption } }
+    SandboxVars = { MilitaryDrop = { Frequency = frequencyOption }, BeltRadio = { BeltAudio = false, BeltNoise = false } }
     MilitaryDrop.Broadcast = { COLOR = { r = 0.45, g = 0.85, b = 0.45 } } -- client MP : pas de chaîne
     UIFont = { Medium = "Medium" }
     NOW = 1000
@@ -592,7 +600,7 @@ function T.mp_belt_radio_on_a_public_channel_gets_one_bubble()
 end
 
 function T.mp_stowed_radio_gets_no_bubble()
-    -- Belt Walkie-Talkie 0.1.1 (copie de secours) : une radio rangée ne reçoit
+    -- Belt Walkie-Talkie : une radio rangée ne reçoit
     -- rien (décision 3) ; en MP le vanilla la sert quand même au chat radio,
     -- sans bulle ajoutée. Seul le talkie accroché à la ceinture en a une.
     mpSetup(151.4)

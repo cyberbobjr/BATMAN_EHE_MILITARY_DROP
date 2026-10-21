@@ -10,6 +10,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Belt Walkie-Talkie (prérequis, require=\batman_BeltRadio) : récepteur réel des tests radio.
+      - uses: actions/checkout@v4
+        with:
+          repository: cyberbobjr/BeltRadio
+          path: _deps/BeltRadio
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -23,6 +29,8 @@ jobs:
       # Sans le jeu, les tests qui lisent les tables vanilla sont ignorés.
       - name: Run checks
         run: python tests/run_tests.py --require-luacheck
+        env:
+          BELT_RADIO_LUA: _deps/BeltRadio/Contents/mods/batman_BeltRadio/42.21/media/lua
 
       - name: Check Mayday models and textures
         run: python tests/check_mayday_assets.py

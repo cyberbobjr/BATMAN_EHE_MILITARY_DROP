@@ -26,7 +26,9 @@ MOD_COMMON = REPO / "Contents" / "mods" / "batman_MilitaryDrop" / "common"
 PZ_MEDIA = Path(os.environ.get(
     "PZ_MEDIA", r"D:\SteamLibrary\steamapps\common\ProjectZomboid\media"))
 VANILLA_LUA = PZ_MEDIA / "lua"
-ARTEMIS_LUA = REPO.parent / "OperationArtemis/Contents/mods/batman_OperationArtemis/42.21/media/lua"
+# Belt Walkie-Talkie (prérequis) : dépôt voisin, ou variable BELT_RADIO_LUA.
+BELT_RADIO_LUA = Path(os.environ.get(
+    "BELT_RADIO_LUA", REPO.parent / "BeltRadio/Contents/mods/batman_BeltRadio/42.21/media/lua"))
 BWT_LUA = Path(os.environ.get("BWT_LUA", r"D:\SteamLibrary\steamapps\workshop\content\108600\3779480293\mods\BetterWalkieTalkies\42.20\media\lua"))
 
 PRELUDE = r"""
@@ -50,28 +52,33 @@ function loadMod(rel)
     return run(readModFile(rel), rel)
 end
 
--- Charger réellement les seuls modules du récepteur radio commun (copie de
--- secours MilitaryDrop/BeltRadioFallback et MilitaryDrop_RadioLib), une fois
--- chacun comme RunLuaInternal ; les autres require gardent les simulations
--- propres à chaque fichier de test. MODULE_STUBS[nom] : module simulé (par
--- exemple BatmanRadio/... de Belt Walkie-Talkie activé) ; un nom
--- BatmanRadio/... sans simulation renvoie nil, comme un require qui échoue.
+-- Charger réellement les seuls modules du récepteur radio commun (Belt
+-- Walkie-Talkie, dépôt voisin ../BeltRadio, et MilitaryDrop_RadioLib), une
+-- fois chacun comme RunLuaInternal ; les autres require gardent les
+-- simulations propres à chaque fichier de test. MODULE_STUBS[nom] : module
+-- simulé ; un nom BatmanRadio/... introuvable (dépôt BeltRadio absent) renvoie
+-- nil, comme un require qui échoue (voir hasBeltRadio).
 MODULE_STUBS = {}
 local radioModules = {}
-local SHARED_RADIO = { BatmanRadio_Compat = true, BatmanRadio_Support = true }
 require = function(name)
     if MODULE_STUBS[name] ~= nil then return MODULE_STUBS[name] end
-    local rel
+    local source, rel
     if name == "MilitaryDrop/MilitaryDrop_RadioLib" then
         rel = "shared/" .. name .. ".lua"
-    elseif name:find("MilitaryDrop/BeltRadioFallback/", 1, true) == 1 then
-        local base = name:sub(#"MilitaryDrop/BeltRadioFallback/" + 1)
-        rel = (SHARED_RADIO[base] and "shared/" or "client/") .. name .. ".lua"
+        source = readModFile(rel)
+    elseif name:find("BatmanRadio/", 1, true) == 1 then
+        for _, scope in ipairs({ "shared/", "client/", "server/" }) do
+            rel = scope .. name .. ".lua"
+            source = readBeltRadioFile(rel)
+            if source then break end
+        end
+        if not source then return end
+        rel = "BeltRadio/" .. rel
     else
         return
     end
     if radioModules[name] == nil then
-        radioModules[name] = loadMod(rel) or false
+        radioModules[name] = run(source, rel) or false
     end
     return radioModules[name] or nil
 end
@@ -230,7 +237,8 @@ def new_runtime():
     globals_.hasVanilla = VANILLA_LUA.is_dir()
     globals_.hasBWT = (BWT_LUA / "client/BetterWalkieTalkies/RadioPTT.lua").is_file()
     globals_.readBWTFile = lambda rel: _read(BWT_LUA, rel)
-    globals_.readArtemisFile = lambda rel: _read(ARTEMIS_LUA, rel)
+    globals_.readBeltRadioFile = lambda rel: _read(BELT_RADIO_LUA, rel)
+    globals_.hasBeltRadio = (BELT_RADIO_LUA / "client/BatmanRadio/BatmanRadio_Core.lua").is_file()
     lua.execute(PRELUDE)
     return lua
 

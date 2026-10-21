@@ -43,7 +43,7 @@ require "TimedActions/ISBaseTimedAction"
 require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Fulton"
--- Récepteur commun : Belt Walkie-Talkie s'il est activé, sinon la copie de secours (RADIO-08).
+-- Récepteur commun : Belt Walkie-Talkie, prérequis du mod (RADIO-08).
 require "MilitaryDrop/MilitaryDrop_RadioLib"
 
 local Config = MilitaryDrop.Config

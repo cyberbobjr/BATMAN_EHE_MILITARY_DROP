@@ -72,31 +72,26 @@ def mod_lua_files():
     return sorted(MOD_LUA.rglob("*.lua"))
 
 
-BELT_RADIO = REPO.parent / "BeltRadio"
-
-
 def check_radio_common(report):
-    """Copie de secours de Belt Walkie-Talkie identique à ce qu'en génère
-    BeltRadio/tools/sync_fallback.py (RADIO-08) ; ignoré sans le dépôt BeltRadio."""
-    report.section("Copie de secours de Belt Walkie-Talkie")
+    """Belt Walkie-Talkie est un prérequis (RADIO-08) : aucun fichier du mod ne
+    reprend ses chemins (BatmanRadio/...) ni une copie de secours."""
+    report.section("Récepteur commun de Belt Walkie-Talkie")
+    found = False
     for scope in ("client", "shared", "server"):
         if (MOD_LUA / scope / "BatmanRadio").exists():
+            found = True
             report.fail(f"{scope}/BatmanRadio : chemin du mod commun, masquerait Belt Walkie-Talkie")
-    tool = BELT_RADIO / "tools" / "sync_fallback.py"
-    if not tool.is_file():
-        report.skip("dépôt BeltRadio absent : égalité des copies non vérifiée")
-        return
-    sys.path.insert(0, str(tool.parent))
-    try:
-        import sync_fallback  # noqa: E402
-    finally:
-        sys.path.pop(0)
-    errors = sync_fallback.check("MilitaryDrop")
-    for error in errors:
-        report.fail(error + " (python ../BeltRadio/tools/sync_fallback.py MilitaryDrop)")
-    if not errors:
-        report.ok("MilitaryDrop/BeltRadioFallback identique à Belt Walkie-Talkie "
-                  + sync_fallback.version())
+        if (MOD_LUA / scope / "MilitaryDrop" / "BeltRadioFallback").exists():
+            found = True
+            report.fail(f"{scope}/MilitaryDrop/BeltRadioFallback : copie de secours retirée, ne pas la remettre")
+    if not found:
+        report.ok("aucune copie de Belt Walkie-Talkie dans le mod")
+    core = lua_harness.BELT_RADIO_LUA / "client" / "BatmanRadio" / "BatmanRadio_Core.lua"
+    if core.is_file():
+        report.ok(f"Belt Walkie-Talkie lu dans {lua_harness.BELT_RADIO_LUA}")
+    else:
+        report.fail("Belt Walkie-Talkie introuvable : dépôt voisin ../BeltRadio ou variable BELT_RADIO_LUA"
+                    " (tests du récepteur ignorés, test_exchange en échec)")
 
 
 def strip_comments(line):

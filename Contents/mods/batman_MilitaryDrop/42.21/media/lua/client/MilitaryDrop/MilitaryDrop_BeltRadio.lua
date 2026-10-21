@@ -1,12 +1,11 @@
 -- MilitaryDrop inscrit ses chaînes et l'ouverture des radios rangées dans le
 -- gestionnaire commun. Aucun second menu, wrapper, récepteur ou drain de pile.
--- Gestionnaire commun : Belt Walkie-Talkie s'il est activé, sinon la copie de
--- secours embarquée (MilitaryDrop.RadioLib, RADIO-08) ; même globale
--- BatmanRadioSupport dans les deux cas.
+-- Gestionnaire commun : Belt Walkie-Talkie, prérequis du mod
+-- (MilitaryDrop.RadioLib, RADIO-08), globale BatmanRadioSupport.
 require "MilitaryDrop/MilitaryDrop_Core"
 require "MilitaryDrop/MilitaryDrop_Exchange"
 require "MilitaryDrop/MilitaryDrop_RadioLib"
--- Charge le récepteur (mod commun ou copie de secours) avant l'inscription.
+-- Charge le récepteur de Belt Walkie-Talkie avant l'inscription.
 MilitaryDrop.RadioLib.receiver()
 -- Aides du gestionnaire (isPortableRadio...) lues sur la globale à l'appel.
 local BeltRadio = setmetatable({}, { __index = function(_, key)
