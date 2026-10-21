@@ -8,11 +8,11 @@ Military Drop lets you call the army by radio for a supply airdrop. A helicopter
 
 ## Install
 
-1. Subscribe to **Military Drop** on the Steam Workshop (Build 42.21).
-2. In the game's mod list, enable **Military Drop** (mod ID `batman_MilitaryDrop`).
+1. Subscribe to **Military Drop** on the Steam Workshop (Build 42.21). Steam also offers its required mods: **Belt Walkie-Talkie** (with **TooltipLib**) and **Signal Smoke**. Subscribe to them too.
+2. In the game's mod list, enable **Military Drop** (mod ID `batman_MilitaryDrop`) together with Belt Walkie-Talkie (`batman_BeltRadio`), TooltipLib (`TooltipLib`) and Signal Smoke (`batman_SignalSmoke`).
 3. Start a game. The settings are on the **Military Drop** page of the sandbox options.
 
-No other mod is required. You can add the mod to an existing save: military notes and codebooks appear on zombies killed after it is enabled.
+Dedicated servers: add `3811752923;3817018338;3694097672;3811010882` to `WorkshopItems=` and `batman_MilitaryDrop;batman_BeltRadio;TooltipLib;batman_SignalSmoke` to `Mods=`. You can add the mod to an existing save: military notes and codebooks appear on zombies killed after it is enabled.
 
 ## What you need
 
@@ -46,6 +46,6 @@ The mod works in both. In multiplayer the server decides everything:
 ## Compatibility
 
 - **HEF - Helicopter Event Framework**: designed to coexist. The supply helicopter waits while a HEF event is active near its target, and the mod never uses 112.2 MHz (reserved by HEF).
-- **Signal Smoke** (optional): when it is active, green smoke marks the crate for 60 minutes of game time.
+- **Signal Smoke** (required): green smoke marks the crate for 60 minutes of game time.
 - **Item and weapon mods**: crate contents come from the game's loot tables, including the items added by your other mods.
 - **Expanded Helicopter Events** is not needed. Military Drop is a standalone rewrite of the Build 41 mod "Drop Military Cargo".

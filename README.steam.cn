@@ -1,7 +1,7 @@
 [h1]Military Drop - 无线电补给空投[/h1]
 
 [h1]不兼容变更 — 版本 0.5.1（2026-10-10）[/h1]
-[b]本模组现在需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]。请订阅这两个模组并与本模组一起启用。专用服务器：将 3817018338;3694097672 加入 WorkshopItems=，将 batman_BeltRadio;TooltipLib 加入 Mods=，否则游戏不会加载本模组（日志中只有一条警告）。[/b]
+[b]本模组现在需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]。请订阅这三个模组并与本模组一起启用。专用服务器：将 3817018338;3694097672;3811010882 加入 WorkshopItems=，将 batman_BeltRadio;TooltipLib;batman_SignalSmoke 加入 Mods=，否则游戏不会加载本模组（日志中只有一条警告）。[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
@@ -51,7 +51,7 @@
 [*]不需要其他模组。
 [*]需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]：为所有使用它的模组提供统一的腰间对讲机行为。
 [*]设计为可与 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url] 共存。
-[*]配合 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url],绿色烟雾会标出补给箱。
+[*]需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]：绿色烟雾会标出补给箱。
 [*]配合 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url],可以用富尔顿送出样本和疫苗。
 [*]支持 Better Walkie Talkies;你的模组物品也会出现在补给箱中。
 [/list]

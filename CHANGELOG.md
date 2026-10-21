@@ -5,6 +5,10 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 
 ## Unreleased
 
+### Changed
+
+- Signal Smoke is now a required mod: subscribe to it and enable it with Military Drop (dedicated servers: add `3811010882` to `WorkshopItems=` and `batman_SignalSmoke` to `Mods=`). Green smoke marks every landed crate.
+
 ### Fixed
 
 - Drop and helicopter crash hordes near water (rivers, lakes, the Ohio shore) now spawn in full: zombies no longer stop appearing at the first water tile, and no more Java error in the console.

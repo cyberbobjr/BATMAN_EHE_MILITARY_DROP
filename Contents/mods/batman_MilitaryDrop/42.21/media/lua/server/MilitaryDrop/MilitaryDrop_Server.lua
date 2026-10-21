@@ -717,7 +717,7 @@ function Server.deliver(x, y, requester, dropId, opts)
         MilitaryDrop.log("crate could not spawn: supply cases left on the ground", true)
     end
     x, y = square:getX(), square:getY()
-    -- Fumée de repérage (Signal Smoke, facultatif).
+    -- Fumée de repérage (Signal Smoke, prérequis).
     if not opts.crash then MilitaryDrop.Smoke.markCrate(x, y) end
     local zombies = opts.crash and 0 or Server.hordeSize()
     if zombies > 0 then

@@ -1,7 +1,7 @@
 [h1]Military Drop - Сброс снабжения по радио[/h1]
 
 [h1]НЕСОВМЕСТИМОЕ ИЗМЕНЕНИЕ — версия 0.5.1 (2026-10-10)[/h1]
-[b]Теперь этому моду требуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]. Подпишитесь на оба и включите их вместе с этим модом. Выделенные серверы: добавьте 3817018338;3694097672 в WorkshopItems= и batman_BeltRadio;TooltipLib в Mods=, иначе игра не загрузит этот мод (в журнале будет только предупреждение).[/b]
+[b]Теперь этому моду требуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Подпишитесь на все три и включите их вместе с этим модом. Выделенные серверы: добавьте 3817018338;3694097672;3811010882 в WorkshopItems= и batman_BeltRadio;TooltipLib;batman_SignalSmoke в Mods=, иначе игра не загрузит этот мод (в журнале будет только предупреждение).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
@@ -51,7 +51,7 @@
 [*]Другие моды не нужны.
 [*]Требуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: единое поведение рации на поясе для всех модов, которые его используют.
 [*]Создан для совместной работы с [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
-[*]С [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url] ящик отмечает зелёный дым.
+[*]Требуется [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]: зелёный дым отмечает ящик.
 [*]С [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url] образцы и вакцины можно отправлять «Фултоном».
 [*]Поддерживается Better Walkie Talkies; предметы из ваших модов появляются в ящиках.
 [/list]

@@ -78,7 +78,7 @@ Depuis le 2026-10-01 (RADIO-06), tout passe par la section « Logistique » de l
 | E2 | Horde | Zombies autour de la caisse (3 à 30 par défaut) |
 | E3 | Ouvrir le coffre (clic droit / menu véhicule) | Coffre « Caisse de largage militaire » avec 6 caisses de ravitaillement |
 | E4 | Largage admin (« Forcer un largage ») sur une radio éteinte, rangée dans l'inventaire | Accepté ; coordonnées en message privé ; délai non modifié |
-| E5 | Avec le mod **Signal Smoke** actif : aller au point de largage | Fumée verte sur la caisse, visible en approchant, pendant 60 minutes de jeu ; sans Signal Smoke, aucune fumée et aucune erreur |
+| E5 | Avec le mod **Signal Smoke** (prérequis) : aller au point de largage | Fumée verte sur la caisse, visible en approchant, pendant 60 minutes de jeu ; « Signal Smoke found » dans la console |
 
 ## F. Sauvegarde
 

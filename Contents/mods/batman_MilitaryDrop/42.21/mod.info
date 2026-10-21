@@ -1,8 +1,8 @@
 name=Military Drop
 id=batman_MilitaryDrop
-description=Call in military supply airdrops by radio. Build 42.21, singleplayer and multiplayer, server-authoritative. Standalone rewrite of Expanded Helicopter Events: Drop Military Cargo (Workshop 3259615085, Build 41). Requires Belt Walkie-Talkie.
+description=Call in military supply airdrops by radio. Build 42.21, singleplayer and multiplayer, server-authoritative. Standalone rewrite of Expanded Helicopter Events: Drop Military Cargo (Workshop 3259615085, Build 41). Requires Belt Walkie-Talkie and Signal Smoke.
 poster=poster.png
 icon=icon.png
 versionMin=42.21
 modversion=0.5.4
-require=\batman_BeltRadio
+require=\batman_BeltRadio,\batman_SignalSmoke

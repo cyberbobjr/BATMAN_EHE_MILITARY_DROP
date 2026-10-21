@@ -8,11 +8,11 @@ Military Drop permet d'appeler l'armée par radio pour obtenir un largage de rav
 
 ## Installation
 
-1. Abonnez-vous à **Military Drop** sur le Workshop Steam (Build 42.21).
-2. Dans la liste des mods du jeu, activez **Military Drop** (identifiant `batman_MilitaryDrop`).
+1. Abonnez-vous à **Military Drop** sur le Workshop Steam (Build 42.21). Steam propose aussi ses mods requis : **Belt Walkie-Talkie** (avec **TooltipLib**) et **Signal Smoke**. Abonnez-vous à eux aussi.
+2. Dans la liste des mods du jeu, activez **Military Drop** (identifiant `batman_MilitaryDrop`) avec Belt Walkie-Talkie (`batman_BeltRadio`), TooltipLib (`TooltipLib`) et Signal Smoke (`batman_SignalSmoke`).
 3. Lancez une partie. Les réglages sont sur la page **Military Drop** des options du bac à sable.
 
-Aucun autre mod n'est nécessaire. Vous pouvez ajouter le mod à une partie en cours : les notes et carnets militaires apparaissent sur les zombies tués après son activation.
+Serveurs dédiés : ajoutez `3811752923;3817018338;3694097672;3811010882` à `WorkshopItems=` et `batman_MilitaryDrop;batman_BeltRadio;TooltipLib;batman_SignalSmoke` à `Mods=`. Vous pouvez ajouter le mod à une partie en cours : les notes et carnets militaires apparaissent sur les zombies tués après son activation.
 
 ## Ce qu'il vous faut
 
@@ -46,6 +46,6 @@ Le mod fonctionne dans les deux modes. En multijoueur, le serveur décide de tou
 ## Compatibilité
 
 - **HEF - Helicopter Event Framework** : conçu pour cohabiter. L'hélicoptère de ravitaillement attend tant qu'un événement HEF est actif près de sa cible, et le mod n'utilise jamais 112,2 MHz (réservée par HEF).
-- **Signal Smoke** (facultatif) : quand il est actif, une fumée verte signale la caisse pendant 60 minutes de jeu.
+- **Signal Smoke** (requis) : une fumée verte signale la caisse pendant 60 minutes de jeu.
 - **Mods d'objets et d'armes** : le contenu des caisses vient des tables de butin du jeu, y compris les objets ajoutés par vos autres mods.
 - **Expanded Helicopter Events** n'est pas nécessaire. Military Drop est une réécriture autonome du mod Build 41 « Drop Military Cargo ».

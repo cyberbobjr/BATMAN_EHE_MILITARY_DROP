@@ -1,12 +1,13 @@
 -- ============================================================================
 -- Military Drop — fumée de repérage sur la caisse (serveur MP ou solo)
 --
--- Intégration facultative avec Signal Smoke (id batman_SignalSmoke, projet
--- Zomboid\Workshop\SignalSmoke) : si ce mod est actif, une fumée verte marque
--- la caisse quand elle est posée (un joueur approche : la zone vient de se
--- charger). Cause dans le monde : le fumigène fixé à la caisse. Sans Signal
--- Smoke, rien ne se passe : Military Drop reste autonome (aucun require dans
--- mod.info).
+-- Intégration avec Signal Smoke (id batman_SignalSmoke, projet
+-- Zomboid\Workshop\SignalSmoke), prérequis de Military Drop depuis le
+-- 2026-10-21 (require= dans mod.info, objet requis sur la page Steam) : une
+-- fumée verte marque la caisse quand elle est posée (un joueur approche : la
+-- zone vient de se charger). Cause dans le monde : le fumigène fixé à la
+-- caisse. Les gardes ci-dessous (mod actif, module chargé) restent en place :
+-- si Signal Smoke manque malgré tout, rien ne se passe et aucune erreur.
 --
 -- Signal Smoke tient le registre des fumées (ModData globale, transmise aux
 -- clients) ; chaque client dessine la fumée, et elle est reprise au

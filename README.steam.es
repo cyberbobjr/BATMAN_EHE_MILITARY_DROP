@@ -1,7 +1,7 @@
 [h1]Military Drop - Lanzamientos de suministros por radio[/h1]
 
 [h1]CAMBIO INCOMPATIBLE — versión 0.5.1 (2026-10-10)[/h1]
-[b]Este mod ahora requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]. Suscríbete a ambos y actívalos junto con este mod. Servidores dedicados: añade 3817018338;3694097672 a WorkshopItems= y batman_BeltRadio;TooltipLib a Mods=; si no, el juego no carga este mod (solo un aviso en el registro).[/b]
+[b]Este mod ahora requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Suscríbete a los tres y actívalos junto con este mod. Servidores dedicados: añade 3817018338;3694097672;3811010882 a WorkshopItems= y batman_BeltRadio;TooltipLib;batman_SignalSmoke a Mods=; si no, el juego no carga este mod (solo un aviso en el registro).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
@@ -51,7 +51,7 @@ Cada personaje tiene su propia reputación, nunca mostrada en cifras. Acorta la 
 [*]No requiere ningún otro mod.
 [*]Requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: el comportamiento común del walkie-talkie en el cinturón para todos los mods que lo usan.
 [*]Pensado para convivir con [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
-[*]Con [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], un humo verde señala la caja.
+[*]Requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]: un humo verde señala la caja.
 [*]Con [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url], muestras y vacunas pueden enviarse por Fulton.
 [*]Better Walkie Talkies es compatible; los objetos de tus mods aparecen en las cajas.
 [/list]

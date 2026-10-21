@@ -37,7 +37,7 @@ La conception et les décisions sont dans [plan.md](plan.md) (v1), [plan-v2.md](
 | v1.3 | Confiance de faction, sources de confiance, poste de commandement (idée 5) | testé solo, sauf H3, H5, H8, H10 ; MP à faire ([plan-v13.md](plan-v13.md)) |
 | v1.4 | Formulaire de réquisition (idée 6) | testé hors jeu ([plan-v14.md](plan-v14.md)) |
 | v1.5 | Largage leurre (idée 9) | testé hors jeu ([plan-v14.md](plan-v14.md)) |
-| Intégrations | Fumée sur la caisse avec Signal Smoke (facultatif) | testé solo |
+| Intégrations | Fumée sur la caisse avec Signal Smoke (prérequis depuis le 2026-10-21) | testé solo |
 | Idée 3 | Balises, détecteur, chasses au trésor | mis de côté |
 | Idée 8 | Mayday, épave démontable | testé hors jeu, solo et MP à faire |
 | Idée 10 | Extraction, pont avec Opération Artemis | à décider |
@@ -111,7 +111,7 @@ La conception et les décisions sont dans [plan.md](plan.md) (v1), [plan-v2.md](
 
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
-| FUM-01 | Fumée verte sur la caisse posée si Signal Smoke (`batman_SignalSmoke`) est actif ; durée en option (`CrateSmokeMinutes`, 60 min, 0 = aucune) ; aucun `require` dans `mod.info` | PLAN-V2 décision 17 | testé solo | test_smoke, test_server, E5, « Signal Smoke found » dans la console (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | MP |
+| FUM-01 | Fumée verte sur la caisse posée par Signal Smoke (`batman_SignalSmoke`) ; durée en option (`CrateSmokeMinutes`, 60 min, 0 = aucune). Facultatif jusqu'en 0.5.4 ; prérequis depuis le 2026-10-21 (décision de l'utilisateur : `require=\batman_BeltRadio,\batman_SignalSmoke`, objet requis sur la page Steam), gardes de détection conservées | PLAN-V2 décision 17 | testé solo | test_smoke, test_server, E5, « Signal Smoke found » dans la console (test solo du 2026-09-30 (console : vol vers 9703,13014, caisse au point annoncé)) | MP |
 
 ## v1.2 — Code chiffré de la semaine (idée 4)
 
@@ -230,6 +230,7 @@ Demandes de deux admins de serveurs MP sur Discord (2026-10-04/05). Conception :
 
 ## Journal
 
+- **2026-10-21** — FUM-01 : Signal Smoke devient un prérequis (décision de l'utilisateur) : `require=\batman_BeltRadio,\batman_SignalSmoke` dans `mod.info`, déjà objet requis sur la page Steam ; gardes de `MilitaryDrop.Smoke` conservées, commentaires, documentation, wiki, descriptions Steam et `autotest.json` (`../SignalSmoke` chargé) mis à jour. Suite hors jeu au vert ; rien testé en jeu, rien republié sur Steam.
 - **2026-10-21** — C13 (TEST-04) : support `pz-autotest` du parcours nominal (`autotest.json`, `autotest/md_hooks.lua`, protocole « Autotest » de `test-protocol.md`). Vérifié par `check` et luacheck ; suites `sp`/`mp` non lancées.
 - **2026-10-21** — Corrections de l'analyse `docs/ameliorations-et-idees.md` : C01 (QUAL-06, horde complète près de l'eau, `6c62913`), C04 (QUAL-07, plafond de confiance du guide, `d03ee87`), C03 en partie (QUAL-08, menu de test en anglais et trace de phase en debug, `498f0d1`). C02 (copie de secours de Belt Walkie-Talkie) attend la décision de l'utilisateur. Rien testé en jeu.
 - **2026-10-21** — C02 (RADIO-08) : copie de secours `BeltRadioFallback/` retirée (décision de l'utilisateur, Belt Walkie-Talkie prérequis), `RadioLib` simplifié, tests radio sur le vrai récepteur `../BeltRadio` (CI : dépôt BeltRadio récupéré), `d820c24`. Suite hors jeu au vert ; rien testé en jeu.

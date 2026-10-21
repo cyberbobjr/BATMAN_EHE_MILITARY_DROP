@@ -66,7 +66,7 @@ local DEFAULTS = {
     NumbersStationFrequency = 0,
     CodebookDropRate = 3,
     CodebookOutfits = "Army",
-    -- Fumée verte sur la caisse posée, si Signal Smoke est actif (0 = aucune).
+    -- Fumée verte sur la caisse posée, par Signal Smoke (prérequis ; 0 = aucune).
     CrateSmokeMinutes = 60,
     DebugLog = false,
 }

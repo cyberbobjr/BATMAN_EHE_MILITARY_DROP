@@ -36,7 +36,7 @@ Non. Un leurre est identique à un vrai largage jusqu'à l'ouverture du coffre.
 Oui. Les caisses puisent dans les tables de butin du jeu, objets de vos mods compris.
 
 **Faut-il Expanded Helicopter Events ?**
-Non. Military Drop est autonome. HEF et Signal Smoke sont des compagnons facultatifs.
+Non. Military Drop est une réécriture autonome : il exige seulement Belt Walkie-Talkie (avec TooltipLib) et Signal Smoke. HEF est un compagnon facultatif.
 
 **Où signaler un bug ?**
 Sur la page du Workshop Steam ou dans les [issues GitHub](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/issues). Joignez `Zomboid/console.txt` et, si possible, activez l'option **Journal de débogage** du bac à sable.

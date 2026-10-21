@@ -36,7 +36,7 @@ No. A decoy looks exactly like a real drop until someone opens the trunk.
 Yes. Crates draw from the game's loot tables, including your mods' items.
 
 **Do I need Expanded Helicopter Events?**
-No. Military Drop is standalone. HEF and Signal Smoke are optional companions.
+No. Military Drop is a standalone rewrite: it only requires Belt Walkie-Talkie (with TooltipLib) and Signal Smoke. HEF is an optional companion.
 
 **Where do I report a bug?**
 On the Steam Workshop page or in the [GitHub issues](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/issues). Please attach `Zomboid/console.txt`, and enable the **Debug log** sandbox option if you can.

@@ -319,9 +319,9 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 
 - **Description** : une caisse peut contenir un fumigène de signalisation ; s'il est allumé dehors pendant l'approche d'un **prochain** largage, la base vise ce point (dans les bornes de distance et de zone autorisées).
 - **Intérêt joueur** : geste naturel (allumer un fumigène) au lieu d'un menu ; contrôle partiel du point de chute.
-- **Faisabilité** : Signal Smoke (mod de l'utilisateur, facultatif ici, déjà intégré pour marquer la caisse) ; détection serveur de la grenade (`OnThrowableExplode`, base `staging-effects.md`) ; repli : fusée vanilla absente, donc fonction facultative.
+- **Faisabilité** : Signal Smoke (mod de l'utilisateur, prérequis depuis le 2026-10-21, déjà intégré pour marquer la caisse) ; détection serveur de la grenade (`OnThrowableExplode`, base `staging-effects.md`) ; repli : fusée vanilla absente, donc fonction facultative.
 - **Impact MP** : position lue par le serveur (objet lancé), pas fournie par le client.
-- **Dépendances** : Signal Smoke facultatif ; respect de `DropPlacement` (en mode zones, seulement à l'intérieur d'une zone).
+- **Dépendances** : Signal Smoke (prérequis) ; respect de `DropPlacement` (en mode zones, seulement à l'intérieur d'une zone).
 - **Effort** : M.
 
 ---

@@ -1,7 +1,7 @@
 [h1]Military Drop - Radio Supply Airdrops[/h1]
 
 [h1]BREAKING CHANGE — version 0.5.1 (2026-10-10)[/h1]
-[b]This mod now requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]. Subscribe to both and enable them together with this mod. Dedicated servers: add 3817018338;3694097672 to WorkshopItems= and batman_BeltRadio;TooltipLib to Mods=, otherwise the game does not load this mod (only a warning in the log).[/b]
+[b]This mod now requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Subscribe to all three and enable them together with this mod. Dedicated servers: add 3817018338;3694097672;3811010882 to WorkshopItems= and batman_BeltRadio;TooltipLib;batman_SignalSmoke to Mods=, otherwise the game does not load this mod (only a warning in the log).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
@@ -51,7 +51,7 @@ Each character has a personal reputation, never shown as a number. It shortens t
 [*]No other mod required.
 [*]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: the shared belt walkie-talkie behaviour of all the mods that use it.
 [*]Designed to coexist with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
-[*]With [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], green smoke marks the crate.
+[*]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]: green smoke marks the crate.
 [*]With [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url], samples and vaccines can be sent by Fulton.
 [*]Better Walkie Talkies is supported; items from your mods appear in the crates.
 [/list]

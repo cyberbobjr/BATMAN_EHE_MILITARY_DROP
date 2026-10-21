@@ -7,6 +7,7 @@ Tune a military radio to the right frequency, give this week's code and requisit
 This branch (`b42`) is a standalone rewrite for Build 42.21 of [Expanded Helicopter Events: Drop Military Cargo](https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085) (Build 41, `main` branch). It no longer requires Expanded Helicopter Events.
 
 - Mod ID: `batman_MilitaryDrop`
+- Requires [Belt Walkie-Talkie](https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338) (`batman_BeltRadio`, which needs [TooltipLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672)) and [Signal Smoke](https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882) (`batman_SignalSmoke`).
 - **Player's guide** (source of the [GitHub wiki](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki)): [English](docs/wiki/en/Home.md) · [Français](docs/wiki/fr/Home.md) ([both](docs/wiki/Home.md))
 - Server admins: [sandbox options, requisition lots file, drop zones, admin tools](docs/wiki/en/06-server-admin.md)
 - Developer documentation, **in French**: [docs/README.md](docs/README.md) (index: architecture, functional and technical specifications, improvements), [docs/annexes/plans/SUIVI.md](docs/annexes/plans/SUIVI.md) (status of every feature), [docs/annexes/tests/test-protocol.md](docs/annexes/tests/test-protocol.md) (in-game test protocol), plans in [docs/annexes/plans/](docs/annexes/plans/).

@@ -1,7 +1,7 @@
 [h1]Military Drop - Largages de ravitaillement par radio[/h1]
 
 [h1]CHANGEMENT INCOMPATIBLE — version 0.5.1 (2026-10-10)[/h1]
-[b]Ce mod nécessite désormais [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url]. Abonnez-vous aux deux et activez-les avec ce mod. Serveurs dédiés : ajoutez 3817018338;3694097672 à WorkshopItems= et batman_BeltRadio;TooltipLib à Mods=, sinon le jeu ne charge pas ce mod (seul un avertissement apparaît dans le journal).[/b]
+[b]Ce mod nécessite désormais [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Abonnez-vous aux trois et activez-les avec ce mod. Serveurs dédiés : ajoutez 3817018338;3694097672;3811010882 à WorkshopItems= et batman_BeltRadio;TooltipLib;batman_SignalSmoke à Mods=, sinon le jeu ne charge pas ce mod (seul un avertissement apparaît dans le journal).[/b]
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
@@ -51,7 +51,7 @@ Chaque personnage a sa propre réputation, jamais affichée en chiffres. Elle ra
 [*]Aucun autre mod requis.
 [*]Nécessite [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] : le comportement commun du talkie-walkie à la ceinture pour tous les mods qui l'utilisent.
 [*]Conçu pour cohabiter avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
-[*]Avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882]Signal Smoke[/url], une fumée verte signale la caisse.
+[*]Nécessite [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url] : une fumée verte signale la caisse.
 [*]Avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url], échantillons et vaccins peuvent partir par Fulton.
 [*]Better Walkie Talkies est pris en charge ; les objets de vos mods apparaissent dans les caisses.
 [/list]

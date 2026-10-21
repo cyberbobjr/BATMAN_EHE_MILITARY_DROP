@@ -8,10 +8,11 @@
   "name": "MilitaryDrop",
   "gameVersion": "42.21",
   // Load order: TooltipLib (required by BeltRadio, read only from the Steam Workshop folder and copied),
-  // Belt Walkie-Talkie (require= of Military Drop), then the mod.
+  // Belt Walkie-Talkie and Signal Smoke (require= of Military Drop), then the mod.
   "mods": [
     {"workshop": "3694097672", "id": "TooltipLib"},
     {"path": "../BeltRadio/Contents/mods/batman_BeltRadio"},
+    {"path": "../SignalSmoke/Contents/mods/batman_SignalSmoke"},
     {"path": "Contents/mods/batman_MilitaryDrop"}
   ],
   // Client hooks: whole path in solo (authority + client view), client view only in mp (client 1, --client-run).

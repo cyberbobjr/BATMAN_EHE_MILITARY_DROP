@@ -96,7 +96,7 @@ Seule globale : la table `MilitaryDrop` (`Core`), dont chaque module est un cham
 | `Guard` | Cadence par joueur et par clé (anti-rafale, mémoire seule). |
 | `Secrets` | Graine et code fixe dans des fichiers du serveur ; nom et accès de la ModData privée. |
 | `Broadcast`, `NumbersStation` | Chaîne militaire dynamique (annonces, MAYDAY, missions) et station de chiffres. |
-| `Flights`, `Crate`, `Decoy`, `Wreck`, `Smoke` | Vols côté serveur, caisse-véhicule et son coffre, leurre à sirène, site de crash, fumée Signal Smoke facultative. |
+| `Flights`, `Crate`, `Decoy`, `Wreck`, `Smoke` | Vols côté serveur, caisse-véhicule et son coffre, leurre à sirène, site de crash, fumée Signal Smoke. |
 | `Requisition`, `LotsFile` | Autorisations et commandes du formulaire ; fichier `requisition.txt` (lecteur de données sans exécution). |
 | `Trust`, `Teams`, `Missions` | Réputation personnelle, équipes (factions vanilla), sources de confiance et missions publiques. |
 | `Post` | Poste de liaison : installation, journal, dépôt de plaques, enregistreur de vol. |
@@ -130,7 +130,7 @@ Migrations présentes : notes collectives de la v1.3 conservées sans transfert 
 ## Intégrations et points d'extension
 
 - **Belt Walkie-Talkie** (`batman_BeltRadio`, requis) : récepteur commun des talkies à la ceinture (`BatmanRadioSupport`), sans copie embarquée (retirée en 2026-10).
-- **Signal Smoke** (`batman_SignalSmoke`, facultatif, détecté par `getActivatedMods`) : fumée verte sur la caisse posée.
+- **Signal Smoke** (`batman_SignalSmoke`, requis depuis le 2026-10-21 : `require=` et objet requis sur Steam) : fumée verte sur la caisse posée. Les gardes de `MilitaryDrop.Smoke` (mod actif par `getActivatedMods`, module chargé) restent : sans lui, aucune fumée et aucune erreur.
 - **HEF – Helicopter Event Framework** (facultatif) : lecture seule de `HTT.Server.state`, départ retardé si un de ses événements est actif près de la cible.
 - **Zombie Virus Vaccine** (`ZVirusVaccine42BETA`, facultatif) : reconnu par le barème Fulton (remède).
 - **Mods de butin** : le contenu des caisses et des lots vient des tables fusionnées ; `MilitaryDrop.Loot.CASES[type].sources` est remplaçable par un mod de compatibilité. Le marqueur `resetedContainers` protège la caisse contre les mods qui re-remplissent les coffres de véhicules.
