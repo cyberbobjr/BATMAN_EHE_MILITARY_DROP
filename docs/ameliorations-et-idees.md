@@ -21,6 +21,7 @@
 - **Risque** : horde plus petite que l'option `MinZombies`/`MaxZombies` sur les zones au bord de l'eau (Riverside, rives de l'Ohio, lacs) et trace Java `NullPointerException` dans `console.txt` à chaque largage concerné, qui brouille le diagnostic. Aucune duplication : la livraison continue.
 - **Correction** : tirer les cases en Lua (case chargée, `not isWaterSquare()`, `isFree(false)`, hors bâtiment) puis appeler `spawnHorde` case par case comme `Missions.spawnOne` (`MilitaryDrop_Missions.lua:944-960`), dans une aide commune (`MilitaryDrop.Horde.spawnAround(x, y, r, n)`) utilisée par le largage, l'épave et le nettoyage. Retirer le `pcall` inutile et corriger son commentaire.
 - **Statut** : confirmé statiquement ; fréquence réelle à vérifier en jeu (largage sur une plage). **Priorité haute, effort S.**
+- **Statut : corrigé (commit 6c62913), à vérifier en jeu** — aide commune `Server.spawnHordeAround` (`MilitaryDrop_Server.lua`) pour le largage et l'épave ; `pcall` de la mission retiré.
 
 ### C02 — Copie de secours de Belt Walkie-Talkie devenue du code mort
 
@@ -37,6 +38,7 @@
 - **Risque** : maintenabilité (un « prototype » qu'on n'ose plus retirer), bruit dans `console.txt` en production, règle du projet sur les textes joueur (libellés hors traduction, même en debug).
 - **Correction** : renommer en `MilitaryDrop_FultonRender*` / module `FultonFlight` (les objets visuels peuvent garder leur nom de script pour ne pas toucher aux sauvegardes : ils ne sont jamais dans un inventaire), déplacer le menu de test dans un fichier `*_Debug.lua` chargé seulement si `isDebugEnabled()`, passer ses libellés en clés `IGUI_` ou en anglais, et conditionner le `print` de phase à `isDebugEnabled()`.
 - **Statut** : confirmé statiquement. **Priorité moyenne, effort S-M.**
+- **Statut : corrigé en partie (commit 498f0d1), à vérifier en jeu** — libellés du menu de test en anglais, `print` de phase seulement en mode debug ; renommage des fichiers « prototype » et menu dans un fichier `*_Debug.lua` restent à faire.
 
 ### C04 — Guide : plafond quotidien de confiance « +8/jour » alors que la valeur par défaut est 10
 
@@ -45,6 +47,7 @@
 - **Risque** : documentation joueur fausse (et descriptions Steam si elles reprennent le tableau : à contrôler dans les 8 `README.steam*`).
 - **Correction** : écrire « plafond réglable (`TrustDailyCap`, 10 par défaut) » dans les deux langues du guide et les descriptions Steam, puis lancer `tools/wiki_sync.py`.
 - **Statut** : confirmé statiquement. **Priorité haute (coût nul), effort XS.**
+- **Statut : corrigé (commit d03ee87), à vérifier en jeu** — guide EN/FR corrigé ; les `README.steam*` ne citent pas ce chiffre ; wiki GitHub à resynchroniser.
 
 ### C05 — Silence après 3 codes faux : clé de personnage, et commentaire qui parle de « nom du joueur »
 
