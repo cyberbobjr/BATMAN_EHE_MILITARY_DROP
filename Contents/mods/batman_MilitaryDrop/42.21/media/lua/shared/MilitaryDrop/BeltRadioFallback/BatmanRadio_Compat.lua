@@ -17,18 +17,38 @@ if beltRadioActive then return end
 -- Adaptation de nos scénarios à BWT, sans modifier ses fichiers ni sa VOIP.
 local Compat = {}
 
+-- Résultat de hasBWT mémorisé : features() est appelé à chaque image.
+-- getActivatedMods() rend toujours la même liste Java
+-- (ZomboidFileSystem.getModIDs, LuaManager.java:6064-6066), fixe pendant une
+-- partie et remplie à nouveau par loadMods, suivi d'un rechargement du Lua qui
+-- vide ce cache. La clé est l'identité de la liste et sa taille ; resetCache
+-- force une nouvelle lecture.
+local cachedMods, cachedSize, cachedResult
+
+function Compat.resetCache()
+    cachedMods, cachedSize, cachedResult = nil, nil, nil
+end
+
 function Compat.hasBWT()
     local mods = getActivatedMods and getActivatedMods()
     if not mods then return false end
-    for i = 0, mods:size() - 1 do
+    local size = mods:size()
+    if cachedMods ~= nil and mods == cachedMods and size == cachedSize then return cachedResult end
+    local found = false
+    for i = 0, size - 1 do
         local id = mods:get(i):gsub("^\\", "")
-        if id == "BetterWalkieTalkies" or id == "BetterWalkieTalkiesDev" then return true end
+        if id == "BetterWalkieTalkies" or id == "BetterWalkieTalkiesDev" then
+            found = true
+            break
+        end
     end
-    return false
+    cachedMods, cachedSize, cachedResult = mods, size, found
+    return found
 end
 
--- Politique commune, réévaluée à l'appel : l'installation ou une globale
--- laissée par un rechargement ne prouvent pas l'activation du mod.
+-- Politique commune, réévaluée à l'appel (liste des mods actifs mémorisée,
+-- voir hasBWT) : l'installation ou une globale laissée par un rechargement ne
+-- prouvent pas l'activation du mod.
 function Compat.features()
     local active = Compat.hasBWT()
     local client, server = isClient(), isServer()

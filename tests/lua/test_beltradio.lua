@@ -315,11 +315,30 @@ function T.window_wrapper_is_installed_once()
 end
 
 function T.window_wrapper_is_put_back_after_a_reload()
+    -- Rechargement de ISRadioWindow.lua : nouvelle classe (ISCollapsableWindow:derive).
     local reloaded = function() return "reloaded" end
-    ISRadioWindow.update = reloaded
+    ISRadioWindow = { update = reloaded }
     MilitaryDrop.BeltRadio.onFillInventoryContextMenu(0, makeContext(), {})
     assertTrue(ISRadioWindow.update ~= reloaded, "enveloppe reposée sur le fichier rechargé")
     assertEq(ISRadioWindow.update(makeWindow(makeRadio())), "reloaded", "nouvel original appelé hors ceinture")
+end
+
+function T.window_wrapper_is_not_stacked_over_another_mod_wrapper()
+    -- Un autre mod enveloppe update après nous et appelle notre enveloppe.
+    local ours = ISRadioWindow.update
+    local foreignCalls = 0
+    local foreign = function(self, ...)
+        foreignCalls = foreignCalls + 1
+        return ours(self, ...)
+    end
+    ISRadioWindow.update = foreign
+    for _ = 1, 3 do
+        MilitaryDrop.BeltRadio.onFillInventoryContextMenu(0, makeContext(), {})
+    end
+    assertEq(ISRadioWindow.update, foreign, "enveloppe étrangère laissée en place")
+    assertEq(ISRadioWindow.update(makeWindow(makeRadio())), "original", "chaîne inchangée")
+    assertEq(foreignCalls, 1, "enveloppe étrangère appelée une fois")
+    assertEq(ORIGINAL_CALLS, 1, "original vanilla appelé une fois")
 end
 
 -- 3. Écoute en solo ----------------------------------------------------------------

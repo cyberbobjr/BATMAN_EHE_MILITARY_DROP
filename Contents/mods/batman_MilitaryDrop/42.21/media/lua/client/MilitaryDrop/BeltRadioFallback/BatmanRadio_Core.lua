@@ -95,7 +95,8 @@ function BeltRadio.onFillInventoryContextMenu(playerNum, context, items)
         local onSelect = BeltRadio.isAttachedOnly(player, item) and ISRadioAndTvMenu.openRadioPanel
         if not onSelect then
             for _, provider in pairs(providers) do
-                if provider.isStowed and provider.isStowed(player, item) then
+                -- Champs facultatifs (api-publique.md) : sans open, pas d'option sans action.
+                if provider.isStowed and provider.open and provider.isStowed(player, item) then
                     onSelect = provider.open
                     break
                 end
@@ -179,14 +180,20 @@ end
 --- pour une radio en main ; dans tous les autres cas, l'original. Si
 --- ISRadioWindow.lua a été rechargé (débogage), l'enveloppe est reposée sur le
 --- nouvel original.
+--- Comparaison par identité de la classe et non de la fonction : un autre mod
+--- qui enveloppe update après nous appelle déjà notre enveloppe ; la
+--- réenvelopper évaluerait keepsWindow deux fois et, avec un mod qui suit la
+--- même règle, allongerait la chaîne à chaque clic droit. Le rechargement de
+--- ISRadioWindow.lua crée une nouvelle table (ISCollapsableWindow:derive).
 function BeltRadio.installWindowWrapper()
     local RadioWindow = ISRadioWindow
     if not RadioWindow or type(RadioWindow.update) ~= "function"
-        or (BeltRadio.windowWrapper and RadioWindow.update == BeltRadio.windowWrapper) then
+        or (BeltRadio.windowWrapper and BeltRadio.wrappedClass == RadioWindow) then
         return false
     end
     local original = RadioWindow.update
     BeltRadio.originalWindowUpdate = original
+    BeltRadio.wrappedClass = RadioWindow
     BeltRadio.windowWrapper = function(self, ...)
         if BeltRadio.keepsWindow(self) then
             ISCollapsableWindow.update(self)
@@ -308,7 +315,8 @@ function BeltRadio.channels()
         for i = 0, channels:size() - 1 do add(channels:get(i)) end
     end
     for _, provider in pairs(providers) do
-        for _, channel in ipairs(provider.channels()) do
+        -- channels est facultatif (fournisseur réduit à recognize ou frequencies).
+        for _, channel in ipairs(provider.channels and provider.channels() or {}) do
             add(channel)
         end
     end
