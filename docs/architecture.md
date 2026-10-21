@@ -66,14 +66,13 @@ Seule globale : la table `MilitaryDrop` (`Core`), dont chaque module est un cham
 | `Core` | Espace de noms, journal `MilitaryDrop.log`, lecture des options (`Config.get`, à chaque appel), détection des changements à chaud (`Config.poll` chaque minute de jeu, `Config.onChange`). |
 | `Net` | Couche réseau : `toServer`, `toPlayer`, `toAll` ; en solo, appel direct du gestionnaire de l'autre côté. |
 | `Codes` | Code d'authentification (deux mots OTAN + deux chiffres), code périodique dérivé de la graine, chiffrement de la station de chiffres (générateur Park-Miller, calcul pur). |
-| `Radio`, `RadioLib` | Reconnaissance des radios militaires (`getIsHighTier`), références de radio échangées avec le serveur ; `RadioLib` choisit le récepteur commun de Belt Walkie-Talkie ou sa copie de secours. |
+| `Radio`, `RadioLib` | Reconnaissance des radios militaires (`getIsHighTier`), références de radio échangées avec le serveur ; `RadioLib` charge le récepteur commun de Belt Walkie-Talkie (prérequis) et vérifie son niveau d'API. |
 | `Exchange` | Échange radio avec la base : prise en main de la radio, action chronométrée `MilitaryDrop.ExchangeAction`, envoi de la commande, réponse traduite côté client (`ExchangeReply`). |
 | `Flight`, `Crash` | Trajectoire de l'hélicoptère (calcul pur partagé serveur/clients) ; décision et géométrie d'un crash Mayday. |
 | `Loot`, `Lots` | Tirage du contenu des caisses dans les tables de butin fusionnées (aucun nom d'objet) ; les 18 lots du formulaire de réquisition. |
 | `Recipe`, `Salvage`, `Memo`, `PrintMedia` | `OnCreate` des recettes (ouverture des caisses, des lots d'épave) et des documents ; mise en page `printMedia`. |
 | `Dismantle`, `SirenAction`, `WreckParts`, `WreckSmoke` | Démontage de la caisse (règles vanilla du bois), action « Couper la sirène », pièces d'épave (enveloppes des actions vanilla de véhicule), fumée locale de l'épave. |
 | `Fulton`, `FultonPrototypeFlight` | Classement et barème du contenu d'un kit Fulton ; trajectoire visuelle du ballon. |
-| `BeltRadioFallback/*` | Copie de secours générée de Belt Walkie-Talkie (`BeltRadio/tools/sync_fallback.py`) : ne fait rien si le mod est actif. Ne pas modifier ici. |
 
 ### `client/`
 
@@ -130,7 +129,7 @@ Migrations présentes : notes collectives de la v1.3 conservées sans transfert 
 
 ## Intégrations et points d'extension
 
-- **Belt Walkie-Talkie** (`batman_BeltRadio`, requis) : récepteur commun des talkies à la ceinture (`BatmanRadioSupport`), avec copie de secours embarquée.
+- **Belt Walkie-Talkie** (`batman_BeltRadio`, requis) : récepteur commun des talkies à la ceinture (`BatmanRadioSupport`), sans copie embarquée (retirée en 2026-10).
 - **Signal Smoke** (`batman_SignalSmoke`, facultatif, détecté par `getActivatedMods`) : fumée verte sur la caisse posée.
 - **HEF – Helicopter Event Framework** (facultatif) : lecture seule de `HTT.Server.state`, départ retardé si un de ses événements est actif près de la cible.
 - **Zombie Virus Vaccine** (`ZVirusVaccine42BETA`, facultatif) : reconnu par le barème Fulton (remède).

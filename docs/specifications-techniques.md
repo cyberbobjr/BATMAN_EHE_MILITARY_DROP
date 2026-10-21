@@ -12,7 +12,7 @@ Contrats précis du mod, relevés dans le code de la version 0.5.4 (2026-10-21).
 | `id` | `batman_MilitaryDrop` (Workshop 3811752923) |
 | `require` | `\batman_BeltRadio` (Belt Walkie-Talkie, Workshop 3817018338), qui exige TooltipLib (3694097672) |
 | Facultatifs détectés | `batman_SignalSmoke` (fumée sur la caisse), HEF (`HTT.Server.state`, lecture seule), `ZVirusVaccine42BETA` (barème Fulton) |
-| Globale Lua | `MilitaryDrop` uniquement (plus `BatmanRadioSupport` et `BatmanBeltRadioBattery` de la copie de secours Belt Walkie-Talkie quand le mod commun manque) |
+| Globale Lua | `MilitaryDrop` uniquement (`BatmanRadioSupport` est lue, fournie par Belt Walkie-Talkie) |
 
 ## Objets et scripts
 

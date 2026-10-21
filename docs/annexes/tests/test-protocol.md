@@ -255,9 +255,8 @@ print(id, MilitaryDrop.Trust.get(id))
 ## Batterie des talkies accrochés — 2026-10-03
 
 Le module `BatmanRadio_BeltBattery.lua` est commun à Artemis et MilitaryDrop.
-Depuis 0.5.0 (RADIO-08), il vient de Belt Walkie-Talkie (`batman_BeltRadio`)
-s'il est activé, sinon de la copie de secours de chaque mod
-(`client/MilitaryDrop/BeltRadioFallback/`, `client/Artemis/BeltRadioFallback/`).
+Il vient de Belt Walkie-Talkie (`batman_BeltRadio`, prérequis) ; les copies de
+secours embarquées par Military Drop et Artemis ont été retirées le 2026-10-21.
 Il appelle `DeviceData.update(false, true)` à l'allumage puis chaque minute de
 jeu pour les radios à pile accrochées, hors main/dos. Le compteur de temps
 vanilla avance avec la consommation : aucun deuxième décompte à la reprise
@@ -286,12 +285,9 @@ API Java simulées ; aucun test en jeu effectué. Redémarrage complet requis.
 
 Depuis 0.5.0 (RADIO-08), la source unique des fonctions de ceinture, batterie et
 compatibilité est le mod Belt Walkie-Talkie (dépôt `BeltRadio`).
-`python ../BeltRadio/tools/sync_fallback.py` génère les copies de secours de
-Military Drop et d'Artemis (chemins propres à chaque mod, garde « mod commun
-activé ») ; `tests/run_tests.py` vérifie leur égalité. Avant 0.5.0 :
-`source/radio/sync_radio.py`, supprimé. Ces copies
-identiques permettent à chaque mod de fonctionner indépendamment, sans ajouter
-une dépendance chargeable ni entretenir deux implémentations. Artemis inscrit
+Belt Walkie-Talkie est un prérequis (`require=`) : Military Drop et Artemis
+n'embarquent plus de copie de secours (retirée le 2026-10-21) et les tests
+radio chargent le vrai récepteur depuis `../BeltRadio`. Artemis inscrit
 sa chaîne par UUID ; MilitaryDrop inscrit ses deux chaînes et son ouverture des
 radios rangées. Un seul menu, wrapper et récepteur solo est installé.
 

@@ -30,6 +30,7 @@
 - **Risque** : maintenabilité (copie générée par `BeltRadio/tools/sync_fallback.py` depuis la version 1.0.0, qui diverge du mod commun), tests à entretenir (`tests/lua/test_beltradio_fallback.lua`), confusion lors d'un diagnostic (deux implémentations du même récepteur dans l'arbre).
 - **Correction** : retirer `BeltRadioFallback/` et son test, simplifier `MilitaryDrop_RadioLib.lua` (plus de choix entre mod commun et copie), garder seulement le contrôle de version d'API (`MilitaryDrop_RadioLib.lua:55`). À ne faire que si le retour à une dépendance facultative est exclu (décision 0.5.0 → 0.5.1 à confirmer par l'utilisateur).
 - **Statut** : confirmé statiquement. **Priorité moyenne, effort S.**
+- **Statut : décidé et fait — corrigé (commit d820c24), à vérifier en jeu** — décision de l'utilisateur du 2026-10-21 : Belt Walkie-Talkie reste prérequis ; `BeltRadioFallback/` et `test_beltradio_fallback.lua` retirés, `RadioLib` charge toujours `BatmanRadio/…` (contrôle de version gardé), tests radio sur le vrai récepteur `../BeltRadio`.
 
 ### C03 — Les vrais vols Fulton passent par des fichiers « prototype » avec menu de debug en français codé en dur
 
