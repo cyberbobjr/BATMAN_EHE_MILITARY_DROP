@@ -100,6 +100,7 @@ La conception et les décisions sont dans [plan.md](plan.md) (v1), [plan-v2.md](
 | TEST-01 | Protocole solo restant : C1, E1, F1, F2, D3, D4 | TEST-PROTOCOL | décidé | — | Partie solo |
 | TEST-02 | Partie avec HEF actif | PLAN phase 7 | décidé | — | Partie solo avec HEF |
 | TEST-03 | Serveur dédié, 2 clients : appel, écoute, reconnexion pendant un vol, commande forgée | PLAN phase 7 | décidé | — | `C:\pzserver` |
+| TEST-04 | Parcours nominal automatisé `pz-autotest` (sp et mp) : code, délai, vol et caisse, contenu, confiance, mission, poste, refus Fulton, vue client | C13 | codé | `autotest.json`, `autotest/md_hooks.lua`, `pz_autotest.py check` et luacheck au vert | Lancer `sp` puis `mp --clients 1 --client-run` ; Fulton complet (kit, hélium, fenêtre) non scripté ; seconde machine cliente (annonce entendue par l'autre) à ajouter |
 | PUB-02 | Poster, aperçu et icône définitifs | PLAN phase 8 | codé | `poster.png`, `preview.png`, `icon.png` (Codex, validés par l'utilisateur) | Vérifier le poster et l'icône dans le sélecteur de mods du jeu |
 | PUB-03 | Suppression de `legacy-b41/` avant la sortie | PLAN phase 8 | décidé | — | — |
 | PUB-04 | Nouvel élément Workshop B42, lien depuis la page B41 | PLAN décisions | publié | Workshop 3811752923 (privé), `c1c8b1b`, `workshop.txt` | Passer en public après TEST-03 ; lien depuis la page B41 |
@@ -229,6 +230,7 @@ Demandes de deux admins de serveurs MP sur Discord (2026-10-04/05). Conception :
 
 ## Journal
 
+- **2026-10-21** — C13 (TEST-04) : support `pz-autotest` du parcours nominal (`autotest.json`, `autotest/md_hooks.lua`, protocole « Autotest » de `test-protocol.md`). Vérifié par `check` et luacheck ; suites `sp`/`mp` non lancées.
 - **2026-10-21** — Corrections de l'analyse `docs/ameliorations-et-idees.md` : C01 (QUAL-06, horde complète près de l'eau, `6c62913`), C04 (QUAL-07, plafond de confiance du guide, `d03ee87`), C03 en partie (QUAL-08, menu de test en anglais et trace de phase en debug, `498f0d1`). C02 (copie de secours de Belt Walkie-Talkie) attend la décision de l'utilisateur. Rien testé en jeu.
 - **2026-10-18** — Signalement d'un joueur (admin sur serveur dédié) : le menu de test « Fulton - prototype visuel » (textes français en dur) apparaissait à chaque clic droit des admins MP. Désormais réservé au mode debug partout, plus le rôle admin en MP (`FultonPrototype.canUse`) ; serveur inchangé (`checkPermissions`). Contrôle MP `check_test_menu_and_commands_are_admin_only` étendu (admin sans debug, non-admin en debug). Version 0.5.4. Rien en jeu.
 - **2026-10-14** — CODE-08 : option `CodePeriod` (semaine, deux semaines ou mois) à la demande d'un joueur ; testée hors jeu. Version 0.5.3.

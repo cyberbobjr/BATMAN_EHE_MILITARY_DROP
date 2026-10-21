@@ -175,6 +175,31 @@ Options par défaut (formulaire actif). Confiance réglable pour les essais : `M
 | K7 | Mettre `enabled = false` sur un lot, ajouter le lot d'exemple de la notice, recharger (`MilitaryDrop.Requisition.reload()` en solo) | Le lot disparaît du formulaire ; le lot ajouté apparaît avec ses textes ; ses caisses portent son nom |
 | K8 | Introduire une erreur de syntaxe, recharger | Journal avec le numéro de ligne ; les 18 lots par défaut restent |
 
+## Autotest — parcours nominal automatisé (pz-autotest, C13 / TEST-04)
+
+Lanceur générique `.claude/tools/pz-autotest` (skill `pz-autotest`) ; configuration `autotest.json`, hooks `autotest/md_hooks.lua`. Mods copiés : TooltipLib (Workshop 3694097672, lu seulement), Belt Walkie-Talkie (`../BeltRadio`), Military Drop. Le monde est une copie : l'original n'est jamais touché.
+
+```powershell
+python .claude/tools/pz-autotest/pz_autotest.py check MilitaryDrop
+python .claude/tools/pz-autotest/pz_autotest.py sp    MilitaryDrop --wait-idle 3600
+python .claude/tools/pz-autotest/pz_autotest.py mp    MilitaryDrop --clients 1 --client-run --wait-idle 3600
+```
+
+Étapes sur l'autorité (solo, ou serveur MP avec le premier joueur connecté), par les points d'entrée du mod :
+
+1. talkie militaire `Base.WalkieTalkie5` en main, allumé, réglé sur `Config.getChannel()` ;
+2. `Server.evaluate` : code faux → `noAnswer`, code juste (`Server.acceptedCodes`) → `accepted` ;
+3. `Server.launchDrop` vers une case de largage proche du joueur (`findLandingNear`, `opts.point` ; le formulaire de réquisition est contourné), puis `evaluate` → `cooldown` ;
+4. vrai vol (`MilitaryDrop_Flights`) jusqu'à `Server.deliver` (`Trust.drop(id).deliveredHours`, délai `-P deliverySec=240`), caisse (véhicule `MilitaryDrop_*`) et caisses de ravitaillement marquées du `dropId` dans le coffre ;
+5. `Trust.onCaseOpened` (appelée par la recette) sur une caisse marquée : issue `recovered`, confiance non abaissée ;
+6. `Missions.adminLaunch` (`control`) : mission ouverte et listée pour le personnage ;
+7. poste de liaison : radio HAM (`IsoRadio`, sprite `appliances_com_01_8` de `HamRadio2`) sur la case du joueur, `Post.install` → propriétaire = équipe du joueur ;
+8. Fulton : `FultonServer.launch` sans kit → refus (`noKit`).
+
+Vue client (solo : même Lua ; MP : client 1 avec `--client-run`, délai `-P clientWaitSec=420`) : commandes `Result` (`accepted`, `requestId` 9001) et `PostResult` (`installed`) reçues, véhicule de la caisse vu près du joueur. Fin : aucune erreur Lua (`getLuaDebuggerErrorCount`).
+
+Hors couverture : lâcher Fulton complet (kit, bouteille d'hélium, fenêtre de mission), annonce entendue par un second client qui n'a pas appelé, ouverture par un autre joueur (confiance `taken`), crash et récupération. État au 2026-10-21 : `check` et luacheck au vert, aucune suite lancée.
+
 ## Plus tard : multijoueur (hébergé, puis serveur dédié `C:\pzserver`)
 
 - Deux joueurs : l'un appelle, l'autre écoute la fréquence (annonce et symbole) sans avoir appelé.

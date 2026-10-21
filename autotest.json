@@ -1,0 +1,48 @@
+// pz-autotest configuration of Military Drop (.claude/tools/pz-autotest/README.md). Nominal path (C13):
+// request checked by the server (code, cooldown), real flight and crate delivery near the player, crate contents,
+// trust on the first supply case opened, admin mission, liaison post, Fulton refusal without a kit.
+//   python .claude/tools/pz-autotest/pz_autotest.py check MilitaryDrop
+//   python .claude/tools/pz-autotest/pz_autotest.py sp    MilitaryDrop --wait-idle 3600
+//   python .claude/tools/pz-autotest/pz_autotest.py mp    MilitaryDrop --clients 1 --client-run --wait-idle 3600
+{
+  "name": "MilitaryDrop",
+  "gameVersion": "42.21",
+  // Load order: TooltipLib (required by BeltRadio, read only from the Steam Workshop folder and copied),
+  // Belt Walkie-Talkie (require= of Military Drop), then the mod.
+  "mods": [
+    {"workshop": "3694097672", "id": "TooltipLib"},
+    {"path": "../BeltRadio/Contents/mods/batman_BeltRadio"},
+    {"path": "Contents/mods/batman_MilitaryDrop"}
+  ],
+  // Client hooks: whole path in solo (authority + client view), client view only in mp (client 1, --client-run).
+  // Server hooks (mp): authority path with the first connected player.
+  "hooks": "autotest/md_hooks.lua",
+  // deliverySec: wait for the helicopter (600 squares at 12 squares/s + hover); clientWaitSec: client 1 in mp.
+  "params": {"deliverySec": "240", "clientWaitSec": "420"},
+  "sp": {
+    "save": "2026-10-17_17-50-04",
+    "gameMode": "Sandbox",
+    "saveMods": "replace",
+    "timeoutSec": 900,
+    "startDelaySec": 5
+  },
+  "server": {
+    "serverName": "pzat_militarydrop",
+    "port": 17401,
+    "timeoutSec": 600,
+    "ini": {"Map": "Muldraugh, KY", "MaxPlayers": 4}
+  },
+  "mp": {
+    "serverName": "pzat_militarydrop_mp",
+    "port": 17411,
+    // Medium house of Muldraugh (media/maps/Muldraugh, KY/spawnpoints.lua): fixed spawn, no spawn choice screen.
+    "spawn": "10656,10137,0",
+    "clients": 1,
+    "clientXmx": "4096m",
+    "serverRun": true,
+    "clientRun": true,
+    "timeoutSec": 1800,
+    "joinTimeoutSec": 600,
+    "ini": {"Map": "Muldraugh, KY", "MaxPlayers": 4}
+  }
+}
