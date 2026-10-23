@@ -146,6 +146,8 @@
     "IGUI_MilitaryDrop_Mission_Control": "Control de radio",
     "IGUI_MilitaryDrop_Broadcast_Recon": "A todas las estaciones, Logística. Reconocimiento en cuadrícula %1 / %2. Gana el primer superviviente que confirme allí en %3 horas. Repito: cuadrícula %1 / %2.",
     "IGUI_MilitaryDrop_Broadcast_Cleanup": "A todas las estaciones, Logística. Horda a %3 casillas de la cuadrícula %1 / %2, unos %4 individuos. Gana el superviviente con más bajas. Plazo: %5 horas.",
+    "IGUI_MilitaryDrop_Broadcast_ReconReminder": "A todas las estaciones, Logística. Recordatorio: orden de reconocimiento aún abierta en cuadrícula %1 / %2, quedan %3 horas. Repito: cuadrícula %1 / %2.",
+    "IGUI_MilitaryDrop_Broadcast_CleanupReminder": "A todas las estaciones, Logística. Recordatorio: orden de limpieza aún abierta, horda a %3 casillas de la cuadrícula %1 / %2, quedan %4 horas.",
     "IGUI_MilitaryDrop_Broadcast_Control": "A todas las estaciones, aquí Logística. Control de radio. Confirmen recepción en esta frecuencia en %1 horas.",
     "IGUI_MilitaryDrop_Broadcast_ReconDone": "A todas las estaciones, reconocimiento de la cuadrícula %1 / %2 confirmado por %3. Orden cerrada.",
     "IGUI_MilitaryDrop_Broadcast_ReconExpired": "A todas las estaciones, orden de reconocimiento de la cuadrícula %1 / %2 cancelada.",

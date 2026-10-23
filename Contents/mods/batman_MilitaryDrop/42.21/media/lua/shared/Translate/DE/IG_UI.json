@@ -146,6 +146,8 @@
     "IGUI_MilitaryDrop_Mission_Control": "Funkprobe",
     "IGUI_MilitaryDrop_Broadcast_Recon": "An alle Stationen, Logistik. Aufklärung bei Raster %1 / %2. Der erste Überlebende, der innerhalb von %3 Stunden vor Ort bestätigt, gewinnt. Wiederhole: Raster %1 / %2.",
     "IGUI_MilitaryDrop_Broadcast_Cleanup": "An alle Stationen, Logistik. Infiziertenhorde im Umkreis von %3 Feldern um Raster %1 / %2, etwa %4 stark. Der Überlebende mit den meisten Abschüssen gewinnt. Frist: %5 Stunden.",
+    "IGUI_MilitaryDrop_Broadcast_ReconReminder": "An alle Stationen, Logistik. Erinnerung: Aufklärungsbefehl für Raster %1 / %2 noch offen, %3 Stunden verbleibend. Wiederhole: Raster %1 / %2.",
+    "IGUI_MilitaryDrop_Broadcast_CleanupReminder": "An alle Stationen, Logistik. Erinnerung: Säuberungsbefehl noch offen, Horde im Umkreis von %3 Feldern um Raster %1 / %2, %4 Stunden verbleibend.",
     "IGUI_MilitaryDrop_Broadcast_Control": "An alle Stationen, hier Logistik. Funkprobe. Empfang auf dieser Frequenz innerhalb von %1 Stunden bestätigen.",
     "IGUI_MilitaryDrop_Broadcast_ReconDone": "An alle Stationen, Aufklärung von Planquadrat %1 / %2 durch %3 bestätigt. Befehl abgeschlossen.",
     "IGUI_MilitaryDrop_Broadcast_ReconExpired": "An alle Stationen, Aufklärungsbefehl für Planquadrat %1 / %2 aufgehoben.",

@@ -28,9 +28,22 @@
 --
 -- Nettoyage (SRC-04) : même principe (CleanupAnnounce, { id, x, y, radius },
 -- MilitaryDrop.Broadcast.cleanupAnnounced), code CLEANUP_CODE, symbole
--- « Skull » rouge au centre de la zone. Le rayon n'est pas dessiné : l'API
--- des symboles n'a ni cercle ni échelle réglable (WorldMapSymbolsV2.java:
--- 62-83, 370-520) ; l'annonce le donne.
+-- « Skull » rouge au centre de la zone. Le rayon n'est pas dessiné (l'annonce
+-- le donne).
+--
+-- Une mission ouverte est rappelée par la base comme un largage (option
+-- DropRepeatHours, Missions.remind) : même annonce, même code. La réponse de
+-- la base à un échange qui cite la grille (reconnaissance trop loin, point du
+-- nettoyage) porte mark = { kind, id, x, y } : la radio du joueur l'a dite,
+-- le repère est posé (Announce.markMission, appelé par Exchange.onReply).
+--
+-- Repères périmés (C10) : le serveur envoie la liste des grilles encore
+-- actives (MarksActive { drops, recon, cleanup }, à l'arrivée et à chaque
+-- changement). Les symboles du mod qui n'y sont plus sont retirés : un
+-- symbole du mod se reconnaît à son identifiant et à sa couleur, sauvegardée
+-- octet par octet (WorldMapBaseSymbol.save/load) ; l'interface vanilla ne
+-- propose aucune de ces couleurs (ISWorldMapSymbols.lua:1098-1103). Les
+-- repères de MAYDAY (secteur d'épave, sans fin définie) restent.
 -- ============================================================================
 
 require "MilitaryDrop/MilitaryDrop_Core"
@@ -58,6 +71,8 @@ Announce.HEARING_DISTANCE = 5
 -- Durée (ms réelles) pendant laquelle une grille annoncée attend d'être
 -- entendue, comptée à l'annonce suivante.
 Announce.PENDING_MS = 5 * 60 * 1000
+-- Écart toléré sur une composante de couleur relue (octet : 1/255).
+Announce.COLOR_TOLERANCE = 0.006
 
 -- Grilles annoncées pas encore entendues : { x, y, at }.
 local pendingDrops = {}
@@ -153,6 +168,91 @@ function Announce.markMap(x, y, symbolId, color)
     symbol:setRGBA(c.r, c.g, c.b, c.a)
     symbol:setAnchor(0.5, 0.5)
     return true
+end
+
+--- Repère d'une mission dont la radio du joueur vient de dire la grille
+--- (réponse de la base) : { kind = "recon" | "cleanup", id, x, y }. Une fois
+--- par mission, comme l'annonce.
+function Announce.markMission(mark)
+    if type(mark) ~= "table" or type(mark.id) ~= "string" or type(mark.x) ~= "number"
+        or type(mark.y) ~= "number" then
+        return false
+    end
+    for _, entry in ipairs(MISSION_MARKS) do
+        if entry.kind == mark.kind then
+            if markedMissions[mark.id] then
+                return false
+            end
+            markedMissions[mark.id] = true
+            local mission = lastMission[mark.kind]
+            if mission and mission.id == mark.id then
+                mission.marked = true
+            end
+            Announce.markMap(mark.x, mark.y, Announce[entry.symbol], Announce[entry.color])
+            MilitaryDrop.log(mark.kind .. " " .. mark.id .. " marked on the map from the base reply")
+            return true
+        end
+    end
+    return false
+end
+
+local function sameColor(symbol, c)
+    local tolerance = Announce.COLOR_TOLERANCE
+    return math.abs(symbol:getRed() - c.r) <= tolerance and math.abs(symbol:getGreen() - c.g) <= tolerance
+        and math.abs(symbol:getBlue() - c.b) <= tolerance
+end
+
+-- Repères retirables : symbole, couleur, champ de MarksActive.
+local REMOVABLE = {
+    { symbol = "SYMBOL", color = "COLOR", field = "drops" },
+    { symbol = "RECON_SYMBOL", color = "RECON_COLOR", field = "recon" },
+    { symbol = "CLEANUP_SYMBOL", color = "CLEANUP_COLOR", field = "cleanup" },
+}
+
+local function activeSet(list)
+    local set = {}
+    for _, grid in ipairs(type(list) == "table" and list or {}) do
+        if type(grid) == "table" and type(grid.x) == "number" and type(grid.y) == "number" then
+            set[math.floor(grid.x) .. "," .. math.floor(grid.y)] = true
+        end
+    end
+    return set
+end
+
+--- Grilles encore actives (MarksActive) : retire les repères du mod qui n'y
+--- sont plus (largage ouvert, vidé ou perdu, mission close). Renvoie le
+--- nombre de symboles retirés.
+function Announce.onActiveMarks(args)
+    if type(args) ~= "table" then
+        return 0
+    end
+    local kinds = {}
+    for _, entry in ipairs(REMOVABLE) do
+        kinds[#kinds + 1] = { symbol = Announce[entry.symbol], color = Announce[entry.color],
+            active = activeSet(args[entry.field]) }
+    end
+    local api = getSymbolsApi()
+    local removed = 0
+    for i = api:getSymbolCount() - 1, 0, -1 do
+        local symbol = api:getSymbolByIndex(i)
+        if symbol:isTexture() then
+            local id = symbol:getSymbolID()
+            for _, kind in ipairs(kinds) do
+                if id == kind.symbol and sameColor(symbol, kind.color) then
+                    local key = math.floor(symbol:getWorldX()) .. "," .. math.floor(symbol:getWorldY())
+                    if not kind.active[key] then
+                        api:removeSymbolByIndex(i)
+                        removed = removed + 1
+                    end
+                    break
+                end
+            end
+        end
+    end
+    if removed > 0 then
+        MilitaryDrop.log("removed " .. removed .. " outdated map marker(s)")
+    end
+    return removed
 end
 
 --- Un joueur local entend l'appareil : radio portée (x = -1), ou posée assez près.

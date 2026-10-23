@@ -70,7 +70,7 @@ Les zombies militaires laissent les plaques d'identité du jeu, gravées au nom 
 
 ## Missions
 
-De temps en temps, la base donne un ordre à **toutes les stations** sur la fréquence militaire. Les missions sont publiques : toutes les stations qui les entendent peuvent les remplir. Seuls les auditeurs reçoivent le repère sur la carte.
+De temps en temps, la base donne un ordre à **toutes les stations** sur la fréquence militaire. Les missions sont publiques : toutes les stations qui les entendent peuvent les remplir. Seuls les auditeurs reçoivent le repère sur la carte. Vous l'avez manqué ? Tant qu'un ordre de reconnaissance ou de nettoyage est ouvert, la base répète sa grille toutes les **6 heures** de jeu par défaut (même option que les rappels des largages), et chaque rappel marque la carte de ceux qui l'entendent.
 
 ![Missions sur la console et annonce en jeu](../../images/screenshots/ingame-console-missions.png)
 
@@ -80,7 +80,7 @@ De temps en temps, la base donne un ordre à **toutes les stations** sur la fré
 
 *« À toutes les stations, ici Logistique. Reconnaissance demandée en grille X / Y. Premier survivant à confirmer sur place dans les 48 heures. »*
 
-Un symbole **œil** bleu marque la grille sur votre carte. Allez-y et appuyez sur **Confirmer la reconnaissance** à **25 cases** au plus du point. Le premier personnage gagne +3.
+Un symbole **œil** bleu marque la grille sur votre carte. Allez-y et appuyez sur **Confirmer la reconnaissance** à **25 cases** au plus du point. Le premier personnage gagne +3. Trop loin, la base vous redonne la grille et le symbole s'ajoute à votre carte.
 
 ### Nettoyage
 
@@ -88,7 +88,7 @@ Un symbole **œil** bleu marque la grille sur votre carte. Allez-y et appuyez su
 
 Un **crâne** rouge marque la zone. La horde apparaît quand le premier joueur approche, hors de sa vue. Vous avez **72 heures** de jeu.
 
-- **Faire le point** demande à la base où en est le nettoyage : zombies de la horde abattus par votre personnage, et nombre restant.
+- **Faire le point** demande à la base où en est le nettoyage : zombies de la horde abattus par votre personnage, et nombre restant. Avant que la horde soit repérée, la base donne la grille et le symbole s'ajoute à votre carte.
 - Quand **90 %** de la horde est mort, le personnage qui en a abattu le plus gagne +5. Le feu et les pièges tuent, mais ne créditent personne.
 
 

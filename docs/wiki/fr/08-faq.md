@@ -20,6 +20,9 @@ Seules les radios militaires ont cette section (talkie-walkie, poste radio nomad
 **J'ai manqué l'annonce. Où est la caisse ?**
 Le repère n'apparaît que sur la carte des joueurs dont la radio était **allumée et réglée sur la fréquence militaire** à ce moment. C'est le piège le plus courant : enregistrez la fréquence avec **Ajouter un préréglage** et gardez une radio allumée. Restez à l'écoute : la base répète la grille toutes les 6 heures par défaut, jusqu'à ce qu'une caisse de ravitaillement soit ouverte (48 heures au plus). Si vous l'avez manquée, demandez à quelqu'un qui écoutait, ou lisez le journal de votre [poste de liaison](05-liaison-post.md) s'il était allumé.
 
+**Il n'y a pas de symbole de reconnaissance ou de nettoyage sur ma carte.**
+Même règle que pour les largages : le symbole n'apparaît que si votre radio entend l'annonce. Les ordres ouverts sont répétés toutes les 6 heures par défaut, et **Confirmer la reconnaissance** trop loin (ou **Faire le point** avant que la horde soit repérée) vous donne aussi la grille et le symbole.
+
 **Je suis à la grille, mais il n'y a pas de caisse.**
 La caisse est posée quand quelqu'un arrive et que la zone est chargée, jusqu'à 30 cases du point annoncé. Cherchez autour.
 

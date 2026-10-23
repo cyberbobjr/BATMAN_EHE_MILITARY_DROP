@@ -90,7 +90,7 @@
 - **Preuves** : `client/MilitaryDrop/MilitaryDrop_Announce.lua:28-33` ; base `world-map.md`, « Tracer une zone (cercle) à l'échelle du monde avec un symbole » (2026-10-11, `WorldMapBaseSymbol.java:43, 210-219`, `MapSymbolDefinitions.addTexture`).
 - **Risque** : aucun bug ; une amélioration joueur ratée (voir I07).
 - **Correction** : corriger le commentaire ; implémentation éventuelle dans I07.
-- **Statut** : confirmé statiquement (non testé en jeu dans la base). **Priorité basse, effort XS.**
+- **Statut** : commentaire corrigé le 2026-10-23 (avec QUAL-09) ; tracé du rayon non fait (I07).
 
 ### C10 — Repères de carte jamais retirés
 
@@ -98,7 +98,7 @@
 - **Preuves** : `client/MilitaryDrop/MilitaryDrop_Announce.lua:10-12` (« sauvegardé comme une note du joueur, qui peut l'effacer »), `:151` (`addTexture`), aucun `removeSymbol` dans le fichier.
 - **Risque** : confort de jeu ; confusion entre grilles anciennes et nouvelles.
 - **Correction** : signer les symboles du mod par un alpha choisi (par exemple 0,8) et une couleur précise, puis retirer à la réception d'un message de clôture (`DropClosed { x, y }`, `MissionClosed { id }`) ou à l'expiration locale ; méthode décrite dans `world-map.md` (même entrée que C09, `removeSymbolByIndex` en indices décroissants). Option joueur (`PZAPI.ModOptions`) pour garder l'historique.
-- **Statut** : confirmé statiquement. **Priorité moyenne, effort S.**
+- **Statut** : corrigé le 2026-10-23 (QUAL-09) : le serveur envoie les grilles encore actives (`MarksActive`, `Missions.sendMarks`) à l'arrivée et à chaque changement ; le client retire les symboles du mod (identifiant + couleur, vanilla et anciens repères compris) qui n'y sont plus. Pas d'option d'historique ; repères de MAYDAY laissés. Non testé en jeu.
 
 ### C11 — Coordonnées exactes envoyées à tous les clients avant le filtrage par la radio
 

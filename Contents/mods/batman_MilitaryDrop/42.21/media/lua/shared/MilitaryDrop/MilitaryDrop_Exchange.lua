@@ -526,6 +526,12 @@ function Exchange.onReply(args)
             later(delay, function() radioSay(request, text) end)
         end
     end
+    -- Grille d'une mission dite par la base (reconnaissance trop loin, point
+    -- du nettoyage) : repère posé quand la radio la dit (MilitaryDrop_Announce.lua).
+    if type(args.mark) == "table" and count > 0 and MilitaryDrop.Announce then
+        local mark = args.mark
+        later(Exchange.REPLY_DELAY_MS, function() MilitaryDrop.Announce.markMission(mark) end)
+    end
     if count == 0 then
         local status = args.status
         local key = Exchange.STATUS_TEXTS[status] or "IGUI_MilitaryDrop_CannotCall"

@@ -9,7 +9,7 @@
     "Sandbox_MilitaryDrop_DropMaxDistance": "Distance maximale du largage",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "Distance maximale en cases entre le joueur qui appelle et le point de largage.",
     "Sandbox_MilitaryDrop_DropRepeatHours": "Rappel de la grille toutes les (heures)",
-    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Heures de jeu entre deux rappels, sur la fréquence militaire, de la grille d'un largage dont aucune caisse de ravitaillement n'a été ouverte. Les rappels cessent quand une caisse est ouverte, ou après les heures pour récupérer un largage. 0 = aucun rappel.",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Heures de jeu entre deux rappels, sur la fréquence militaire, de la grille d'un largage dont aucune caisse de ravitaillement n'a été ouverte, et de celle d'un ordre de reconnaissance ou de nettoyage ouvert. Les rappels d'un largage cessent quand une caisse est ouverte, ou après les heures pour récupérer un largage ; ceux d'une mission, à la clôture de l'ordre. 0 = aucun rappel.",
     "Sandbox_MilitaryDrop_DropPlacement": "Placement des largages",
     "Sandbox_MilitaryDrop_DropPlacement_tooltip": "Près du demandeur : un point tiré entre les distances minimale et maximale. Zones de largage : dans une zone tracée par l'admin (Zomboid/Lua/MilitaryDrop/dropzones.txt, ou l'outil d'admin) ; sans zone utilisable, une ville vanilla, sinon près du demandeur. Zones si l'une est proche : une zone plus proche que la portée des zones ci-dessous, sinon près du demandeur.",
     "Sandbox_MilitaryDrop_DropPlacement_option1": "Près du demandeur",

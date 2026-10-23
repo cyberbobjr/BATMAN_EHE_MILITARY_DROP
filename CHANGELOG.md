@@ -3,6 +3,17 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## Unreleased
+
+### Added
+
+- Missed a recon or clearance order? While it is open, the base repeats its grid on the military frequency (every 6 hours by default, same option as the drop reminders), and the reminder marks the map of players who hear it.
+- When the base gives you a mission grid in a reply (Confirm the recon too far away, Clearance status before the horde is spotted), the symbol is added to your map.
+
+### Changed
+
+- Map symbols placed by the base are now removed once they are no longer useful: a drop symbol when a supply case has been opened or emptied, or the drop is lost; a mission symbol when the order closes (also on reconnection). MAYDAY symbols and your own map notes are left alone.
+
 ## 0.6.0 — 2026-10-21
 
 ### Changed

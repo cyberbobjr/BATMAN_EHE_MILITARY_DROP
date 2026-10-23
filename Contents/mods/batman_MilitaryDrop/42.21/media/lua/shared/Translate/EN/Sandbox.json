@@ -9,7 +9,7 @@
     "Sandbox_MilitaryDrop_DropMaxDistance": "Maximum drop distance",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "Maximum distance in tiles between the player who calls and the drop point.",
     "Sandbox_MilitaryDrop_DropRepeatHours": "Grid reminder every (hours)",
-    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "In-game hours between two reminders, on the military frequency, of the grid of a drop whose supply cases are all still unopened. Reminders stop when a case is opened, or after the hours to recover a drop. 0 = no reminder.",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "In-game hours between two reminders, on the military frequency, of the grid of a drop whose supply cases are all still unopened, and of an open reconnaissance or clearance order. Drop reminders stop when a case is opened, or after the hours to recover a drop; mission reminders stop when the order closes. 0 = no reminder.",
     "Sandbox_MilitaryDrop_DropPlacement": "Drop placement",
     "Sandbox_MilitaryDrop_DropPlacement_tooltip": "Near the caller: a random point between the minimum and maximum drop distances. Drop zones: inside a zone drawn by the admin (Zomboid/Lua/MilitaryDrop/dropzones.txt, or the admin tool); without any usable zone, a vanilla town, else near the caller. Zones if one is near: a zone closer than the zone range below, else near the caller.",
     "Sandbox_MilitaryDrop_DropPlacement_option1": "Near the caller",

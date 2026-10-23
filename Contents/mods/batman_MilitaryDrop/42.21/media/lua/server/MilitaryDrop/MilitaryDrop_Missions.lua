@@ -38,6 +38,13 @@
 --     « Faire le point » (Missions.cleanupStatus) : réponse privée, sans gain ;
 --   * SRC-05 appel de contrôle : chaque personnage qui confirme la réception avant
 --     ControlHours gagne +ControlGain, une fois.
+-- Rappel (Missions.remind) : une reconnaissance ou un nettoyage ouvert est
+-- rappelé sur la chaîne militaire toutes les DropRepeatHours heures (comme la
+-- grille d'un largage), avec le code du repère de carte. Les réponses privées
+-- qui citent la grille portent mark = { kind, id, x, y } (repère du client).
+-- Repères actifs (Missions.sendMarks, C10) : grilles des largages encore
+-- rappelés et des missions ouvertes, envoyées à l'arrivée d'un joueur et à
+-- chaque changement ; le client retire les repères du mod qui n'y sont plus.
 -- Planification : une mission de chaque type au plus ; la suivante est tirée
 -- <type>IntervalHours (±25 %) après la clôture de la précédente, si la chaîne
 -- militaire existe et qu'un joueur est connecté. Lancements et clôtures sont
@@ -511,6 +518,7 @@ local function close(kind, now, outcome, characterId, text)
     if text then
         Missions.announce(text, 1)
     end
+    Missions.sendMarks()
 end
 
 --- Joueurs vivants connectés (serveur MP) ou locaux (solo).
@@ -758,6 +766,7 @@ function Missions.launch(kind, now)
         end
     end
     mission.text = launchText(mission)
+    mission.repeats = 0
     s.open[kind] = mission
     s.nextHours[kind] = nil
     -- Reconnaissance et nettoyage : coordonnées envoyées avant l'annonce ;
@@ -810,9 +819,101 @@ function Missions.update(now)
             end
         end
     end
+    Missions.remind(now)
     -- Horde pas encore apparue alors que le centre est chargé (chunk chargé
     -- avant l'ouverture, ou aucune case libre au premier essai).
     Missions.trySpawnHorde(now)
+    Missions.sendMarks()
+end
+
+--- Rappel des missions ouvertes à grille (reconnaissance, nettoyage) toutes
+--- les DropRepeatHours heures depuis l'ouverture (0 = aucun) : coordonnées aux
+--- clients puis annonce codée, comme au lancement. Rappels manqués (serveur
+--- arrêté) : un seul, pas de rattrapage. Renvoie le nombre de rappels.
+function Missions.remind(now)
+    now = now or hoursNow()
+    local every = math.floor(tonumber(Config.get("DropRepeatHours")) or 0)
+    if every <= 0 then
+        return 0
+    end
+    local Broadcast = MilitaryDrop.Broadcast
+    local count = 0
+    for _, kind in ipairs({ "recon", "cleanup" }) do
+        local mission = Missions.openMission(kind, now)
+        local due = mission and math.floor((now - mission.openedHours) / every) or 0
+        if mission and mission.x and due > (tonumber(mission.repeats) or 0) then
+            mission.repeats = due
+            local hours = whole(math.max(1, mission.deadline - now))
+            local code, text
+            if kind == "recon" then
+                code = Broadcast.reconAnnounced and Broadcast.reconAnnounced(mission.id, mission.x, mission.y)
+                text = getText("IGUI_MilitaryDrop_Broadcast_ReconReminder", tostring(mission.x),
+                    tostring(mission.y), hours)
+            else
+                code = Broadcast.cleanupAnnounced
+                    and Broadcast.cleanupAnnounced(mission.id, mission.x, mission.y, mission.radius)
+                text = getText("IGUI_MilitaryDrop_Broadcast_CleanupReminder", tostring(mission.x),
+                    tostring(mission.y), tostring(mission.radius), hours)
+            end
+            Missions.announce(text, Missions.ANNOUNCE_REPEATS, code)
+            MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") reminder " .. due)
+            count = count + 1
+        end
+    end
+    return count
+end
+
+--- Grilles encore actives, pour le retrait des repères périmés du client :
+--- { drops = { { x, y } }, recon = { { x, y } }, cleanup = { { x, y } } }.
+--- Largages : annoncés, ni clos ni vidés (Trust.announcedDrops), dans la
+--- fenêtre de récupération (TrustDropLostHours), comme les rappels.
+function Missions.activeMarks(now)
+    now = now or hoursNow()
+    local marks = { drops = {}, recon = {}, cleanup = {} }
+    local window = math.max(1, tonumber(Config.get("TrustDropLostHours")) or 48)
+    for _, entry in ipairs(MilitaryDrop.Trust.announcedDrops()) do
+        local drop = entry.drop
+        if type(drop.x) == "number" and type(drop.y) == "number" and now - drop.announcedHours < window then
+            marks.drops[#marks.drops + 1] = { x = drop.x, y = drop.y }
+        end
+    end
+    for _, kind in ipairs({ "recon", "cleanup" }) do
+        local mission = Missions.openMission(kind, now)
+        if mission and mission.x then
+            marks[kind][1] = { x = mission.x, y = mission.y }
+        end
+    end
+    return marks
+end
+
+local lastMarksKey = nil
+
+local function marksKey(marks)
+    local parts = {}
+    for _, field in ipairs({ "drops", "recon", "cleanup" }) do
+        parts[#parts + 1] = field
+        for _, grid in ipairs(marks[field]) do
+            parts[#parts + 1] = grid.x .. "," .. grid.y
+        end
+    end
+    return table.concat(parts, ";")
+end
+
+--- Grilles actives à un joueur (arrivée), ou à tous si elles ont changé
+--- depuis le dernier envoi (MarksActive). Renvoie true si un envoi est parti.
+function Missions.sendMarks(player)
+    local marks = Missions.activeMarks()
+    if player then
+        MilitaryDrop.Net.toPlayer(player, "MarksActive", marks)
+        return true
+    end
+    local key = marksKey(marks)
+    if key == lastMarksKey then
+        return false
+    end
+    lastMarksKey = key
+    MilitaryDrop.Net.toAll("MarksActive", marks)
+    return true
 end
 
 -- SRC-03 : reconnaissance
@@ -831,7 +932,7 @@ function Missions.confirmRecon(player, args)
     local dy = player:getY() - (mission.y + 0.5)
     if dx * dx + dy * dy > mission.radius * mission.radius then
         reply(ctx, "tooFar", { Exchange.line("IGUI_MilitaryDrop_Reply_ReconFar", ctx.callsign, tostring(mission.x),
-            tostring(mission.y)) })
+            tostring(mission.y)) }, { mark = { kind = "recon", id = mission.id, x = mission.x, y = mission.y } })
         return
     end
     MilitaryDrop.Trust.add(ctx.characterId, Exchange.gain("recon"), "recon", ctx.opts)
@@ -887,6 +988,7 @@ end
 --- Arrivée d'un joueur (commande Sync du client).
 function Missions.sync(player)
     Missions.sendCleanupState(player)
+    Missions.sendMarks(player)
 end
 
 --- Cases d'apparition de la horde : tirées dans le disque de la zone, chargées,
@@ -1094,7 +1196,8 @@ function Missions.cleanupStatus(player, args)
     end
     if type(mission.horde) ~= "table" then
         reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_CleanupPending", ctx.callsign, tostring(mission.x),
-            tostring(mission.y), tostring(mission.radius)) })
+            tostring(mission.y), tostring(mission.radius)) },
+            { mark = { kind = "cleanup", id = mission.id, x = mission.x, y = mission.y } })
         return
     end
     local mine = tonumber(mission.counts and mission.counts[ctx.characterId]) or 0

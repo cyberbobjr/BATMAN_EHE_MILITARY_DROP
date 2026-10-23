@@ -9,7 +9,7 @@
     "Sandbox_MilitaryDrop_DropMaxDistance": "Maximale Abwurfentfernung",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "Maximale Entfernung in Kacheln zwischen dem rufenden Spieler und dem Abwurfpunkt.",
     "Sandbox_MilitaryDrop_DropRepeatHours": "Planquadrat-Erinnerung alle (Stunden)",
-    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Spielstunden zwischen zwei Erinnerungen auf der Militärfrequenz an das Planquadrat eines Abwurfs, dessen Versorgungskoffer noch alle ungeöffnet sind. Die Erinnerungen enden, sobald ein Koffer geöffnet wird, oder nach den Stunden zum Bergen eines Abwurfs. 0 = keine Erinnerung.",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Spielstunden zwischen zwei Erinnerungen auf der Militärfrequenz an das Planquadrat eines Abwurfs, dessen Versorgungskoffer noch alle ungeöffnet sind, und eines offenen Aufklärungs- oder Säuberungsbefehls. Die Erinnerungen an einen Abwurf enden, sobald ein Koffer geöffnet wird, oder nach den Stunden zum Bergen eines Abwurfs; die an einen Befehl, wenn er abgeschlossen ist. 0 = keine Erinnerung.",
     "Sandbox_MilitaryDrop_DropPlacement": "Abwurfplatzierung",
     "Sandbox_MilitaryDrop_DropPlacement_tooltip": "Nahe dem rufenden Spieler: ein zufälliger Punkt zwischen minimaler und maximaler Abwurfentfernung. Abwurfzonen: innerhalb einer vom Admin gezeichneten Zone (Zomboid/Lua/MilitaryDrop/dropzones.txt oder das Admin-Werkzeug); ohne nutzbare Zone eine Vanilla-Stadt, sonst nahe dem rufenden Spieler. Zonen, wenn eine nah ist: eine Zone, die näher liegt als die Reichweite der Abwurfzonen unten, sonst nahe dem rufenden Spieler.",
     "Sandbox_MilitaryDrop_DropPlacement_option1": "Nahe dem rufenden Spieler",

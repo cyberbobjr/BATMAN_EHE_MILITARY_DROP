@@ -303,6 +303,28 @@ function T.send_carries_the_radio_reference_and_shows_the_base_lines()
     assertEq(#shown, 2, "réponse déjà traitée : ignorée")
 end
 
+function T.reply_with_a_mission_grid_marks_the_map()
+    isClient = function() return true end
+    MilitaryDrop.Client = { later = function(_, fn) fn() end, radioSay = function() end }
+    local marks = {}
+    MilitaryDrop.Announce = { markMission = function(mark) marks[#marks + 1] = mark end }
+    local radio = makeRadio()
+    local player = makePlayer(radio)
+    getSpecificPlayer = function() return player end
+    Exchange.send(player, radio, "MissionRecon", {}, nil)
+    QUEUE[1]:perform()
+    Exchange.onReply({ exchangeId = SENT[1].args.exchangeId, status = "tooFar", lines = { { text = "grid" } },
+        mark = { kind = "recon", id = "M3", x = 300, y = 400 } })
+    assertEq(#marks, 1, "repère posé avec la réponse")
+    assertEq(marks[1].id .. "@" .. marks[1].x, "M3@300", "grille de la mission")
+    Exchange.send(player, radio, "MissionRecon", {}, nil)
+    QUEUE[#QUEUE]:perform()
+    Exchange.onReply({ exchangeId = SENT[#SENT].args.exchangeId, status = "busy",
+        mark = { kind = "recon", id = "M3", x = 300, y = 400 } })
+    assertEq(#marks, 1, "aucune ligne de la base : pas de repère")
+    MilitaryDrop.Announce = nil
+end
+
 function T.fulton_reply_keeps_the_window_for_the_local_player()
     isClient = function() return true end
     HOURS = 500

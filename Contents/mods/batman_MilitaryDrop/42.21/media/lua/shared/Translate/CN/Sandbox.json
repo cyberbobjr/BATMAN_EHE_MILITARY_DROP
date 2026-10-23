@@ -9,7 +9,7 @@
     "Sandbox_MilitaryDrop_DropMaxDistance": "最大空投距离",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "呼叫的玩家与空投点之间的最大距离（格）。",
     "Sandbox_MilitaryDrop_DropRepeatHours": "坐标提醒间隔（小时）",
-    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "在军用频率上两次提醒空投坐标之间的游戏内小时数，仅针对补给箱一个都还没被打开的空投。打开一个补给箱后，或超过回收空投时限后，提醒停止。0 = 不提醒。",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "在军用频率上两次提醒之间的游戏内小时数：提醒补给箱一个都还没被打开的空投坐标，以及仍然有效的侦察或清剿命令坐标。打开一个补给箱后，或超过回收空投时限后，空投提醒停止；命令结束时，任务提醒停止。0 = 不提醒。",
     "Sandbox_MilitaryDrop_DropPlacement": "空投位置",
     "Sandbox_MilitaryDrop_DropPlacement_tooltip": "呼叫者附近：在最小与最大空投距离之间随机选一个点。空投区：在管理员绘制的区域内（Zomboid/Lua/MilitaryDrop/dropzones.txt，或管理员工具）；没有可用区域时，选一座原版城镇，否则在呼叫者附近。附近有空投区时使用：选用比下方空投区范围更近的区域，否则在呼叫者附近。",
     "Sandbox_MilitaryDrop_DropPlacement_option1": "呼叫者附近",

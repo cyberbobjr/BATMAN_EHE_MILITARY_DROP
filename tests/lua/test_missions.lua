@@ -701,6 +701,139 @@ function T.recon_announce_carries_the_map_marker_code()
     assertEq(AIRED[#AIRED][1][2], nil, "autres missions sans repère")
 end
 
+--- Commandes envoyées à tous (sendServerCommand sans joueur) de ce nom.
+local function sentToAll(command)
+    local found = {}
+    for _, entry in ipairs(SENT) do
+        if entry.all and entry.command == command then
+            found[#found + 1] = entry.args
+        end
+    end
+    return found
+end
+
+local function lastSentArgs(player, command)
+    for i = #SENT, 1, -1 do
+        if SENT[i].player == player and SENT[i].command == command then
+            return SENT[i].args
+        end
+    end
+    return nil
+end
+
+--- Seules ces sources restent actives (pas de lancement planifié des autres).
+local function onlySources(...)
+    SandboxVars.MilitaryDrop.ReconGain, SandboxVars.MilitaryDrop.CleanupGain = 0, 0
+    SandboxVars.MilitaryDrop.ControlGain = 0
+    for _, kind in ipairs({ ... }) do
+        SandboxVars.MilitaryDrop[string.upper(string.sub(kind, 1, 1)) .. string.sub(kind, 2) .. "Gain"] = 3
+    end
+end
+
+function T.open_recon_is_reminded_with_the_map_marker_code()
+    onlySources("recon")
+    makePlayer("alice")
+    local announced = {}
+    MilitaryDrop.Broadcast.reconAnnounced = function(id, x, y)
+        announced[#announced + 1] = id .. "@" .. x .. "," .. y
+        return "MDRC"
+    end
+    local mission = Missions.launch("recon")
+    local aired = #AIRED
+    wait(5)
+    Missions.update()
+    assertEq(#AIRED, aired, "pas de rappel avant DropRepeatHours (6 h)")
+    wait(1)
+    Missions.update()
+    assertEq(#AIRED, aired + 1, "rappel à 6 h")
+    local lines = AIRED[#AIRED]
+    assertTrue(string.find(lines[1][1], "IGUI_MilitaryDrop_Broadcast_ReconReminder|300|400|42", 1, true) == 1,
+        "grille et heures restantes : " .. lines[1][1])
+    assertEq(lines[1][2], "MDRC", "ligne codée : repère de carte")
+    assertEq(lines[2][2], "MDRC", "répétée")
+    assertEq(announced[#announced], mission.id .. "@300,400", "grille renvoyée aux clients avant l'annonce")
+    Missions.update()
+    assertEq(#AIRED, aired + 1, "un rappel par période")
+    wait(30)
+    Missions.update()
+    assertEq(#AIRED, aired + 2, "rappels manqués : un seul")
+    SandboxVars.MilitaryDrop.DropRepeatHours = 0
+    wait(6)
+    Missions.update()
+    assertEq(#AIRED, aired + 2, "option à 0 : aucun rappel")
+    MilitaryDrop.Broadcast.reconAnnounced = nil
+end
+
+function T.open_cleanup_is_reminded_and_control_is_not()
+    onlySources("cleanup", "control")
+    makePlayer("alice")
+    MilitaryDrop.Broadcast.cleanupAnnounced = function() return "MDCU" end
+    Missions.launch("cleanup")
+    Missions.launch("control")
+    local aired = #AIRED
+    wait(6)
+    Missions.update()
+    local reminders = {}
+    for i = aired + 1, #AIRED do
+        if string.find(AIRED[i][1][1], "Reminder", 1, true) then
+            reminders[#reminders + 1] = AIRED[i]
+        end
+    end
+    assertEq(#reminders, 1, "un seul rappel : le nettoyage (l'appel de contrôle n'a pas de grille)")
+    assertTrue(string.find(reminders[1][1][1], "IGUI_MilitaryDrop_Broadcast_CleanupReminder|300|400|40|", 1, true)
+        == 1, "grille et rayon : " .. reminders[1][1][1])
+    assertEq(reminders[1][1][2], "MDCU", "code du nettoyage")
+    MilitaryDrop.Broadcast.cleanupAnnounced = nil
+end
+
+function T.base_replies_that_give_the_grid_carry_the_map_mark()
+    local alice = makePlayer("alice", 0, 0)
+    local recon = Missions.launch("recon")
+    call("MissionRecon", alice)
+    local args = lastSentArgs(alice, "ExchangeReply")
+    assertEq(args.status, "tooFar", "trop loin")
+    assertEq(args.mark.kind .. ":" .. args.mark.id .. "@" .. args.mark.x .. "," .. args.mark.y,
+        "recon:" .. recon.id .. "@300,400", "repère de la reconnaissance")
+    local cleanup = Missions.launch("cleanup")
+    call("MissionCleanupStatus", alice)
+    args = lastSentArgs(alice, "ExchangeReply")
+    assertEq(args.mark.kind .. ":" .. args.mark.id, "cleanup:" .. cleanup.id, "repère du nettoyage")
+    alice.x, alice.y = 300, 400
+    wait(1)
+    call("MissionRecon", alice)
+    assertEq(lastSentArgs(alice, "ExchangeReply").mark, nil, "confirmée : pas de repère")
+end
+
+function T.active_marks_follow_drops_and_missions()
+    onlySources("recon")
+    makePlayer("alice")
+    local bob = makePlayer("bob")
+    local dropId = Trust.registerDrop("C:alice", "alice", false, {})
+    Trust.onDropAnnounced(dropId, 500, 600)
+    local closed = Trust.registerDrop("C:alice", "alice", false, {})
+    Trust.onDropAnnounced(closed, 700, 800)
+    Trust.markCollected(closed)
+    Missions.launch("recon")
+    Missions.update()
+    local sent = sentToAll("MarksActive")
+    local marks = sent[#sent]
+    assertEq(#marks.drops, 1, "largage vidé exclu")
+    assertEq(marks.drops[1].x .. "," .. marks.drops[1].y, "500,600", "largage en attente")
+    assertEq(marks.recon[1].x .. "," .. marks.recon[1].y, "300,400", "reconnaissance ouverte")
+    assertEq(#marks.cleanup, 0, "aucun nettoyage")
+    local count = #sent
+    Missions.update()
+    assertEq(#sentToAll("MarksActive"), count, "rien de changé : pas d'envoi")
+    Missions.sync(bob)
+    assertEq(#lastSentArgs(bob, "MarksActive").recon, 1, "liste envoyée à l'arrivée")
+    wait(48)
+    Missions.update()
+    sent = sentToAll("MarksActive")
+    assertEq(#sent, count + 1, "clôture : nouvelle liste")
+    assertEq(#sent[#sent].recon, 0, "reconnaissance close retirée")
+    assertEq(#sent[#sent].drops, 0, "largage hors de la fenêtre de récupération")
+end
+
 function T.no_mission_without_players_channel_or_gain()
     assertEq(Missions.launch("control"), nil, "aucun joueur connecté")
     makePlayer("alice")

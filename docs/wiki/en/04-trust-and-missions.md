@@ -70,7 +70,7 @@ Military zombies drop the game's own dog tags, engraved with the soldier's name.
 
 ## Missions
 
-From time to time, the base gives an order to **all stations** on the military frequency. Missions are public: every station that hears them can compete. Only listeners get the map marker.
+From time to time, the base gives an order to **all stations** on the military frequency. Missions are public: every station that hears them can compete. Only listeners get the map marker. Missed it? While a recon or clearance order is open, the base repeats its grid every **6 hours** of game time by default (same option as the drop reminders), and each reminder marks the map of those who hear it.
 
 ![Missions on the console and the announcement in game](../../images/screenshots/ingame-console-missions.png)
 
@@ -78,7 +78,7 @@ From time to time, the base gives an order to **all stations** on the military f
 
 *"All stations, Logistics. Recon required at grid X / Y. First survivor to confirm on site within 48 hours."*
 
-A blue **eye** symbol marks the grid on your map. Go there and press **Confirm the recon** within **25 tiles** of the point. The first character gets +3.
+A blue **eye** symbol marks the grid on your map. Go there and press **Confirm the recon** within **25 tiles** of the point. The first character gets +3. Pressed too far away, the base gives you the grid again and the symbol is added to your map.
 
 ### Clearance
 
@@ -86,7 +86,7 @@ A blue **eye** symbol marks the grid on your map. Go there and press **Confirm t
 
 A red **skull** marks the zone. The horde appears when the first player comes near, out of sight. You have **72 hours** of game time.
 
-- **Clearance status** asks the base how it is going: zombies of the horde brought down by your character, and how many are left.
+- **Clearance status** asks the base how it is going: zombies of the horde brought down by your character, and how many are left. Before the horde is spotted, the base gives the grid and the symbol is added to your map.
 - When **90%** of the horde is dead, the character that killed the most gets +5. Fire and traps kill zombies but credit nobody.
 
 

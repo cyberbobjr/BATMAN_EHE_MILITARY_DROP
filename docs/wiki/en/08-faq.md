@@ -20,6 +20,9 @@ Only military radios have the section (US Army Walkie Talkie, Manpack Radio, Ham
 **I missed the announcement. Where is the crate?**
 The marker appears only on the maps of players whose radio was **on and tuned to the military frequency** at that moment. It is the most common trap: save the frequency with **Add preset** and keep a radio on. Keep listening: the base repeats the grid every 6 hours by default, until someone opens a supply case (48 hours at most). If you missed it, ask someone who was listening, or read the log of your [liaison post](05-liaison-post.md) if it was on.
 
+**There is no recon or clearance symbol on my map.**
+Same rule as the drops: the symbol appears only if your radio hears the announcement. Open orders are repeated every 6 hours by default, and pressing **Confirm the recon** too far away (or **Clearance status** before the horde is spotted) also gives you the grid and the symbol.
+
 **I reached the grid but there is no crate.**
 The crate is placed when someone arrives and the area is loaded, up to 30 tiles from the announced point. Look around.
 

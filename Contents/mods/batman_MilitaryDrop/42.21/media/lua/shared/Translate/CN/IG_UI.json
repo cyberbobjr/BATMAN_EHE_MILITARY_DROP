@@ -146,6 +146,8 @@
     "IGUI_MilitaryDrop_Mission_Control": "通信检查",
     "IGUI_MilitaryDrop_Broadcast_Recon": "各站注意，这里是后勤。需要侦察坐标%1 / %2。在%3小时内首先到场确认的幸存者获胜。重复：坐标%1 / %2。",
     "IGUI_MilitaryDrop_Broadcast_Cleanup": "各站注意，这里是后勤。坐标%1 / %2周围%3格内发现约%4个感染者。击杀最多的幸存者获胜。时限%5小时。",
+    "IGUI_MilitaryDrop_Broadcast_ReconReminder": "各站注意，这里是后勤。提醒：坐标%1 / %2的侦察命令仍然有效，剩余%3小时。重复：坐标%1 / %2。",
+    "IGUI_MilitaryDrop_Broadcast_CleanupReminder": "各站注意，这里是后勤。提醒：清剿命令仍然有效，僵尸群位于坐标%1 / %2周围%3格内，剩余%4小时。",
     "IGUI_MilitaryDrop_Broadcast_Control": "各台注意，这里是后勤处。通信检查。请在 %1 小时内于本频率确认收到。",
     "IGUI_MilitaryDrop_Broadcast_ReconDone": "各台注意，坐标 %1 / %2 的侦察已由 %3 确认。命令结束。",
     "IGUI_MilitaryDrop_Broadcast_ReconExpired": "各台注意，坐标 %1 / %2 的侦察命令已取消。",

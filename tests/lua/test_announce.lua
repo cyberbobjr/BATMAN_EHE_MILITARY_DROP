@@ -2,6 +2,23 @@
 
 local T = {}
 
+--- Symbole simulé : couleur relue octet par octet, comme après un rechargement.
+function MAKE_SYMBOL(id, x, y, r, g, b)
+    local symbol = { color = { r, g, b } }
+    symbol.isTexture = function() return true end
+    symbol.getSymbolID = function() return id end
+    symbol.getWorldX = function() return x end
+    symbol.getWorldY = function() return y end
+    symbol.setRGBA = function(_, cr, cg, cb)
+        symbol.color = { math.floor(cr * 255) / 255, math.floor(cg * 255) / 255, math.floor(cb * 255) / 255 }
+    end
+    symbol.getRed = function() return symbol.color[1] end
+    symbol.getGreen = function() return symbol.color[2] end
+    symbol.getBlue = function() return symbol.color[3] end
+    symbol.setAnchor = function() end
+    return symbol
+end
+
 function T.setup()
     SandboxVars = {}
     SYMBOLS = {}
@@ -9,17 +26,11 @@ function T.setup()
         getSymbolCount = function() return #SYMBOLS end,
         getSymbolByIndex = function(_, i) return SYMBOLS[i + 1] end,
         addTexture = function(_, id, x, y)
-            local symbol = {
-                isTexture = function() return true end,
-                getSymbolID = function() return id end,
-                getWorldX = function() return x end,
-                getWorldY = function() return y end,
-                setRGBA = function() end,
-                setAnchor = function() end,
-            }
+            local symbol = MAKE_SYMBOL(id, x, y, 1, 1, 1)
             SYMBOLS[#SYMBOLS + 1] = symbol
             return symbol
         end,
+        removeSymbolByIndex = function(_, i) table.remove(SYMBOLS, i + 1) end,
     }
     UIWorldMap = { new = function()
         return { getAPIv3 = function()
@@ -170,6 +181,50 @@ function T.existing_symbol_is_not_duplicated()
     MilitaryDrop.Announce.markMap(500, 600)
     assertEq(MilitaryDrop.Announce.markMap(500, 600), false, "doublon refusé")
     assertEq(#SYMBOLS, 1, "un symbole")
+end
+
+function T.base_reply_marks_the_mission_once()
+    local A = MilitaryDrop.Announce
+    assertEq(A.markMission({ kind = "recon", id = "M7", x = 700, y = 800 }), true, "grille dite par la base")
+    assertEq(SYMBOLS[1].getSymbolID(), "Eye", "symbole de la reconnaissance")
+    assertEq(A.markMission({ kind = "recon", id = "M7", x = 700, y = 800 }), false, "une fois par mission")
+    -- Annonce entendue ensuite : déjà marquée.
+    A.onReconAnnounce({ id = "M7", x = 700, y = 800 })
+    triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
+    assertEq(#SYMBOLS, 1, "pas de doublon")
+    assertEq(A.markMission({ kind = "cleanup", id = "M8", x = 900, y = 950 }), true, "nettoyage")
+    assertEq(SYMBOLS[2].getSymbolID(), "Skull", "symbole du nettoyage")
+    assertEq(A.markMission({ kind = "control", id = "M9", x = 1, y = 1 }), false, "mission sans grille")
+    assertEq(A.markMission({ kind = "recon", id = 5, x = 1, y = 1 }), false, "identifiant invalide")
+end
+
+function T.outdated_markers_are_removed_and_others_kept()
+    local A = MilitaryDrop.Announce
+    A.markMap(500, 600)
+    A.markMap(510, 610)
+    A.markMap(700, 800, A.RECON_SYMBOL, A.RECON_COLOR)
+    A.markMap(900, 950, A.CLEANUP_SYMBOL, A.CLEANUP_COLOR)
+    A.markMap(525, 625, A.MAYDAY_SYMBOL, A.MAYDAY_COLOR)
+    -- Symboles du joueur : même icône, couleur d'un stylo vanilla.
+    SYMBOLS[#SYMBOLS + 1] = MAKE_SYMBOL("Target", 520, 620, 0.06, 0.39, 0.17)
+    SYMBOLS[#SYMBOLS + 1] = MAKE_SYMBOL("Eye", 720, 820, 0.156, 0.188, 0.49)
+    local removed = A.onActiveMarks({ drops = { { x = 510, y = 610 } }, recon = {}, cleanup = { { x = 900, y = 950 } } })
+    assertEq(removed, 2, "largage clos et reconnaissance close retirés")
+    local left = {}
+    for _, symbol in ipairs(SYMBOLS) do
+        left[#left + 1] = symbol.getSymbolID() .. "@" .. symbol.getWorldX()
+    end
+    assertEq(table.concat(left, " "), "Target@510 Skull@900 Question@525 Target@520 Eye@720",
+        "actifs, MAYDAY et symboles du joueur gardés")
+    assertEq(A.onActiveMarks(nil), 0, "liste invalide ignorée")
+end
+
+function T.legacy_markers_with_full_alpha_are_recognised()
+    local A = MilitaryDrop.Announce
+    local c = A.RECON_COLOR
+    SYMBOLS[1] = MAKE_SYMBOL("Eye", 700, 800, math.floor(c.r * 255) / 255, math.floor(c.g * 255) / 255,
+        math.floor(c.b * 255) / 255)
+    assertEq(A.onActiveMarks({ drops = {}, recon = {}, cleanup = {} }), 1, "repère d'une session précédente")
 end
 
 function T.mayday_marks_an_approximate_sector_only_when_heard()

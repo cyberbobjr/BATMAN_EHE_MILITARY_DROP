@@ -146,6 +146,8 @@
     "IGUI_MilitaryDrop_Mission_Control": "Radio check",
     "IGUI_MilitaryDrop_Broadcast_Recon": "All stations, Logistics. Recon required at grid %1 / %2. First survivor to confirm on site within %3 hours. I repeat, grid %1 / %2.",
     "IGUI_MilitaryDrop_Broadcast_Cleanup": "All stations, Logistics. Infected horde reported within %3 tiles of grid %1 / %2, about %4 strong. The survivor with the most kills wins. Deadline %5 hours.",
+    "IGUI_MilitaryDrop_Broadcast_ReconReminder": "All stations, Logistics. Reminder: recon order still open at grid %1 / %2, %3 hours left. I repeat, grid %1 / %2.",
+    "IGUI_MilitaryDrop_Broadcast_CleanupReminder": "All stations, Logistics. Reminder: clearance order still open, horde within %3 tiles of grid %1 / %2, %4 hours left.",
     "IGUI_MilitaryDrop_Broadcast_Control": "All stations, Logistics. Radio check. Confirm reception on this frequency within %1 hours.",
     "IGUI_MilitaryDrop_Broadcast_ReconDone": "All stations, recon of grid %1 / %2 confirmed by %3. Order closed.",
     "IGUI_MilitaryDrop_Broadcast_ReconExpired": "All stations, recon order for grid %1 / %2 cancelled.",

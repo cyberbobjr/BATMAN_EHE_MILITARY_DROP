@@ -146,6 +146,8 @@
     "IGUI_MilitaryDrop_Mission_Control": "Teste de rádio",
     "IGUI_MilitaryDrop_Broadcast_Recon": "A todas as estações, Logística. Reconhecimento na grade %1 / %2. Ganha o primeiro sobrevivente a confirmar no local em %3 horas. Repito: grade %1 / %2.",
     "IGUI_MilitaryDrop_Broadcast_Cleanup": "A todas as estações, Logística. Horda num raio de %3 quadrados da grade %1 / %2, cerca de %4 indivíduos. Ganha o sobrevivente com mais baixas. Prazo: %5 horas.",
+    "IGUI_MilitaryDrop_Broadcast_ReconReminder": "A todas as estações, Logística. Lembrete: ordem de reconhecimento ainda aberta na grade %1 / %2, faltam %3 horas. Repito: grade %1 / %2.",
+    "IGUI_MilitaryDrop_Broadcast_CleanupReminder": "A todas as estações, Logística. Lembrete: ordem de limpeza ainda aberta, horda num raio de %3 quadrados da grade %1 / %2, faltam %4 horas.",
     "IGUI_MilitaryDrop_Broadcast_Control": "A todas as estações, aqui Logística. Teste de rádio. Confirmem a recepção nesta frequência em até %1 horas.",
     "IGUI_MilitaryDrop_Broadcast_ReconDone": "A todas as estações, reconhecimento da quadrícula %1 / %2 confirmado por %3. Ordem encerrada.",
     "IGUI_MilitaryDrop_Broadcast_ReconExpired": "A todas as estações, ordem de reconhecimento da quadrícula %1 / %2 cancelada.",

@@ -107,7 +107,7 @@ Missed it? The base repeats the grid of every drop whose supply cases are all st
 
 ### Map symbols
 
-The base marks your map only if one of your radios **hears** the announcement. The symbols are the game's own map symbols: you can erase them like any map note.
+The base marks your map only if one of your radios **hears** the announcement or one of its reminders, or when the base gives you a mission grid in a reply on your radio (recon too far, clearance status). The symbols are the game's own map symbols: you can erase them like any map note.
 
 | Symbol | Meaning | Where |
 |---|---|---|
@@ -115,7 +115,7 @@ The base marks your map only if one of your radios **hears** the announcement. T
 | <img src="../../images/screenshots/map-symbol-recon.png" width="48" alt="Blue eye"> | **Reconnaissance**: the building or road to check | Confirm within 25 tiles of the symbol |
 | <img src="../../images/screenshots/map-symbol-clearance.png" width="48" alt="Red skull"> | **Clearance**: centre of the zone where the horde was reported | The horde is spread within 40 tiles around it |
 
-Symbols stay on the map after the mission or the drop: erase them yourself when you no longer need them.
+The base removes its symbols once they are no longer useful: a drop symbol when a supply case has been opened or emptied, or the drop is lost; a mission symbol when the order closes. If you were offline, they are removed when you reconnect. MAYDAY symbols and your own map notes are never touched.
 
 ## 6. The crate
 

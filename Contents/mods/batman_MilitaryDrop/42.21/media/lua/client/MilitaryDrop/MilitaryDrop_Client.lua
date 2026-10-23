@@ -526,6 +526,10 @@ function Client.onServerCommand(module, command, args)
         MilitaryDrop.Announce.onCleanupAnnounce(args)
         return
     end
+    if command == "MarksActive" then
+        MilitaryDrop.Announce.onActiveMarks(args)
+        return
+    end
     local request = pending[args.requestId]
     if not request then
         return

@@ -146,6 +146,8 @@
     "IGUI_MilitaryDrop_Mission_Control": "Appel de contrôle",
     "IGUI_MilitaryDrop_Broadcast_Recon": "À toutes les stations, ici Logistique. Reconnaissance demandée en grille %1 / %2. Premier survivant à confirmer sur place dans les %3 heures. Je répète, grille %1 / %2.",
     "IGUI_MilitaryDrop_Broadcast_Cleanup": "À toutes les stations, ici Logistique. Horde d'infectés signalée dans un rayon de %3 cases autour de la grille %1 / %2, environ %4 individus. Le survivant qui en abat le plus remporte l'ordre. Délai : %5 heures.",
+    "IGUI_MilitaryDrop_Broadcast_ReconReminder": "À toutes les stations, ici Logistique. Rappel : ordre de reconnaissance toujours ouvert en grille %1 / %2, %3 heures restantes. Je répète, grille %1 / %2.",
+    "IGUI_MilitaryDrop_Broadcast_CleanupReminder": "À toutes les stations, ici Logistique. Rappel : ordre de nettoyage toujours ouvert, horde dans un rayon de %3 cases autour de la grille %1 / %2, %4 heures restantes.",
     "IGUI_MilitaryDrop_Broadcast_Control": "À toutes les stations, ici Logistique. Appel de contrôle. Confirmez la réception sur cette fréquence dans les %1 heures.",
     "IGUI_MilitaryDrop_Broadcast_ReconDone": "À toutes les stations, reconnaissance de la grille %1 / %2 confirmée par %3. Ordre clos.",
     "IGUI_MilitaryDrop_Broadcast_ReconExpired": "À toutes les stations, ordre de reconnaissance de la grille %1 / %2 annulé.",

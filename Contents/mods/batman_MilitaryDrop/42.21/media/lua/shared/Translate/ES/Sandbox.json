@@ -9,7 +9,7 @@
     "Sandbox_MilitaryDrop_DropMaxDistance": "Distancia máxima de lanzamiento",
     "Sandbox_MilitaryDrop_DropMaxDistance_tooltip": "Distancia máxima en casillas entre el jugador que llama y el punto de lanzamiento.",
     "Sandbox_MilitaryDrop_DropRepeatHours": "Recordatorio de la cuadrícula cada (horas)",
-    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Horas de juego entre dos recordatorios, en la frecuencia militar, de la cuadrícula de un lanzamiento cuyos estuches de suministros siguen todos sin abrir. Los recordatorios cesan cuando se abre un estuche, o tras las horas para recuperar un lanzamiento. 0 = sin recordatorio.",
+    "Sandbox_MilitaryDrop_DropRepeatHours_tooltip": "Horas de juego entre dos recordatorios, en la frecuencia militar, de la cuadrícula de un lanzamiento cuyos estuches de suministros siguen todos sin abrir, y de una orden de reconocimiento o de limpieza abierta. Los recordatorios de un lanzamiento cesan cuando se abre un estuche, o tras las horas para recuperar un lanzamiento; los de una orden, cuando se cierra. 0 = sin recordatorio.",
     "Sandbox_MilitaryDrop_DropPlacement": "Ubicación de los lanzamientos",
     "Sandbox_MilitaryDrop_DropPlacement_tooltip": "Cerca de quien llama: un punto al azar entre las distancias mínima y máxima de lanzamiento. Zonas de lanzamiento: dentro de una zona trazada por el admin (Zomboid/Lua/MilitaryDrop/dropzones.txt, o la herramienta de admin); sin ninguna zona utilizable, una ciudad vanilla, y si no, cerca de quien llama. Zonas si hay una cerca: una zona más cercana que el alcance de las zonas de lanzamiento indicado abajo, y si no, cerca de quien llama.",
     "Sandbox_MilitaryDrop_DropPlacement_option1": "Cerca de quien llama",

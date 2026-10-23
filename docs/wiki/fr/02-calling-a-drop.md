@@ -111,7 +111,7 @@ Vous l'avez manquée ? La base répète la grille de chaque largage dont aucune 
 
 ### Symboles sur la carte
 
-La base marque votre carte seulement si l'une de vos radios **entend** l'annonce. Ce sont les symboles de carte du jeu : on les efface comme n'importe quelle note de carte.
+La base marque votre carte seulement si l'une de vos radios **entend** l'annonce ou l'un de ses rappels, ou quand la base vous donne la grille d'une mission en réponse sur votre radio (reconnaissance trop loin, point du nettoyage). Ce sont les symboles de carte du jeu : on les efface comme n'importe quelle note de carte.
 
 | Symbole | Signification | Où |
 |---|---|---|
@@ -119,7 +119,7 @@ La base marque votre carte seulement si l'une de vos radios **entend** l'annonce
 | <img src="../../images/screenshots/map-symbol-recon.png" width="48" alt="Œil bleu"> | **Reconnaissance** : le bâtiment ou la route à vérifier | Confirmer à 25 cases au plus du symbole |
 | <img src="../../images/screenshots/map-symbol-clearance.png" width="48" alt="Tête de mort rouge"> | **Nettoyage** : centre de la zone où la horde est signalée | La horde est répartie dans un rayon de 40 cases autour |
 
-Les symboles restent sur la carte après la mission ou le largage : effacez-les vous-même quand ils ne servent plus.
+La base retire ses symboles quand ils ne servent plus : celui d'un largage quand une caisse de ravitaillement a été ouverte ou vidée, ou que le largage est perdu ; celui d'une mission à la clôture de l'ordre. Si vous étiez déconnecté, ils sont retirés à votre reconnexion. Les symboles de MAYDAY et vos propres notes de carte ne sont jamais touchés.
 
 ## 6. La caisse
 
