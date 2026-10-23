@@ -22,7 +22,7 @@
 |---|---|---|---|---|---|---|
 | C01 | Horde complète près de l'eau | ✅ Corrigé | hors jeu | 0.6.0 | `6c62913` | Vérifier en jeu (largage sur une rive) |
 | C02 | Copie de secours de Belt Walkie-Talkie | ✅ Retirée | hors jeu | 0.6.0 | `d820c24` | Vérifier en jeu |
-| C03 | Fichiers « prototype » du Fulton, menu de debug | ✅ Corrigé | hors jeu ; chargement solo et MP | 0.6.0 (menu) + non publié (renommage) | `498f0d1`, `fff0055` | Vrai lâcher Fulton à vérifier en jeu (protocole F*) |
+| C03 | Fichiers « prototype » du Fulton, menu de debug | ✅ Corrigé | hors jeu ; chargement solo et MP | 0.6.0 (menu) + non publié (renommage) | `498f0d1`, `fff0055` | — (vrai lâcher testé en solo et en MP, `d376bbd`) |
 | C04 | Guide : « +8/jour » au lieu de 10 | ✅ Corrigé | — (documentation) | 0.6.0 | `d03ee87` | Resynchroniser le wiki GitHub |
 | C05 | Silence après 3 codes faux : clé et commentaire | ✅ Corrigé (commentaire) | — (commentaire) | non publié | `d86d42b` | — (clé inchangée, voulu) |
 | C06 | Registres privés qui ne rétrécissent jamais | ✅ Corrigé | hors jeu | non publié | `f161134` | Coût réel non mesuré en jeu |
@@ -32,7 +32,7 @@
 | C10 | Repères de carte jamais retirés | ✅ Corrigé | hors jeu, solo, MP | non publié | `97a1727`, `5af1181` | Vraie reconnexion MP (testée par `Sync` seulement) |
 | C11 | Coordonnées envoyées à tous avant le filtre radio | ❌ Écarté | — | — | — | Décision de l'utilisateur (2026-10-23) |
 | C12 | Livraison en attente sans fin | ✅ Corrigé | hors jeu | non publié | `261a94d` | Cas d'une zone sur l'eau non testé en jeu |
-| C13 | Campagne de tests MP en retard | 🟡 En partie | solo et MP (1 et 2 clients) verts | outil hors mod | `dedd363`, `91c1383`, `99a36aa` | Carte du second client non inspectable ; Fulton complet et crash restent manuels |
+| C13 | Campagne de tests MP en retard | 🟡 En partie | solo et MP (1 et 2 clients) verts | outil hors mod | `dedd363`, `91c1383`, `99a36aa`, `d376bbd` | Carte du second client non inspectable ; crash et refus Fulton (F6, F11) restent manuels |
 | C14 | `Post.onLoadChunk` relit chaque poste | ✅ Corrigé | hors jeu, solo, MP | non publié | `db2834a` | Coût réel non mesuré |
 | C15 | Repère de mission manqué (retour d'un joueur) | ✅ Corrigé | hors jeu, solo, MP | non publié | `97a1727`, `5af1181` | — |
 
@@ -94,7 +94,7 @@
 - **Risque** : maintenabilité (un « prototype » qu'on n'ose plus retirer), bruit dans `console.txt` en production, règle du projet sur les textes joueur (libellés hors traduction, même en debug).
 - **Correction** : renommer en `MilitaryDrop_FultonRender*` / module `FultonFlight` (les objets visuels peuvent garder leur nom de script pour ne pas toucher aux sauvegardes : ils ne sont jamais dans un inventaire), déplacer le menu de test dans un fichier `*_Debug.lua` chargé seulement si `isDebugEnabled()`, passer ses libellés en clés `IGUI_` ou en anglais, et conditionner le `print` de phase à `isDebugEnabled()`.
 - **Statut** : confirmé statiquement. **Priorité moyenne, effort S-M.**
-- **Avancement : ✅ corrigé (commits 498f0d1, publié en 0.6.0 ; fff0055, non publié)** — fichiers renommés `MilitaryDrop_FultonFlight.lua`, `MilitaryDrop_FultonFlightServer.lua`, `MilitaryDrop_FultonRender.lua` ; menu de test dans `MilitaryDrop_FultonRender_Debug.lua`, chargé seulement en mode debug ; objets `FultonPrototypeBalloon/Bag` gardés (sauvegardes) ; module réseau `MilitaryDropFultonFlight` (client et serveur de même version). Chargement sans erreur vérifié en solo et en MP ; vrai lâcher non testé (QUAL-16).
+- **Avancement : ✅ corrigé (commits 498f0d1, publié en 0.6.0 ; fff0055, non publié)** — fichiers renommés `MilitaryDrop_FultonFlight.lua`, `MilitaryDrop_FultonFlightServer.lua`, `MilitaryDrop_FultonRender.lua` ; menu de test dans `MilitaryDrop_FultonRender_Debug.lua`, chargé seulement en mode debug ; objets `FultonPrototypeBalloon/Bag` gardés (sauvegardes) ; module réseau `MilitaryDropFultonFlight` (client et serveur de même version). Chargement sans erreur vérifié en solo et en MP ; vrai lâcher Fulton testé en solo (14/14, `runs/20261023-185503-sp-21799cb48711`) et en MP (serveur 9/9, client 11/11, `runs/20261023-190102-mp-19341f8c28cb`), captures de la montée du ballon à valider à l'œil (QUAL-16).
 
 ### C04 — Guide : plafond quotidien de confiance « +8/jour » alors que la valeur par défaut est 10
 
@@ -185,7 +185,7 @@
 - **Preuves** : `docs/annexes/plans/SUIVI.md`, tableau « Vue d'ensemble » ; `docs/annexes/tests/test-protocol.md` (protocoles M1-M8, Z13-Z14…).
 - **Risque** : bugs MP découverts par les joueurs (historique : 0.3.3, 0.4.2, 0.4.3 ont corrigé des clés brutes et des états périmés propres au MP).
 - **Correction** : outiller les parcours nominaux avec `pz-autotest` (`--mp`, serveur dédié + 2 clients) : appel, annonce entendue par l'un seulement, ouverture de caisse par l'autre (confiance), Fulton, crash et récupération ; la règle de l'utilisateur fait d'une suite MP automatisée verte la preuve « testé MP ».
-- **Avancement : 🟡 en partie (commits dedd363, 91c1383, 99a36aa)** — parcours nominal et scénario `marks` verts en solo et en MP (campagne du 2026-10-23 en tête du document) ; avec 2 clients, le second joueur ouvre la caisse (issue `taken`, confiance du demandeur 25 → 20). Restent : annonce entendue par un seul client (seul le client 1 exécute les hooks), Fulton complet et crash (protocoles manuels F* et M*) (QUAL-19).
+- **Avancement : 🟡 en partie (commits dedd363, 91c1383, 99a36aa)** — parcours nominal et scénario `marks` verts en solo et en MP (campagne du 2026-10-23 en tête du document) ; avec 2 clients, le second joueur ouvre la caisse (issue `taken`, confiance du demandeur 25 → 20). Fulton complet scripté depuis le commit d376bbd (scénario `-P scenario=fulton`, solo et MP verts). Restent : annonce entendue par un seul client (seul le client 1 exécute les hooks), crash, refus Fulton et commande forgée (protocoles manuels) (QUAL-19).
 
 ### C14 — `Post.onLoadChunk` relit chaque poste à chaque chunk chargé
 
