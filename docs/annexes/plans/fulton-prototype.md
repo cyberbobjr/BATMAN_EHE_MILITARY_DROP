@@ -1,5 +1,7 @@
 # Tester la montée Fulton
 
+> Depuis le 2026-10-23 (QUAL-16), le prototype est devenu le rendu de production : `shared/MilitaryDrop/MilitaryDrop_FultonFlight.lua` (trajectoire), `server/MilitaryDrop/MilitaryDrop_FultonFlightServer.lua` (vols autoritaires, module réseau `MilitaryDropFultonFlight`), `client/MilitaryDrop/MilitaryDrop_FultonRender.lua` (rendu) et `client/MilitaryDrop/MilitaryDrop_FultonRender_Debug.lua` (menu de test, chargé seulement en mode debug). Les objets visuels gardent leurs noms de script `FultonPrototypeBalloon` et `FultonPrototypeBag`.
+
 Branche `prototype/fulton-ascent`. Prototype visuel solo et synchronisé en MP, pour Build 42.21.
 Le ballon et le sac sont des modèles Blender propres au mod. Aucun butin, recette,
 objet persistant, extraction serveur ou gain de confiance n'est implémenté.

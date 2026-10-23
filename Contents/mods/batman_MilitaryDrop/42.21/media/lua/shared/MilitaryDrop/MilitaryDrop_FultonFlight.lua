@@ -1,8 +1,8 @@
 -- Shared visual trajectory and wire constants. No world/inventory mutation.
 require "MilitaryDrop/MilitaryDrop_Core"
 local Flight = {}
-MilitaryDrop.FultonPrototypeFlight = Flight
-Flight.MODULE = "MilitaryDropFultonPrototype"
+MilitaryDrop.FultonFlight = Flight
+Flight.MODULE = "MilitaryDropFultonFlight"
 Flight.RISE_SECONDS = 3
 Flight.HOLD_SECONDS = 0
 Flight.PICKUP_SECONDS = 1.5

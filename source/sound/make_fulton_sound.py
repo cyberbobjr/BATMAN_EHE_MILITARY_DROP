@@ -6,7 +6,7 @@ Source : originals/315660_2506497-lq.mp3 (aperçu Freesound, MP3 24 kHz stéréo
 Analyse (2026-10-07) : passage au plus près à 44,1 s (niveau maximal, note des hélices
 qui descend de 135 Hz à l'approche à 110 Hz à l'éloignement : effet Doppler).
 L'extrait est calé pour que ce pic tombe à PEAK_AT secondes : le ballon monte 3 s, puis
-l'avion l'accroche pendant 1,5 s (MilitaryDrop_FultonPrototypeFlight.lua) ; le son
+l'avion l'accroche pendant 1,5 s (MilitaryDrop_FultonFlight.lua) ; le son
 démarre avec le vol. Mono pour le rendu 3D sur un émetteur, passe-haut à 40 Hz,
 pic normalisé à -1 dBFS, fondus d'entrée et de sortie.
 """

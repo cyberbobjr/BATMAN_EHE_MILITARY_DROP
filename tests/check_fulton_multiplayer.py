@@ -65,10 +65,10 @@ class Network:
         self.server = self.vm(server=True)
         self.clients = [self.vm(owner=1), self.vm(owner=2)]
         self.server.globals().sendServerCommand = self.broadcast
-        self.server.execute('loadMod("server/MilitaryDrop/MilitaryDrop_FultonPrototypeServer.lua")')
+        self.server.execute('loadMod("server/MilitaryDrop/MilitaryDrop_FultonFlightServer.lua")')
         for index, client in enumerate(self.clients):
             client.globals().sendClientCommand = self.sender(index)
-            client.execute('loadMod("client/MilitaryDrop/MilitaryDrop_FultonPrototype.lua")')
+            client.execute('loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender.lua")')
 
     @staticmethod
     def vm(server=False, owner=1):
@@ -77,7 +77,7 @@ class Network:
         vm.globals().SERVER = server
         vm.globals().OWNER = owner
         vm.execute('isServer=function() return SERVER end; isClient=function() return not SERVER end; '
-                   'LOCAL=PLAYERS[OWNER]; loadMod("shared/MilitaryDrop/MilitaryDrop_FultonPrototypeFlight.lua")')
+                   'LOCAL=PLAYERS[OWNER]; loadMod("shared/MilitaryDrop/MilitaryDrop_FultonFlight.lua")')
         return vm
 
     def sender(self, index):
@@ -118,12 +118,12 @@ class Network:
             vm.globals().triggerEvent("OnTick")
 
     def start(self, index=0):
-        assert self.clients[index].eval("MilitaryDrop.FultonPrototype.start(0)")
+        assert self.clients[index].eval("MilitaryDrop.FultonRender.start(0)")
         self.command()
         self.deliver()
 
     def count(self, index):
-        return self.clients[index].eval("MilitaryDrop.FultonPrototype.count()")
+        return self.clients[index].eval("MilitaryDrop.FultonRender.count()")
 
     def height(self, index):
         vm = self.clients[index]
@@ -133,7 +133,7 @@ class Network:
 
 def check_shared_ascent_and_packet_delay():
     n = Network()
-    n.clients[0].eval("MilitaryDrop.FultonPrototype.start(0)")
+    n.clients[0].eval("MilitaryDrop.FultonRender.start(0)")
     assert n.count(0) == n.count(1) == 0, "no speculative private flight before server acceptance"
     n.command()
     assert n.packets[0][3]["flights"][1]["hold"] == 0, "server has no default waiting phase"
@@ -147,7 +147,7 @@ def check_shared_ascent_and_packet_delay():
     n.deliver()
     assert math.isclose(n.height(0), 2.7) and math.isclose(n.height(1), 2.7)
     n.tick(.1)
-    assert n.clients[0].eval("MilitaryDrop.FultonPrototype.status().phase") == "pickup"
+    assert n.clients[0].eval("MilitaryDrop.FultonRender.status().phase") == "pickup"
     for vm in n.clients:
         vm.execute('DRAWS={}; triggerEvent("OnPostRender")')
         assert vm.globals().DRAWS[1].z > 0, "both clients immediately see the bag rising"
@@ -173,7 +173,7 @@ def check_late_join_unloaded_square_and_reload():
     assert len(observer.globals().DRAWS) == 0 and n.count(1) == 1
     observer.globals().LOADED = True
     assert n.height(1) > 1.45
-    observer.execute('loadMod("client/MilitaryDrop/MilitaryDrop_FultonPrototype.lua")')
+    observer.execute('loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender.lua")')
     assert not n.commands, "local reload must not cancel a server flight"
     n.tick(.5)
     n.deliver()
@@ -182,18 +182,18 @@ def check_late_join_unloaded_square_and_reload():
 
 def check_unordered_commands_and_snapshots():
     n = Network()
-    n.clients[0].eval("MilitaryDrop.FultonPrototype.start(0)")
-    n.clients[0].eval("MilitaryDrop.FultonPrototype.stop()")
+    n.clients[0].eval("MilitaryDrop.FultonRender.start(0)")
+    n.clients[0].eval("MilitaryDrop.FultonRender.stop()")
     start, stop = n.commands
     n.commands.clear()
     n.command(stop)
     n.command(start)
     n.deliver()
     assert n.count(0) == n.count(1) == 0, "a delayed Start cannot defeat a newer Stop"
-    n.clients[0].eval("MilitaryDrop.FultonPrototype.start(0)")
+    n.clients[0].eval("MilitaryDrop.FultonRender.start(0)")
     n.command()
     old, n.packets = n.packets, []
-    n.clients[0].eval("MilitaryDrop.FultonPrototype.stop()")
+    n.clients[0].eval("MilitaryDrop.FultonRender.stop()")
     n.command()
     n.deliver()
     n.deliver(old)
@@ -205,23 +205,23 @@ def check_two_flights_pause_ownership_and_disconnect():
     n.start(0)
     n.start(1)
     assert n.count(0) == n.count(1) == 2
-    n.clients[0].eval("MilitaryDrop.FultonPrototype.togglePause()")
+    n.clients[0].eval("MilitaryDrop.FultonRender.togglePause()")
     n.command()
     n.deliver()
     n.tick(1)
     n.deliver()
-    assert n.clients[0].eval("MilitaryDrop.FultonPrototype.status().elapsed") == 0
-    assert n.clients[1].eval("MilitaryDrop.FultonPrototype.status().elapsed") == 1
+    assert n.clients[0].eval("MilitaryDrop.FultonRender.status().elapsed") == 0
+    assert n.clients[1].eval("MilitaryDrop.FultonRender.status().elapsed") == 1
     # Player 2 attempts to pause player 1's flight: server must use actual sender.
-    n.command((1, "MilitaryDropFultonPrototype", "Pause", {"request": 999, "id": 1, "paused": True}))
+    n.command((1, "MilitaryDropFultonFlight", "Pause", {"request": 999, "id": 1, "paused": True}))
     n.tick(.5)
     n.deliver()
-    assert n.clients[1].eval("MilitaryDrop.FultonPrototype.status().paused") is False
+    assert n.clients[1].eval("MilitaryDrop.FultonRender.status().paused") is False
     # Even a high-sequence pause doesn't block an older Start targeting a new flight.
-    n.command((0, "MilitaryDropFultonPrototype", "Pause", {"request": 1000, "id": 1, "paused": True}))
-    n.command((0, "MilitaryDropFultonPrototype", "Start", {"request": 3}))
+    n.command((0, "MilitaryDropFultonFlight", "Pause", {"request": 1000, "id": 1, "paused": True}))
+    n.command((0, "MilitaryDropFultonFlight", "Start", {"request": 3}))
     n.deliver()
-    assert n.clients[0].eval("MilitaryDrop.FultonPrototype.status().paused") is False
+    assert n.clients[0].eval("MilitaryDrop.FultonRender.status().paused") is False
     n.server.execute('table.remove(PLAYERS, 1)')
     n.tick(.1)
     n.deliver()
@@ -235,7 +235,7 @@ def check_two_flights_pause_ownership_and_disconnect():
 
 def check_server_bounds_and_completion():
     n = Network()
-    n.command((0, "MilitaryDropFultonPrototype", "Start", {
+    n.command((0, "MilitaryDropFultonFlight", "Start", {
         "request": 1, "owner": 2, "x": -1000, "z": 100, "elapsed": 90,
         "height": 999, "duration": .01, "hold": -9}))
     row = n.packets[0][3]["flights"][1]
@@ -255,7 +255,7 @@ def flybys(index, n):
 
 def check_real_launch_is_anchored_shared_and_heard_once():
     n = Network()
-    n.server.eval("MilitaryDrop.FultonPrototypeServer.startFlight(150.5, 250.5, 0)")
+    n.server.eval("MilitaryDrop.FultonFlightServer.startFlight(150.5, 250.5, 0)")
     row = n.packets[0][3]["flights"][1]
     assert row["real"] is True and (row["x"], row["y"], row["owner"]) == (150.5, 250.5, -1)
     n.deliver()
@@ -282,21 +282,30 @@ def check_real_launch_is_anchored_shared_and_heard_once():
 def check_test_menu_and_commands_are_admin_only():
     n = Network()
     vm = n.clients[1]
+    debug_file = 'loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender_Debug.lua")'
+    vm.execute('ADMINS[2] = true; ' + debug_file)
+    assert vm.eval("MilitaryDrop.FultonRenderDebug") is None, "debug file skipped outside debug mode"
+    assert vm.eval('listenerCount("OnFillWorldObjectContextMenu")') == 0, "no test menu handler outside debug mode"
+    vm.execute('isDebugEnabled = function() return true end; ' + debug_file)
+    assert vm.eval('listenerCount("OnFillWorldObjectContextMenu")') == 1, "one test menu handler in debug mode"
+    vm.execute(debug_file)
+    assert vm.eval('listenerCount("OnFillWorldObjectContextMenu")') == 1, "reload keeps a single handler"
     vm.execute('ADMINS[2] = false; ADDED = 0; ISContextMenu = {getNew = function() return {addOption = function() end} end}; '
                'CTX = {addOption = function() ADDED = ADDED + 1 return {} end, addSubMenu = function() end}; '
-               'MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
+               'MilitaryDrop.FultonRenderDebug.onContext(0, CTX, {}, false)')
     assert vm.globals().ADDED == 0, "MP non-admin: no test menu"
-    vm.execute('ADMINS[2] = true; MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
-    assert vm.globals().ADDED == 0, "MP admin without debug mode: no test menu"
-    vm.execute('isDebugEnabled = function() return true end; MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false)')
+    vm.execute('ADMINS[2] = true; isDebugEnabled = function() return false end; '
+               'MilitaryDrop.FultonRenderDebug.onContext(0, CTX, {}, false)')
+    assert vm.globals().ADDED == 0, "MP admin, debug mode turned off: no test menu"
+    vm.execute('isDebugEnabled = function() return true end; MilitaryDrop.FultonRenderDebug.onContext(0, CTX, {}, false)')
     assert vm.globals().ADDED == 1, "MP admin in debug mode: test menu shown"
-    vm.execute('ADMINS[2] = false; ADDED = 0; MilitaryDrop.FultonPrototype.onContext(0, CTX, {}, false); '
+    vm.execute('ADMINS[2] = false; ADDED = 0; MilitaryDrop.FultonRenderDebug.onContext(0, CTX, {}, false); '
                'ADMINS[2] = true; isDebugEnabled = function() return false end')
     assert vm.globals().ADDED == 0, "MP non-admin in debug mode: no test menu"
     n.server.execute('ADMINS[2] = false')
-    n.command((1, "MilitaryDropFultonPrototype", "Start", {"request": 1}))
+    n.command((1, "MilitaryDropFultonFlight", "Start", {"request": 1}))
     assert not n.packets, "server refuses a forged Start from a non-admin"
-    n.command((1, "MilitaryDropFultonPrototype", "Sync", {}))
+    n.command((1, "MilitaryDropFultonFlight", "Sync", {}))
     assert n.packets, "Sync stays open to every player (needed to see real flights)"
 
 

@@ -1,17 +1,17 @@
 -- Fulton balloon rendering; MP trajectories come exclusively from the server.
 -- Real launches (FULTON-07): server flights marked `real`, or a local anchored
--- flight in solo (Prototype.startAt). Each client plays the aircraft flyby
+-- flight in solo (Render.startAt). Each client plays the aircraft flyby
 -- locally when a real flight starts (FULTON-06 sound, peak at 3.8 s = pickup).
--- The test menu is admin-only: in MP, a role with Capability.MakeEventsAlarmGunshot
--- (same right as /chopper and the forced drop); in solo, debug mode only. The server
--- re-checks the right for Start/Stop/Pause.
-require "MilitaryDrop/MilitaryDrop_FultonPrototypeFlight"
-local Flight = MilitaryDrop.FultonPrototypeFlight
-local previous = MilitaryDrop.FultonPrototype
+-- Test flights (Render.start/stop/togglePause, render modes) are driven by the
+-- debug-only test menu (MilitaryDrop_FultonRender_Debug.lua); the server
+-- re-checks the admin right for Start/Stop/Pause.
+require "MilitaryDrop/MilitaryDrop_FultonFlight"
+local Flight = MilitaryDrop.FultonFlight
+local previous = MilitaryDrop.FultonRender
 if previous then previous.dispose() end
-local Prototype = {}
-MilitaryDrop.FultonPrototype = Prototype
-Prototype.pose = Flight.pose
+local Render = {}
+MilitaryDrop.FultonRender = Render
+Render.pose = Flight.pose
 local entries, active = {}, nil
 -- Solo anchored flights use negative ids (server flights are positive).
 local nextLocalId = 0
@@ -20,49 +20,49 @@ local mode, cable, selectedPlayerNum = "auto", true, 0
 local ticking, revision = false, -1
 local worldFrames, postFrames, lastRenderer = 0, 0, nil
 local drewInWorld = {}
-Prototype.SOUND = "MilitaryDropFultonFlyby"
+Render.SOUND = "MilitaryDropFultonFlyby"
 -- High emitter: never muffled by walls (as MilitaryDrop_Heli.lua).
-Prototype.SOUND_Z = 20
+Render.SOUND_Z = 20
 -- A flight discovered later than this (join, unloaded area) plays no flyby.
-Prototype.SOUND_LATE_SECONDS = 1
+Render.SOUND_LATE_SECONDS = 1
 
 --- Aircraft flyby, local to this client. Never playSoundImpl(name, nil): Kahlua
 --- would pick the (String, IsoGridSquare) overload and throw (NPE).
-function Prototype.playFlyby(x, y)
+function Render.playFlyby(x, y)
     local world = getWorld and getWorld()
-    local emitter = world and world:getFreeEmitter(x, y, Prototype.SOUND_Z)
+    local emitter = world and world:getFreeEmitter(x, y, Render.SOUND_Z)
     if emitter then
-        emitter:playSoundImpl(Prototype.SOUND, false, nil)
+        emitter:playSoundImpl(Render.SOUND, false, nil)
     end
 end
 
 local function clear()
     entries, active, drewInWorld = {}, nil, {}
     ticking = false
-    Events.OnTick.Remove(Prototype.onTick)
-    Events.RenderOpaqueObjectsInWorld.Remove(Prototype.onWorldRender)
-    Events.OnPostRender.Remove(Prototype.onPostRender)
+    Events.OnTick.Remove(Render.onTick)
+    Events.RenderOpaqueObjectsInWorld.Remove(Render.onWorldRender)
+    Events.OnPostRender.Remove(Render.onPostRender)
 end
 
 local function startTicking()
     if ticking then return end
     ticking = true
-    Events.OnTick.Add(Prototype.onTick)
-    Events.RenderOpaqueObjectsInWorld.Add(Prototype.onWorldRender)
-    Events.OnPostRender.Add(Prototype.onPostRender)
+    Events.OnTick.Add(Render.onTick)
+    Events.RenderOpaqueObjectsInWorld.Add(Render.onWorldRender)
+    Events.OnPostRender.Add(Render.onPostRender)
 end
 
 local function request(command, args)
     local player = getSpecificPlayer(selectedPlayerNum)
     if not player then return false end
-    MilitaryDrop.FultonPrototypeRequest = (MilitaryDrop.FultonPrototypeRequest or 0) + 1
+    MilitaryDrop.FultonFlightRequest = (MilitaryDrop.FultonFlightRequest or 0) + 1
     args = args or {}
-    args.request = MilitaryDrop.FultonPrototypeRequest
+    args.request = MilitaryDrop.FultonFlightRequest
     sendClientCommand(player, Flight.MODULE, command, args)
     return true
 end
 
-function Prototype.stop()
+function Render.stop()
     if isClient() then return request("Stop") end
     clear()
 end
@@ -74,7 +74,7 @@ local function items(vanilla)
     return balloon, bag
 end
 
-function Prototype.onServerCommand(module, command, args)
+function Render.onServerCommand(module, command, args)
     if module ~= Flight.MODULE or command ~= "Snapshot" or type(args) ~= "table" then return end
     if type(args.revision) ~= "number" or args.revision <= revision or type(args.flights) ~= "table" then return end
     revision = args.revision
@@ -90,8 +90,8 @@ function Prototype.onServerCommand(module, command, args)
                 "elapsed", "paused", "vanilla" }) do e[key] = row[key] end
             e.shared, e.serverAt, e.serverElapsed = true, args.sentAt or 0, row.elapsed
             updated[e.id] = e
-            if row.real and not known and (tonumber(row.elapsed) or 0) < Prototype.SOUND_LATE_SECONDS then
-                Prototype.playFlyby(row.x, row.y)
+            if row.real and not known and (tonumber(row.elapsed) or 0) < Render.SOUND_LATE_SECONDS then
+                Render.playFlyby(row.x, row.y)
             end
             if ownPlayer and e.owner == ownPlayer:getOnlineID() then active = e end
         end
@@ -100,7 +100,7 @@ function Prototype.onServerCommand(module, command, args)
     if #args.flights == 0 then clear() else startTicking() end
 end
 
-function Prototype.onTick()
+function Render.onTick()
     local dt = Flight.bounded(getGameTime():getRealworldSecondsSinceLastUpdate(), 0, 0, 0.25)
     local now = isClient() and Flight.clock() or 0
     local finished = {}
@@ -124,7 +124,7 @@ function Prototype.onTick()
             e.phase = pose.phase
             -- Phase changes are development traces: debug mode only.
             if isDebugEnabled ~= nil and isDebugEnabled() == true then
-                print("[MilitaryDrop Fulton prototype] " .. tostring(id) .. " " .. pose.phase)
+                print("[MilitaryDrop Fulton] flight " .. tostring(id) .. " " .. pose.phase)
             end
         end
         if pose.phase == "done" then finished[#finished + 1] = id end
@@ -133,10 +133,10 @@ function Prototype.onTick()
         if entries[id] == active then active = nil end
         entries[id] = nil
     end
-    if Prototype.count() == 0 then clear() end
+    if Render.count() == 0 then clear() end
 end
 
-function Prototype.count()
+function Render.count()
     local n = 0
     for _ in pairs(entries) do n = n + 1 end
     return n
@@ -171,17 +171,17 @@ local function draw(playerNum, source)
     return drawn
 end
 
-function Prototype.onWorldRender(playerNum)
+function Render.onWorldRender(playerNum)
     if mode ~= "post" then drewInWorld[playerNum] = draw(playerNum, "world") end
 end
 
-function Prototype.onPostRender()
+function Render.onPostRender()
     local playerNum = IsoPlayer.getPlayerIndex()
     if mode == "post" or (mode == "auto" and not drewInWorld[playerNum]) then draw(playerNum, "post") end
     drewInWorld[playerNum] = nil
 end
 
-function Prototype.start(playerNum, options)
+function Render.start(playerNum, options)
     playerNum, options = playerNum or 0, options or {}
     local player = getSpecificPlayer(playerNum)
     if not player or player:isDead() then return false, "no living local player" end
@@ -209,7 +209,7 @@ end
 
 --- Solo real launch (FULTON-07): local flight anchored at x, y, z, independent
 --- of any player, with the flyby. MP launches arrive by Snapshot instead.
-function Prototype.startAt(x, y, z)
+function Render.startAt(x, y, z)
     local balloon, bag = items(false)
     if not balloon or not bag then return false end
     nextLocalId = nextLocalId - 1
@@ -217,26 +217,26 @@ function Prototype.startAt(x, y, z)
         balloon = balloon, bag = bag, elapsed = 0, phase = "rise", paused = false, height = 2.5,
         duration = Flight.RISE_SECONDS, hold = Flight.HOLD_SECONDS, pickup = Flight.PICKUP_SECONDS }
     startTicking()
-    Prototype.playFlyby(x, y)
+    Render.playFlyby(x, y)
     return true
 end
 
-function Prototype.togglePause()
+function Render.togglePause()
     if not active then return end
     if isClient() then return request("Pause", { id = active.id, paused = not active.paused }) end
     active.paused = not active.paused
 end
 
-function Prototype.toggleCable() cable = not cable end
+function Render.toggleCable() cable = not cable end
 
-function Prototype.setMode(value)
+function Render.setMode(value)
     if not modes[value] then return false end
     mode, drewInWorld = value, {}
     return true
 end
 
-function Prototype.status()
-    local s = { running = active ~= nil, count = Prototype.count(), mode = mode, revision = revision,
+function Render.status()
+    local s = { running = active ~= nil, count = Render.count(), mode = mode, revision = revision,
         worldFrames = worldFrames, postFrames = postFrames, lastRenderer = lastRenderer }
     if active then
         local pose = Flight.pose(active.elapsed, active)
@@ -246,66 +246,38 @@ function Prototype.status()
     return s
 end
 
-local function startFromMenu(playerNum, vanilla) Prototype.start(playerNum, { vanilla = vanilla }) end
-
---- Right to see the test menu (display only; the server re-checks).
---- Development tool: debug mode always, plus an admin role in MP.
-function Prototype.canUse(player)
-    if not player then return false end
-    if isDebugEnabled == nil or isDebugEnabled() ~= true then return false end
-    if isClient() then
-        local role = player:getRole()
-        return role ~= nil and Capability ~= nil and role:hasCapability(Capability.MakeEventsAlarmGunshot) == true
-    end
-    return isDebugEnabled ~= nil and isDebugEnabled() == true
-end
-
-function Prototype.onContext(playerNum, context, worldObjects, test)
-    if test or not Prototype.canUse(getSpecificPlayer(playerNum)) then return end
+--- Test menu (debug file): selects the local player driving test flights and,
+--- in MP, the flight this player owns. Returns the player's active test flight.
+function Render.selectPlayer(playerNum)
     selectedPlayerNum = playerNum
     if isClient() then
         active = nil
+        local player = getSpecificPlayer(playerNum)
         for _, e in pairs(entries) do
-            if e.owner == getSpecificPlayer(playerNum):getOnlineID() then active = e end
+            if player and e.owner == player:getOnlineID() then active = e end
         end
     end
-    local option = context:addOption("Fulton - visual test (debug)")
-    local sub = ISContextMenu:getNew(context)
-    context:addSubMenu(option, sub)
-    sub:addOption("Launch the balloon ascent", playerNum, startFromMenu, false)
-    sub:addOption("Compare with the vanilla floating item", playerNum, startFromMenu, true)
-    if active then
-        sub:addOption(active.paused and "Resume the animation" or "Freeze the animation", nil, Prototype.togglePause)
-        sub:addOption("Stop the test flight", nil, Prototype.stop)
-    end
-    if Prototype.count() > 0 then
-        sub:addOption("Show / hide the cable", nil, Prototype.toggleCable)
-        sub:addOption("Automatic rendering (with fallback)", "auto", Prototype.setMode)
-        sub:addOption("World rendering only (vanilla floating item)", "world", Prototype.setMode)
-        sub:addOption("Post-world rendering only", "post", Prototype.setMode)
-    end
+    return active
 end
 
-function Prototype.onGameStart()
+function Render.onGameStart()
     clear()
     revision = -1
     if isClient() then request("Sync") end
 end
 
-function Prototype.onDisconnect()
+function Render.onDisconnect()
     clear()
     revision = -1
 end
 
-function Prototype.dispose()
+function Render.dispose()
     clear() -- A local Lua reload mustn't stop the shared server flight.
-    Events.OnFillWorldObjectContextMenu.Remove(Prototype.onContext)
-    Events.OnGameStart.Remove(Prototype.onGameStart)
-    Events.OnDisconnect.Remove(Prototype.onDisconnect)
-    Events.OnServerCommand.Remove(Prototype.onServerCommand)
+    Events.OnGameStart.Remove(Render.onGameStart)
+    Events.OnDisconnect.Remove(Render.onDisconnect)
+    Events.OnServerCommand.Remove(Render.onServerCommand)
 end
 
-Events.OnFillWorldObjectContextMenu.Add(Prototype.onContext)
-Events.OnGameStart.Add(Prototype.onGameStart)
-Events.OnDisconnect.Add(Prototype.onDisconnect)
-Events.OnServerCommand.Add(Prototype.onServerCommand)
+Events.OnGameStart.Add(Render.onGameStart)
+Events.OnDisconnect.Add(Render.onDisconnect)
+Events.OnServerCommand.Add(Render.onServerCommand)

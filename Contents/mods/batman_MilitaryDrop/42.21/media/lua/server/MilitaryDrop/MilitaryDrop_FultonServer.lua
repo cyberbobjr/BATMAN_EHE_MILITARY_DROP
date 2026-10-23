@@ -35,7 +35,7 @@ require "MilitaryDrop/MilitaryDrop_Trust"
 require "MilitaryDrop/MilitaryDrop_Missions"
 require "MilitaryDrop/MilitaryDrop_ZonesFile"
 require "MilitaryDrop/MilitaryDrop_Broadcast"
-require "MilitaryDrop/MilitaryDrop_FultonPrototypeServer"
+require "MilitaryDrop/MilitaryDrop_FultonFlightServer"
 require "MilitaryDrop/MilitaryDrop_Fulton"
 require "MilitaryDrop/MilitaryDrop_Exchange"
 
@@ -216,12 +216,12 @@ end
 function FultonServer.onLaunched(player, x, y, z)
     local fx, fy = x + 0.5, y + 0.5
     if isServer() then
-        local Flights = MilitaryDrop.FultonPrototypeServer
+        local Flights = MilitaryDrop.FultonFlightServer
         if Flights and Flights.startFlight then
             Flights.startFlight(fx, fy, z)
         end
-    elseif MilitaryDrop.FultonPrototype and MilitaryDrop.FultonPrototype.startAt then
-        MilitaryDrop.FultonPrototype.startAt(fx, fy, z)
+    elseif MilitaryDrop.FultonRender and MilitaryDrop.FultonRender.startAt then
+        MilitaryDrop.FultonRender.startAt(fx, fy, z)
     end
     local sounds = getWorldSoundManager and getWorldSoundManager()
     if sounds then

@@ -86,7 +86,7 @@ Les radios sont désignées par une référence (`Radio.makeRef`) : `{ kind = "i
 | `FultonLaunch` | `kitId`, `tankId`, `x`, `y`, `z` | `FultonServer.launch` | Cadence 3 s ; case du kit à `Fulton.REACH` cases et au même étage ; kit trouvé au sol (identifiant et type) ; bouteille non vide dans l'inventaire principal ; ligne ouverte ; source activée ; créneau ouvert ; case extérieure sans arbre ; météo ; hors zone non-PvP et refuge ; kit non vide. |
 | `SirenSync` | — | `Decoy.onClientCommand` | Cadence 3 s ; renvoie les sirènes à portée d'écoute. |
 
-Module distinct `MilitaryDropFultonPrototype` (menu de test du ballon) : `Sync`, `Start`, `Stop`, `Pause` ; `Start`, `Stop` et `Pause` exigent `Capability.MakeEventsAlarmGunshot` ; serveur MP seulement ; réponse `Snapshot`.
+Module distinct `MilitaryDropFultonFlight` (menu de test du ballon) : `Sync`, `Start`, `Stop`, `Pause` ; `Start`, `Stop` et `Pause` exigent `Capability.MakeEventsAlarmGunshot` ; serveur MP seulement ; réponse `Snapshot`.
 
 Les actions chronométrées partagées `MilitaryDrop.SirenAction` et `MilitaryDrop.DismantleAction` sont reconstruites par le serveur (actions réseau de la B42) ; leur `complete()` revérifie tout (`Decoy.stopByPlayer`, `Dismantle`). `MilitaryDrop.ExchangeAction` et l'action de lâcher Fulton restent côté client et n'agissent que par leur commande.
 

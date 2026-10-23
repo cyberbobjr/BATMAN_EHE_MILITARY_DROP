@@ -72,7 +72,7 @@ Seule globale : la table `MilitaryDrop` (`Core`), dont chaque module est un cham
 | `Loot`, `Lots` | Tirage du contenu des caisses dans les tables de butin fusionnées (aucun nom d'objet) ; les 18 lots du formulaire de réquisition. |
 | `Recipe`, `Salvage`, `Memo`, `PrintMedia` | `OnCreate` des recettes (ouverture des caisses, des lots d'épave) et des documents ; mise en page `printMedia`. |
 | `Dismantle`, `SirenAction`, `WreckParts`, `WreckSmoke` | Démontage de la caisse (règles vanilla du bois), action « Couper la sirène », pièces d'épave (enveloppes des actions vanilla de véhicule), fumée locale de l'épave. |
-| `Fulton`, `FultonPrototypeFlight` | Classement et barème du contenu d'un kit Fulton ; trajectoire visuelle du ballon. |
+| `Fulton`, `FultonFlight` | Classement et barème du contenu d'un kit Fulton ; trajectoire visuelle du ballon. |
 
 ### `client/`
 
@@ -85,7 +85,7 @@ Seule globale : la table `MilitaryDrop` (`Core`), dont chaque module est un cham
 | `PostWindow`, `BaySound` | Console du poste de liaison, baie de lecture de l'enregistreur de vol et ses sons. |
 | `Heli`, `Announce`, `Siren` | Hélicoptère vu et entendu (son, ombre, flèche), repères de carte des auditeurs, sirène du leurre ; tout est local, sans paquet. |
 | `ZonesAdmin`, `ZonesWindow`, `ZoneEditor` | Outil d'admin des zones de largage (bouton du panneau d'admin vanilla en MP, menu de debug en solo). |
-| `FultonClient`, `FultonMenu`, `FultonPrototype` | Créneau Fulton reçu de la base, menu du kit et action de lâcher, rendu du ballon et menu de test (debug). |
+| `FultonClient`, `FultonMenu`, `FultonRender`, `FultonRender_Debug` | Créneau Fulton reçu de la base, menu du kit et action de lâcher, rendu du ballon et menu de test (debug). |
 | `DismantleMenu`, `WreckMenu`, `GroundFire`, `BeltRadio` | Menu « Démonter la caisse », récupération de l'épave (enveloppe d'`ISVehicleMenu.FillMenuOutsideVehicle`), signal d'un tir vers l'hélicoptère, inscription des chaînes du mod au récepteur de ceinture. |
 
 ### `server/`
@@ -101,7 +101,7 @@ Seule globale : la table `MilitaryDrop` (`Core`), dont chaque module est un cham
 | `Trust`, `Teams`, `Missions` | Réputation personnelle, équipes (factions vanilla), sources de confiance et missions publiques. |
 | `Post` | Poste de liaison : installation, journal, dépôt de plaques, enregistreur de vol. |
 | `Zones`, `ZonesFile` | Zones de largage (`dropzones.txt`) et protocole de l'outil d'admin. |
-| `FultonServer`, `FultonLoot`, `FultonPrototypeServer` | Lâcher Fulton et paiement, butin Fulton, vols de ballon autoritaires. |
+| `FultonServer`, `FultonLoot`, `FultonFlightServer` | Lâcher Fulton et paiement, butin Fulton, vols de ballon autoritaires. |
 | `Notes`, `Documents`, `ServerTranslations` | Notes et carnets sur les zombies et dans le butin, mises en page, rechargement des traductions sur un serveur MP. |
 
 Chaque module serveur inscrit ses propres commandes dans `Server.COMMANDS` (voir [specifications-techniques.md](specifications-techniques.md#commandes-réseau)).
@@ -113,7 +113,7 @@ Chaque module serveur inscrit ses propres commandes dans `Server.COMMANDS` (voir
 3. **Livraison** : quand la case est chargée (`LoadChunk`, sondage), `Crate` crée le véhicule `Base.MilitaryDrop_SupplyCrate`, son coffre est rempli par `OnFillContainer`, la horde apparaît ; leurre : `Decoy.onDelivered`. `Server.pollCollected` (chaque minute) clôt le largage quand une caisse est ouverte ou vidée.
 4. **Confiance** : `Exchange` → commandes `Mission*` → `Missions` → `Trust.add` ; missions planifiées sur `EveryTenMinutes`, nettoyage suivi par `OnZombieDead`.
 5. **Poste de liaison** : commandes `Post*` → `Post` ; journal rafraîchi chaque minute (`EveryOneMinute`), état relu au `LoadChunk`.
-6. **Fulton** : `MissionFulton` ouvre un créneau ; `FultonLaunch` → `FultonServer.launch` (revérification complète) → paiement, vol `FultonPrototypeServer`, `Snapshot` aux clients.
+6. **Fulton** : `MissionFulton` ouvre un créneau ; `FultonLaunch` → `FultonServer.launch` (revérification complète) → paiement, vol `FultonFlightServer`, `Snapshot` aux clients.
 7. **Zones** : `ZoneList`/`ZoneAdd`/… → `Zones.handleCommand` (droit `ChangeAndReloadServerOptions`, cadence) → `ZonesFile` écrit `dropzones.txt`, réponses `ZoneReply` puis `ZoneListReply`.
 
 Événements du jeu les plus utilisés : `OnGameStart`, `OnTick`, `OnInitGlobalModData`, `OnFillWorldObjectContextMenu`, `EveryOneMinute`, `OnServerStarted`, `LoadChunk`, `OnLoadRadioScripts`, `OnClientCommand`/`OnServerCommand`, `EveryTenMinutes`, `EveryHours`, `OnZombieDead`, `OnFillContainer`, `OnSpawnVehicleEnd`, `OnDeviceText`, `OnPostDistributionMerge`.

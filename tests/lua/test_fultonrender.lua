@@ -21,12 +21,12 @@ function T.setup()
         DRAWS[#DRAWS + 1] = { kind = item.kind, x = x, y = y, z = z, alpha = item.alpha }
     end
     renderIsoLine = function() end
-    loadMod("shared/MilitaryDrop/MilitaryDrop_FultonPrototypeFlight.lua")
-    loadMod("client/MilitaryDrop/MilitaryDrop_FultonPrototype.lua")
+    loadMod("shared/MilitaryDrop/MilitaryDrop_FultonFlight.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender.lua")
 end
 
 function T.rise_hold_and_pickup_have_continuous_heights()
-    local P = MilitaryDrop.FultonPrototype
+    local P = MilitaryDrop.FultonRender
     local config = { x = 100, y = 200, z = 2, height = 2.5, duration = 10, hold = 20, pickup = 4 }
     assertEq(P.pose(0, config).balloonZ, 2.2)
     local mid = P.pose(5, config)
@@ -43,7 +43,7 @@ function T.rise_hold_and_pickup_have_continuous_heights()
 end
 
 function T.auto_draws_once_and_falls_back_if_world_event_is_missing()
-    local P = MilitaryDrop.FultonPrototype
+    local P = MilitaryDrop.FultonRender
     assertTrue(P.start(0))
     triggerEvent("RenderOpaqueObjectsInWorld", 0)
     triggerEvent("OnPostRender")
@@ -63,7 +63,7 @@ function T.auto_draws_once_and_falls_back_if_world_event_is_missing()
 end
 
 function T.default_ascent_reaches_full_height_in_three_seconds()
-    local P = MilitaryDrop.FultonPrototype
+    local P = MilitaryDrop.FultonRender
     P.start(0)
     for _ = 1, 15 do triggerEvent("OnTick") end
     assertTrue(math.abs(P.status().height - 1.45) < 0.000001, "linear ascent halfway at 1.5s")
@@ -72,14 +72,14 @@ function T.default_ascent_reaches_full_height_in_three_seconds()
     DRAWS = {}
     triggerEvent("OnPostRender")
     assertTrue(DRAWS[1].z > 0, "bag already rises at 3.1s without an idle hold")
-    assertEq(MilitaryDrop.FultonPrototypeFlight.HOLD_SECONDS, 0)
-    assertEq(MilitaryDrop.FultonPrototypeFlight.PICKUP_SECONDS, 1.5)
+    assertEq(MilitaryDrop.FultonFlight.HOLD_SECONDS, 0)
+    assertEq(MilitaryDrop.FultonFlight.PICKUP_SECONDS, 1.5)
     for _ = 1, 15 do triggerEvent("OnTick") end
     assertEq(P.status().running, false, "complete cycle finishes after 4.5s")
 end
 
 function T.pause_restart_and_unloaded_square_are_clean()
-    local P = MilitaryDrop.FultonPrototype
+    local P = MilitaryDrop.FultonRender
     P.start(0)
     triggerEvent("OnTick")
     local elapsed = P.status().elapsed
@@ -102,15 +102,34 @@ function T.pause_restart_and_unloaded_square_are_clean()
 end
 
 function T.completion_and_lua_reload_remove_old_callbacks()
-    local P = MilitaryDrop.FultonPrototype
+    local P = MilitaryDrop.FultonRender
     P.start(0, { duration = 1, hold = 0 })
     for _ = 1, 51 do triggerEvent("OnTick") end
     assertEq(P.status().running, false)
     P.start(0)
-    loadMod("client/MilitaryDrop/MilitaryDrop_FultonPrototype.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender.lua")
     assertEq(listenerCount("OnTick"), 0)
-    assertEq(listenerCount("OnFillWorldObjectContextMenu"), 1)
+    assertEq(listenerCount("OnFillWorldObjectContextMenu"), 0, "no test menu in the render file")
     assertEq(listenerCount("OnGameStart"), 1)
+end
+
+function T.test_menu_file_loads_only_in_debug_mode()
+    isDebugEnabled = function() return false end
+    loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender_Debug.lua")
+    assertEq(MilitaryDrop.FultonRenderDebug, nil, "skipped outside debug mode")
+    assertEq(listenerCount("OnFillWorldObjectContextMenu"), 0, "no menu outside debug mode")
+    isDebugEnabled = function() return true end
+    loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender_Debug.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender_Debug.lua")
+    assertEq(listenerCount("OnFillWorldObjectContextMenu"), 1, "one menu handler, even after a reload")
+    local added = {}
+    ISContextMenu = { getNew = function()
+        return { addOption = function(_, text) added[#added + 1] = text end }
+    end }
+    local context = { addOption = function(_, text) added[#added + 1] = text return {} end, addSubMenu = function() end }
+    triggerEvent("OnFillWorldObjectContextMenu", 0, context, {}, false)
+    assertEq(added[1], "Fulton - visual test (debug)", "solo debug: menu shown")
+    assertEq(added[2], "Launch the balloon ascent", "English labels")
 end
 
 return T

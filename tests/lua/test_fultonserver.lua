@@ -312,10 +312,10 @@ end
 
 function T.default_hook_starts_the_flight_noise_and_announcement()
     local calls = {}
-    MilitaryDrop.FultonPrototypeServer = {
+    MilitaryDrop.FultonFlightServer = {
         startFlight = function(x, y, z) calls[#calls + 1] = "mp " .. x .. "," .. y .. "," .. z end,
     }
-    MilitaryDrop.FultonPrototype = { startAt = function(x, y, z) calls[#calls + 1] = "solo " .. x .. "," .. y .. "," .. z end }
+    MilitaryDrop.FultonRender = { startAt = function(x, y, z) calls[#calls + 1] = "solo " .. x .. "," .. y .. "," .. z end }
     MilitaryDrop.Broadcast = { fulton = function(x, y) calls[#calls + 1] = "broadcast " .. x .. "," .. y end }
     getWorldSoundManager = function()
         return { addSound = function(_, source, x, y, z, radius, volume)
