@@ -102,4 +102,42 @@ function T.identity_sync_sends_no_score_or_private_state()
     assertEq(sent[2].trust, nil, "no private state")
 end
 
+function T.idle_entries_at_the_starting_value_are_forgotten_after_30_days()
+    local idle = Trust.idFor(player("idle"))
+    local raised = Trust.idFor(player("raised"))
+    Trust.add(raised, 5, "report")
+    local locked = Trust.idFor(player("locked"))
+    STATE.characterTrust[locked].lockedUntil = HOURS + 2000
+    local recent = Trust.idFor(player("recent"))
+    HOURS = HOURS + Trust.FORGET_IDLE_HOURS - 1
+    Trust.touch(recent)
+    assertEq(Trust.forgetIdle(), 0, "moins de 30 jours : rien d'oublié")
+    HOURS = HOURS + 1
+    assertEq(Trust.forgetIdle(), 1, "une seule entrée oubliée")
+    assertEq(STATE.characterTrust[idle], nil, "note de départ, sans contact : oubliée")
+    assertTrue(STATE.characterTrust[raised] ~= nil, "note changée : gardée")
+    assertTrue(STATE.characterTrust[locked] ~= nil, "ligne coupée en cours : gardée")
+    assertTrue(STATE.characterTrust[recent] ~= nil, "contact récent : gardée")
+    assertEq(Trust.get(idle), Trust.START, "même note qu'avant l'oubli")
+end
+
+function T.forgotten_entry_is_recreated_identically_for_a_connected_player()
+    local p = player("batman")
+    local id = Trust.idFor(p)
+    HOURS = HOURS + Trust.FORGET_IDLE_HOURS
+    Trust.forgetIdle()
+    assertEq(STATE.characterTrust[id], nil, "oubliée")
+    assertEq(Trust.idFor(p), id, "même identifiant")
+    assertEq(STATE.characterTrust[id].username, "batman", "nom recréé")
+    assertEq(Trust.get(id), Trust.START, "note de départ")
+end
+
+function T.saved_entries_without_dates_get_one_before_being_forgotten()
+    STATE.characterTrust = { ["C:old"] = { value = Trust.START } }
+    assertEq(Trust.forgetIdle(), 0, "pas de date : rien d'oublié")
+    assertEq(STATE.characterTrust["C:old"].createdHours, HOURS, "date posée à la migration")
+    HOURS = HOURS + Trust.FORGET_IDLE_HOURS
+    assertEq(Trust.forgetIdle(), 1, "oubliée 30 jours plus tard")
+end
+
 return T

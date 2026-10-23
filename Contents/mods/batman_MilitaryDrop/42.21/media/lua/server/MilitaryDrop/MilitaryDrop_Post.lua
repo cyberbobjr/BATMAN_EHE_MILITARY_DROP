@@ -1100,7 +1100,7 @@ function Post.insertRecorder(player, args)
         return reply(player, "recorderUsed")
     end
     local data = item:getModData()
-    local wreck = type(s.wrecks) == "table" and s.wrecks[site] or nil
+    local wreck = MilitaryDrop.Wreck and MilitaryDrop.Wreck.siteInfo(site) or nil
     local container = item:getContainer()
     container:Remove(item)
     if isServer() then

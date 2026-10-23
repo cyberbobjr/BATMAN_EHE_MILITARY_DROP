@@ -39,6 +39,9 @@ Trust.FACTOR_AT_MIN = 1.5
 Trust.FACTOR_AT_NEUTRAL = 1
 Trust.FACTOR_AT_MAX = 0.6
 Trust.EROSION_IDLE_HOURS = 24
+-- Entrée de personnage oubliée (C06) : note de départ, sans ligne coupée, sans
+-- contact depuis ce délai. Elle se recrée à l'identique au prochain appel.
+Trust.FORGET_IDLE_HOURS = 30 * 24
 -- Largages clos gardés pour la console, puis oubliés.
 Trust.CLOSED_DROP_KEEP_HOURS = 168
 Trust.ITEM_KEY = "MilitaryDrop_dropId"
@@ -84,7 +87,7 @@ local function entry(characterId)
     local trust = state().characterTrust
     local e = trust[characterId]
     if not e then
-        e = { value = Trust.START }
+        e = { value = Trust.START, createdHours = hoursNow() }
         trust[characterId] = e
     end
     return e
@@ -100,12 +103,14 @@ function Trust.idFor(player)
         return nil
     end
     local cached = characterIds[player]
-    if cached then
+    if cached and state().characterTrust[cached] then
         player:getModData()[Trust.CHARACTER_KEY] = cached
         return cached
     end
     local data = player:getModData()
-    local id = data[Trust.CHARACTER_KEY]
+    -- Entrée oubliée (Trust.forgetIdle) pendant que le joueur restait connecté :
+    -- même identifiant, nom recréé.
+    local id = cached or data[Trust.CHARACTER_KEY]
     local username = tostring(player:getUsername())
     if type(id) ~= "string" or not id:match("^C:") then
         id = "C:" .. getRandomUUID()
@@ -528,11 +533,38 @@ function Trust.erode(hours)
     end
 end
 
+--- Oublie les entrées de personnage sans effet (note de départ, sans ligne
+--- coupée en cours, sans contact depuis FORGET_IDLE_HOURS). Une entrée sans
+--- aucune date (sauvegarde d'avant) reçoit la date du jour : oubliée plus tard.
+function Trust.forgetIdle(hours)
+    hours = hours or hoursNow()
+    local trust = state().characterTrust
+    local forgotten = {}
+    for characterId, e in pairs(trust) do
+        local last = tonumber(e.lastCallHours) or tonumber(e.createdHours)
+        if not last then
+            e.createdHours = hours
+        elseif (tonumber(e.value) or Trust.START) == Trust.START and not activeLock(characterId)
+            and hours - last >= Trust.FORGET_IDLE_HOURS then
+            forgotten[#forgotten + 1] = characterId
+        end
+    end
+    for _, characterId in ipairs(forgotten) do
+        trust[characterId] = nil
+    end
+    if #forgotten > 0 then
+        MilitaryDrop.log("trust: " .. #forgotten .. " idle character entr" .. (#forgotten == 1 and "y" or "ies")
+            .. " at the starting value forgotten")
+    end
+    return #forgotten
+end
+
 function Trust.onEveryHour()
     local hours = hoursNow()
     Trust.flushPenalties()
     Trust.checkDrops(hours)
     Trust.erode(hours)
+    Trust.forgetIdle(hours)
 end
 
 -- ----------------------------------------------------------------------------

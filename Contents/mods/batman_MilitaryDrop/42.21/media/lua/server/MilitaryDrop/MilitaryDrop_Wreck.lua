@@ -20,6 +20,31 @@ local function sites()
     return s.wrecks
 end
 
+-- Sites clos (C06) : posés en entier, fumée finie ; plus rien à y faire. Ils
+-- sortent du registre parcouru à chaque LoadChunk et chaque minute ; seule
+-- reste l'entrée compacte { x, y, c } lue par l'enregistreur de vol
+-- (Post.insertRecorder, enregistreurs d'avant la position dans leur ModData).
+local function closedSites()
+    local s = MilitaryDrop.Secrets.privateState()
+    s.wrecksClosed = s.wrecksClosed or {}
+    return s.wrecksClosed
+end
+
+--- Site encore actif (pose à finir ou fumée à entretenir).
+function Wreck.isActive(site)
+    return not site.complete
+        or ((tonumber(site.fire) or 0) >= 2 and getGameTime():getWorldAgeHours() < (tonumber(site.smokeUntil) or 0))
+end
+
+--- Point et horloge d'un site, actif ou clos, ou nil.
+function Wreck.siteInfo(id)
+    local site = sites()[id] or closedSites()[id]
+    if type(site) ~= "table" then
+        return nil
+    end
+    return { x = tonumber(site.x), y = tonumber(site.y), c = tonumber(site.c) }
+end
+
 -- Une enveloppe carrée couvre les pales, les rotations et le jitter ±0,2 rad.
 function Wreck.footprint(x, y, radius)
     local cell = getCell()
@@ -284,6 +309,8 @@ function Wreck.add(flight)
     local registry = sites()
     local id = "W" .. flight.id
     if registry[id] then return registry[id] end
+    -- Site déjà clos (vol de crash relu après la clôture) : rien à reposer.
+    if closedSites()[id] then return nil end
     local impact = flight.crash
     if not flight.mayday then MilitaryDrop.Broadcast.mayday(flight.id, impact.x, impact.y) end
     local outfits = getAllOutfits(false)
@@ -314,9 +341,24 @@ function Wreck.add(flight)
 end
 
 function Wreck.update()
-    for _, site in pairs(sites()) do
-        if not site.complete or (site.fire >= 2 and getGameTime():getWorldAgeHours() < site.smokeUntil) then
+    local registry = sites()
+    local closing = {}
+    for id, site in pairs(registry) do
+        if Wreck.isActive(site) then
             Wreck.trySite(site)
+        end
+        if not Wreck.isActive(site) then
+            closing[#closing + 1] = id
+        end
+    end
+    -- Kahlua : retirer après le pairs.
+    if #closing > 0 then
+        local closed = closedSites()
+        for _, id in ipairs(closing) do
+            local site = registry[id]
+            closed[id] = { x = site.x, y = site.y, c = site.c }
+            registry[id] = nil
+            MilitaryDrop.log("crash " .. tostring(id) .. ": site closed")
         end
     end
 end

@@ -388,4 +388,41 @@ function T.recorder_carries_the_site_point_and_time_of_the_crash()
     assertEq(data.MilitaryDrop_crashClock, 2412.5, "heure du crash")
 end
 
+function T.finished_site_leaves_the_scanned_registry_but_keeps_its_point()
+    local site = MilitaryDrop.Wreck.add(FLIGHT)
+    assertTrue(site.complete, "site posé en entier")
+    assertTrue(PRIVATE.wrecks[site.id] ~= nil, "fumée encore active : site parcouru")
+    HOURS = 1000
+    MilitaryDrop.Wreck.update()
+    assertEq(PRIVATE.wrecks[site.id], nil, "fumée finie : sorti du registre parcouru")
+    local closed = PRIVATE.wrecksClosed[site.id]
+    assertEq(closed.x .. "," .. closed.y .. "," .. closed.c, site.x .. "," .. site.y .. ",2412.5",
+        "entrée compacte pour l'enregistreur")
+    local info = MilitaryDrop.Wreck.siteInfo(site.id)
+    assertEq(info.x, site.x, "point lu après la clôture")
+    assertEq(MilitaryDrop.Wreck.add(FLIGHT), nil, "vol relu : rien de reposé")
+    assertEq(BODIES, 1, "pas de second pilote")
+end
+function T.saved_finished_sites_are_closed_on_restore()
+    PRIVATE.wrecks = {
+        W7 = { id = "W7", x = 5, y = 6, c = 7, complete = true, fire = 2, smokeUntil = 1, done = {}, positions = {} },
+        W8 = { id = "W8", x = 9, y = 9, c = 9, complete = false, fire = 0, smokeUntil = 0, done = {}, positions = {},
+            crewVersion = 1, zombies = 0 },
+    }
+    LOADED = false
+    MilitaryDrop.Wreck.restore()
+    assertEq(PRIVATE.wrecks.W7, nil, "ancien site fini : clos")
+    assertEq(PRIVATE.wrecksClosed.W7.x, 5, "point gardé")
+    assertTrue(PRIVATE.wrecks.W8 ~= nil, "site encore à poser : gardé")
+end
+function T.site_with_active_smoke_or_unfinished_pose_stays()
+    UNLOADED = function(x) return x > 100 end
+    local site = MilitaryDrop.Wreck.add(FLIGHT)
+    HOURS = 1000
+    MilitaryDrop.Wreck.update()
+    assertEq(site.complete and true or false, false, "queue en attente de son chunk")
+    assertTrue(PRIVATE.wrecks[site.id] ~= nil, "pose à finir : site gardé")
+    UNLOADED = nil
+end
+
 return T

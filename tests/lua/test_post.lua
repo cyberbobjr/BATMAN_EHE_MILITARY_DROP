@@ -1287,6 +1287,19 @@ function T.bay_refuses_other_objects_and_a_second_recorder()
     assertEq(lastSent("PostResult").status, "bayEmpty", "rien à retirer")
 end
 
+function T.old_recorder_reads_the_point_of_a_closed_crash_site()
+    -- Enregistreur d'avant la position dans sa ModData : point et heure relus
+    -- du site, même clos (Wreck.siteInfo : registre compact wrecksClosed).
+    MilitaryDrop.Wreck = { siteInfo = function(id)
+        return id == "W4" and { x = 321, y = 654, c = CLOCK - 5 } or nil
+    end }
+    ALICE.inventory = makeInventory({ makeRecorder(11, "W4") })
+    install(ALICE, RADIO)
+    assertEq(insertRecorder(ALICE, 11).status, "recorderIn", "insérée")
+    local bay = lastSent("PostData").bay
+    assertEq(bay.cx .. "/" .. bay.cy .. "/" .. bay.cc, "321/654/" .. (CLOCK - 5), "point et heure du site clos")
+end
+
 function T.recorder_keys_match_the_wreck_module()
     local source = readModFile("server/MilitaryDrop/MilitaryDrop_Wreck.lua")
     assertTrue(source:find('Wreck.SITE_KEY = "' .. Post.SITE_KEY .. '"', 1, true) ~= nil, "même clé de site")
