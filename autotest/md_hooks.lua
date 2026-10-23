@@ -332,29 +332,61 @@ local function addClientSteps(player, waitMs)
             "size=" .. math.floor(window.width) .. "x" .. math.floor(window.height) .. " affairs=" .. tostring(affairs))
         return true
     end, 30000)
-    addStep("requisition sheet opens and draws", function()
-        local RW = MD.RequisitionWindow
-        local playerNum = player:getPlayerNum()
-        if not S.sheet then
-            -- Admin forced-drop sheet (forced: no radio needed), one lot and the decoy, never transmitted.
-            S.sheet = RW.open(player, nil, { requestId = 0, callsign = "Autotest", tier = 2, budget = 10, forced = true,
-                expiresMs = 120000,
+    -- Solo: the server's real offer (Requisition.offer, same fields as the "form" reply of Requisition.openForm):
+    -- the character's own tier, then an admin sheet (all tiers). mp client: a synthetic admin sheet (the offer
+    -- is built on the server). Sheets are closed without transmitting or cancelling a real request.
+    local function sheetArgs(forced)
+        local Req, Trust = MD.Requisition, MD.Trust
+        if not (Req and Req.offer and Trust) then
+            return { requestId = 0, callsign = "Autotest", tier = 2, budget = 10, forced = true, expiresMs = 120000,
                 lots = { { id = "autotest", group = 1, cost = 2, allowed = true, label = "Autotest lot" } },
-                decoy = { cost = 3, allowed = true, sectors = { "N", "E", "S", "W" } } })
-            return false
+                decoy = { cost = 3, allowed = true, sectors = { "N", "E", "S", "W" } } }, "synthetic"
         end
-        S.sheetFrames = (S.sheetFrames or 0) + 1
-        if S.sheetFrames < 30 then return false end
-        if SHOTS and not shotAfter(S, "sheetShot", 1, "md_requisition_sheet.png") then return false end
-        local visible = S.sheet:getIsVisible() and RW.instances[playerNum] == S.sheet
-        local w, h = S.sheet.width, S.sheet.height
-        -- Closed without transmitting or cancelling a real request.
-        S.sheet.done = true
-        S.sheet:close()
-        rec(visible and RW.instances[playerNum] == nil, "requisition sheet opens and draws",
-            "size=" .. math.floor(w) .. "x" .. math.floor(h))
-        return true
-    end, 30000)
+        local cid = Trust.idFor(player)
+        local offer = Req.offer(cid, forced, player)
+        local teamId = MD.Teams.idFor(player)
+        local allowed = 0
+        for _, lot in ipairs(offer.lots) do
+            if lot.allowed then allowed = allowed + 1 end
+        end
+        return { requestId = 0, status = "form", forced = forced or nil, callsign = MD.Teams.callsign(teamId),
+            tier = Trust.tier(cid), budget = offer.budget, expiresMs = 120000, lots = offer.lots,
+            decoy = offer.decoy, drop = offer.drop },
+            "real offer: " .. #offer.lots .. " lots, " .. allowed .. " allowed, budget " .. tostring(offer.budget)
+            .. ", tier " .. tostring(Trust.tier(cid)) .. (forced and " (admin)" or "")
+    end
+
+    local function addSheetStep(name, forced, shot)
+        addStep(name, function()
+            local RW = MD.RequisitionWindow
+            local playerNum = player:getPlayerNum()
+            local key = forced and "admin" or "own"
+            if not S[key] then
+                local args, detail = sheetArgs(forced)
+                S[key .. "Detail"] = detail
+                -- A normal sheet closes itself without the calling radio (RW:deviceValid): the radio in hand.
+                local radio = not forced and (player:getPrimaryHandItem() or player:getSecondaryHandItem()) or nil
+                S[key] = RW.open(player, radio, args)
+                return false
+            end
+            local sheet = S[key]
+            S[key .. "Frames"] = (S[key .. "Frames"] or 0) + 1
+            if S[key .. "Frames"] < 30 then return false end
+            if SHOTS and not shotAfter(S, key .. "Shot", 1, shot) then return false end
+            local visible = sheet:getIsVisible() and RW.instances[playerNum] == sheet
+            local w, h = sheet.width, sheet.height
+            sheet.done = true
+            sheet:close()
+            rec(visible and RW.instances[playerNum] == nil, name,
+                "size=" .. math.floor(w) .. "x" .. math.floor(h) .. " " .. tostring(S[key .. "Detail"]))
+            return true
+        end, 30000)
+    end
+
+    if not isClient() then
+        addSheetStep("requisition sheet opens and draws (own tier)", false, "md_requisition_sheet_own_tier.png")
+    end
+    addSheetStep("requisition sheet opens and draws", true, "md_requisition_sheet.png")
 end
 
 -- ------------------------------------------------------------------ authority path
