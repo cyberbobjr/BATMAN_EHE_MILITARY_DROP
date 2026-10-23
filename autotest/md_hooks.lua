@@ -11,6 +11,8 @@ Authority (solo client, or mp server with the first connected player), through t
   4. real flight (MilitaryDrop_Flights, OnTick) until Server.deliver records the delivery (Trust.drop(id));
      crate vehicle on the square, marked supply cases in its trunk;
   5. Trust.onCaseOpened (called by Recipe.openSupplyCase) on a marked case: outcome "recovered", trust not lower;
+     mp with a second connected player (--clients 2): the case is opened by that other player instead (no common
+     faction): outcome "taken", the caller's trust lowered by Trust.DROP_TAKEN (C13);
   6. Missions.adminLaunch(control): mission open and listed for the character;
   7. liaison post: HAM radio (IsoRadio with the HamRadio2 sprite) on the player's square, Post.install -> owner;
   8. Fulton: FultonServer.launch without a kit -> refused "noKit" (a full launch needs kit, helium tank and a mission
@@ -336,7 +338,7 @@ end
 
 -- ------------------------------------------------------------------ authority path
 
-local function addAuthoritySteps(player, deliveryMs, crateWaitMs, leadMs)
+local function addAuthoritySteps(player, deliveryMs, crateWaitMs, leadMs, other)
     local MD = MilitaryDrop
     local Server, Trust, Config = MD.Server, MD.Trust, MD.Config
     local S = {}
@@ -456,7 +458,27 @@ local function addAuthoritySteps(player, deliveryMs, crateWaitMs, leadMs)
         return true
     end, crateWaitMs + 5000)
 
+    if other then
+        addStep("trust: supply case opened by another player", function()
+            if not S.case then
+                rec(false, "trust: supply case opened by another player", "no marked case")
+                return true
+            end
+            local before = Trust.get(S.cid)
+            Trust.onCaseOpened(S.case, other)
+            local drop = Trust.drop(S.dropId)
+            local after = Trust.get(S.cid)
+            rec(drop and drop.outcome == "taken" and drop.openedBy == tostring(other:getUsername())
+                and after == math.max(Trust.MIN, before + Trust.DROP_TAKEN),
+                "trust: supply case opened by another player", "opener=" .. tostring(other:getUsername())
+                .. " outcome=" .. tostring(drop and drop.outcome) .. " caller trust " .. tostring(before) .. " -> "
+                .. tostring(after))
+            return true
+        end)
+    end
+
     addStep("trust: first supply case opened by the caller", function()
+        if other then return true end
         if not S.case then
             rec(false, "trust: first supply case opened by the caller", "no marked case")
             return true
@@ -1160,8 +1182,12 @@ function H.server.start(ctx)
         Events.OnClientCommand.Add(serverOp)
         return true
     end
+    local other = ctx.players()[2]
+    if other then
+        info("second player connected: " .. tostring(other:getUsername()) .. " opens the supply case")
+    end
     addAuthoritySteps(player, seconds(ctx.params.deliverySec, 240), seconds(ctx.params.crateWaitSec, 30),
-        seconds(ctx.params.serverLeadSec, 20))
+        seconds(ctx.params.serverLeadSec, 20), other)
     return true
 end
 
