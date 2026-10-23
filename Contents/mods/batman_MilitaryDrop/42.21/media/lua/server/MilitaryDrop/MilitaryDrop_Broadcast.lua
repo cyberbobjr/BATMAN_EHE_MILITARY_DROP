@@ -186,6 +186,15 @@ function Broadcast.fulton(x, y)
     return x, y
 end
 
+--- Grille d'un largage envoyée aux clients : la liste des repères actifs
+--- sera renvoyée (Missions.invalidateMarks, retrait des repères périmés).
+local function marksSent()
+    local Missions = MilitaryDrop.Missions
+    if Missions and Missions.invalidateMarks then
+        Missions.invalidateMarks()
+    end
+end
+
 --- Le nom de la zone de largage (idée 11) est lu dans l'annonce : nom
 --- donné et option DropZoneAnnounceName vraie (défaut).
 function Broadcast.announcesZone(zoneName)
@@ -198,6 +207,7 @@ end
 --- le repère et le message aux clients ne changent pas.
 function Broadcast.dropped(x, y, zoneName)
     Net.toAll("DropAnnounce", { x = x, y = y })
+    marksSent()
     local lines = {}
     local text
     if Broadcast.announcesZone(zoneName) then
@@ -227,6 +237,7 @@ function Broadcast.pending(grids)
         marks[i] = { x = grid.x, y = grid.y }
     end
     Net.toAll("DropAnnounce", { grids = marks })
+    marksSent()
     local lines = {}
     for _, grid in ipairs(grids) do
         local text

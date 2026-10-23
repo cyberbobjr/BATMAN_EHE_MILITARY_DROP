@@ -439,6 +439,192 @@ local function addAuthoritySteps(player, deliveryMs, crateWaitMs, leadMs)
     end)
 end
 
+-- ------------------------------------------------------------------ scenario "marks" (solo)
+
+-- -P scenario=marks: map markers of the missions and outdated markers (QUAL-09, QUAL-10), real radio path.
+--   1. radio off, recon R1 launched: no Eye symbol once the announcement has aired;
+--   2. radio on, "Confirm the recon" through Exchange.send (timed action, server reply): Eye symbol at R1;
+--   3. R1 closed by the admin entry point: its Eye symbol removed (MarksActive);
+--   4. radio off, recon R2 launched and aired, no symbol; radio on, reminder forced (openedHours moved back by
+--      DropRepeatHours): Eye symbol at R2 heard through OnDeviceText;
+--   5. drops: announced drop D1 (Trust record of the copied save) with its Target, stray Target elsewhere;
+--      Missions.sendMarks(player): stray removed, D1 kept; D1 emptied (markCollected) + Missions.update(): removed;
+--   6. R2 closed: Eye removed.
+local function symbolsApi()
+    local ui = {}
+    ui.javaObject = UIWorldMap.new(ui)
+    local api = ui.javaObject:getAPIv3()
+    api:setMapItem(MapItem.getSingleton())
+    return api:getSymbolsAPIv2()
+end
+
+local function countSymbols(id, x, y)
+    local api, n = symbolsApi(), 0
+    for i = 0, api:getSymbolCount() - 1 do
+        local symbol = api:getSymbolByIndex(i)
+        if symbol:isTexture() and symbol:getSymbolID() == id and math.floor(symbol:getWorldX()) == x
+            and math.floor(symbol:getWorldY()) == y then
+            n = n + 1
+        end
+    end
+    return n
+end
+
+local function airingDone()
+    local channel = MilitaryDrop.Broadcast.channel
+    return channel == nil or channel:getAiringBroadcast() == nil
+end
+
+local function addMarksSteps(player, airMs)
+    local MD = MilitaryDrop
+    local Missions, Trust, Announce = MD.Missions, MD.Trust, MD.Announce
+    local S = {}
+
+    local function setOn(on)
+        S.radio:getDeviceData():setTurnedOnRaw(on)
+    end
+
+    local function closeRecon()
+        if Missions.openMission("recon") then
+            Missions.adminLaunch(player, { kind = "recon", action = "close" })
+        end
+    end
+
+    addStep("marks: setup", function()
+        S.radio = giveMilitaryRadio(player, MD.Config.getChannel())
+        S.every = math.floor(tonumber(MD.Config.get("DropRepeatHours")) or 0)
+        rec(S.radio ~= nil and S.every > 0, "marks: setup", "DropRepeatHours=" .. tostring(S.every))
+        closeRecon()
+        return true
+    end)
+
+    addStep("marks: wait for the channel", function() return airingDone() end, airMs)
+
+    addStep("marks: unheard recon gives no symbol", function()
+        if not S.r1 then
+            setOn(false)
+            S.r1 = Missions.launch("recon")
+            if not S.r1 then
+                rec(false, "marks: unheard recon gives no symbol", "launch failed")
+                return true
+            end
+            info("R1 " .. S.r1.id .. " at " .. S.r1.x .. "," .. S.r1.y)
+            return false
+        end
+        if not airingDone() then return false end
+        local n = countSymbols("Eye", S.r1.x, S.r1.y)
+        rec(n == 0, "marks: unheard recon gives no symbol", "eye=" .. n)
+        return true
+    end, airMs)
+
+    addStep("marks: base reply (too far) marks the recon", function()
+        if not S.r1 then return true end
+        if not S.sent then
+            setOn(true)
+            -- Solo: Exchange.toPlayer calls the client handler directly (not seen by the observer).
+            S.sent = MD.Exchange.send(player, S.radio, MD.Exchange.COMMANDS.recon, {}, nil,
+                { onReply = function(args) S.reply = args end })
+            if not S.sent then
+                rec(false, "marks: base reply (too far) marks the recon", "exchange not started")
+                return true
+            end
+            return false
+        end
+        local reply = S.reply
+        if not reply then return false end
+        local n = countSymbols("Eye", S.r1.x, S.r1.y)
+        if n == 0 then return false end
+        rec(reply.status == "tooFar" and n == 1, "marks: base reply (too far) marks the recon",
+            "status=" .. tostring(reply.status) .. " eye=" .. n)
+        return true
+    end, 60000)
+
+    addStep("marks: closed recon symbol removed", function()
+        if not S.r1 then return true end
+        if not S.closed1 then
+            S.closed1 = true
+            closeRecon()
+        end
+        if countSymbols("Eye", S.r1.x, S.r1.y) > 0 then return false end
+        rec(true, "marks: closed recon symbol removed", "R1 " .. S.r1.id)
+        return true
+    end, 10000)
+
+    addStep("marks: wait for the channel (2)", function() return airingDone() end, airMs)
+
+    addStep("marks: reminder heard marks the recon", function()
+        if not S.r2 then
+            setOn(false)
+            S.r2 = Missions.launch("recon")
+            if not S.r2 then
+                rec(false, "marks: reminder heard marks the recon", "launch failed")
+                return true
+            end
+            info("R2 " .. S.r2.id .. " at " .. S.r2.x .. "," .. S.r2.y)
+            return false
+        end
+        if not S.reminded then
+            if not airingDone() then return false end
+            if countSymbols("Eye", S.r2.x, S.r2.y) ~= 0 then
+                rec(false, "marks: reminder heard marks the recon", "marked before the reminder")
+                return true
+            end
+            setOn(true)
+            S.r2.openedHours = S.r2.openedHours - S.every - 0.1
+            S.reminded = Missions.remind()
+            info("reminders aired: " .. tostring(S.reminded))
+            return false
+        end
+        local n = countSymbols("Eye", S.r2.x, S.r2.y)
+        if n == 0 then return false end
+        rec(S.reminded == 1, "marks: reminder heard marks the recon", "eye=" .. n)
+        return true
+    end, airMs * 2)
+
+    addStep("marks: drop announcement heard", function()
+        if not S.d1 then
+            if not airingDone() then return false end
+            local px, py = math.floor(player:getX()), math.floor(player:getY())
+            S.d1 = Trust.registerDrop(Trust.idFor(player), "autotest", true, {})
+            S.d1x, S.d1y, S.strayX, S.strayY = px + 40, py, px + 60, py
+            -- What the flight does at the drop (MilitaryDrop_Flights.lua, drop()).
+            Trust.onDropAnnounced(S.d1, S.d1x, S.d1y)
+            MD.Broadcast.dropped(S.d1x, S.d1y)
+            return false
+        end
+        if countSymbols("Target", S.d1x, S.d1y) == 0 then return false end
+        rec(true, "marks: drop announcement heard", "D1 " .. S.d1 .. " at " .. S.d1x .. "," .. S.d1y)
+        return true
+    end, airMs)
+
+    addStep("marks: outdated drop markers removed, active kept", function()
+        if not S.d1x then return true end
+        Announce.markMap(S.strayX, S.strayY)
+        Missions.sendMarks(player)
+        local px, py = S.strayX - 60, S.strayY
+        local active, stray = countSymbols("Target", S.d1x, S.d1y), countSymbols("Target", px + 60, py)
+        rec(active == 1 and stray == 0, "marks: outdated drop markers removed, active kept",
+            "active=" .. active .. " stray=" .. stray)
+        return true
+    end)
+
+    addStep("marks: emptied drop marker removed", function()
+        Trust.markCollected(S.d1)
+        Missions.update()
+        local n = countSymbols("Target", S.d1x, S.d1y)
+        rec(n == 0, "marks: emptied drop marker removed", "target=" .. n)
+        return true
+    end)
+
+    addStep("marks: second recon closed, symbol removed", function()
+        if not S.r2 then return true end
+        closeRecon()
+        local n = countSymbols("Eye", S.r2.x, S.r2.y)
+        rec(n == 0, "marks: second recon closed, symbol removed", "eye=" .. n)
+        return true
+    end)
+end
+
 -- ------------------------------------------------------------------ hooks
 
 local function seconds(value, default)
@@ -456,6 +642,10 @@ function H.client.start(ctx)
         addClientSteps(player, seconds(ctx.params.clientWaitSec, 420))
     else
         if not MilitaryDrop.Server then return false, "MilitaryDrop.Server missing in solo" end
+        if ctx.params.scenario == "marks" then
+            addMarksSteps(player, seconds(ctx.params.airSec, 240))
+            return true
+        end
         addAuthoritySteps(player, seconds(ctx.params.deliverySec, 240), seconds(ctx.params.crateWaitSec, 30), 0)
         addClientSteps(player, 10000)
     end

@@ -779,6 +779,7 @@ function Missions.launch(kind, now)
         code = Broadcast.cleanupAnnounced(mission.id, mission.x, mission.y, mission.radius)
     end
     Missions.announce(mission.text, Missions.ANNOUNCE_REPEATS, code)
+    Missions.invalidateMarks()
     MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") until " .. mission.deadline)
     if kind == "cleanup" then
         mission.reached, mission.seq = {}, 0
@@ -856,6 +857,7 @@ function Missions.remind(now)
                     tostring(mission.y), tostring(mission.radius), hours)
             end
             Missions.announce(text, Missions.ANNOUNCE_REPEATS, code)
+            Missions.invalidateMarks()
             MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") reminder " .. due)
             count = count + 1
         end
@@ -887,6 +889,14 @@ function Missions.activeMarks(now)
 end
 
 local lastMarksKey = nil
+
+--- Une grille vient de partir aux clients (annonce, rappel) : le prochain
+--- Missions.sendMarks envoie la liste même si elle n'a pas changé depuis le
+--- dernier envoi. Sinon une grille annoncée puis close entre deux envois
+--- laisserait un repère périmé (même liste avant et après).
+function Missions.invalidateMarks()
+    lastMarksKey = nil
+end
 
 local function marksKey(marks)
     local parts = {}

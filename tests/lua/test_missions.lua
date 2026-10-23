@@ -834,6 +834,21 @@ function T.active_marks_follow_drops_and_missions()
     assertEq(#sent[#sent].drops, 0, "largage hors de la fenêtre de récupération")
 end
 
+function T.mission_closed_before_any_update_still_clears_its_marker()
+    onlySources("recon")
+    makePlayer("alice")
+    Missions.update()
+    local count = #sentToAll("MarksActive")
+    -- Lancée puis close sans passage de Missions.update entre les deux : même
+    -- liste avant et après, mais le client a pu poser le repère entre-temps.
+    Missions.launch("recon")
+    MilitaryDrop.Server.canForce = function() return true end
+    Missions.adminLaunch(ONLINE[1], { kind = "recon", action = "close" })
+    local sent = sentToAll("MarksActive")
+    assertEq(#sent, count + 1, "liste renvoyée à la clôture")
+    assertEq(#sent[#sent].recon, 0, "reconnaissance close absente")
+end
+
 function T.no_mission_without_players_channel_or_gain()
     assertEq(Missions.launch("control"), nil, "aucun joueur connecté")
     makePlayer("alice")
