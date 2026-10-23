@@ -13,7 +13,7 @@
 -- Code (option AuthCode) : aucun, fixe, ou celui de la semaine, des deux
 -- semaines ou du mois (option CodePeriod ; le précédent reste accepté 24 h).
 -- Après FAILED_CODE_LIMIT codes faux dans la même journée de jeu, la base ne
--- répond plus à ce joueur jusqu'au lendemain, même avec le bon code : la
+-- répond plus à ce personnage jusqu'au lendemain, même avec le bon code : la
 -- réponse reste « noAnswer », rien ne trahit le silence (parade à la force
 -- brute : 676 codes quand les chiffres sont connus). Le compteur reste en mémoire du serveur : dans la ModData, il
 -- distinguerait un mauvais code (compté) d'un mauvais canal (non compté) et
@@ -115,9 +115,10 @@ Server.HORDE_RADIUS = 4
 -- (un point lointain est tiré sans voir l'eau ni les obstacles).
 Server.RELOCATE_RADIUS = 30
 Server.CELL_SIZE = 256
--- Codes faux permis par joueur et par journée de jeu avant le silence.
+-- Codes faux permis par personnage et par journée de jeu avant le silence.
 Server.FAILED_CODE_LIMIT = 3
--- nom du joueur → { day, count } : mémoire du serveur seulement (voir en-tête).
+-- identifiant de personnage (Trust.idFor) → { day, count } : mémoire du
+-- serveur seulement (voir en-tête). Un nouveau personnage repart sans silence.
 local failedCodes = {}
 
 --- État persistant public (lisible par les clients : vols, livraisons en
@@ -163,7 +164,8 @@ function Server.acceptedCodes(clock)
     return codes
 end
 
---- La base ignore ce joueur jusqu'au lendemain (trop de codes faux).
+--- La base ignore ce personnage (identifiant Trust.idFor) jusqu'au lendemain
+--- (trop de codes faux).
 function Server.isSilenced(name, day)
     local entry = failedCodes[name]
     return entry ~= nil and entry.day == day and entry.count >= Server.FAILED_CODE_LIMIT
