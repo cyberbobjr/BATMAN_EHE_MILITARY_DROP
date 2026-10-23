@@ -18,6 +18,7 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 ### Fixed
 
 - A drop that cannot land (drop zone drawn over water or packed with vehicles) no longer waits forever: after repeated failed attempts it lands on the nearest dry open ground, even outside its zone, or is called off with a warning in the server console.
+- Fulton: when you have no radio in hand, the base's lines shown above your character are no longer glued together ("Out.Today's credit…").
 
 ## 0.6.0 — 2026-10-21
 

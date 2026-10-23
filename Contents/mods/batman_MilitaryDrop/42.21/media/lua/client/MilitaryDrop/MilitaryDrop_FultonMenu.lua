@@ -313,7 +313,9 @@ local function showBaseLines(player, lines)
                 Client.later(Exchange.REPLY_DELAY_MS + count * Exchange.LINE_DELAY_MS,
                     function() Client.radioSay(request, text) end)
             else
-                HaloTextHelper.addText(player, text, "", 180, 220, 140)
+                -- Lines added in the same frame are joined with this separator
+                -- (HaloTextHelper.addText, HaloTextHelper.java:113-118): a space.
+                HaloTextHelper.addText(player, text, " ", 180, 220, 140)
             end
             count = count + 1
         end

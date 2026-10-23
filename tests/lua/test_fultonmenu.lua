@@ -168,6 +168,7 @@ function T.setup()
         return table.concat(parts, "|")
     end
     QUEUE, SENT, HALO, NOISE, TRANSFERS, WALKS = {}, {}, {}, {}, {}, {}
+    HALO_SEPARATORS = {}
     GROUND = makeGround()
     EMPTY = {}
     getCell = function()
@@ -201,7 +202,10 @@ function T.setup()
     end }
     ISToolTip = { new = function() return { initialise = function() end, setVisible = function() end } end }
     addSound = function(_, x, y, z, radius, volume) NOISE[#NOISE + 1] = { x = x, y = y, radius = radius, volume = volume } end
-    HaloTextHelper = { addText = function(_, text) HALO[#HALO + 1] = text end }
+    HaloTextHelper = { addText = function(_, text, separator)
+        HALO[#HALO + 1] = text
+        HALO_SEPARATORS[#HALO] = separator
+    end }
     getSpecificPlayer = function() return PLAYER end
     getNumActivePlayers = function() return 1 end
     local noop = { Add = function() end, Remove = function() end }
@@ -363,8 +367,12 @@ end
 function T.result_shows_base_lines_or_the_refusal()
     local player = ready({ item("Base.Paperwork") })
     FultonMenu.onResult({ username = "alice", status = "ok",
-        lines = { { key = "IGUI_MilitaryDrop_Fulton_Received", params = { "BRAVO", "1" } } } })
+        lines = { { key = "IGUI_MilitaryDrop_Fulton_Received", params = { "BRAVO", "1" } },
+            { key = "IGUI_MilitaryDrop_Fulton_CapReached", params = {} } } })
     assertEq(HALO[1], "IGUI_MilitaryDrop_Fulton_Received|BRAVO|1", "sans radio en main : texte au-dessus du personnage")
+    assertEq(#HALO, 2, "deux lignes")
+    -- Lignes de la même image réunies par le moteur avec ce séparateur : jamais collées.
+    assertEq(HALO_SEPARATORS[2], " ", "séparateur : une espace")
     assertEq(FultonClient.window(0), nil, "créneau du client fermé")
     FultonMenu.onResult({ username = "alice", status = "noWindow", reason = "IGUI_MilitaryDrop_Fulton_NoWindow" })
     assertEq(player.said[1], "IGUI_MilitaryDrop_Fulton_NoWindow", "refus dit par le personnage")
