@@ -27,6 +27,14 @@
 -- déchargée, l'essai suivant redevient immédiat. Clé « x,y,dropId » : deux
 -- largages au même point attendent chacun leur tour.
 --
+-- Fin de l'attente (C12) : chaque échec case chargée est compté (tries,
+-- sauvegardé avec l'entrée). Après MAX_FAILED_TRIES échecs, ou dès un échec
+-- quand l'entrée attend depuis MAX_PENDING_DAYS jours de jeu, un dernier essai
+-- livre sur la case sèche la plus proche sans borne de zone ; s'il échoue
+-- aussi, la livraison est abandonnée et le dossier du largage clos « expired »
+-- (ligne WARN pour l'admin). Une case jamais chargée ne compte pas : personne
+-- n'est allé voir.
+--
 -- Persistance (ModData « MilitaryDrop ») : les vols en cours et les
 -- livraisons en attente, avec le dropId du largage (confiance, jamais envoyé
 -- aux clients). Au chargement de la partie, un vol interrompu reprend là où il
@@ -76,6 +84,45 @@ end
 Flights.RETRY_MS = 60000
 -- clé de livraison en attente → heure (getTimestampMs) du prochain essai permis.
 local retryAt = {}
+-- Échecs case chargée avant le dernier essai sans borne de zone.
+Flights.MAX_FAILED_TRIES = 10
+-- Jours de jeu d'attente après lesquels le premier échec mène au dernier essai.
+Flights.MAX_PENDING_DAYS = 7
+
+local function worldHours()
+    return getGameTime():getWorldAgeHours()
+end
+
+--- Livraison abandonnée : dossier du largage clos, ligne WARN, repères à jour.
+local function abandon(entry)
+    MilitaryDrop.log(string.format("WARN: drop %s at %d,%d abandoned after %d failed attempts on a loaded"
+        .. " square: no dry open ground nearby (check the drop zone)", tostring(entry.dropId), entry.x, entry.y,
+        tonumber(entry.tries) or 0), true)
+    if entry.dropId and MilitaryDrop.Trust and MilitaryDrop.Trust.expireUndelivered then
+        MilitaryDrop.Trust.expireUndelivered(entry.dropId)
+    end
+    if MilitaryDrop.Missions and MilitaryDrop.Missions.sendMarks then
+        MilitaryDrop.Missions.sendMarks()
+    end
+end
+
+--- Essai de livraison d'une entrée dont la case est chargée. Renvoie true si
+--- l'entrée est réglée (livrée ou abandonnée), false si elle reste en attente.
+local function attempt(entry)
+    entry.since = tonumber(entry.since) or worldHours()
+    local tries = tonumber(entry.tries) or 0
+    local waited = worldHours() - entry.since >= Flights.MAX_PENDING_DAYS * 24
+    local last = tries >= Flights.MAX_FAILED_TRIES or (tries >= 1 and waited)
+    if Server.deliver(entry.x, entry.y, entry.requester, entry.dropId, last and { unbounded = true } or nil) then
+        return true
+    end
+    entry.tries = tries + 1
+    if last then
+        abandon(entry)
+        return true
+    end
+    return false
+end
 
 --- Clé d'une livraison en attente : « x,y,dropId » (« x,y » sans dropId,
 --- format des sauvegardes d'avant, dont les entrées sont relues telles
@@ -126,7 +173,7 @@ local function onLoadChunk()
     end
     for _, key in ipairs(ready) do
         local entry = pending[key]
-        if Server.deliver(entry.x, entry.y, entry.requester, entry.dropId) then
+        if attempt(entry) then
             pending[key] = nil
             retryAt[key] = nil
         else
@@ -159,7 +206,8 @@ function Flights.deliverAt(x, y, requester, dropId)
     end
     local pending = state().pending
     local key = pendingKey(pending, x, y, dropId)
-    pending[key] = { x = x, y = y, requester = requester, dropId = dropId }
+    pending[key] = { x = x, y = y, requester = requester, dropId = dropId, since = worldHours(),
+        tries = loaded and 1 or 0 }
     if loaded then
         retryAt[key] = getTimestampMs() + Flights.RETRY_MS
     end

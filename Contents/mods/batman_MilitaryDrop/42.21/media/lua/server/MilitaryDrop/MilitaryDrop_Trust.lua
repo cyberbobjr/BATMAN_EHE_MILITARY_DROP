@@ -420,6 +420,21 @@ function Trust.onCaseOpened(item, character)
     MilitaryDrop.log("drop " .. dropId .. " " .. drop.outcome .. " by " .. username)
 end
 
+--- Livraison abandonnée (aucune case ne convient, MilitaryDrop_Flights.lua) :
+--- dossier clos « expired », sans effet sur la confiance (personne n'est en
+--- faute), oublié ensuite comme les autres largages clos.
+function Trust.expireUndelivered(dropId)
+    local drop = dropId and state().drops[dropId]
+    if not drop or drop.outcome then
+        return false
+    end
+    drop.outcome = "expired"
+    drop.closedHours = hoursNow()
+    drop.suppliesPending = nil
+    MilitaryDrop.log("drop " .. tostring(dropId) .. " expired (never delivered)")
+    return true
+end
+
 --- Largages échus (rien d'ouvert) et oubli des largages clos anciens.
 function Trust.checkDrops(hours)
     hours = hours or hoursNow()

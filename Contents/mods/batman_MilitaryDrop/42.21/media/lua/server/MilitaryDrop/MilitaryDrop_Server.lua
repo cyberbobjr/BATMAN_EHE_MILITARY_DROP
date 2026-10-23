@@ -663,6 +663,8 @@ end
 --- métagrille ne la connaît qu'en partie). Renvoie false si
 --- aucune case ne convient encore (la livraison reste en attente). dropId :
 --- largage (confiance), porté par chaque caisse de ravitaillement.
+--- opts.unbounded : dernier essai d'une livraison bloquée (Flights, C12), case
+--- sèche la plus proche sans borne de zone.
 function Server.deliver(x, y, requester, dropId, opts)
     opts = opts or {}
     -- Largage d'une zone (idée 11) : jamais hors du rectangle, ni dans une
@@ -671,7 +673,7 @@ function Server.deliver(x, y, requester, dropId, opts)
     -- rectangle (grande zone, point au bord de l'eau). Fournitures d'un
     -- crash (opts.crash, MilitaryDrop_Wreck.lua) : à l'épave, qui peut être
     -- loin de la zone visée ; bornées, elles n'apparaîtraient jamais.
-    local bounds = not opts.crash and Server.dropBounds(dropId) or nil
+    local bounds = not opts.crash and not opts.unbounded and Server.dropBounds(dropId) or nil
     local square = Server.findLandingNear(x, y, bounds)
     if not square and bounds then
         square = Server.findLandingInBounds(x, y, bounds)

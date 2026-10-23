@@ -14,6 +14,10 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 
 - Map symbols placed by the base are now removed once they are no longer useful: a drop symbol when a supply case has been opened or emptied, or the drop is lost; a mission symbol when the order closes (also on reconnection). MAYDAY symbols and your own map notes are left alone.
 
+### Fixed
+
+- A drop that cannot land (drop zone drawn over water or packed with vehicles) no longer waits forever: after repeated failed attempts it lands on the nearest dry open ground, even outside its zone, or is called off with a warning in the server console.
+
 ## 0.6.0 — 2026-10-21
 
 ### Changed

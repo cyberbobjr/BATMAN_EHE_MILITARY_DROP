@@ -351,6 +351,114 @@ function T.blocked_delivery_is_retried_at_most_once_a_minute()
     assertEq(listenerCount("EveryOneMinute"), permanent, "surveillance arrêtée")
 end
 
+--- Monde chargé où toute case est de l'eau, sauf si dry() ; horloge réelle réglable.
+local function blockedWorld(dry)
+    local clock = { now = 0 }
+    getTimestampMs = function() return clock.now end
+    getCell = function()
+        return { getGridSquare = function(_, x, y)
+            if not LOADED then
+                return nil
+            end
+            local square = makeSquare(x, y)
+            square.isWaterSquare = function() return not (dry and dry(x, y)) end
+            return square
+        end }
+    end
+    return clock
+end
+
+local function pendingCount()
+    local count = 0
+    for _ in pairs(MilitaryDrop.Server.getState().pending) do
+        count = count + 1
+    end
+    return count
+end
+
+function T.blocked_delivery_is_abandoned_after_max_tries_with_a_warning()
+    local clock = blockedWorld()
+    local printed = {}
+    print = function(text) printed[#printed + 1] = text end
+    local drops = MilitaryDrop.Secrets.privateState()
+    drops.drops = drops.drops or {}
+    drops.drops.D1 = { announcedHours = 10, x = 500, y = 600 }
+    local calls = {}
+    local deliver = MilitaryDrop.Server.deliver
+    MilitaryDrop.Server.deliver = function(x, y, requester, dropId, opts)
+        calls[#calls + 1] = opts and opts.unbounded or false
+        return deliver(x, y, requester, dropId, opts)
+    end
+    LOADED = true
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester", "D1")
+    local entry = MilitaryDrop.Server.getState().pending["500,600,D1"]
+    assertEq(entry.tries, 1, "premier échec case chargée compté")
+    for _ = 2, MilitaryDrop.Flights.MAX_FAILED_TRIES do
+        clock.now = clock.now + MilitaryDrop.Flights.RETRY_MS
+        triggerEvent("EveryOneMinute")
+    end
+    assertEq(entry.tries, MilitaryDrop.Flights.MAX_FAILED_TRIES, "essais comptés")
+    assertEq(pendingCount(), 1, "encore en attente avant le dernier essai")
+    for i = 1, #calls do
+        assertEq(calls[i], false, "essais ordinaires bornés (" .. i .. ")")
+    end
+    clock.now = clock.now + MilitaryDrop.Flights.RETRY_MS
+    triggerEvent("EveryOneMinute")
+    assertEq(calls[#calls], true, "dernier essai sans borne de zone")
+    assertEq(pendingCount(), 0, "livraison abandonnée")
+    assertEq(drops.drops.D1.outcome, "expired", "dossier du largage clos")
+    local warned = false
+    for _, line in ipairs(printed) do
+        warned = warned or (line:find("WARN: drop D1", 1, true) ~= nil)
+    end
+    assertTrue(warned, "ligne WARN pour l'admin")
+    assertEq(#PLACED, 0, "rien de posé")
+    assertEq(listenerCount("LoadChunk"), 0, "surveillance arrêtée")
+end
+
+function T.last_try_delivers_outside_the_drop_zone()
+    -- Zone de largage entièrement sur l'eau ; terre ferme à l'est, hors zone.
+    blockedWorld(function(x) return x >= 510 end)
+    MilitaryDrop.Server.dropBounds = function() return { x1 = 490, y1 = 590, x2 = 505, y2 = 610 } end
+    LOADED = true
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester", "D2")
+    assertEq(pendingCount(), 1, "zone bornée : en attente")
+    MilitaryDrop.Server.getState().pending["500,600,D2"].tries = MilitaryDrop.Flights.MAX_FAILED_TRIES
+    getTimestampMs = function() return MilitaryDrop.Flights.RETRY_MS end
+    triggerEvent("EveryOneMinute")
+    assertEq(pendingCount(), 0, "livré au dernier essai")
+    assertTrue(MilitaryDrop.Server.getState().lastDrop.x >= 510, "sur la case sèche la plus proche, hors zone")
+end
+
+function T.long_wait_makes_the_next_failure_the_last_try()
+    local clock = blockedWorld()
+    local hours = 10
+    getGameTime = function() return { getWorldAgeHours = function() return hours end } end
+    LOADED = false
+    MilitaryDrop.Flights.deliverAt(500, 600, "tester", "D3")
+    local entry = MilitaryDrop.Server.getState().pending["500,600,D3"]
+    assertEq(entry.tries, 0, "case jamais chargée : aucun essai compté")
+    hours = hours + MilitaryDrop.Flights.MAX_PENDING_DAYS * 24
+    triggerEvent("LoadChunk", makeChunk(800, 800))
+    assertEq(pendingCount(), 1, "longue attente sans visite : toujours en attente")
+    LOADED = true
+    triggerEvent("LoadChunk", makeChunk(496, 600))
+    assertEq(pendingCount(), 1, "premier échec ordinaire")
+    clock.now = MilitaryDrop.Flights.RETRY_MS
+    triggerEvent("EveryOneMinute")
+    assertEq(pendingCount(), 0, "attente de plus de MAX_PENDING_DAYS : dernier essai puis abandon")
+end
+
+function T.saved_pending_entries_without_counters_still_work()
+    blockedWorld(function() return true end)
+    local state = MilitaryDrop.Server.getState()
+    state.pending = { ["700,800"] = { x = 700, y = 800, requester = "tester", dropId = "D9" } }
+    LOADED = true
+    MilitaryDrop.Flights.restore()
+    triggerEvent("LoadChunk", makeChunk(696, 800))
+    assertEq(pendingCount(), 0, "entrée d'avant (sans tries ni since) livrée")
+end
+
 local function maydaySetup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Crash.lua")
     getClimateManager = function() return { getIsThunderStorming = function() return false end } end
