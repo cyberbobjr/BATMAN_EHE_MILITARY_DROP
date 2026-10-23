@@ -98,7 +98,7 @@
 - **Preuves** : `client/MilitaryDrop/MilitaryDrop_Announce.lua:10-12` (« sauvegardé comme une note du joueur, qui peut l'effacer »), `:151` (`addTexture`), aucun `removeSymbol` dans le fichier.
 - **Risque** : confort de jeu ; confusion entre grilles anciennes et nouvelles.
 - **Correction** : signer les symboles du mod par un alpha choisi (par exemple 0,8) et une couleur précise, puis retirer à la réception d'un message de clôture (`DropClosed { x, y }`, `MissionClosed { id }`) ou à l'expiration locale ; méthode décrite dans `world-map.md` (même entrée que C09, `removeSymbolByIndex` en indices décroissants). Option joueur (`PZAPI.ModOptions`) pour garder l'historique.
-- **Statut** : corrigé le 2026-10-23 (QUAL-09) : le serveur envoie les grilles encore actives (`MarksActive`, `Missions.sendMarks`) à l'arrivée et à chaque changement ; le client retire les symboles du mod (identifiant + couleur, vanilla et anciens repères compris) qui n'y sont plus. Pas d'option d'historique ; repères de MAYDAY laissés. Testé en solo par pz-autotest (scénario `marks`), MP à faire.
+- **Statut** : corrigé le 2026-10-23 (QUAL-09) : le serveur envoie les grilles encore actives (`MarksActive`, `Missions.sendMarks`) à l'arrivée et à chaque changement ; le client retire les symboles du mod (identifiant + couleur, vanilla et anciens repères compris) qui n'y sont plus. Pas d'option d'historique ; repères de MAYDAY laissés. Testé en solo et en MP par pz-autotest (scénario `marks`) ; vraie reconnexion non testée.
 
 ### C11 — Coordonnées exactes envoyées à tous les clients avant le filtrage par la radio
 

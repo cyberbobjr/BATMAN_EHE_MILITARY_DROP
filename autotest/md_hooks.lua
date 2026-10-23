@@ -625,6 +625,285 @@ local function addMarksSteps(player, airMs)
     end)
 end
 
+-- ------------------------------------------------------------------ scenario "marks" (mp)
+
+-- Same checks as the solo scenario, through the network: the client (client 1, --client-run) drives the sequence
+-- and asks the server for each authority action with a test command (module PZATMD); the server answers with the
+-- same op. Client checks its own map symbols (announcements heard by its radio, MarksActive, Sync, base reply).
+local OPS_MODULE = "PZATMD"
+local Ops = { replies = {}, installed = false }
+
+local function onOpReply(module, command, args)
+    if module ~= OPS_MODULE then return end
+    Ops.replies[command] = type(args) == "table" and args or {}
+end
+
+local function request(player, op, args)
+    Ops.replies[op] = nil
+    sendClientCommand(player, OPS_MODULE, op, args or {})
+end
+
+local function replyOf(op)
+    return Ops.replies[op]
+end
+
+-- Ask once, then poll the reply (false until it arrives).
+local function asked(S, key, player, op, args)
+    if not S[key] then
+        S[key] = true
+        request(player, op, args)
+        return nil
+    end
+    return replyOf(op)
+end
+
+local function findRadio(player, id)
+    local items = player:getInventory():getItems()
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if item:getID() == id then return item end
+    end
+    return nil
+end
+
+local function addMarksClientSteps(player, airMs)
+    local MD = MilitaryDrop
+    local S = {}
+    if not Ops.installed then
+        Ops.installed = true
+        Events.OnServerCommand.Add(onOpReply)
+    end
+
+    -- The military frequency is unknown to an mp client (Config.getChannel is nil there): the server tunes the
+    -- radio before giving it and sends the channel.
+    local function setOn(on)
+        local data = S.radio:getDeviceData()
+        data:setIsTurnedOn(on)
+        data:setChannel(S.channel)
+    end
+
+    -- Poll the server until the military channel has nothing left to air.
+    local function airingDoneMp(key)
+        if not S[key] or (nowMs() - S[key]) > 1000 then
+            local r = replyOf("airing")
+            if S[key] and r and r.done then
+                S[key] = nil
+                return true
+            end
+            S[key] = nowMs()
+            request(player, "airing")
+        end
+        return false
+    end
+
+    addStep("mp marks: radio given by the server and taken in hand", function()
+        local r = asked(S, "askedRadio", player, "giveRadio")
+        if not r then return false end
+        S.radio = S.radio or findRadio(player, r.id)
+        S.channel = tonumber(r.channel)
+        if not S.radio or not S.channel then return false end
+        if player:getPrimaryHandItem() ~= S.radio and player:getSecondaryHandItem() ~= S.radio then
+            if not S.equipping then
+                S.equipping = true
+                MD.Exchange.takeInHand(player, S.radio)
+            end
+            return false
+        end
+        setOn(false)
+        rec(true, "mp marks: radio given by the server and taken in hand", "id=" .. tostring(r.id))
+        return true
+    end, 30000)
+
+    addStep("mp marks: unheard recon gives no symbol", function()
+        local r = asked(S, "askedR1", player, "launch")
+        if not r then return false end
+        if not r.id then
+            rec(false, "mp marks: unheard recon gives no symbol", "launch failed")
+            return true
+        end
+        S.r1 = r
+        if not airingDoneMp("air1") then return false end
+        local n = countSymbols("Eye", r.x, r.y)
+        info("R1 " .. r.id .. " at " .. r.x .. "," .. r.y)
+        rec(n == 0 and received("ReconAnnounce", function(a) return a.id == r.id end) ~= nil,
+            "mp marks: unheard recon gives no symbol", "eye=" .. n .. " (ReconAnnounce received)")
+        return true
+    end, airMs)
+
+    addStep("mp marks: base reply (too far) marks the recon", function()
+        if not S.r1 then return true end
+        if not S.sent then
+            setOn(true)
+            S.sent = MD.Exchange.send(player, S.radio, MD.Exchange.COMMANDS.recon, {}, nil,
+                { onReply = function(args) S.reply = args end })
+            if not S.sent then
+                rec(false, "mp marks: base reply (too far) marks the recon", "exchange not started")
+                return true
+            end
+            return false
+        end
+        if not S.reply then return false end
+        local n = countSymbols("Eye", S.r1.x, S.r1.y)
+        if n == 0 then return false end
+        rec(S.reply.status == "tooFar" and n == 1, "mp marks: base reply (too far) marks the recon",
+            "status=" .. tostring(S.reply.status) .. " eye=" .. n)
+        return true
+    end, 60000)
+
+    addStep("mp marks: closed recon symbol removed (MarksActive)", function()
+        if not S.r1 then return true end
+        if not asked(S, "askedClose1", player, "close") then return false end
+        if countSymbols("Eye", S.r1.x, S.r1.y) > 0 then return false end
+        rec(true, "mp marks: closed recon symbol removed (MarksActive)", "R1 " .. S.r1.id)
+        return true
+    end, 15000)
+
+    addStep("mp marks: reminder heard marks the recon", function()
+        if not S.air2 and not S.waited2 then
+            if not airingDoneMp("airPre2") then return false end
+            S.waited2 = true
+            setOn(false)
+        end
+        local r = asked(S, "askedR2", player, "launch")
+        if not r then return false end
+        if not r.id then
+            rec(false, "mp marks: reminder heard marks the recon", "launch failed")
+            return true
+        end
+        S.r2 = r
+        if not S.remindAsked then
+            if not airingDoneMp("air2") then return false end
+            if countSymbols("Eye", r.x, r.y) ~= 0 then
+                rec(false, "mp marks: reminder heard marks the recon", "marked before the reminder")
+                return true
+            end
+            info("R2 " .. r.id .. " at " .. r.x .. "," .. r.y)
+            setOn(true)
+            S.remindAsked = true
+            request(player, "remind")
+            return false
+        end
+        local rr = replyOf("remind")
+        local n = countSymbols("Eye", r.x, r.y)
+        if not rr or n == 0 then return false end
+        rec(rr.count == 1 and n == 1, "mp marks: reminder heard marks the recon",
+            "reminders=" .. tostring(rr.count) .. " eye=" .. n)
+        return true
+    end, airMs * 3)
+
+    addStep("mp marks: drop announcement heard", function()
+        if not S.dropAsked then
+            if not airingDoneMp("airPre3") then return false end
+        end
+        local r = asked(S, "dropAsked", player, "drop")
+        if not r then return false end
+        S.d1 = r
+        if countSymbols("Target", r.x, r.y) == 0 then return false end
+        rec(true, "mp marks: drop announcement heard", "D1 " .. tostring(r.id) .. " at " .. r.x .. "," .. r.y)
+        return true
+    end, airMs)
+
+    addStep("mp marks: Sync removes a stray marker, keeps the active one", function()
+        if not S.d1 then return true end
+        if not S.syncSent then
+            S.strayX, S.strayY = S.d1.x + 20, S.d1.y
+            MD.Announce.markMap(S.strayX, S.strayY)
+            S.syncSent = true
+            MD.Net.toServer(player, "Sync", {})
+            return false
+        end
+        if countSymbols("Target", S.strayX, S.strayY) > 0 then return false end
+        local active = countSymbols("Target", S.d1.x, S.d1.y)
+        rec(active == 1, "mp marks: Sync removes a stray marker, keeps the active one", "active=" .. active)
+        return true
+    end, 15000)
+
+    addStep("mp marks: emptied drop marker removed", function()
+        if not S.d1 then return true end
+        if not asked(S, "askedCollect", player, "collect") then return false end
+        if countSymbols("Target", S.d1.x, S.d1.y) > 0 then return false end
+        rec(true, "mp marks: emptied drop marker removed", "D1 " .. tostring(S.d1.id))
+        return true
+    end, 15000)
+
+    addStep("mp marks: second recon closed, symbol removed", function()
+        if not S.r2 then return true end
+        if not asked(S, "askedClose2", player, "close") then return false end
+        if countSymbols("Eye", S.r2.x, S.r2.y) > 0 then return false end
+        rec(true, "mp marks: second recon closed, symbol removed", "R2 " .. S.r2.id)
+        return true
+    end, 15000)
+
+    addStep("mp marks: finish", function()
+        request(player, "finish")
+        return true
+    end)
+end
+
+-- Server side of the mp scenario: one handler per op, answered to the sender.
+local ServerOps = { finished = false }
+
+local function serverOp(module, command, player, args)
+    if module ~= OPS_MODULE or not player then return end
+    local MD = MilitaryDrop
+    local Missions, Trust = MD.Missions, MD.Trust
+    local reply = {}
+    local function closeRecon()
+        if Missions.openMission("recon") then
+            ServerOps.closeAt = nowMs()
+            return Missions.adminLaunch(player, { kind = "recon", action = "close" })
+        end
+        return "none"
+    end
+    if command == "giveRadio" then
+        local inv = player:getInventory()
+        local radio = inv:AddItem("Base.WalkieTalkie5")
+        local channel = MD.Config.getChannel()
+        radio:getDeviceData():setChannelRaw(channel)
+        sendAddItemToContainer(inv, radio)
+        reply.id, reply.channel = radio:getID(), channel
+    elseif command == "airing" then
+        reply.done = airingDone()
+    elseif command == "launch" then
+        closeRecon()
+        local mission = Missions.launch("recon")
+        ServerOps.mission = mission
+        if mission then
+            reply.id, reply.x, reply.y = mission.id, mission.x, mission.y
+        end
+        rec(mission ~= nil, "server: recon launched", mission and mission.id or "nil")
+    elseif command == "close" then
+        local status = closeRecon()
+        reply.status = status
+        rec(status == "closed", "server: recon closed", "status=" .. tostring(status))
+    elseif command == "remind" then
+        local mission = ServerOps.mission
+        local every = math.floor(tonumber(MD.Config.get("DropRepeatHours")) or 0)
+        if mission then
+            mission.openedHours = mission.openedHours - every - 0.1
+        end
+        reply.count = Missions.remind()
+        rec(reply.count == 1, "server: reminder aired", "count=" .. tostring(reply.count))
+    elseif command == "drop" then
+        local x, y = math.floor(player:getX()) + 40, math.floor(player:getY())
+        local dropId = Trust.registerDrop(Trust.idFor(player), "autotest", true, {})
+        Trust.onDropAnnounced(dropId, x, y)
+        MD.Broadcast.dropped(x, y)
+        ServerOps.dropId = dropId
+        reply.id, reply.x, reply.y = dropId, x, y
+    elseif command == "collect" then
+        reply.ok = Trust.markCollected(ServerOps.dropId)
+        Missions.update()
+        rec(reply.ok == true, "server: drop emptied", tostring(ServerOps.dropId))
+    elseif command == "finish" then
+        ServerOps.finished = true
+        return
+    else
+        return
+    end
+    sendServerCommand(player, OPS_MODULE, command, reply)
+end
+
 -- ------------------------------------------------------------------ hooks
 
 local function seconds(value, default)
@@ -639,6 +918,10 @@ function H.client.start(ctx)
     if not player then return false, "no local player" end
     installObserver()
     if isClient() then
+        if ctx.params.scenario == "marks" then
+            addMarksClientSteps(player, seconds(ctx.params.airSec, 240))
+            return true
+        end
         addClientSteps(player, seconds(ctx.params.clientWaitSec, 420))
     else
         if not MilitaryDrop.Server then return false, "MilitaryDrop.Server missing in solo" end
@@ -667,16 +950,35 @@ function H.server.start(ctx)
     if not MilitaryDrop or not MilitaryDrop.Server then return false, "MilitaryDrop.Server missing" end
     local player = ctx.players()[1]
     if not player then return false, "no connected player (mode server alone: use mp)" end
+    if ctx.params.scenario == "marks" then
+        ServerOps.finished = false
+        ServerOps.started = nowMs()
+        ServerOps.limitMs = seconds(ctx.params.airSec, 240) * 6
+        Events.OnClientCommand.Add(serverOp)
+        return true
+    end
     addAuthoritySteps(player, seconds(ctx.params.deliverySec, 240), seconds(ctx.params.crateWaitSec, 30),
         seconds(ctx.params.serverLeadSec, 20))
     return true
 end
 
 function H.server.done()
+    if ServerOps.started then
+        if ServerOps.finished then return true end
+        if nowMs() - ServerOps.started > ServerOps.limitMs then
+            rec(false, "server: client finished the scenario", "timeout")
+            return true
+        end
+        return false
+    end
     return runSteps()
 end
 
 function H.server.result()
+    if ServerOps.started then
+        Events.OnClientCommand.Remove(serverOp)
+        rec(ServerOps.finished, "server: client finished the scenario")
+    end
     errorCheck()
     return summary()
 end
