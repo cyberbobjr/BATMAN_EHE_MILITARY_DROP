@@ -16,6 +16,8 @@ function MAKE_SYMBOL(id, x, y, r, g, b)
     symbol.getGreen = function() return symbol.color[2] end
     symbol.getBlue = function() return symbol.color[3] end
     symbol.setAnchor = function() end
+    symbol.scale = 1
+    symbol.setScale = function(_, value) symbol.scale = value end
     return symbol
 end
 
@@ -151,8 +153,9 @@ function T.cleanup_zone_marked_once_with_its_own_symbol_and_color()
     MilitaryDrop.Announce.onCleanupAnnounce({ id = "M2", x = 1200, y = 1300, radius = 40 })
     triggerEvent("OnDeviceText", "guid", "MDCU", -1, -1, -1, "line", {})
     triggerEvent("OnDeviceText", "guid", "MDCU", -1, -1, -1, "line", {})
-    assertEq(#SYMBOLS, 1, "seul le nettoyage, une fois")
+    assertEq(#SYMBOLS, 2, "seul le nettoyage (tête de mort et cercle), une fois")
     assertEq(SYMBOLS[1].getSymbolID(), "Skull", "symbole du nettoyage")
+    assertEq(SYMBOLS[2].getSymbolID(), "Circle", "cercle du rayon")
     assertEq(SYMBOLS[1].getWorldX() .. "," .. SYMBOLS[1].getWorldY(), "1200,1300", "centre de la zone")
     local A = MilitaryDrop.Announce
     assertTrue(A.CLEANUP_SYMBOL ~= A.RECON_SYMBOL and A.CLEANUP_SYMBOL ~= A.SYMBOL, "symbole distinct")
@@ -160,7 +163,8 @@ function T.cleanup_zone_marked_once_with_its_own_symbol_and_color()
     assertTrue(A.CLEANUP_COLOR.r ~= A.RECON_COLOR.r and A.CLEANUP_COLOR.r ~= A.COLOR.r, "couleur distincte")
     assertEq(colors[1][1], A.CLEANUP_COLOR.r, "couleur appliquée")
     triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
-    assertEq(SYMBOLS[2].getSymbolID(), "Eye", "puis la reconnaissance, indépendante")
+    assertEq(SYMBOLS[3].getSymbolID(), "Eye", "puis la reconnaissance, indépendante, sans cercle")
+    assertEq(#SYMBOLS, 3, "pas de cercle pour la reconnaissance")
     -- Même mission annoncée de nouveau (reconnexion) : pas de second repère.
     MilitaryDrop.Announce.onCleanupAnnounce({ id = "M2", x = 1200, y = 1300, radius = 40 })
     SYMBOLS = {}
@@ -174,7 +178,7 @@ function T.cleanup_needs_a_radio_that_hears_it()
     triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
     assertEq(#SYMBOLS, 0, "radio posée trop loin, ou ligne d'une autre mission")
     triggerEvent("OnDeviceText", "guid", "MDCU", 102, 99, 0, "line", {})
-    assertEq(#SYMBOLS, 1, "radio posée à portée")
+    assertEq(#SYMBOLS, 2, "radio posée à portée : tête de mort et cercle")
 end
 
 function T.existing_symbol_is_not_duplicated()
@@ -192,8 +196,9 @@ function T.base_reply_marks_the_mission_once()
     A.onReconAnnounce({ id = "M7", x = 700, y = 800 })
     triggerEvent("OnDeviceText", "guid", "MDRC", -1, -1, -1, "line", {})
     assertEq(#SYMBOLS, 1, "pas de doublon")
-    assertEq(A.markMission({ kind = "cleanup", id = "M8", x = 900, y = 950 }), true, "nettoyage")
+    assertEq(A.markMission({ kind = "cleanup", id = "M8", x = 900, y = 950, radius = 40 }), true, "nettoyage")
     assertEq(SYMBOLS[2].getSymbolID(), "Skull", "symbole du nettoyage")
+    assertEq(SYMBOLS[3].getSymbolID(), "Circle", "cercle du rayon dit par la base")
     assertEq(A.markMission({ kind = "control", id = "M9", x = 1, y = 1 }), false, "mission sans grille")
     assertEq(A.markMission({ kind = "recon", id = 5, x = 1, y = 1 }), false, "identifiant invalide")
 end
@@ -236,6 +241,35 @@ function T.mayday_marks_an_approximate_sector_only_when_heard()
     assertEq(SYMBOLS[1].getWorldX(),525)
     triggerEvent("OnDeviceText", "guid", "MDAY", -1, -1, -1, "MAYDAY", {})
     assertEq(#SYMBOLS,1)
+end
+
+function T.cleanup_circle_covers_the_radius_and_is_removed_with_the_mission()
+    local A = MilitaryDrop.Announce
+    A.onCleanupAnnounce({ id = "M3", x = 1200, y = 1300, radius = 40 })
+    triggerEvent("OnDeviceText", "guid", "MDCU", -1, -1, -1, "line", {})
+    local circle = SYMBOLS[2]
+    assertEq(circle.getSymbolID(), "Circle", "cercle posé")
+    assertEq(circle.getWorldX() .. "," .. circle.getWorldY(), "1200,1300", "centré sur la zone")
+    -- Anneau de 50 pixels sur 64 d'une icône de 20 cases : diamètre = 2 × rayon.
+    assertTrue(math.abs(circle.scale * 20 * 50 / 64 - 80) < 1e-9, "diamètre de 80 cases pour un rayon de 40")
+    assertTrue(math.abs(circle.color[1] - A.CLEANUP_CIRCLE_COLOR.r) <= A.COLOR_TOLERANCE, "couleur du mod")
+    -- Cercle d'un joueur (couleur vanilla) au même endroit : jamais retiré.
+    local own = MAKE_SYMBOL("Circle", 1200, 1300, 0.65, 0.054, 0.054)
+    SYMBOLS[#SYMBOLS + 1] = own
+    assertEq(A.onActiveMarks({ drops = {}, recon = {}, cleanup = { { x = 1200, y = 1300 } } }), 0,
+        "mission encore ouverte : rien de retiré")
+    assertEq(A.onActiveMarks({ drops = {}, recon = {}, cleanup = {} }), 2, "mission close : tête de mort et cercle retirés")
+    assertEq(#SYMBOLS, 1, "seul le cercle du joueur reste")
+    assertEq(SYMBOLS[1], own, "cercle du joueur gardé")
+end
+
+function T.cleanup_circle_is_not_duplicated_and_needs_a_radius()
+    local A = MilitaryDrop.Announce
+    assertEq(A.markCircle(500, 600, 40), true, "premier cercle")
+    assertEq(A.markCircle(500, 600, 40), false, "doublon refusé")
+    assertEq(A.markCircle(700, 800, nil), false, "sans rayon : rien")
+    assertEq(A.markCircle(700, 800, 0), false, "rayon nul : rien")
+    assertEq(#SYMBOLS, 1, "un seul cercle")
 end
 
 return T

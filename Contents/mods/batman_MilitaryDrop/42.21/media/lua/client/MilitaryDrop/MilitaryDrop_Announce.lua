@@ -28,8 +28,12 @@
 --
 -- Nettoyage (SRC-04) : même principe (CleanupAnnounce, { id, x, y, radius },
 -- MilitaryDrop.Broadcast.cleanupAnnounced), code CLEANUP_CODE, symbole
--- « Skull » rouge au centre de la zone. Le rayon n'est pas dessiné (l'annonce
--- le donne).
+-- « Skull » rouge au centre de la zone et cercle du rayon (C09) : symbole
+-- vanilla « Circle » mis à l'échelle. Une icône d'échelle s couvre 20 × s
+-- cases à tout zoom (WorldMapBaseSymbol.getDisplayScale) ; l'anneau de
+-- map_o.png occupe environ 50 pixels sur 64. Même couleur que la tête de
+-- mort, un peu transparent ; retiré avec elle (MarksActive). Mini-carte :
+-- l'échelle y est ignorée, le cercle y reste une petite icône.
 --
 -- Une mission ouverte est rappelée par la base comme un largage (option
 -- DropRepeatHours, Missions.remind) : même annonce, même code. La réponse de
@@ -63,6 +67,12 @@ Announce.RECON_COLOR = { r = 0.15, g = 0.35, b = 0.75, a = 1 }
 Announce.CLEANUP_CODE = "MDCU"
 Announce.CLEANUP_SYMBOL = "Skull"
 Announce.CLEANUP_COLOR = { r = 0.75, g = 0.15, b = 0.1, a = 1 }
+-- Cercle du rayon du nettoyage : symbole vanilla, signé par la couleur de la
+-- tête de mort (aucune couleur de l'interface vanilla).
+Announce.CLEANUP_CIRCLE_SYMBOL = "Circle"
+Announce.CLEANUP_CIRCLE_COLOR = { r = 0.75, g = 0.15, b = 0.1, a = 0.8 }
+-- Diamètre (cases) de l'anneau du symbole « Circle » à l'échelle 1.
+Announce.CIRCLE_RING_TILES = 20 * 50 / 64
 Announce.MAYDAY_CODE = "MDAY"
 Announce.MAYDAY_SYMBOL = "Question"
 Announce.MAYDAY_COLOR = { r = 0.85, g = 0.35, b = 0.1, a = 1 }
@@ -122,7 +132,8 @@ end
 local function onMissionAnnounce(kind, args)
     if type(args) == "table" and type(args.id) == "string" and type(args.x) == "number"
         and type(args.y) == "number" then
-        lastMission[kind] = { id = args.id, x = args.x, y = args.y, marked = markedMissions[args.id] == true }
+        lastMission[kind] = { id = args.id, x = args.x, y = args.y, radius = tonumber(args.radius),
+            marked = markedMissions[args.id] == true }
     end
 end
 
@@ -170,9 +181,43 @@ function Announce.markMap(x, y, symbolId, color)
     return true
 end
 
+--- Cercle du rayon d'un nettoyage centré sur (x, y), sauf s'il existe déjà
+--- (même symbole, même place, même couleur : un cercle du joueur ne compte pas).
+function Announce.markCircle(x, y, radius)
+    radius = tonumber(radius)
+    if not radius or radius <= 0 then
+        return false
+    end
+    local c = Announce.CLEANUP_CIRCLE_COLOR
+    local api = getSymbolsApi()
+    for i = 0, api:getSymbolCount() - 1 do
+        local symbol = api:getSymbolByIndex(i)
+        if symbol:isTexture() and symbol:getSymbolID() == Announce.CLEANUP_CIRCLE_SYMBOL
+            and math.floor(symbol:getWorldX()) == x and math.floor(symbol:getWorldY()) == y
+            and math.abs(symbol:getRed() - c.r) <= Announce.COLOR_TOLERANCE
+            and math.abs(symbol:getGreen() - c.g) <= Announce.COLOR_TOLERANCE
+            and math.abs(symbol:getBlue() - c.b) <= Announce.COLOR_TOLERANCE then
+            return false
+        end
+    end
+    local symbol = api:addTexture(Announce.CLEANUP_CIRCLE_SYMBOL, x, y)
+    symbol:setRGBA(c.r, c.g, c.b, c.a)
+    symbol:setAnchor(0.5, 0.5)
+    symbol:setScale(2 * radius / Announce.CIRCLE_RING_TILES)
+    return true
+end
+
+--- Symbole d'une mission (et cercle du rayon pour un nettoyage).
+local function markMissionSymbols(entry, x, y, radius)
+    Announce.markMap(x, y, Announce[entry.symbol], Announce[entry.color])
+    if entry.kind == "cleanup" then
+        Announce.markCircle(x, y, radius)
+    end
+end
+
 --- Repère d'une mission dont la radio du joueur vient de dire la grille
---- (réponse de la base) : { kind = "recon" | "cleanup", id, x, y }. Une fois
---- par mission, comme l'annonce.
+--- (réponse de la base) : { kind = "recon" | "cleanup", id, x, y, radius }.
+--- Une fois par mission, comme l'annonce.
 function Announce.markMission(mark)
     if type(mark) ~= "table" or type(mark.id) ~= "string" or type(mark.x) ~= "number"
         or type(mark.y) ~= "number" then
@@ -188,7 +233,7 @@ function Announce.markMission(mark)
             if mission and mission.id == mark.id then
                 mission.marked = true
             end
-            Announce.markMap(mark.x, mark.y, Announce[entry.symbol], Announce[entry.color])
+            markMissionSymbols(entry, mark.x, mark.y, mark.radius or (mission and mission.radius))
             MilitaryDrop.log(mark.kind .. " " .. mark.id .. " marked on the map from the base reply")
             return true
         end
@@ -207,6 +252,7 @@ local REMOVABLE = {
     { symbol = "SYMBOL", color = "COLOR", field = "drops" },
     { symbol = "RECON_SYMBOL", color = "RECON_COLOR", field = "recon" },
     { symbol = "CLEANUP_SYMBOL", color = "CLEANUP_COLOR", field = "cleanup" },
+    { symbol = "CLEANUP_CIRCLE_SYMBOL", color = "CLEANUP_CIRCLE_COLOR", field = "cleanup" },
 }
 
 local function activeSet(list)
@@ -300,7 +346,7 @@ function Announce.onDeviceText(_, codes, x, y, z)
         local mission, mark = entry.mission, entry.mark
         mission.marked = true
         markedMissions[mission.id] = true
-        Announce.markMap(mission.x, mission.y, Announce[mark.symbol], Announce[mark.color])
+        markMissionSymbols(mark, mission.x, mission.y, mission.radius)
         MilitaryDrop.log(mark.kind .. " " .. mission.id .. " marked on the map at " .. mission.x .. "," .. mission.y)
     end
 end

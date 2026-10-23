@@ -113,7 +113,7 @@ The base marks your map only if one of your radios **hears** the announcement or
 |---|---|---|
 | <img src="../../images/screenshots/map-symbol-drop.png" width="48" alt="Green target"> | **Supply drop**: the announced grid of a crate (or of a decoy, which looks the same) | On a road or next to a building, never in water |
 | <img src="../../images/screenshots/map-symbol-recon.png" width="48" alt="Blue eye"> | **Reconnaissance**: the building or road to check | Confirm within 25 tiles of the symbol |
-| <img src="../../images/screenshots/map-symbol-clearance.png" width="48" alt="Red skull"> | **Clearance**: centre of the zone where the horde was reported | The horde is spread within 40 tiles around it |
+| <img src="../../images/screenshots/map-symbol-clearance.png" width="48" alt="Red skull"> | **Clearance**: centre of the zone where the horde was reported, with a red circle showing the zone's radius on the world map (the mini-map only shows a small circle icon) | The horde is spread within 40 tiles around it, inside the circle |
 
 The base removes its symbols once they are no longer useful: a drop symbol when a supply case has been opened or emptied, or the drop is lost; a mission symbol when the order closes. If you were offline, they are removed when you reconnect. MAYDAY symbols and your own map notes are never touched.
 

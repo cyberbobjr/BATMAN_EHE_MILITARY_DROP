@@ -449,7 +449,10 @@ end
 --      DropRepeatHours): Eye symbol at R2 heard through OnDeviceText;
 --   5. drops: announced drop D1 (Trust record of the copied save) with its Target, stray Target elsewhere;
 --      Missions.sendMarks(player): stray removed, D1 kept; D1 emptied (markCollected) + Missions.update(): removed;
---   6. R2 closed: Eye removed.
+--   6. R2 closed: Eye removed;
+--   7. clearance C1 launched, radio on: Skull and radius Circle (scale 2 * radius / (20 * 50 / 64)) once aired;
+--      a player's own Circle (vanilla red pen color) at the same place; C1 closed: Skull and mod Circle removed,
+--      the player's Circle kept (C09).
 local function symbolsApi()
     local ui = {}
     ui.javaObject = UIWorldMap.new(ui)
@@ -468,6 +471,43 @@ local function countSymbols(id, x, y)
         end
     end
     return n
+end
+
+--- Scale of the first mod-colored Circle at x, y (the clearance radius), or nil.
+local function circleScale(x, y)
+    local api, c = symbolsApi(), MilitaryDrop.Announce.CLEANUP_CIRCLE_COLOR
+    for i = 0, api:getSymbolCount() - 1 do
+        local symbol = api:getSymbolByIndex(i)
+        if symbol:isTexture() and symbol:getSymbolID() == "Circle" and math.floor(symbol:getWorldX()) == x
+            and math.floor(symbol:getWorldY()) == y and math.abs(symbol:getRed() - c.r) < 0.01 then
+            return symbol:getScale()
+        end
+    end
+    return nil
+end
+
+--- Player's own circle (vanilla red pen color, ISWorldMapSymbols.lua) at x, y.
+local function addPlayerCircle(x, y)
+    local symbol = symbolsApi():addTexture("Circle", x, y)
+    symbol:setRGBA(0.65, 0.054, 0.054, 1)
+    symbol:setAnchor(0.5, 0.5)
+end
+
+local function removePlayerCircle(x, y)
+    local api = symbolsApi()
+    for i = api:getSymbolCount() - 1, 0, -1 do
+        local symbol = api:getSymbolByIndex(i)
+        if symbol:isTexture() and symbol:getSymbolID() == "Circle" and math.floor(symbol:getWorldX()) == x
+            and math.floor(symbol:getWorldY()) == y and math.abs(symbol:getRed() - 0.65) < 0.01 then
+            api:removeSymbolByIndex(i)
+            return true
+        end
+    end
+    return false
+end
+
+local function expectedCircleScale(radius)
+    return 2 * radius / (20 * 50 / 64)
 end
 
 local function airingDone()
@@ -623,6 +663,46 @@ local function addMarksSteps(player, airMs)
         rec(n == 0, "marks: second recon closed, symbol removed", "eye=" .. n)
         return true
     end)
+
+    addStep("marks: clearance heard: skull and radius circle", function()
+        if not S.c1 then
+            if not airingDone() then return false end
+            if Missions.openMission("cleanup") then
+                if Missions.adminLaunch(player, { kind = "cleanup", action = "close" }) == "busy" then return false end
+            end
+            setOn(true)
+            S.c1 = Missions.launch("cleanup")
+            if not S.c1 then
+                rec(false, "marks: clearance heard: skull and radius circle", "launch failed")
+                return true
+            end
+            info("C1 " .. S.c1.id .. " at " .. S.c1.x .. "," .. S.c1.y .. " radius " .. tostring(S.c1.radius))
+            return false
+        end
+        local skull, scale = countSymbols("Skull", S.c1.x, S.c1.y), circleScale(S.c1.x, S.c1.y)
+        if skull == 0 or not scale then return false end
+        local expected = expectedCircleScale(S.c1.radius)
+        rec(skull == 1 and countSymbols("Circle", S.c1.x, S.c1.y) == 1 and math.abs(scale - expected) < 0.01,
+            "marks: clearance heard: skull and radius circle",
+            "skull=" .. skull .. " scale=" .. tostring(scale) .. " expected=" .. tostring(expected))
+        addPlayerCircle(S.c1.x, S.c1.y)
+        return true
+    end, airMs)
+
+    addStep("marks: closed clearance removes skull and circle, keeps the player's circle", function()
+        if not S.c1 then return true end
+        if not S.c1closed then
+            local status = Missions.adminLaunch(player, { kind = "cleanup", action = "close" })
+            if status == "busy" then return false end
+            S.c1closed = true
+        end
+        local skull, circles = countSymbols("Skull", S.c1.x, S.c1.y), countSymbols("Circle", S.c1.x, S.c1.y)
+        if skull > 0 or circleScale(S.c1.x, S.c1.y) then return false end
+        rec(circles == 1 and removePlayerCircle(S.c1.x, S.c1.y),
+            "marks: closed clearance removes skull and circle, keeps the player's circle",
+            "skull=" .. skull .. " circles left=" .. circles)
+        return true
+    end, 15000)
 end
 
 -- ------------------------------------------------------------------ scenario "marks" (mp)
@@ -834,6 +914,39 @@ local function addMarksClientSteps(player, airMs)
         return true
     end, 15000)
 
+    addStep("mp marks: clearance heard: skull and radius circle", function()
+        if not S.cAsked then
+            if not airingDoneMp("airPre4") then return false end
+            setOn(true)
+        end
+        local r = asked(S, "cAsked", player, "launchCleanup")
+        if not r then return false end
+        if not r.id then
+            rec(false, "mp marks: clearance heard: skull and radius circle", "launch failed")
+            return true
+        end
+        S.c1 = r
+        local skull, scale = countSymbols("Skull", r.x, r.y), circleScale(r.x, r.y)
+        if skull == 0 or not scale then return false end
+        local expected = expectedCircleScale(r.radius)
+        rec(skull == 1 and countSymbols("Circle", r.x, r.y) == 1 and math.abs(scale - expected) < 0.01,
+            "mp marks: clearance heard: skull and radius circle",
+            "C1 " .. r.id .. " skull=" .. skull .. " scale=" .. tostring(scale) .. " expected=" .. tostring(expected))
+        addPlayerCircle(r.x, r.y)
+        return true
+    end, airMs)
+
+    addStep("mp marks: closed clearance removes skull and circle, keeps the player's circle", function()
+        if not S.c1 then return true end
+        if not asked(S, "askedCloseC1", player, "closeCleanup") then return false end
+        local skull, circles = countSymbols("Skull", S.c1.x, S.c1.y), countSymbols("Circle", S.c1.x, S.c1.y)
+        if skull > 0 or circleScale(S.c1.x, S.c1.y) then return false end
+        rec(circles == 1 and removePlayerCircle(S.c1.x, S.c1.y),
+            "mp marks: closed clearance removes skull and circle, keeps the player's circle",
+            "circles left=" .. circles)
+        return true
+    end, 15000)
+
     addStep("mp marks: finish", function()
         request(player, "finish")
         return true
@@ -895,6 +1008,23 @@ local function serverOp(module, command, player, args)
         reply.ok = Trust.markCollected(ServerOps.dropId)
         Missions.update()
         rec(reply.ok == true, "server: drop emptied", tostring(ServerOps.dropId))
+    elseif command == "launchCleanup" then
+        if Missions.openMission("cleanup") then
+            Missions.adminLaunch(player, { kind = "cleanup", action = "close" })
+        end
+        local mission = Missions.launch("cleanup")
+        ServerOps.cleanup = mission
+        if mission then
+            reply.id, reply.x, reply.y, reply.radius = mission.id, mission.x, mission.y, mission.radius
+        end
+        rec(mission ~= nil, "server: clearance launched", mission and mission.id or "nil")
+    elseif command == "closeCleanup" then
+        -- Admin commands are throttled (1 s): closed from H.server.done a moment later.
+        if Missions.openMission("cleanup") then
+            ServerOps.pendingClose = { player = player, at = nowMs() }
+            return
+        end
+        reply.status = "none"
     elseif command == "finish" then
         ServerOps.finished = true
         return
@@ -964,6 +1094,13 @@ end
 
 function H.server.done()
     if ServerOps.started then
+        local pending = ServerOps.pendingClose
+        if pending and nowMs() - pending.at > 1500 then
+            ServerOps.pendingClose = nil
+            local status = MilitaryDrop.Missions.adminLaunch(pending.player, { kind = "cleanup", action = "close" })
+            rec(status == "closed", "server: clearance closed", "status=" .. tostring(status))
+            sendServerCommand(pending.player, OPS_MODULE, "closeCleanup", { status = status })
+        end
         if ServerOps.finished then return true end
         if nowMs() - ServerOps.started > ServerOps.limitMs then
             rec(false, "server: client finished the scenario", "timeout")

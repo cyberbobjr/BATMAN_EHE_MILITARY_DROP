@@ -9,6 +9,7 @@ Each `## <version> — <date>` section is published as the Steam Workshop change
 
 - Missed a recon or clearance order? While it is open, the base repeats its grid on the military frequency (every 6 hours by default, same option as the drop reminders), and the reminder marks the map of players who hear it.
 - When the base gives you a mission grid in a reply (Confirm the recon too far away, Clearance status before the horde is spotted), the symbol is added to your map.
+- Clearance orders now draw the zone's radius on the world map: a red circle around the skull, removed with it when the order closes. Circles you draw yourself are never touched.
 
 ### Changed
 

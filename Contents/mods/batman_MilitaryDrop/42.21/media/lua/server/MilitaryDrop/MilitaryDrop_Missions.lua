@@ -41,7 +41,7 @@
 -- Rappel (Missions.remind) : une reconnaissance ou un nettoyage ouvert est
 -- rappelé sur la chaîne militaire toutes les DropRepeatHours heures (comme la
 -- grille d'un largage), avec le code du repère de carte. Les réponses privées
--- qui citent la grille portent mark = { kind, id, x, y } (repère du client).
+-- qui citent la grille portent mark = { kind, id, x, y[, radius] } (repère du client).
 -- Repères actifs (Missions.sendMarks, C10) : grilles des largages encore
 -- rappelés et des missions ouvertes, envoyées à l'arrivée d'un joueur et à
 -- chaque changement ; le client retire les repères du mod qui n'y sont plus.
@@ -1191,7 +1191,7 @@ function Missions.cleanupStatus(player, args)
     if type(mission.horde) ~= "table" then
         reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_CleanupPending", ctx.callsign, tostring(mission.x),
             tostring(mission.y), tostring(mission.radius)) },
-            { mark = { kind = "cleanup", id = mission.id, x = mission.x, y = mission.y } })
+            { mark = { kind = "cleanup", id = mission.id, x = mission.x, y = mission.y, radius = mission.radius } })
         return
     end
     local mine = tonumber(mission.counts and mission.counts[ctx.characterId]) or 0

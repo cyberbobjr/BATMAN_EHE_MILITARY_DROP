@@ -798,6 +798,7 @@ function T.base_replies_that_give_the_grid_carry_the_map_mark()
     call("MissionCleanupStatus", alice)
     args = lastSentArgs(alice, "ExchangeReply")
     assertEq(args.mark.kind .. ":" .. args.mark.id, "cleanup:" .. cleanup.id, "repère du nettoyage")
+    assertEq(args.mark.radius, cleanup.radius, "rayon du nettoyage pour le cercle de la carte")
     alice.x, alice.y = 300, 400
     wait(1)
     call("MissionRecon", alice)

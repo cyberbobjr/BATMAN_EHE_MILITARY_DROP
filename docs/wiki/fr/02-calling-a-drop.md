@@ -117,7 +117,7 @@ La base marque votre carte seulement si l'une de vos radios **entend** l'annonce
 |---|---|---|
 | <img src="../../images/screenshots/map-symbol-drop.png" width="48" alt="Cible verte"> | **Largage** : la grille annoncée d'une caisse (ou d'un leurre, identique) | Sur une route ou au pied d'un bâtiment, jamais dans l'eau |
 | <img src="../../images/screenshots/map-symbol-recon.png" width="48" alt="Œil bleu"> | **Reconnaissance** : le bâtiment ou la route à vérifier | Confirmer à 25 cases au plus du symbole |
-| <img src="../../images/screenshots/map-symbol-clearance.png" width="48" alt="Tête de mort rouge"> | **Nettoyage** : centre de la zone où la horde est signalée | La horde est répartie dans un rayon de 40 cases autour |
+| <img src="../../images/screenshots/map-symbol-clearance.png" width="48" alt="Tête de mort rouge"> | **Nettoyage** : centre de la zone où la horde est signalée, avec un cercle rouge qui trace le rayon de la zone sur la carte du monde (la mini-carte n'en montre qu'une petite icône) | La horde est répartie dans un rayon de 40 cases autour, dans le cercle |
 
 La base retire ses symboles quand ils ne servent plus : celui d'un largage quand une caisse de ravitaillement a été ouverte ou vidée, ou que le largage est perdu ; celui d'une mission à la clôture de l'ordre. Si vous étiez déconnecté, ils sont retirés à votre reconnexion. Les symboles de MAYDAY et vos propres notes de carte ne sont jamais touchés.
 

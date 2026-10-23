@@ -86,7 +86,7 @@ Un symbole **œil** bleu marque la grille sur votre carte. Allez-y et appuyez su
 
 *« À toutes les stations, ici Logistique. Horde d'infectés signalée dans un rayon de 40 cases autour de la grille X / Y, environ 30 individus… »*
 
-Un **crâne** rouge marque la zone. La horde apparaît quand le premier joueur approche, hors de sa vue. Vous avez **72 heures** de jeu.
+Un **crâne** rouge marque le centre de la zone et un **cercle** rouge son rayon. La horde apparaît quand le premier joueur approche, hors de sa vue. Vous avez **72 heures** de jeu.
 
 - **Faire le point** demande à la base où en est le nettoyage : zombies de la horde abattus par votre personnage, et nombre restant. Avant que la horde soit repérée, la base donne la grille et le symbole s'ajoute à votre carte.
 - Quand **90 %** de la horde est mort, le personnage qui en a abattu le plus gagne +5. Le feu et les pièges tuent, mais ne créditent personne.

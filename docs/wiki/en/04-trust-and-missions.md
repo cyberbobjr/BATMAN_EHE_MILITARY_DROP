@@ -84,7 +84,7 @@ A blue **eye** symbol marks the grid on your map. Go there and press **Confirm t
 
 *"All stations, Logistics. Infected horde reported within 40 tiles of grid X / Y, about 30 strong..."*
 
-A red **skull** marks the zone. The horde appears when the first player comes near, out of sight. You have **72 hours** of game time.
+A red **skull** marks the centre of the zone and a red **circle** its radius. The horde appears when the first player comes near, out of sight. You have **72 hours** of game time.
 
 - **Clearance status** asks the base how it is going: zombies of the horde brought down by your character, and how many are left. Before the horde is spotted, the base gives the grid and the symbol is added to your map.
 - When **90%** of the horde is dead, the character that killed the most gets +5. Fire and traps kill zombies but credit nobody.
