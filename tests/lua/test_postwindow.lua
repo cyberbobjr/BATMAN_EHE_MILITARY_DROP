@@ -40,6 +40,9 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Exchange.lua")
     MilitaryDrop.Client = { HANDLERS = {} }
     loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow_Affairs.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow_Draw.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow_Layout.lua")
     W = MilitaryDrop.PostWindow
 end
 

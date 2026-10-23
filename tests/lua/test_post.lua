@@ -874,6 +874,9 @@ local function loadWindow()
     end
     loadMod("shared/MilitaryDrop/MilitaryDrop_Codes.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow_Affairs.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow_Draw.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow_Layout.lua")
     return MilitaryDrop.PostWindow
 end
 

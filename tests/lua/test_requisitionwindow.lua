@@ -62,6 +62,9 @@ function T.setup()
         end,
     }
     loadMod("client/MilitaryDrop/MilitaryDrop_RequisitionWindow.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_RequisitionWindow_Draw.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_RequisitionWindow_Form.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_RequisitionWindow_Layout.lua")
     RW = MilitaryDrop.RequisitionWindow
 end
 

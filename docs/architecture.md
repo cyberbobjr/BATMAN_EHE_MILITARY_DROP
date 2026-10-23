@@ -81,8 +81,8 @@ Seule globale : la table `MilitaryDrop` (`Core`), dont chaque module est un cham
 | `Client` | Appel de largage, réponses de la base, table `Client.HANDLERS` des commandes serveur, fichier local du code saisi, options admin du menu contextuel. |
 | `RadioModule` | Section « Logistique » ajoutée à la fenêtre radio vanilla (`ISRadioWindow.createChildren` enveloppée). |
 | `ExchangeMenu` | Options d'échange (rapport, plaques, reconnaissance, contrôle, nettoyage, Fulton) utilisées par `RadioModule`. |
-| `RequisitionWindow` | Formulaire de réquisition (lots, budget, leurre, secteur). |
-| `PostWindow`, `BaySound` | Console du poste de liaison, baie de lecture de l'enregistreur de vol et ses sons. |
+| `RequisitionWindow` (+ `_Form`, `_Layout`, `_Draw`) | Formulaire de réquisition (lots, budget, leurre, secteur) : fenêtre, souris, clavier et manette dans le fichier principal ; formulaire pur, disposition et dessin dans les fichiers `_Form`, `_Layout`, `_Draw`. |
+| `PostWindow` (+ `_Layout`, `_Affairs`, `_Draw`), `BaySound` | Console du poste de liaison, baie de lecture de l'enregistreur de vol et ses sons : radio, menu, fenêtre, souris et réponses du serveur dans le fichier principal ; mise en forme et disposition, liste des affaires et dessin dans les fichiers `_Layout`, `_Affairs`, `_Draw`. |
 | `Heli`, `Announce`, `Siren` | Hélicoptère vu et entendu (son, ombre, flèche), repères de carte des auditeurs, sirène du leurre ; tout est local, sans paquet. |
 | `ZonesAdmin`, `ZonesWindow`, `ZoneEditor` | Outil d'admin des zones de largage (bouton du panneau d'admin vanilla en MP, menu de debug en solo). |
 | `FultonClient`, `FultonMenu`, `FultonRender`, `FultonRender_Debug` | Créneau Fulton reçu de la base, menu du kit et action de lâcher, rendu du ballon et menu de test (debug). |

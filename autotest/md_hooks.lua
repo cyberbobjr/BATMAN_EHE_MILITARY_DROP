@@ -16,7 +16,9 @@ Authority (solo client, or mp server with the first connected player), through t
   8. Fulton: FultonServer.launch without a kit -> refused "noKit" (a full launch needs kit, helium tank and a mission
      window: not scripted here).
 Client view (solo: same Lua; mp: client 1 with --client-run): MilitaryDrop server commands received ("Result"
-accepted, "PostResult" installed) and the crate vehicle seen near the player.
+accepted, "PostResult" installed) and the crate vehicle seen near the player; Fulton modules loaded under their
+production names (C03), liaison post console opened through the server (PostOpen -> PostData) and requisition sheet
+opened, both drawn for a few frames then closed (C08: split window files, Lua errors counted at the end).
 
 Parameters (ctx.params, text): deliverySec (default 240), clientWaitSec (mp client, default 420), crateWaitSec
 (crate vehicle or ground cases after the delivery, default 30), serverLeadSec (mp server, delay before step 1 so
@@ -239,7 +241,36 @@ local function received(command, pred)
     return nil
 end
 
+--- Liaison post radio of the player's team within 2 squares (client view), or nil.
+local function ownPostNear(player)
+    local cell, PW = getCell(), MilitaryDrop.PostWindow
+    local px, py, pz = math.floor(player:getX()), math.floor(player:getY()), math.floor(player:getZ())
+    for dx = -2, 2 do
+        for dy = -2, 2 do
+            local square = cell:getGridSquare(px + dx, py + dy, pz)
+            local objects = square and square:getObjects()
+            for i = 0, (objects and objects:size() or 0) - 1 do
+                local object = objects:get(i)
+                if instanceof(object, "IsoWaveSignal") and PW.isOwnPost(object) then return object end
+            end
+        end
+    end
+    return nil
+end
+
 local function addClientSteps(player, waitMs)
+    local MD = MilitaryDrop
+    local S = {}
+    addStep("Fulton modules loaded under their production names", function()
+        local debugMenu = MD.FultonRenderDebug ~= nil
+        local debugMode = isDebugEnabled() == true
+        local server = isClient() or MD.FultonFlightServer ~= nil
+        rec(MD.FultonFlight ~= nil and MD.FultonRender ~= nil and MD.FultonRender.startAt ~= nil and server
+            and MD.FultonPrototype == nil and debugMenu == debugMode,
+            "Fulton modules loaded under their production names",
+            "debug=" .. tostring(debugMode) .. " testMenu=" .. tostring(debugMenu))
+        return true
+    end)
     addStep("client received Result accepted", function()
         local args = received("Result", function(a) return tonumber(a.requestId) == REQUEST_ID end)
         if not args then return false end
@@ -259,6 +290,48 @@ local function addClientSteps(player, waitMs)
             .. math.floor(vehicle:getX()) .. "," .. math.floor(vehicle:getY()))
         return true
     end, waitMs)
+    addStep("liaison post console opens and draws", function()
+        local PW = MD.PostWindow
+        local playerNum = player:getPlayerNum()
+        if not S.postAsked then
+            local object = ownPostNear(player)
+            if not object then return false end
+            S.postAsked = true
+            PW.requestOpen(player, object)
+            return false
+        end
+        local window = PW.instances[playerNum]
+        if not window or not window:getIsVisible() or not window.data then return false end
+        S.postFrames = (S.postFrames or 0) + 1
+        if S.postFrames < 30 then return false end
+        local affairs = window.affairList and #window.affairList or -1
+        window:close("autotest")
+        rec(PW.instances[playerNum] == nil, "liaison post console opens and draws",
+            "size=" .. math.floor(window.width) .. "x" .. math.floor(window.height) .. " affairs=" .. tostring(affairs))
+        return true
+    end, 30000)
+    addStep("requisition sheet opens and draws", function()
+        local RW = MD.RequisitionWindow
+        local playerNum = player:getPlayerNum()
+        if not S.sheet then
+            -- Admin forced-drop sheet (forced: no radio needed), one lot and the decoy, never transmitted.
+            S.sheet = RW.open(player, nil, { requestId = 0, callsign = "Autotest", tier = 2, budget = 10, forced = true,
+                expiresMs = 120000,
+                lots = { { id = "autotest", group = 1, cost = 2, allowed = true, label = "Autotest lot" } },
+                decoy = { cost = 3, allowed = true, sectors = { "N", "E", "S", "W" } } })
+            return false
+        end
+        S.sheetFrames = (S.sheetFrames or 0) + 1
+        if S.sheetFrames < 30 then return false end
+        local visible = S.sheet:getIsVisible() and RW.instances[playerNum] == S.sheet
+        local w, h = S.sheet.width, S.sheet.height
+        -- Closed without transmitting or cancelling a real request.
+        S.sheet.done = true
+        S.sheet:close()
+        rec(visible and RW.instances[playerNum] == nil, "requisition sheet opens and draws",
+            "size=" .. math.floor(w) .. "x" .. math.floor(h))
+        return true
+    end, 30000)
 end
 
 -- ------------------------------------------------------------------ authority path
