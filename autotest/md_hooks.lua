@@ -15,8 +15,7 @@ Authority (solo client, or mp server with the first connected player), through t
      faction): outcome "taken", the caller's trust lowered by Trust.DROP_TAKEN (C13);
   6. Missions.adminLaunch(control): mission open and listed for the character;
   7. liaison post: HAM radio (IsoRadio with the HamRadio2 sprite) on the player's square, Post.install -> owner;
-  8. Fulton: FultonServer.launch without a kit -> refused "noKit" (a full launch needs kit, helium tank and a mission
-     window: not scripted here).
+  8. Fulton: FultonServer.launch without a kit -> refused "noKit" (the full launch is the scenario -P scenario=fulton).
 Client view (solo: same Lua; mp: client 1 with --client-run): MilitaryDrop server commands received ("Result"
 accepted, "PostResult" installed) and the crate vehicle seen near the player; Fulton modules loaded under their
 production names (C03), liaison post console opened through the server (PostOpen -> PostData) and requisition sheet
@@ -223,6 +222,10 @@ end
 local Observer = { installed = false }
 
 local function observe(module, command, args)
+    -- Fulton flights (MilitaryDrop_FultonFlightServer.lua): own module, recorded as "FlightSnapshot".
+    if module == "MilitaryDropFultonFlight" and command == "Snapshot" then
+        module, command = "MilitaryDrop", "FlightSnapshot"
+    end
     if module ~= "MilitaryDrop" or type(command) ~= "string" then return end
     local list = R.seen[command] or {}
     list[#list + 1] = type(args) == "table" and args or {}
@@ -547,7 +550,7 @@ local function addAuthoritySteps(player, deliveryMs, crateWaitMs, leadMs, other)
         end
         local result = FultonServer.launch(player, {})
         rec(result == nil or result ~= "ok", "Fulton refused without a kit", "result=" .. tostring(result))
-        info("Fulton launch with kit, helium tank and mission window: not scripted (manual protocol F*)")
+        info("full Fulton launch (kit, helium tank, window): -P scenario=fulton")
         return true
     end)
 end
@@ -853,6 +856,328 @@ local function addMarksSteps(player, airMs)
             "skull=" .. skull .. " circles left=" .. circles)
         return true
     end, 15000)
+end
+
+-- ------------------------------------------------------------------ scenario "fulton" (authority helpers, solo)
+
+-- -P scenario=fulton: real Fulton launch (FULTON-06/07), through the mod's player path:
+--   1. military radio in hand, "request a Fulton pass" through Exchange.send (timed action, Missions.requestFulton):
+--      reply ok (or pending), window kept by FultonClient.window and Missions.fultonWindow;
+--   2. kit (Fulton.KIT_TYPE) filled with paid items (papers, identity card of someone else, gas mask, filter,
+--      stash map) and one unpaid item, laid on an outside square near the player (Fulton.siteReason, free square),
+--      helium tank in the main inventory; menu reason nil (option enabled);
+--   3. FultonMenu.queueLaunch: walk to the kit, FultonLaunchAction, FultonLaunch -> FultonServer.launch;
+--   4. FultonResult ok, kit gone from the ground, one helium use spent, trust raised by
+--      min(Fulton.evaluate().capped, Trust.dailyLeft) + uncapped, window closed, Broadcast.fulton called once,
+--      visible flight started (solo: FultonRender anchored flight; mp: Snapshot with a real flight).
+-- No valid square because of the weather (storm, wind): FAIL "site: <reason>" (never hidden).
+-- Screenshots (-P shots=1): kit on the ground, then the balloon rise and the pickup at FULTON_SHOTS seconds.
+local FULTON_SHOTS = { 0.4, 1.5, 2.8, 3.5, 4.0, 4.4 }
+local FULTON_STRANGER = "Autotest Stranger"
+
+--- Outside square near the player for the kit: Fulton.siteReason nil, free, no water; Chebyshev distance 2 to
+--- radius first (the character walks to it), then 1. Returns the square, or nil and the refusal seen.
+local function fultonSite(player, radius)
+    local Fulton = MilitaryDrop.Fulton
+    local cell = getCell()
+    local px, py, pz = math.floor(player:getX()), math.floor(player:getY()), math.floor(player:getZ())
+    local best, bestD, seen = nil, nil, nil
+    for dx = -radius, radius do
+        for dy = -radius, radius do
+            local square = cell:getGridSquare(px + dx, py + dy, pz)
+            local d = math.max(math.abs(dx), math.abs(dy))
+            if square and d > 0 and square:isFree(false) and not square:isWaterSquare() then
+                local reason = Fulton.siteReason(square)
+                if reason then
+                    if reason ~= "IGUI_MilitaryDrop_Fulton_NotOutside" or not seen then seen = reason end
+                else
+                    local rank = d >= 2 and d or radius + 1
+                    if not bestD or rank < bestD then best, bestD = square, rank end
+                end
+            end
+        end
+    end
+    return best, seen
+end
+
+--- Kit filled with paid items and one unpaid item, laid on square (transmitted in mp).
+local function fultonPlaceKit(square)
+    local Fulton = MilitaryDrop.Fulton
+    local kit = instanceItem(Fulton.KIT_TYPE)
+    local container = kit:getItemContainer()
+    local card = instanceItem("Base.IDcard")
+    card:setName(FULTON_STRANGER)
+    card:setCustomName(true)
+    local map = instanceItem("Base.MuldraughMap")
+    map:setStashMap("MulStashMap1")
+    for _, item in ipairs({ instanceItem("Base.Paperwork"), card, instanceItem("Base.Hat_GasMask"),
+        instanceItem("Base.GasmaskFilter"), map, instanceItem("Base.Pencil") }) do
+        container:AddItem(item)
+    end
+    square:AddWorldInventoryItem(kit, 0.5, 0.5, 0, true)
+    return kit
+end
+
+local function fultonGiveTank(player)
+    local inv = player:getInventory()
+    local tank = inv:AddItem(MilitaryDrop.Fulton.TANK_TYPE)
+    if tank and isServer() then sendAddItemToContainer(inv, tank) end
+    return tank
+end
+
+local function countsText(counts)
+    local parts = {}
+    for category, n in pairs(counts) do parts[#parts + 1] = category .. "=" .. n end
+    table.sort(parts)
+    return table.concat(parts, ",")
+end
+
+-- Broadcast.fulton recorded on the authority (called by FultonServer.onLaunched through the field).
+local FultonCalls = {}
+
+local function wrapFultonBroadcast()
+    local B = MilitaryDrop.Broadcast
+    if FultonCalls.original or not B or not B.fulton then return end
+    local original = B.fulton
+    FultonCalls.original, FultonCalls.list = original, {}
+    B.fulton = function(x, y)
+        local sx, sy = original(x, y)
+        FultonCalls.list[#FultonCalls.list + 1] = { x = x, y = y, sx = sx, sy = sy }
+        return sx, sy
+    end
+end
+
+local function unwrapFultonBroadcast()
+    if FultonCalls.original then MilitaryDrop.Broadcast.fulton = FultonCalls.original end
+    FultonCalls = {}
+end
+
+--- Authority preparation: site, kit, tank, expected payment. Returns state, or nil and the failure text.
+local function fultonPrepare(player)
+    local MD = MilitaryDrop
+    local Fulton, Trust = MD.Fulton, MD.Trust
+    local square, seen = fultonSite(player, 8)
+    if not square then
+        return nil, "site: " .. tostring(seen or "no free outside square within 8")
+    end
+    wrapFultonBroadcast()
+    local kit = fultonPlaceKit(square)
+    local tank = fultonGiveTank(player)
+    local cid = Trust.idFor(player)
+    local items = Fulton.kitItems(kit)
+    local evaluation = Fulton.evaluate(items, player)
+    local left = Trust.dailyLeft(cid)
+    local F = { cid = cid, kit = kit, tank = tank, square = square, x = square:getX(), y = square:getY(),
+        z = square:getZ(), kitId = kit:getID(), tankId = tank and tank:getID(), uses = tank and tank:getCurrentUses(),
+        items = #items, evaluation = evaluation, left = left, trust = Trust.get(cid),
+        expected = math.min(evaluation.capped, left) + evaluation.uncapped }
+    return F
+end
+
+--- Kit with kitId still on the ground of square.
+local function kitOnSquare(square, kitId)
+    local objects = square and square:getWorldObjects()
+    for i = 0, (objects and objects:size() or 0) - 1 do
+        local item = objects:get(i):getItem()
+        if item and item:getID() == kitId then return item end
+    end
+    return nil
+end
+
+--- Authority checks after the launch: { name = { ok, detail } } in a fixed order.
+local function fultonVerify(player, F)
+    local MD = MilitaryDrop
+    local Trust, Missions = MD.Trust, MD.Missions
+    local out = {}
+    local gone = kitOnSquare(F.square, F.kitId) == nil
+    out[#out + 1] = { "fulton: kit removed from the ground", gone, F.x .. "," .. F.y .. "," .. F.z }
+    local uses = F.tank and F.tank:getCurrentUses()
+    out[#out + 1] = { "fulton: one helium use spent", uses == (F.uses or 0) - 1,
+        "uses " .. tostring(F.uses) .. " -> " .. tostring(uses) }
+    local after = Trust.get(F.cid)
+    out[#out + 1] = { "fulton: trust raised by the scale", after - F.trust == F.expected,
+        "trust " .. tostring(F.trust) .. " -> " .. tostring(after) .. " expected +" .. F.expected .. " (capped "
+        .. F.evaluation.capped .. ", dailyLeft " .. F.left .. ", paid " .. F.evaluation.paid .. ", unpaid "
+        .. F.evaluation.unpaid .. ")" }
+    out[#out + 1] = { "fulton: window closed", Missions.fultonWindow(F.cid) == nil, nil }
+    local calls = FultonCalls.list or {}
+    local call = calls[1]
+    out[#out + 1] = { "fulton: sector announced (Broadcast.fulton)", #calls == 1 and call.x == F.x and call.y == F.y,
+        "calls=" .. #calls .. (call and (" sector " .. tostring(call.sx) .. "," .. tostring(call.sy)) or "") }
+    return out
+end
+
+local function fultonExpectedOk(F)
+    local paid = F.evaluation.paid
+    return F.items == 6 and paid == 5 and F.evaluation.unpaid == 1, "items=" .. F.items .. " paid=" .. paid
+        .. " (" .. countsText(F.evaluation.counts) .. ") capped=" .. F.evaluation.capped .. " dailyLeft=" .. F.left
+end
+
+--- Screenshots of the flight: every window hidden (ISUIHandler.setVisibleAllUI(false) leaves the radio windows,
+--- hidden one by one) and the camera zoomed out up to five steps (doZoomScroll +1 = next larger zoom value, MultiTextureFBO2:
+--- zoom levels sorted from the widest) so that the balloon stays on screen. Restored after the flight.
+local function hideUiForShots(S, player)
+    if S.uiHidden then return end
+    S.uiHidden = true
+    S.zoomBefore = getCore():getZoom(player:getPlayerNum())
+    ISUIHandler.setVisibleAllUI(false)
+    for _, list in ipairs({ ISRadioWindow and ISRadioWindow.instances, ISRadioWindow and ISRadioWindow.instancesIso }) do
+        for _, window in pairs(list or {}) do
+            if window and window.setVisible then window:setVisible(false) end
+        end
+    end
+    for _ = 1, 5 do getCore():doZoomScroll(player:getPlayerNum(), 1) end
+end
+
+local function restoreUiAfterShots(S, player)
+    if not S.uiHidden then return end
+    S.uiHidden = false
+    ISUIHandler.setVisibleAllUI(true)
+    info("camera zoom " .. tostring(S.zoomBefore) .. " -> " .. tostring(getCore():getZoom(player:getPlayerNum()))
+        .. " for the screenshots")
+end
+
+--- Shared client steps: request the window by radio, then launch the kit through the menu path; screenshots.
+--- getKit() returns the kit item seen by this client (nil while not there yet).
+local function addFultonLaunchSteps(player, S, prefix)
+    local MD = MilitaryDrop
+    local FultonMenu, FultonClient = MD.FultonMenu, MD.FultonClient
+
+    addStep(prefix .. "kit ready, menu option enabled", function()
+        if not S.items then return true end
+        local kit = S.getKit()
+        if not kit or #MD.Fulton.kitItems(kit) < S.items or not MD.Fulton.findTank(player:getInventory(), true) then
+            return false
+        end
+        S.kit = kit
+        if SHOTS then
+            hideUiForShots(S, player)
+            if not shotAfter(S, "kitShot", 60, "md_fulton_kit_ground.png") then return false end
+        end
+        local reason = FultonMenu.reason(player, kit)
+        local text = FultonMenu.confirmText(player, kit)
+        rec(reason == nil and type(text) == "string" and text ~= "", prefix .. "kit ready, menu option enabled",
+            "reason=" .. tostring(reason) .. " kitItems=" .. #MD.Fulton.kitItems(kit))
+        return true
+    end, 30000)
+
+    addStep(prefix .. "launch queued (walk, inflate, FultonLaunch)", function()
+        if not S.kit then return true end
+        if ISTimedActionQueue.isPlayerDoingAction(player) then return false end
+        S.queued = FultonMenu.queueLaunch(player, S.kit)
+        rec(S.queued == true, prefix .. "launch queued (walk, inflate, FultonLaunch)",
+            "kit at " .. tostring(S.x) .. "," .. tostring(S.y))
+        return true
+    end, 30000)
+
+    addStep(prefix .. "FultonResult ok", function()
+        if not S.queued then return true end
+        local args = received("FultonResult")
+        if not args then return false end
+        S.result = args
+        S.t0 = nowMs()
+        local lines = type(args.lines) == "table" and #args.lines or 0
+        rec(args.status == "ok" and lines > 0, prefix .. "FultonResult ok", "status=" .. tostring(args.status)
+            .. " reason=" .. tostring(args.reason) .. " lines=" .. lines)
+        return true
+    end, 90000)
+
+    addStep(prefix .. "visible flight started", function()
+        if not S.result or S.result.status ~= "ok" then return true end
+        local Render = MD.FultonRender
+        local snapshot = received("FlightSnapshot", function(a)
+            for _, row in ipairs(type(a.flights) == "table" and a.flights or {}) do
+                if row.real and math.abs((tonumber(row.x) or 0) - (S.x + 0.5)) < 0.01
+                    and math.abs((tonumber(row.y) or 0) - (S.y + 0.5)) < 0.01 then return true end
+            end
+            return false
+        end)
+        local count = Render and Render.count() or 0
+        if isClient() and not snapshot then return false end
+        if count == 0 then return false end
+        rec(true, prefix .. "visible flight started", "rendered flights=" .. count
+            .. (isClient() and " (Snapshot with a real flight received)" or " (solo anchored flight)"))
+        return true
+    end, 10000)
+
+    addStep(prefix .. "flight screenshots", function()
+        if not SHOTS or not S.t0 then return true end
+        S.shot = S.shot or 1
+        local at = FULTON_SHOTS[S.shot]
+        if not at then return true end
+        if nowMs() - S.t0 >= at * 1000 then
+            local name = string.format("md_fulton_flight_%02d_%04dms.png", S.shot, math.floor(at * 1000))
+            takeScreenshot(name)
+            info("screenshot " .. name .. " (" .. (nowMs() - S.t0) .. " ms after the result)")
+            S.shot = S.shot + 1
+        end
+        return false
+    end, 15000)
+
+    addStep(prefix .. "client window cleared, flight over", function()
+        if not S.result then return true end
+        local count = MD.FultonRender and MD.FultonRender.count() or 0
+        if count > 0 then return false end
+        restoreUiAfterShots(S, player)
+        rec(FultonClient.window(player:getPlayerNum()) == nil, prefix .. "client window cleared, flight over",
+            "rendered flights=" .. count)
+        return true
+    end, 20000)
+end
+
+local function addFultonSoloSteps(player)
+    local MD = MilitaryDrop
+    local S = {}
+    addStep("fulton: setup (radio)", function()
+        S.radio = giveMilitaryRadio(player, MD.Config.getChannel())
+        S.cid = MD.Trust.idFor(player)
+        rec(S.radio ~= nil and MD.Fulton.isEnabled(), "fulton: setup (radio)",
+            "FultonValue=" .. tostring(MD.Config.get("FultonValue")) .. " lineCut="
+            .. tostring(MD.Trust.isLineCut(S.cid)))
+        return true
+    end)
+
+    addStep("fulton: pass requested by radio", function()
+        if not S.sent then
+            S.sent = MD.Exchange.send(player, S.radio, MD.Exchange.COMMANDS.fulton, {}, nil,
+                { onReply = function(args) S.reply = args end })
+            if not S.sent then
+                rec(false, "fulton: pass requested by radio", "exchange not started")
+                return true
+            end
+            return false
+        end
+        if not S.reply then return false end
+        local window = MD.FultonClient.window(player:getPlayerNum())
+        rec((S.reply.status == "ok" or S.reply.status == "pending") and window ~= nil
+            and MD.Missions.fultonWindow(S.cid) ~= nil, "fulton: pass requested by radio",
+            "status=" .. tostring(S.reply.status) .. " minutesLeft=" .. tostring(S.reply.fulton and S.reply.fulton.minutesLeft)
+            .. " dailyLeft=" .. tostring(S.reply.fulton and S.reply.fulton.dailyLeft))
+        return true
+    end, 60000)
+
+    addStep("fulton: kit laid outside, tank given", function()
+        local F, err = fultonPrepare(player)
+        if not F then
+            rec(false, "fulton: kit laid outside, tank given", err)
+            return true
+        end
+        S.F, S.x, S.y, S.items = F, F.x, F.y, F.items
+        S.getKit = function() return kitOnSquare(F.square, F.kitId) end
+        local ok, detail = fultonExpectedOk(F)
+        rec(ok and F.tank ~= nil, "fulton: kit laid outside, tank given", "at " .. F.x .. "," .. F.y .. "," .. F.z
+            .. " player " .. math.floor(player:getX()) .. "," .. math.floor(player:getY()) .. " " .. detail)
+        return true
+    end)
+
+    S.getKit = function() return nil end
+    addFultonLaunchSteps(player, S, "fulton: ")
+
+    addStep("fulton: authority paid and cleaned up", function()
+        if not S.F or not S.result then return true end
+        for _, c in ipairs(fultonVerify(player, S.F)) do rec(c[2] == true, c[1], c[3]) end
+        return true
+    end)
 end
 
 -- ------------------------------------------------------------------ scenario "marks" (mp)
@@ -1175,6 +1500,31 @@ local function serverOp(module, command, player, args)
             return
         end
         reply.status = "none"
+    elseif command == "fultonPrepare" then
+        local F, err = fultonPrepare(player)
+        ServerOps.fulton = F
+        if F then
+            local ok, detail = fultonExpectedOk(F)
+            rec(ok and F.tank ~= nil, "server: fulton kit laid outside, tank given", "at " .. F.x .. "," .. F.y .. ","
+                .. F.z .. " " .. detail)
+            rec(Missions.fultonWindow(F.cid) ~= nil, "server: fulton window open before the launch")
+            reply.x, reply.y, reply.z, reply.kitId, reply.tankId, reply.items = F.x, F.y, F.z, F.kitId, F.tankId, F.items
+        else
+            rec(false, "server: fulton kit laid outside, tank given", err)
+            reply.error = err
+        end
+    elseif command == "fultonCheck" then
+        local F = ServerOps.fulton
+        reply.ok = F ~= nil
+        if F then
+            for _, c in ipairs(fultonVerify(player, F)) do
+                rec(c[2] == true, "server: " .. c[1], c[3])
+                if c[2] ~= true then
+                    reply.ok = false
+                    reply.failed = c[1]
+                end
+            end
+        end
     elseif command == "finish" then
         ServerOps.finished = true
         return
@@ -1182,6 +1532,111 @@ local function serverOp(module, command, player, args)
         return
     end
     sendServerCommand(player, OPS_MODULE, command, reply)
+end
+
+-- ------------------------------------------------------------------ scenario "fulton" (mp client)
+
+-- Client 1 drives: radio from the server (tuned there), pass requested by radio, kit and tank laid and given by the
+-- server (op fultonPrepare), real menu launch, then the server checks payment and removal (op fultonCheck).
+local function addFultonClientSteps(player)
+    local MD = MilitaryDrop
+    local S = {}
+    if not Ops.installed then
+        Ops.installed = true
+        Events.OnServerCommand.Add(onOpReply)
+    end
+
+    -- The mp test world is new at each run, with ambient zombies, and the inflation is noisy: the character is
+    -- made invisible and invincible like the solo test save (admin powers, as ISAdminPowerUI: setter then
+    -- sendPlayerExtraInfo), so that a zombie never cancels the timed action.
+    addStep("mp fulton: admin powers (invisible, god mode)", function()
+        player:setInvisible(true)
+        player:setGodMod(true)
+        sendPlayerExtraInfo(player)
+        info("mp fulton: character invisible and invincible for the test")
+        return true
+    end)
+
+    addStep("mp fulton: radio given by the server and taken in hand", function()
+        local r = asked(S, "askedRadio", player, "giveRadio")
+        if not r then return false end
+        S.radio = S.radio or findRadio(player, r.id)
+        S.channel = tonumber(r.channel)
+        if not S.radio or not S.channel then return false end
+        if player:getPrimaryHandItem() ~= S.radio and player:getSecondaryHandItem() ~= S.radio then
+            if not S.equipping then
+                S.equipping = true
+                MD.Exchange.takeInHand(player, S.radio)
+            end
+            return false
+        end
+        local data = S.radio:getDeviceData()
+        data:setIsTurnedOn(true)
+        data:setChannel(S.channel)
+        rec(true, "mp fulton: radio given by the server and taken in hand", "id=" .. tostring(r.id))
+        return true
+    end, 30000)
+
+    addStep("mp fulton: pass requested by radio", function()
+        if not S.radio then return true end
+        if not S.sent then
+            if ISTimedActionQueue.isPlayerDoingAction(player) then return false end
+            S.sent = MD.Exchange.send(player, S.radio, MD.Exchange.COMMANDS.fulton, {}, nil,
+                { onReply = function(args) S.reply = args end })
+            if not S.sent then
+                rec(false, "mp fulton: pass requested by radio", "exchange not started")
+                return true
+            end
+            return false
+        end
+        if not S.reply then return false end
+        local window = MD.FultonClient.window(player:getPlayerNum())
+        rec((S.reply.status == "ok" or S.reply.status == "pending") and window ~= nil,
+            "mp fulton: pass requested by radio", "status=" .. tostring(S.reply.status) .. " minutesLeft="
+            .. tostring(window and MD.FultonClient.minutesLeft(player:getPlayerNum())) .. " dailyLeft="
+            .. tostring(window and window.dailyLeft))
+        return true
+    end, 60000)
+
+    addStep("mp fulton: kit laid and tank given by the server", function()
+        local r = asked(S, "askedPrep", player, "fultonPrepare")
+        if not r then return false end
+        if r.error or not r.kitId then
+            rec(false, "mp fulton: kit laid and tank given by the server", tostring(r.error))
+            return true
+        end
+        S.x, S.y, S.z, S.kitId, S.items = r.x, r.y, r.z, r.kitId, r.items
+        rec(true, "mp fulton: kit laid and tank given by the server", "kit " .. tostring(r.kitId) .. " at " .. r.x
+            .. "," .. r.y .. "," .. r.z .. " tank " .. tostring(r.tankId))
+        return true
+    end, 30000)
+
+    S.getKit = function()
+        if not S.kitId then return nil end
+        return kitOnSquare(getCell():getGridSquare(S.x, S.y, S.z), S.kitId)
+    end
+    addFultonLaunchSteps(player, S, "mp fulton: ")
+
+    addStep("mp fulton: server paid and cleaned up", function()
+        if not S.result then return true end
+        local r = asked(S, "askedCheck", player, "fultonCheck")
+        if not r then return false end
+        rec(r.ok == true, "mp fulton: server paid and cleaned up", r.failed and ("failed: " .. tostring(r.failed))
+            or "all server checks passed")
+        return true
+    end, 30000)
+
+    addStep("mp fulton: kit gone for the client", function()
+        if not S.kitId then return true end
+        if S.getKit() then return false end
+        rec(true, "mp fulton: kit gone for the client", S.x .. "," .. S.y .. "," .. S.z)
+        return true
+    end, 15000)
+
+    addStep("mp fulton: finish", function()
+        request(player, "finish")
+        return true
+    end)
 end
 
 -- ------------------------------------------------------------------ hooks
@@ -1203,11 +1658,19 @@ function H.client.start(ctx)
             addMarksClientSteps(player, seconds(ctx.params.airSec, 240))
             return true
         end
+        if ctx.params.scenario == "fulton" then
+            addFultonClientSteps(player)
+            return true
+        end
         addClientSteps(player, seconds(ctx.params.clientWaitSec, 420))
     else
         if not MilitaryDrop.Server then return false, "MilitaryDrop.Server missing in solo" end
         if ctx.params.scenario == "marks" then
             addMarksSteps(player, seconds(ctx.params.airSec, 240))
+            return true
+        end
+        if ctx.params.scenario == "fulton" then
+            addFultonSoloSteps(player)
             return true
         end
         addAuthoritySteps(player, seconds(ctx.params.deliverySec, 240), seconds(ctx.params.crateWaitSec, 30), 0)
@@ -1222,6 +1685,7 @@ end
 
 function H.client.result()
     removeObserver()
+    unwrapFultonBroadcast()
     errorCheck()
     return summary()
 end
@@ -1231,7 +1695,7 @@ function H.server.start(ctx)
     if not MilitaryDrop or not MilitaryDrop.Server then return false, "MilitaryDrop.Server missing" end
     local player = ctx.players()[1]
     if not player then return false, "no connected player (mode server alone: use mp)" end
-    if ctx.params.scenario == "marks" then
+    if ctx.params.scenario == "marks" or ctx.params.scenario == "fulton" then
         ServerOps.finished = false
         ServerOps.started = nowMs()
         ServerOps.limitMs = seconds(ctx.params.airSec, 240) * 6
@@ -1269,6 +1733,7 @@ end
 function H.server.result()
     if ServerOps.started then
         Events.OnClientCommand.Remove(serverOp)
+        unwrapFultonBroadcast()
         rec(ServerOps.finished, "server: client finished the scenario")
     end
     errorCheck()

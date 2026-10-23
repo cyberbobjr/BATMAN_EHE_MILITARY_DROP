@@ -183,6 +183,8 @@ Lanceur générique `.claude/tools/pz-autotest` (skill `pz-autotest`) ; configur
 python .claude/tools/pz-autotest/pz_autotest.py check MilitaryDrop
 python .claude/tools/pz-autotest/pz_autotest.py sp    MilitaryDrop --wait-idle 3600
 python .claude/tools/pz-autotest/pz_autotest.py mp    MilitaryDrop --clients 1 --client-run --wait-idle 3600
+python .claude/tools/pz-autotest/pz_autotest.py sp    MilitaryDrop -P scenario=fulton -P shots=1 --wait-idle 3600
+python .claude/tools/pz-autotest/pz_autotest.py mp    MilitaryDrop --clients 1 --client-run -P scenario=fulton -P shots=1 --wait-idle 3600
 ```
 
 Étapes sur l'autorité (solo, ou serveur MP avec le premier joueur connecté), par les points d'entrée du mod :
@@ -198,7 +200,9 @@ python .claude/tools/pz-autotest/pz_autotest.py mp    MilitaryDrop --clients 1 -
 
 Vue client (solo : même Lua ; MP : client 1 avec `--client-run`, délai `-P clientWaitSec=420`) : commandes `Result` (`accepted`, `requestId` 9001) et `PostResult` (`installed`) reçues, véhicule de la caisse vu près du joueur. Fin : aucune erreur Lua (`getLuaDebuggerErrorCount`).
 
-Hors couverture : lâcher Fulton complet (kit, bouteille d'hélium, fenêtre de mission), annonce entendue par un second client qui n'a pas appelé, ouverture par un autre joueur (confiance `taken`), crash et récupération. État au 2026-10-21 : `check` et luacheck au vert, aucune suite lancée.
+Scénario `-P scenario=fulton` (vrai lâcher Fulton, F2, F3 et F5 sans l'œil ni l'oreille) : talkie militaire en main, **Demander un passage Fulton** par l'échange radio réel (`Exchange.send`, `Missions.requestFulton`) → réponse `ok`, créneau gardé par `FultonClient.window` ; kit `MilitaryDrop.FultonKit` posé sur une case extérieure libre à 2-8 cases du joueur (`Fulton.siteReason`), rempli de papiers, d'une carte d'identité au nom d'un autre, d'un masque à gaz, d'un filtre, d'une carte-cachette et d'un crayon (non payé) ; bouteille d'hélium dans l'inventaire principal ; option du menu disponible (`FultonMenu.reason` nul) ; lancement par `FultonMenu.queueLaunch` (marche, gonflage, `FultonLaunch`). Vérifié : `FultonResult` `ok`, kit retiré du sol, une charge d'hélium consommée (4 → 3), confiance augmentée de `min(capped, dailyLeft) + uncapped` (`Fulton.evaluate`), créneau fermé (serveur et client), `Broadcast.fulton` appelé une fois sur le point du lâcher, vol visible démarré (solo : vol ancré de `FultonRender` ; MP : `Snapshot` d'un vol réel reçu par le client) puis terminé. En MP, le serveur fournit radio, kit (`AddWorldInventoryItem`, transmis) et bouteille (`sendAddItemToContainer`) par les commandes de test `PZATMD` (`giveRadio`, `fultonPrepare`, `fultonCheck`) ; le personnage du client est rendu invisible et invincible (pouvoirs d'admin, comme la sauvegarde solo de test) car le monde MP est neuf à chaque passage et le gonflage attire les zombies. Une météo qui refuse le lâcher (orage, vent) donne un échec `site: <motif>`, jamais masqué. Avec `-P shots=1` : fenêtres masquées, caméra dézoomée, captures `md_fulton_kit_ground.png` puis `md_fulton_flight_NN_<ms>.png` (0,4 à 4,4 s après la réponse : montée, accroche, départ) dans `runs/<passage>/` (MP : `client1/`), à regarder à l'œil.
+
+Hors couverture : son du passage de l'avion et annonce entendue (F5 à l'oreille), vol vu par un second client (F9, F10), refus F6 et forgés F11, annonce entendue par un second client qui n'a pas appelé, crash et récupération.
 
 ## Plus tard : multijoueur (hébergé, puis serveur dédié `C:\pzserver`)
 
@@ -463,7 +467,7 @@ Préparation :
 
 ## Fulton — branche prototype/fulton-ascent (à valider en jeu)
 
-FULTON-02 à FULTON-10 (idée 12, `docs/annexes/recherches/idee-12-fulton-conception.md`). Aucun cas n'a encore été joué. Parcours nominal d'abord ; cas limites ensuite. Redémarrer complètement le jeu (scripts d'objets, son et options chargés au démarrage seulement) et vérifier `version=42.21.0` dans le journal de la session. Guide : `docs/wiki/fr/07-fulton.md`.
+FULTON-02 à FULTON-10 (idée 12, `docs/annexes/recherches/idee-12-fulton-conception.md`). F2, F3 et la partie visible de F5 sont aussi automatisés (section « Autotest », `-P scenario=fulton`, solo et MP 1 client) ; le reste (son, refus, deux clients) reste manuel. Parcours nominal d'abord ; cas limites ensuite. Redémarrer complètement le jeu (scripts d'objets, son et options chargés au démarrage seulement) et vérifier `version=42.21.0` dans le journal de la session. Guide : `docs/wiki/fr/07-fulton.md`.
 
 Préparation (solo debug, nouvelle partie, page **Military Drop** : **Journal de débogage** activé) : un talkie militaire allumé sur la fréquence militaire, puis dans la console Lua :
 
