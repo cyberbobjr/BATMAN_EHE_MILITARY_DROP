@@ -1,10 +1,63 @@
 # Military Drop — améliorations de code et idées de fonctionnalités
 
 - **Mod** : Military Drop (`id=batman_MilitaryDrop`, Workshop 3811752923), version **0.5.4** (`mod.info`, `modversion=0.5.4`, `versionMin=42.21`, `require=\batman_BeltRadio`).
-- **Date** : 2026-10-21.
+- **Date** : 2026-10-21 ; **avancement mis à jour le 2026-10-23** (version publiée : 0.6.0).
 - **Périmètre** : code chargé `Contents/mods/batman_MilitaryDrop/42.21` et `common` (Lua client, serveur et partagé, scripts, traductions des 8 langues), `README.md`, `CHANGELOG.md`, guide `docs/wiki/`, notes de développement et analyses (déplacées pendant cette analyse de `dev/` vers `docs/annexes/plans/` et `docs/annexes/recherches/` : les chemins cités ci-dessous sont les nouveaux), tests `tests/`. `legacy-b41/` ignoré.
 - **Méthode** : lecture statique, comparaison avec le Java décompilé 42.21.0 (`E:\pz-decompiled\42.21.0\java`) et la base `.claude/pz-knowledge`. **Rien n'a été testé en jeu** pour ce document. Chaque constat porte la mention « confirmé statiquement » ou « à vérifier en jeu ».
 - **Constat général** : le code est d'une qualité nettement au-dessus de la moyenne des mods : autorité serveur systématique, cadence par commande (`MilitaryDrop_Guard`), secrets hors de la ModData publique, retraits après `pairs`, abonnés uniques au rechargement, traductions serveur rechargées (`MilitaryDrop_ServerTranslations.lua`), 48 fichiers de tests `lupa`. Les 718 clés de traduction sont présentes dans les 8 langues, sans clé manquante ni orpheline (contrôle par script : les 12 clés « absentes » relevées sont des clés vanilla ou des préfixes dynamiques comme `IGUI_MilitaryDrop_AckTier<n>_<m>`). Les constats ci-dessous sont donc surtout des cas limites, de la dette de structure et des écarts de documentation.
+
+---
+
+## Tableau de bord — ce qui est fait et ce qui reste
+
+**Légende** : ✅ fait · 🟡 fait en partie · ⬜ pas commencé. « Publié » = présent dans une version du Workshop ; « non publié » = sur `main`, dans la section `Unreleased` du `CHANGELOG.md`. Détail de chaque point dans les parties 1 et 2, suivi fin dans `docs/annexes/plans/SUIVI.md`.
+
+**Bilan** : améliorations de code **5 faites, 3 en partie, 7 à faire** (sur 15) ; idées de fonctionnalités **0 faite, 1 en partie, 19 à faire** (sur 20).
+
+### Améliorations de code
+
+| ID | Sujet | État | Testé | Publié | Commit | Ce qui reste |
+|---|---|---|---|---|---|---|
+| C01 | Horde complète près de l'eau | ✅ Corrigé | hors jeu | 0.6.0 | `6c62913` | Vérifier en jeu (largage sur une rive) |
+| C02 | Copie de secours de Belt Walkie-Talkie | ✅ Retirée | hors jeu | 0.6.0 | `d820c24` | Vérifier en jeu |
+| C03 | Fichiers « prototype » du Fulton, menu de debug | 🟡 En partie | hors jeu | 0.6.0 (menu en anglais, traces en debug) | `498f0d1` | Renommer les fichiers « prototype », menu dans un `*_Debug.lua` |
+| C04 | Guide : « +8/jour » au lieu de 10 | ✅ Corrigé | — (documentation) | 0.6.0 | `d03ee87` | Resynchroniser le wiki GitHub |
+| C05 | Silence après 3 codes faux : clé et commentaire | ⬜ À faire | — | — | — | Tout |
+| C06 | Registres privés qui ne rétrécissent jamais | ⬜ À faire | — | — | — | Tout |
+| C07 | Six copies de « joueurs connectés ou locaux » | ⬜ À faire | — | — | — | Tout |
+| C08 | Fenêtres géantes (`PostWindow`, `RequisitionWindow`) | ⬜ À faire | — | — | — | Tout |
+| C09 | Commentaire dépassé sur le cercle du nettoyage | 🟡 En partie | — | non publié | `97a1727` | Tracer le rayon sur la carte (I07) |
+| C10 | Repères de carte jamais retirés | ✅ Corrigé | hors jeu, solo, MP | non publié | `97a1727`, `5af1181` | Vraie reconnexion MP (testée par `Sync` seulement) |
+| C11 | Coordonnées envoyées à tous avant le filtre radio | ⬜ À faire | — | — | — | Seulement si un serveur PvP le demande (choix de l'utilisateur) |
+| C12 | Livraison en attente sans fin | ⬜ À faire | — | — | — | Tout |
+| C13 | Campagne de tests MP en retard | 🟡 En partie | solo 15/15 ; MP du parcours nominal à relancer | outil hors mod | `dedd363`, `91c1383` | Relancer le MP nominal ; second client, ouverture par un autre joueur, Fulton, crash |
+| C14 | `Post.onLoadChunk` relit chaque poste | ⬜ À faire | — | — | — | Tout |
+| C15 | Repère de mission manqué (retour d'un joueur) | ✅ Corrigé | hors jeu, solo, MP | non publié | `97a1727`, `5af1181` | — |
+
+### Idées de fonctionnalités
+
+| ID | Idée | État | Remarque |
+|---|---|---|---|
+| I01 | Horde attirée par le bruit | ⬜ Proposée | |
+| I02 | Bruit du rotor le long de la trajectoire | ⬜ Proposée | |
+| I03 | Caisse visible sous parachute | ⬜ Proposée | |
+| I04 | Silhouette 3D de l'hélicoptère | ⬜ Proposée | |
+| I05 | Mission « Remettre le relais en service » | ⬜ Proposée | |
+| I06 | Largage retardé par la météo | ⬜ Proposée | |
+| I07 | Cercle du nettoyage et repères qui s'effacent | 🟡 En partie | Repères qui s'effacent : faits (C10) ; cercle : à faire |
+| I08 | Noter une grille dans un carnet | ⬜ Proposée | |
+| I09 | Primes Fulton de la semaine | ⬜ Proposée | |
+| I10 | Signaler une horde à la base | ⬜ Proposée | |
+| I11 | Citation officielle au changement de palier | ⬜ Proposée | |
+| I12 | Tableau de bord admin en jeu | ⬜ Proposée | |
+| I13 | Accusé de réception de caisse | ⬜ Proposée | |
+| I14 | Raréfaction progressive des moyens | ⬜ Proposée | |
+| I15 | Brouilleur radio (PvP) | ⬜ Proposée | Dépend de C11 |
+| I16 | Commande d'un objet précis | ⬜ Proposée | |
+| I17 | Partage d'un largage avec une autre station | ⬜ Proposée | |
+| I18 | Ravitaillement du poste de liaison | ⬜ Proposée | |
+| I19 | Pilote survivant blessé | ⬜ Proposée | |
+| I20 | Fumée fournie pour marquer une future zone | ⬜ Proposée | Signal Smoke déjà prérequis |
 
 ---
 
@@ -21,7 +74,7 @@
 - **Risque** : horde plus petite que l'option `MinZombies`/`MaxZombies` sur les zones au bord de l'eau (Riverside, rives de l'Ohio, lacs) et trace Java `NullPointerException` dans `console.txt` à chaque largage concerné, qui brouille le diagnostic. Aucune duplication : la livraison continue.
 - **Correction** : tirer les cases en Lua (case chargée, `not isWaterSquare()`, `isFree(false)`, hors bâtiment) puis appeler `spawnHorde` case par case comme `Missions.spawnOne` (`MilitaryDrop_Missions.lua:944-960`), dans une aide commune (`MilitaryDrop.Horde.spawnAround(x, y, r, n)`) utilisée par le largage, l'épave et le nettoyage. Retirer le `pcall` inutile et corriger son commentaire.
 - **Statut** : confirmé statiquement ; fréquence réelle à vérifier en jeu (largage sur une plage). **Priorité haute, effort S.**
-- **Statut : corrigé (commit 6c62913), à vérifier en jeu** — aide commune `Server.spawnHordeAround` (`MilitaryDrop_Server.lua`) pour le largage et l'épave ; `pcall` de la mission retiré.
+- **Avancement : ✅ corrigé, publié en 0.6.0 (commit 6c62913), à vérifier en jeu** — aide commune `Server.spawnHordeAround` (`MilitaryDrop_Server.lua`) pour le largage et l'épave ; `pcall` de la mission retiré.
 
 ### C02 — Copie de secours de Belt Walkie-Talkie devenue du code mort
 
@@ -30,7 +83,7 @@
 - **Risque** : maintenabilité (copie générée par `BeltRadio/tools/sync_fallback.py` depuis la version 1.0.0, qui diverge du mod commun), tests à entretenir (`tests/lua/test_beltradio_fallback.lua`), confusion lors d'un diagnostic (deux implémentations du même récepteur dans l'arbre).
 - **Correction** : retirer `BeltRadioFallback/` et son test, simplifier `MilitaryDrop_RadioLib.lua` (plus de choix entre mod commun et copie), garder seulement le contrôle de version d'API (`MilitaryDrop_RadioLib.lua:55`). À ne faire que si le retour à une dépendance facultative est exclu (décision 0.5.0 → 0.5.1 à confirmer par l'utilisateur).
 - **Statut** : confirmé statiquement. **Priorité moyenne, effort S.**
-- **Statut : décidé et fait — corrigé (commit d820c24), à vérifier en jeu** — décision de l'utilisateur du 2026-10-21 : Belt Walkie-Talkie reste prérequis ; `BeltRadioFallback/` et `test_beltradio_fallback.lua` retirés, `RadioLib` charge toujours `BatmanRadio/…` (contrôle de version gardé), tests radio sur le vrai récepteur `../BeltRadio`.
+- **Avancement : ✅ corrigé, publié en 0.6.0 (commit d820c24), à vérifier en jeu** — décision de l'utilisateur du 2026-10-21 : Belt Walkie-Talkie reste prérequis ; `BeltRadioFallback/` et `test_beltradio_fallback.lua` retirés, `RadioLib` charge toujours `BatmanRadio/…` (contrôle de version gardé), tests radio sur le vrai récepteur `../BeltRadio`.
 
 ### C03 — Les vrais vols Fulton passent par des fichiers « prototype » avec menu de debug en français codé en dur
 
@@ -39,7 +92,7 @@
 - **Risque** : maintenabilité (un « prototype » qu'on n'ose plus retirer), bruit dans `console.txt` en production, règle du projet sur les textes joueur (libellés hors traduction, même en debug).
 - **Correction** : renommer en `MilitaryDrop_FultonRender*` / module `FultonFlight` (les objets visuels peuvent garder leur nom de script pour ne pas toucher aux sauvegardes : ils ne sont jamais dans un inventaire), déplacer le menu de test dans un fichier `*_Debug.lua` chargé seulement si `isDebugEnabled()`, passer ses libellés en clés `IGUI_` ou en anglais, et conditionner le `print` de phase à `isDebugEnabled()`.
 - **Statut** : confirmé statiquement. **Priorité moyenne, effort S-M.**
-- **Statut : corrigé en partie (commit 498f0d1), à vérifier en jeu** — libellés du menu de test en anglais, `print` de phase seulement en mode debug ; renommage des fichiers « prototype » et menu dans un fichier `*_Debug.lua` restent à faire.
+- **Avancement : 🟡 en partie, publié en 0.6.0 (commit 498f0d1), à vérifier en jeu** — libellés du menu de test en anglais, `print` de phase seulement en mode debug ; renommage des fichiers « prototype » et menu dans un fichier `*_Debug.lua` restent à faire.
 
 ### C04 — Guide : plafond quotidien de confiance « +8/jour » alors que la valeur par défaut est 10
 
@@ -48,7 +101,7 @@
 - **Risque** : documentation joueur fausse (et descriptions Steam si elles reprennent le tableau : à contrôler dans les 8 `README.steam*`).
 - **Correction** : écrire « plafond réglable (`TrustDailyCap`, 10 par défaut) » dans les deux langues du guide et les descriptions Steam, puis lancer `tools/wiki_sync.py`.
 - **Statut** : confirmé statiquement. **Priorité haute (coût nul), effort XS.**
-- **Statut : corrigé (commit d03ee87), à vérifier en jeu** — guide EN/FR corrigé ; les `README.steam*` ne citent pas ce chiffre ; wiki GitHub à resynchroniser.
+- **Avancement : ✅ corrigé, publié en 0.6.0 (commit d03ee87)** — guide EN/FR corrigé ; les `README.steam*` ne citent pas ce chiffre ; wiki GitHub à resynchroniser.
 
 ### C05 — Silence après 3 codes faux : clé de personnage, et commentaire qui parle de « nom du joueur »
 
@@ -57,6 +110,7 @@
 - **Risque** : faible sur un serveur entre amis (contournement coûteux : mourir). Surtout un écart doc/code qui trompera un futur diagnostic.
 - **Correction** : corriger le commentaire (« identifiant de personnage → { day, count } »). Option, si l'utilisateur le souhaite : clé `getUsername()` pour le silence seulement (la perte de confiance reste par personnage). Ne pas ajouter de persistance (le commentaire d'en-tête explique pourquoi la ModData trahirait la fréquence).
 - **Statut** : confirmé statiquement. **Priorité basse, effort XS.**
+- **Avancement : ⬜ à faire.**
 
 ### C06 — Registres privés qui ne rétrécissent jamais : épaves et personnages morts
 
@@ -67,6 +121,7 @@
 - **Risque** : croissance lente de la ModData privée sauvegardée (`global_mod_data.bin`) et du coût de `LoadChunk` sur un serveur qui tourne des mois. Faible à court terme (quelques crashs par semaine).
 - **Correction** : marquer un site « clos » quand toutes ses étapes sont faites, la fumée finie et les pièces récupérées (ou après N jours), le sortir du registre parcouru (`wrecksClosed` compact : `id`, `x`, `y` pour la lecture d'enregistreur par site) ; pour la confiance, oublier une entrée à la note de départ, sans verrou et sans contact depuis 30 jours (elle se recrée à l'identique au prochain appel).
 - **Statut** : confirmé statiquement (croissance) ; coût réel à mesurer en jeu. **Priorité basse, effort S.**
+- **Avancement : ⬜ à faire.**
 
 ### C07 — Six copies de « joueurs connectés ou locaux »
 
@@ -75,6 +130,7 @@
 - **Risque** : maintenabilité ; une correction (par exemple liste vide pendant une reconnexion, base `multiplayer.md`) devra être faite six fois.
 - **Correction** : `MilitaryDrop.Net.players({ alive = true })` et `Net.findPlayer(username)` dans `MilitaryDrop_Net.lua`, avec un test `lupa` unique.
 - **Statut** : confirmé statiquement. **Priorité basse, effort S.**
+- **Avancement : ⬜ à faire.**
 
 ### C08 — Fenêtres géantes : `PostWindow` (2 591 lignes) et `RequisitionWindow` (2 341 lignes)
 
@@ -83,6 +139,7 @@
 - **Risque** : maintenabilité, conflits lors des modifications parallèles, temps de lecture d'un agent ou d'un contributeur.
 - **Correction** : découper sans changer le comportement, par exemple `PostWindow` en `PostWindow_Layout`, `PostWindow_Affairs` (liste de gauche), `PostWindow_Detail`, `PostWindow_Log` ; `RequisitionWindow` en `Req_Lots`, `Req_Budget`, `Req_Sector`. Les tests `test_postwindow`/`test_requisitionwindow` servent de filet. À faire seulement à l'occasion d'une évolution de ces fenêtres.
 - **Statut** : confirmé statiquement. **Priorité basse, effort M.**
+- **Avancement : ⬜ à faire.**
 
 ### C09 — Commentaire dépassé : le rayon du nettoyage peut être dessiné sur la carte
 
@@ -90,7 +147,8 @@
 - **Preuves** : `client/MilitaryDrop/MilitaryDrop_Announce.lua:28-33` ; base `world-map.md`, « Tracer une zone (cercle) à l'échelle du monde avec un symbole » (2026-10-11, `WorldMapBaseSymbol.java:43, 210-219`, `MapSymbolDefinitions.addTexture`).
 - **Risque** : aucun bug ; une amélioration joueur ratée (voir I07).
 - **Correction** : corriger le commentaire ; implémentation éventuelle dans I07.
-- **Statut** : commentaire corrigé le 2026-10-23 (avec QUAL-09) ; tracé du rayon non fait (I07).
+- **Statut** : confirmé statiquement. **Priorité basse, effort XS.**
+- **Avancement : 🟡 en partie, non publié (commit 97a1727)** — commentaire corrigé le 2026-10-23 (avec QUAL-09) ; tracé du rayon non fait (I07).
 
 ### C10 — Repères de carte jamais retirés
 
@@ -98,7 +156,8 @@
 - **Preuves** : `client/MilitaryDrop/MilitaryDrop_Announce.lua:10-12` (« sauvegardé comme une note du joueur, qui peut l'effacer »), `:151` (`addTexture`), aucun `removeSymbol` dans le fichier.
 - **Risque** : confort de jeu ; confusion entre grilles anciennes et nouvelles.
 - **Correction** : signer les symboles du mod par un alpha choisi (par exemple 0,8) et une couleur précise, puis retirer à la réception d'un message de clôture (`DropClosed { x, y }`, `MissionClosed { id }`) ou à l'expiration locale ; méthode décrite dans `world-map.md` (même entrée que C09, `removeSymbolByIndex` en indices décroissants). Option joueur (`PZAPI.ModOptions`) pour garder l'historique.
-- **Statut** : corrigé le 2026-10-23 (QUAL-09) : le serveur envoie les grilles encore actives (`MarksActive`, `Missions.sendMarks`) à l'arrivée et à chaque changement ; le client retire les symboles du mod (identifiant + couleur, vanilla et anciens repères compris) qui n'y sont plus. Pas d'option d'historique ; repères de MAYDAY laissés. Testé en solo et en MP par pz-autotest (scénario `marks`) ; vraie reconnexion non testée.
+- **Statut** : confirmé statiquement. **Priorité moyenne, effort S.**
+- **Avancement : ✅ corrigé, non publié (commits 97a1727, 5af1181)** — le 2026-10-23 (QUAL-09) : le serveur envoie les grilles encore actives (`MarksActive`, `Missions.sendMarks`) à l'arrivée et à chaque changement ; le client retire les symboles du mod (identifiant + couleur, vanilla et anciens repères compris) qui n'y sont plus. Pas d'option d'historique ; repères de MAYDAY laissés. Testé en solo et en MP par pz-autotest (scénario `marks`) ; vraie reconnexion non testée.
 
 ### C11 — Coordonnées exactes envoyées à tous les clients avant le filtrage par la radio
 
@@ -107,6 +166,7 @@
 - **Risque** : un client modifié connaît la grille sans radio. Sur un serveur entre amis, **ne pas corriger au prix du jeu** (préférence de l'utilisateur) ; à garder en tête seulement si un serveur PvP public le demande.
 - **Correction (si demandée)** : n'envoyer `DropAnnounce` qu'aux joueurs dont une radio reçoit la chaîne (le serveur connaît la radio tenue ou posée), et retirer la cible de `FlightStart` (le client n'a besoin que de la trajectoire visible).
 - **Statut** : confirmé statiquement. **Priorité basse, effort M.**
+- **Avancement : ⬜ à faire.** Volontairement laissé tant qu'aucun serveur PvP public ne le demande (serveur entre amis).
 
 ### C12 — Livraison en attente sans fin si aucune case ne convient
 
@@ -115,6 +175,7 @@
 - **Risque** : faible (la proximité vise une route ou un bâtiment, la zone a un second passage `findLandingInBounds`) ; cas d'une zone mal dessinée entièrement sur l'eau ou couverte de véhicules : ligne de journal répétée et dossier éternel.
 - **Correction** : compter les essais et, après N essais sur case chargée (ou N jours), livrer au sol sur la case sèche la plus proche sans borne de zone, ou clore le dossier `expired` avec une ligne `WARN` pour l'admin.
 - **Statut** : confirmé statiquement ; occurrence à vérifier en jeu. **Priorité basse, effort S.**
+- **Avancement : ⬜ à faire.**
 
 ### C13 — Campagne de tests MP en retard sur le code publié
 
@@ -122,7 +183,7 @@
 - **Preuves** : `docs/annexes/plans/SUIVI.md`, tableau « Vue d'ensemble » ; `docs/annexes/tests/test-protocol.md` (protocoles M1-M8, Z13-Z14…).
 - **Risque** : bugs MP découverts par les joueurs (historique : 0.3.3, 0.4.2, 0.4.3 ont corrigé des clés brutes et des états périmés propres au MP).
 - **Correction** : outiller les parcours nominaux avec `pz-autotest` (`--mp`, serveur dédié + 2 clients) : appel, annonce entendue par l'un seulement, ouverture de caisse par l'autre (confiance), Fulton, crash et récupération ; la règle de l'utilisateur fait d'une suite MP automatisée verte la preuve « testé MP ».
-- **Statut** : **outillé (commit dedd363) : parcours nominal `pz-autotest` sp/mp (`autotest.json`, `autotest/md_hooks.lua`), suites non lancées, à vérifier en jeu.** Solo réel 15/15 ; MP réel 10/12 par défauts du hook seulement (caisse cherchée dans l'image de sa création, client démarré après la réponse), hook corrigé, MP à relancer. Reste : second client qui écoute, ouverture par un autre joueur, Fulton complet, crash. **Priorité haute, effort M.**
+- **Avancement : 🟡 en partie** — **outillé (commit dedd363) : parcours nominal `pz-autotest` sp/mp (`autotest.json`, `autotest/md_hooks.lua`), suites non lancées, à vérifier en jeu.** Solo réel 15/15 ; MP réel 10/12 par défauts du hook seulement (caisse cherchée dans l'image de sa création, client démarré après la réponse), hook corrigé, MP à relancer. Reste : second client qui écoute, ouverture par un autre joueur, Fulton complet, crash. **Priorité haute, effort M.**
 
 ### C14 — `Post.onLoadChunk` relit chaque poste à chaque chunk chargé
 
@@ -131,6 +192,15 @@
 - **Risque** : faible (un poste par équipe) ; à surveiller si les équipes se multiplient.
 - **Correction** : indexer les postes par clé de chunk (`floor(x / 8)`, `floor(y / 8)`, z) et ne lire que l'entrée du chunk chargé (`chunk:getWx()`, `getWy()`).
 - **Statut** : confirmé statiquement ; coût à mesurer. **Priorité basse, effort XS.**
+- **Avancement : ⬜ à faire.**
+
+### C15 — Repère de mission manqué : reconnaissance et nettoyage absents de la carte (retour d'un joueur, 2026-10-23)
+
+- **Problème** : le repère d'une mission n'était posé que si une radio entendait l'annonce de lancement, et une mission n'était jamais rappelée (contrairement aux largages). Un joueur qui avait manqué l'annonce voyait la grille à la console du poste ou dans la réponse « trop loin » de la base, mais jamais de repère.
+- **Preuves** : `client/MilitaryDrop/MilitaryDrop_Announce.lua` (repère seulement sur `OnDeviceText`), `server/MilitaryDrop/MilitaryDrop_Missions.lua` (`Missions.launch` : annonce unique).
+- **Correction** : rappel des missions ouvertes toutes les `DropRepeatHours` heures (`Missions.remind`, même code de repère) ; réponses de la base qui citent la grille (`tooFar`, point du nettoyage avant la horde) avec `mark`, repère posé par `Announce.markMission`.
+- **Statut** : confirmé statiquement et en jeu (QUAL-10).
+- **Avancement : ✅ corrigé, non publié (commits 97a1727, 5af1181)** — testé hors jeu, en solo et en MP par pz-autotest (scénario `marks`).
 
 ---
 
@@ -328,16 +398,16 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 
 ## Partie 3 — Priorisation
 
-Les cinq actions les plus rentables (gain pour les joueurs ou la fiabilité, rapporté à l'effort) :
+Les cinq actions les plus rentables (gain pour les joueurs ou la fiabilité, rapporté à l'effort), avec leur avancement au 2026-10-23 :
 
-1. **C04** — corriger « +8/jour » dans le guide et les descriptions Steam (XS, information joueur fausse).
-2. **C01** — aide commune d'apparition des zombies hors de l'eau (S, hordes complètes près des rives, journal propre ; prépare I01).
-3. **C13** — suite MP automatisée des parcours nominaux avec `pz-autotest` (M, la plupart des lots publiés ne sont pas « testé MP »).
-4. **C10 + I07** — repères de carte qui s'effacent et cercle du nettoyage (S, gain de lisibilité immédiat pour tous les joueurs).
-5. **I01** — horde attirée par le bruit en option (S, une cause visible à l'effet le plus artificiel du mod, mécanique vanilla).
+1. ✅ **C04** — corriger « +8/jour » dans le guide et les descriptions Steam (XS, information joueur fausse).
+2. ✅ **C01** — aide commune d'apparition des zombies hors de l'eau (S, hordes complètes près des rives, journal propre ; prépare I01).
+3. 🟡 **C13** — suite MP automatisée des parcours nominaux avec `pz-autotest` (M, la plupart des lots publiés ne sont pas « testé MP »).
+4. 🟡 **C10 + I07** (C10 fait, cercle d'I07 à faire) — repères de carte qui s'effacent et cercle du nettoyage (S, gain de lisibilité immédiat pour tous les joueurs).
+5. ⬜ **I01** — horde attirée par le bruit en option (S, une cause visible à l'effet le plus artificiel du mod, mécanique vanilla).
 
-Ensuite : C03 (renommer le « prototype » Fulton, couper le bruit de console), C02 (retirer la copie de secours si la dépendance obligatoire est définitive), I06 et I13 (petits efforts, boucle radio plus riche).
+Ensuite : 🟡 C03 (renommer le « prototype » Fulton ; bruit de console déjà coupé), ✅ C02 (copie de secours retirée), ⬜ I06 et I13 (petits efforts, boucle radio plus riche).
 
 ---
 
-*Document de proposition : aucune de ces améliorations ni fonctionnalités n'est implémentée. Chacune attend la validation explicite de l'utilisateur avant tout code, et les idées retenues entreront dans `docs/annexes/plans/SUIVI.md` avec leur identifiant.*
+*Document de proposition mis à jour au fil des corrections : l'état de chaque point est dans le tableau de bord en tête. Les points encore à faire attendent la validation explicite de l'utilisateur avant tout code ; ceux retenus entrent dans `docs/annexes/plans/SUIVI.md` avec leur identifiant.*
