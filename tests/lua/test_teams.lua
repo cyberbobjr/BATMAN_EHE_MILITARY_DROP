@@ -63,6 +63,7 @@ function T.setup()
         end,
     }
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
     -- État privé (ModData au nom tiré de la graine, jamais transmise).
     PUBLIC = {}
     MilitaryDrop.Secrets = { privateState = function() return STATE end }

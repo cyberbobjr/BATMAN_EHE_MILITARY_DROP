@@ -128,21 +128,7 @@ end
 
 --- Joueurs connectés (serveur MP) ou locaux (solo).
 function Decoy.players()
-    local list = {}
-    if isServer() then
-        local players = getOnlinePlayers()
-        for i = 0, players:size() - 1 do
-            list[#list + 1] = players:get(i)
-        end
-        return list
-    end
-    for i = 0, getNumActivePlayers() - 1 do
-        local player = getSpecificPlayer(i)
-        if player then
-            list[#list + 1] = player
-        end
-    end
-    return list
+    return Net.players()
 end
 
 --- Clé d'auditeur : le nom du joueur en MP ; en solo, tous les joueurs locaux

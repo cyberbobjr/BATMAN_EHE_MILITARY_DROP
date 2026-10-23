@@ -35,6 +35,7 @@ if isClient() then
 end
 
 require "MilitaryDrop/MilitaryDrop_Core"
+require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Secrets"
 
 local Teams = {}
@@ -446,11 +447,8 @@ function Teams.members(teamId)
     local s = state()
     if teamId == Teams.SOLO_ID and Teams.isSolo() then
         local names = {}
-        for i = 0, getNumActivePlayers() - 1 do
-            local player = getSpecificPlayer(i)
-            if player then
-                names[#names + 1] = tostring(player:getUsername())
-            end
+        for _, player in ipairs(MilitaryDrop.Net.players()) do
+            names[#names + 1] = tostring(player:getUsername())
         end
         table.sort(names)
         return names

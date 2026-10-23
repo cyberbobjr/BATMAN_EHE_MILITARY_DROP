@@ -85,6 +85,7 @@ if isClient() then
 end
 
 require "MilitaryDrop/MilitaryDrop_Server"
+require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Secrets"
 require "MilitaryDrop/MilitaryDrop_Guard"
 require "MilitaryDrop/MilitaryDrop_Broadcast"
@@ -523,24 +524,7 @@ end
 
 --- Joueurs vivants connectés (serveur MP) ou locaux (solo).
 local function livePlayers()
-    local list = {}
-    if isServer() then
-        local players = getOnlinePlayers()
-        for i = 0, players:size() - 1 do
-            local player = players:get(i)
-            if player and not player:isDead() then
-                list[#list + 1] = player
-            end
-        end
-        return list
-    end
-    for i = 0, getNumActivePlayers() - 1 do
-        local player = getSpecificPlayer(i)
-        if player and not player:isDead() then
-            list[#list + 1] = player
-        end
-    end
-    return list
+    return MilitaryDrop.Net.players({ alive = true })
 end
 
 -- ----------------------------------------------------------------------------

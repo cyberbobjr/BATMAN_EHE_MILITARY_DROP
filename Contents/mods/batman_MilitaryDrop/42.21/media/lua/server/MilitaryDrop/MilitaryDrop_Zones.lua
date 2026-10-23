@@ -372,21 +372,7 @@ end
 
 --- Joueurs connectés (serveur MP) ou locaux (solo).
 function Zones.players()
-    local list = {}
-    if isServer() then
-        local players = getOnlinePlayers()
-        for i = 0, players:size() - 1 do
-            list[#list + 1] = players:get(i)
-        end
-        return list
-    end
-    for i = 0, getNumActivePlayers() - 1 do
-        local player = getSpecificPlayer(i)
-        if player then
-            list[#list + 1] = player
-        end
-    end
-    return list
+    return Net.players()
 end
 
 --- Mode 2 sans zone ni ville : avertissement au journal et aux admins connectés.

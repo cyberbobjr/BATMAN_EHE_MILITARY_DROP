@@ -653,23 +653,7 @@ end
 
 --- Joueur connecté par son nom (serveur MP ou joueurs locaux), ou nil.
 function Server.findPlayer(username)
-    if isServer() then
-        local players = getOnlinePlayers()
-        for i = 0, players:size() - 1 do
-            local player = players:get(i)
-            if player:getUsername() == username then
-                return player
-            end
-        end
-        return nil
-    end
-    for i = 0, getNumActivePlayers() - 1 do
-        local player = getSpecificPlayer(i)
-        if player and player:getUsername() == username then
-            return player
-        end
-    end
-    return nil
+    return Net.findPlayer(username)
 end
 
 --- Livraison au point (x, y), déjà annoncé : caisse de largage et horde

@@ -41,4 +41,37 @@ function Net.toAll(command, args)
     end
 end
 
+--- Joueurs du serveur : connectés (serveur MP) ou locaux (solo, client).
+--- options.alive : seulement les joueurs vivants. Jamais de nil dans la liste.
+function Net.players(options)
+    local alive = options and options.alive
+    local list = {}
+    local function add(player)
+        if player and not (alive and player:isDead()) then
+            list[#list + 1] = player
+        end
+    end
+    if isServer() then
+        local players = getOnlinePlayers()
+        for i = 0, players:size() - 1 do
+            add(players:get(i))
+        end
+    else
+        for i = 0, getNumActivePlayers() - 1 do
+            add(getSpecificPlayer(i))
+        end
+    end
+    return list
+end
+
+--- Joueur connecté (serveur MP) ou local (solo) par son nom, vivant ou mort ; nil sinon.
+function Net.findPlayer(username)
+    for _, player in ipairs(Net.players()) do
+        if player:getUsername() == username then
+            return player
+        end
+    end
+    return nil
+end
+
 return Net

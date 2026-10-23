@@ -79,6 +79,7 @@ if isClient() then
 end
 
 require "MilitaryDrop/MilitaryDrop_Server"
+require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Secrets"
 require "MilitaryDrop/MilitaryDrop_Guard"
 require "MilitaryDrop/MilitaryDrop_Teams"
@@ -580,20 +581,10 @@ end
 --- Joueurs vivants à SOUND_RANGE cases du poste, même étage (serveur MP : en
 --- ligne ; solo : joueurs locaux).
 function Post.listeners(post)
-    local list, candidates = {}, {}
-    if isServer() then
-        local players = getOnlinePlayers()
-        for i = 0, players:size() - 1 do
-            candidates[#candidates + 1] = players:get(i)
-        end
-    else
-        for i = 0, getNumActivePlayers() - 1 do
-            candidates[#candidates + 1] = getSpecificPlayer(i)
-        end
-    end
+    local list = {}
     local range = Post.SOUND_RANGE
-    for _, player in ipairs(candidates) do
-        if player and not player:isDead() and math.floor(player:getZ()) == post.z then
+    for _, player in ipairs(Net.players({ alive = true })) do
+        if math.floor(player:getZ()) == post.z then
             local dx, dy = player:getX() - (post.x + 0.5), player:getY() - (post.y + 0.5)
             if dx * dx + dy * dy <= range * range then
                 list[#list + 1] = player
