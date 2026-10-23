@@ -1,7 +1,7 @@
 # Military Drop — améliorations de code et idées de fonctionnalités
 
 - **Mod** : Military Drop (`id=batman_MilitaryDrop`, Workshop 3811752923), version **0.5.4** (`mod.info`, `modversion=0.5.4`, `versionMin=42.21`, `require=\batman_BeltRadio`).
-- **Date** : 2026-10-21 ; **avancement mis à jour le 2026-10-23, après les corrections C03 à C14** (version publiée : 0.6.0 ; corrections suivantes sur `main`, non publiées).
+- **Date** : 2026-10-21 ; **avancement mis à jour le 2026-10-23, après les corrections C03 à C14** (version publiée : 0.7.0, le 2026-10-23).
 - **Périmètre** : code chargé `Contents/mods/batman_MilitaryDrop/42.21` et `common` (Lua client, serveur et partagé, scripts, traductions des 8 langues), `README.md`, `CHANGELOG.md`, guide `docs/wiki/`, notes de développement et analyses (déplacées pendant cette analyse de `dev/` vers `docs/annexes/plans/` et `docs/annexes/recherches/` : les chemins cités ci-dessous sont les nouveaux), tests `tests/`. `legacy-b41/` ignoré.
 - **Méthode** : lecture statique, comparaison avec le Java décompilé 42.21.0 (`E:\pz-decompiled\42.21.0\java`) et la base `.claude/pz-knowledge`. **Rien n'a été testé en jeu** pour ce document. Chaque constat porte la mention « confirmé statiquement » ou « à vérifier en jeu ».
 - **Constat général** : le code est d'une qualité nettement au-dessus de la moyenne des mods : autorité serveur systématique, cadence par commande (`MilitaryDrop_Guard`), secrets hors de la ModData publique, retraits après `pairs`, abonnés uniques au rechargement, traductions serveur rechargées (`MilitaryDrop_ServerTranslations.lua`), 48 fichiers de tests `lupa`. Les 718 clés de traduction sont présentes dans les 8 langues, sans clé manquante ni orpheline (contrôle par script : les 12 clés « absentes » relevées sont des clés vanilla ou des préfixes dynamiques comme `IGUI_MilitaryDrop_AckTier<n>_<m>`). Les constats ci-dessous sont donc surtout des cas limites, de la dette de structure et des écarts de documentation.
@@ -10,7 +10,7 @@
 
 ## Tableau de bord — ce qui est fait et ce qui reste
 
-**Légende** : ✅ fait · 🟡 fait en partie · ⬜ pas commencé · ❌ écarté. « Publié » = présent dans une version du Workshop ; « non publié » = sur `main`, dans la section `Unreleased` du `CHANGELOG.md`. Détail de chaque point dans les parties 1 et 2, suivi fin dans `docs/annexes/plans/SUIVI.md`.
+**Légende** : ✅ fait · 🟡 fait en partie · ⬜ pas commencé · ❌ écarté. « Publié » = présent dans une version du Workshop ; « non publié » = sur `main`, pas encore dans une version publiée. Détail de chaque point dans les parties 1 et 2, suivi fin dans `docs/annexes/plans/SUIVI.md`.
 
 **Bilan** : améliorations de code **13 faites, 1 en partie, 1 écartée** (sur 15) ; idées de fonctionnalités **1 faite, 19 à faire** (sur 20).
 
@@ -22,19 +22,19 @@
 |---|---|---|---|---|---|---|
 | C01 | Horde complète près de l'eau | ✅ Corrigé | hors jeu | 0.6.0 | `6c62913` | Vérifier en jeu (largage sur une rive) |
 | C02 | Copie de secours de Belt Walkie-Talkie | ✅ Retirée | hors jeu | 0.6.0 | `d820c24` | Vérifier en jeu |
-| C03 | Fichiers « prototype » du Fulton, menu de debug | ✅ Corrigé | hors jeu ; chargement solo et MP | 0.6.0 (menu) + non publié (renommage) | `498f0d1`, `fff0055` | — (vrai lâcher testé en solo et en MP, `d376bbd`) |
+| C03 | Fichiers « prototype » du Fulton, menu de debug | ✅ Corrigé | hors jeu ; chargement solo et MP | 0.6.0 (menu) + 0.7.0 (renommage) | `498f0d1`, `fff0055` | — (vrai lâcher testé en solo et en MP, `d376bbd`) |
 | C04 | Guide : « +8/jour » au lieu de 10 | ✅ Corrigé | — (documentation) | 0.6.0 | `d03ee87` | Resynchroniser le wiki GitHub |
-| C05 | Silence après 3 codes faux : clé et commentaire | ✅ Corrigé (commentaire) | — (commentaire) | non publié | `d86d42b` | — (clé inchangée, voulu) |
-| C06 | Registres privés qui ne rétrécissent jamais | ✅ Corrigé | hors jeu | non publié | `f161134` | Coût réel non mesuré en jeu |
-| C07 | Six copies de « joueurs connectés ou locaux » | ✅ Corrigé | hors jeu, solo, MP | non publié | `ce8acd6` | — |
-| C08 | Fenêtres géantes (`PostWindow`, `RequisitionWindow`) | ✅ Découpées | hors jeu ; ouverture et rendu solo et MP | non publié | `89af0c7` | Rendu des deux fenêtres à regarder à l'œil |
-| C09 | Cercle du nettoyage sur la carte | ✅ Corrigé | hors jeu, solo, MP | non publié | `97a1727`, `d9f74c9` | Lisibilité du cercle à l'œil (mini-carte : petite icône) |
-| C10 | Repères de carte jamais retirés | ✅ Corrigé | hors jeu, solo, MP | non publié | `97a1727`, `5af1181` | Vraie reconnexion MP (testée par `Sync` seulement) |
+| C05 | Silence après 3 codes faux : clé et commentaire | ✅ Corrigé (commentaire) | — (commentaire) | 0.7.0 | `d86d42b` | — (clé inchangée, voulu) |
+| C06 | Registres privés qui ne rétrécissent jamais | ✅ Corrigé | hors jeu | 0.7.0 | `f161134` | Coût réel non mesuré en jeu |
+| C07 | Six copies de « joueurs connectés ou locaux » | ✅ Corrigé | hors jeu, solo, MP | 0.7.0 | `ce8acd6` | — |
+| C08 | Fenêtres géantes (`PostWindow`, `RequisitionWindow`) | ✅ Découpées | hors jeu ; ouverture et rendu solo et MP | 0.7.0 | `89af0c7` | Rendu des deux fenêtres à regarder à l'œil |
+| C09 | Cercle du nettoyage sur la carte | ✅ Corrigé | hors jeu, solo, MP | 0.7.0 | `97a1727`, `d9f74c9` | Lisibilité du cercle à l'œil (mini-carte : petite icône) |
+| C10 | Repères de carte jamais retirés | ✅ Corrigé | hors jeu, solo, MP | 0.7.0 | `97a1727`, `5af1181` | Vraie reconnexion MP (testée par `Sync` seulement) |
 | C11 | Coordonnées envoyées à tous avant le filtre radio | ❌ Écarté | — | — | — | Décision de l'utilisateur (2026-10-23) |
-| C12 | Livraison en attente sans fin | ✅ Corrigé | hors jeu | non publié | `261a94d` | Cas d'une zone sur l'eau non testé en jeu |
+| C12 | Livraison en attente sans fin | ✅ Corrigé | hors jeu | 0.7.0 | `261a94d` | Cas d'une zone sur l'eau non testé en jeu |
 | C13 | Campagne de tests MP en retard | 🟡 En partie | solo et MP (1 et 2 clients) verts | outil hors mod | `dedd363`, `91c1383`, `99a36aa`, `d376bbd` | Carte du second client non inspectable ; crash et refus Fulton (F6, F11) restent manuels |
-| C14 | `Post.onLoadChunk` relit chaque poste | ✅ Corrigé | hors jeu, solo, MP | non publié | `db2834a` | Coût réel non mesuré |
-| C15 | Repère de mission manqué (retour d'un joueur) | ✅ Corrigé | hors jeu, solo, MP | non publié | `97a1727`, `5af1181` | — |
+| C14 | `Post.onLoadChunk` relit chaque poste | ✅ Corrigé | hors jeu, solo, MP | 0.7.0 | `db2834a` | Coût réel non mesuré |
+| C15 | Repère de mission manqué (retour d'un joueur) | ✅ Corrigé | hors jeu, solo, MP | 0.7.0 | `97a1727`, `5af1181` | — |
 
 ### Idées de fonctionnalités
 
@@ -94,7 +94,7 @@
 - **Risque** : maintenabilité (un « prototype » qu'on n'ose plus retirer), bruit dans `console.txt` en production, règle du projet sur les textes joueur (libellés hors traduction, même en debug).
 - **Correction** : renommer en `MilitaryDrop_FultonRender*` / module `FultonFlight` (les objets visuels peuvent garder leur nom de script pour ne pas toucher aux sauvegardes : ils ne sont jamais dans un inventaire), déplacer le menu de test dans un fichier `*_Debug.lua` chargé seulement si `isDebugEnabled()`, passer ses libellés en clés `IGUI_` ou en anglais, et conditionner le `print` de phase à `isDebugEnabled()`.
 - **Statut** : confirmé statiquement. **Priorité moyenne, effort S-M.**
-- **Avancement : ✅ corrigé (commits 498f0d1, publié en 0.6.0 ; fff0055, non publié)** — fichiers renommés `MilitaryDrop_FultonFlight.lua`, `MilitaryDrop_FultonFlightServer.lua`, `MilitaryDrop_FultonRender.lua` ; menu de test dans `MilitaryDrop_FultonRender_Debug.lua`, chargé seulement en mode debug ; objets `FultonPrototypeBalloon/Bag` gardés (sauvegardes) ; module réseau `MilitaryDropFultonFlight` (client et serveur de même version). Chargement sans erreur vérifié en solo et en MP ; vrai lâcher Fulton testé en solo (14/14, `runs/20261023-185503-sp-21799cb48711`) et en MP (serveur 9/9, client 11/11, `runs/20261023-190102-mp-19341f8c28cb`), captures de la montée du ballon à valider à l'œil (QUAL-16).
+- **Avancement : ✅ corrigé (commits 498f0d1, publié en 0.6.0 ; fff0055, publié en 0.7.0)** — fichiers renommés `MilitaryDrop_FultonFlight.lua`, `MilitaryDrop_FultonFlightServer.lua`, `MilitaryDrop_FultonRender.lua` ; menu de test dans `MilitaryDrop_FultonRender_Debug.lua`, chargé seulement en mode debug ; objets `FultonPrototypeBalloon/Bag` gardés (sauvegardes) ; module réseau `MilitaryDropFultonFlight` (client et serveur de même version). Chargement sans erreur vérifié en solo et en MP ; vrai lâcher Fulton testé en solo (14/14, `runs/20261023-185503-sp-21799cb48711`) et en MP (serveur 9/9, client 11/11, `runs/20261023-190102-mp-19341f8c28cb`), captures de la montée du ballon à valider à l'œil (QUAL-16).
 
 ### C04 — Guide : plafond quotidien de confiance « +8/jour » alors que la valeur par défaut est 10
 
@@ -112,7 +112,7 @@
 - **Risque** : faible sur un serveur entre amis (contournement coûteux : mourir). Surtout un écart doc/code qui trompera un futur diagnostic.
 - **Correction** : corriger le commentaire (« identifiant de personnage → { day, count } »). Option, si l'utilisateur le souhaite : clé `getUsername()` pour le silence seulement (la perte de confiance reste par personnage). Ne pas ajouter de persistance (le commentaire d'en-tête explique pourquoi la ModData trahirait la fréquence).
 - **Statut** : confirmé statiquement. **Priorité basse, effort XS.**
-- **Avancement : ✅ corrigé, non publié (commit d86d42b)** — commentaires de `failedCodes` corrigés ; clé et persistance inchangées, comme recommandé (QUAL-11).
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commit d86d42b)** — commentaires de `failedCodes` corrigés ; clé et persistance inchangées, comme recommandé (QUAL-11).
 
 ### C06 — Registres privés qui ne rétrécissent jamais : épaves et personnages morts
 
@@ -123,7 +123,7 @@
 - **Risque** : croissance lente de la ModData privée sauvegardée (`global_mod_data.bin`) et du coût de `LoadChunk` sur un serveur qui tourne des mois. Faible à court terme (quelques crashs par semaine).
 - **Correction** : marquer un site « clos » quand toutes ses étapes sont faites, la fumée finie et les pièces récupérées (ou après N jours), le sortir du registre parcouru (`wrecksClosed` compact : `id`, `x`, `y` pour la lecture d'enregistreur par site) ; pour la confiance, oublier une entrée à la note de départ, sans verrou et sans contact depuis 30 jours (elle se recrée à l'identique au prochain appel).
 - **Statut** : confirmé statiquement (croissance) ; coût réel à mesurer en jeu. **Priorité basse, effort S.**
-- **Avancement : ✅ corrigé, non publié (commit f161134)** — épaves finies sans fumée déplacées vers `wrecksClosed` (`{x, y, c}`, lu par `Wreck.siteInfo`) ; entrées de confiance oubliées à la note de départ, sans ligne coupée ni contact depuis 30 jours (`Trust.forgetIdle`) ; migration au premier passage. Tests lupa ; coût réel non mesuré (QUAL-15).
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commit f161134)** — épaves finies sans fumée déplacées vers `wrecksClosed` (`{x, y, c}`, lu par `Wreck.siteInfo`) ; entrées de confiance oubliées à la note de départ, sans ligne coupée ni contact depuis 30 jours (`Trust.forgetIdle`) ; migration au premier passage. Tests lupa ; coût réel non mesuré (QUAL-15).
 
 ### C07 — Six copies de « joueurs connectés ou locaux »
 
@@ -132,7 +132,7 @@
 - **Risque** : maintenabilité ; une correction (par exemple liste vide pendant une reconnexion, base `multiplayer.md`) devra être faite six fois.
 - **Correction** : `MilitaryDrop.Net.players({ alive = true })` et `Net.findPlayer(username)` dans `MilitaryDrop_Net.lua`, avec un test `lupa` unique.
 - **Statut** : confirmé statiquement. **Priorité basse, effort S.**
-- **Avancement : ✅ corrigé, non publié (commit ce8acd6)** — `Net.players({ alive })` et `Net.findPlayer` dans `MilitaryDrop_Net.lua`, utilisés par les six modules, filtrage des morts inchangé ; `tests/lua/test_net.lua` (QUAL-13).
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commit ce8acd6)** — `Net.players({ alive })` et `Net.findPlayer` dans `MilitaryDrop_Net.lua`, utilisés par les six modules, filtrage des morts inchangé ; `tests/lua/test_net.lua` (QUAL-13).
 
 ### C08 — Fenêtres géantes : `PostWindow` (2 591 lignes) et `RequisitionWindow` (2 341 lignes)
 
@@ -141,7 +141,7 @@
 - **Risque** : maintenabilité, conflits lors des modifications parallèles, temps de lecture d'un agent ou d'un contributeur.
 - **Correction** : découper sans changer le comportement, par exemple `PostWindow` en `PostWindow_Layout`, `PostWindow_Affairs` (liste de gauche), `PostWindow_Detail`, `PostWindow_Log` ; `RequisitionWindow` en `Req_Lots`, `Req_Budget`, `Req_Sector`. Les tests `test_postwindow`/`test_requisitionwindow` servent de filet. À faire seulement à l'occasion d'une évolution de ces fenêtres.
 - **Statut** : confirmé statiquement. **Priorité basse, effort M.**
-- **Avancement : ✅ corrigé, non publié (commit 89af0c7)** — `PostWindow` 2 591 → 1 378 lignes (+ `_Layout`, `_Affairs`, `_Draw`), `RequisitionWindow` 2 341 → 776 lignes (+ `_Form`, `_Layout`, `_Draw`) ; mêmes lignes de code avant et après (contrôle automatique), assertions des tests inchangées ; console et feuille ouvertes et dessinées en solo et en MP sans erreur. Rendu à regarder à l'œil (QUAL-18).
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commit 89af0c7)** — `PostWindow` 2 591 → 1 378 lignes (+ `_Layout`, `_Affairs`, `_Draw`), `RequisitionWindow` 2 341 → 776 lignes (+ `_Form`, `_Layout`, `_Draw`) ; mêmes lignes de code avant et après (contrôle automatique), assertions des tests inchangées ; console et feuille ouvertes et dessinées en solo et en MP sans erreur. Rendu à regarder à l'œil (QUAL-18).
 
 ### C09 — Commentaire dépassé : le rayon du nettoyage peut être dessiné sur la carte
 
@@ -150,7 +150,7 @@
 - **Risque** : aucun bug ; une amélioration joueur ratée (voir I07).
 - **Correction** : corriger le commentaire ; implémentation éventuelle dans I07.
 - **Statut** : confirmé statiquement. **Priorité basse, effort XS.**
-- **Avancement : ✅ corrigé, non publié (commits 97a1727, d9f74c9)** — cercle vanilla `Circle` à l'échelle `2 × rayon / 15,625` (5,12 pour 40 cases), rouge du nettoyage, posé avec la tête de mort et retiré avec elle par `MarksActive` ; cercle du joueur jamais retiré. Testé hors jeu, en solo et en MP (scénario `marks`) ; lisibilité à vérifier à l'œil (QUAL-17).
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commits 97a1727, d9f74c9)** — cercle vanilla `Circle` à l'échelle `2 × rayon / 15,625` (5,12 pour 40 cases), rouge du nettoyage, posé avec la tête de mort et retiré avec elle par `MarksActive` ; cercle du joueur jamais retiré. Testé hors jeu, en solo et en MP (scénario `marks`) ; lisibilité à vérifier à l'œil (QUAL-17).
 
 ### C10 — Repères de carte jamais retirés
 
@@ -159,7 +159,7 @@
 - **Risque** : confort de jeu ; confusion entre grilles anciennes et nouvelles.
 - **Correction** : signer les symboles du mod par un alpha choisi (par exemple 0,8) et une couleur précise, puis retirer à la réception d'un message de clôture (`DropClosed { x, y }`, `MissionClosed { id }`) ou à l'expiration locale ; méthode décrite dans `world-map.md` (même entrée que C09, `removeSymbolByIndex` en indices décroissants). Option joueur (`PZAPI.ModOptions`) pour garder l'historique.
 - **Statut** : confirmé statiquement. **Priorité moyenne, effort S.**
-- **Avancement : ✅ corrigé, non publié (commits 97a1727, 5af1181)** — le 2026-10-23 (QUAL-09) : le serveur envoie les grilles encore actives (`MarksActive`, `Missions.sendMarks`) à l'arrivée et à chaque changement ; le client retire les symboles du mod (identifiant + couleur, vanilla et anciens repères compris) qui n'y sont plus. Pas d'option d'historique ; repères de MAYDAY laissés. Testé en solo et en MP par pz-autotest (scénario `marks`) ; vraie reconnexion non testée.
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commits 97a1727, 5af1181)** — le 2026-10-23 (QUAL-09) : le serveur envoie les grilles encore actives (`MarksActive`, `Missions.sendMarks`) à l'arrivée et à chaque changement ; le client retire les symboles du mod (identifiant + couleur, vanilla et anciens repères compris) qui n'y sont plus. Pas d'option d'historique ; repères de MAYDAY laissés. Testé en solo et en MP par pz-autotest (scénario `marks`) ; vraie reconnexion non testée.
 
 ### C11 — Coordonnées exactes envoyées à tous les clients avant le filtrage par la radio
 
@@ -177,7 +177,7 @@
 - **Risque** : faible (la proximité vise une route ou un bâtiment, la zone a un second passage `findLandingInBounds`) ; cas d'une zone mal dessinée entièrement sur l'eau ou couverte de véhicules : ligne de journal répétée et dossier éternel.
 - **Correction** : compter les essais et, après N essais sur case chargée (ou N jours), livrer au sol sur la case sèche la plus proche sans borne de zone, ou clore le dossier `expired` avec une ligne `WARN` pour l'admin.
 - **Statut** : confirmé statiquement ; occurrence à vérifier en jeu. **Priorité basse, effort S.**
-- **Avancement : ✅ corrigé, non publié (commit 261a94d)** — essais comptés sur case chargée (`tries`, `since`, sauvegardés) ; après 10 échecs ou 7 jours, dernier essai sur la case sèche la plus proche sans borne de zone, sinon dossier `expired` sans effet sur la confiance et ligne `WARN`. Tests lupa ; cas réel non testé en jeu (QUAL-14).
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commit 261a94d)** — essais comptés sur case chargée (`tries`, `since`, sauvegardés) ; après 10 échecs ou 7 jours, dernier essai sur la case sèche la plus proche sans borne de zone, sinon dossier `expired` sans effet sur la confiance et ligne `WARN`. Tests lupa ; cas réel non testé en jeu (QUAL-14).
 
 ### C13 — Campagne de tests MP en retard sur le code publié
 
@@ -194,7 +194,7 @@
 - **Risque** : faible (un poste par équipe) ; à surveiller si les équipes se multiplient.
 - **Correction** : indexer les postes par clé de chunk (`floor(x / 8)`, `floor(y / 8)`, z) et ne lire que l'entrée du chunk chargé (`chunk:getWx()`, `getWy()`).
 - **Statut** : confirmé statiquement ; coût à mesurer. **Priorité basse, effort XS.**
-- **Avancement : ✅ corrigé, non publié (commit db2834a)** — index des postes par chunk, recalculé à l'installation, au déplacement et à la perte d'un poste ; repli sur la relecture complète si un chunk n'a aucune case ; test lupa (QUAL-12).
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commit db2834a)** — index des postes par chunk, recalculé à l'installation, au déplacement et à la perte d'un poste ; repli sur la relecture complète si un chunk n'a aucune case ; test lupa (QUAL-12).
 
 ### C15 — Repère de mission manqué : reconnaissance et nettoyage absents de la carte (retour d'un joueur, 2026-10-23)
 
@@ -202,7 +202,7 @@
 - **Preuves** : `client/MilitaryDrop/MilitaryDrop_Announce.lua` (repère seulement sur `OnDeviceText`), `server/MilitaryDrop/MilitaryDrop_Missions.lua` (`Missions.launch` : annonce unique).
 - **Correction** : rappel des missions ouvertes toutes les `DropRepeatHours` heures (`Missions.remind`, même code de repère) ; réponses de la base qui citent la grille (`tooFar`, point du nettoyage avant la horde) avec `mark`, repère posé par `Announce.markMission`.
 - **Statut** : confirmé statiquement et en jeu (QUAL-10).
-- **Avancement : ✅ corrigé, non publié (commits 97a1727, 5af1181)** — testé hors jeu, en solo et en MP par pz-autotest (scénario `marks`).
+- **Avancement : ✅ corrigé, publié en 0.7.0 (commits 97a1727, 5af1181)** — testé hors jeu, en solo et en MP par pz-autotest (scénario `marks`).
 
 ---
 
