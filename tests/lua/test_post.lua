@@ -29,9 +29,30 @@ local function key(x, y, z)
     return x .. "," .. y .. "," .. z
 end
 
+--- IsoChunk simulé (8 x 8 cases) : sans coordonnées lisibles, comme en jeu ;
+--- getGridSquare(xLocal, yLocal, z) rend une case dont on déduit sa position.
+CHUNKS = {}
+function chunkAt(x, y)
+    local wx, wy = math.floor(x / 8), math.floor(y / 8)
+    local name = wx .. "," .. wy
+    if not CHUNKS[name] then
+        local chunk = { gridReads = 0 }
+        function chunk.getGridSquare(self, lx, ly, z)
+            self.gridReads = self.gridReads + 1
+            if z ~= 0 then return nil end
+            return { getX = function() return wx * 8 + lx end, getY = function() return wy * 8 + ly end }
+        end
+        function chunk.getMinLevel() return 0 end
+        function chunk.getMaxLevel() return 0 end
+        CHUNKS[name] = chunk
+    end
+    return CHUNKS[name]
+end
+
 --- Case simulée : secteur et pièce par défaut, sans générateur.
 local function makeSquare(x, y, z)
-    local square = { x = x, y = y, z = z or 0, objects = {}, grid = true, room = true, elec = false, chunk = "A" }
+    local square = { x = x, y = y, z = z or 0, objects = {}, grid = true, room = true, elec = false,
+        chunk = chunkAt(x, y) }
     function square.getX(self) return self.x end
     function square.getY(self) return self.y end
     function square.getZ(self) return self.z end
@@ -376,10 +397,39 @@ end
 function T.chunk_load_checks_the_posts_it_contains()
     install(ALICE, RADIO)
     removeObject(RADIO)
-    triggerEvent("LoadChunk", "B")
+    triggerEvent("LoadChunk", chunkAt(200, 200))
     assertTrue(STATE.posts.SOLO ~= nil, "autre chunk : rien")
-    triggerEvent("LoadChunk", "A")
+    triggerEvent("LoadChunk", chunkAt(SQUARE:getX(), SQUARE:getY()))
     assertEq(STATE.posts.SOLO, nil, "chunk du poste chargé sans la radio : désinstallé")
+end
+
+function T.chunk_load_reads_only_the_posts_of_that_chunk()
+    install(ALICE, RADIO)
+    local reads = 0
+    local realGetCell = getCell
+    getCell = function()
+        local cell = realGetCell()
+        local getGridSquare = cell.getGridSquare
+        cell.getGridSquare = function(self, x, y, z)
+            reads = reads + 1
+            return getGridSquare(self, x, y, z)
+        end
+        return cell
+    end
+    triggerEvent("LoadChunk", chunkAt(400, 400))
+    assertEq(reads, 0, "chunk sans poste : aucune case de poste lue")
+    triggerEvent("LoadChunk", chunkAt(SQUARE:getX(), SQUARE:getY()))
+    assertTrue(reads > 0, "chunk du poste : sa case lue")
+    assertTrue(STATE.posts.SOLO ~= nil, "radio en place : poste gardé")
+    -- Poste déplacé dans un autre chunk : l'index suit.
+    local moved = makeRadio(makeSquare(104, 100, 0))
+    ALICE.x = 104
+    assertEq(install(ALICE, moved).status, "moved", "poste déplacé au chunk voisin")
+    removeObject(moved)
+    triggerEvent("LoadChunk", chunkAt(100, 100))
+    assertTrue(STATE.posts.SOLO ~= nil, "ancien chunk : plus de poste")
+    triggerEvent("LoadChunk", chunkAt(104, 100))
+    assertEq(STATE.posts.SOLO, nil, "nouveau chunk du poste sans radio : désinstallé")
 end
 
 -- ----------------------------------------------------------------------------

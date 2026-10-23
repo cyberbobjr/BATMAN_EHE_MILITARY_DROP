@@ -473,6 +473,7 @@ function Post.uninstall(teamId)
         return
     end
     s.posts[teamId] = nil
+    Post.invalidateChunkIndex()
     addSystem(teamId, "lost")
     MilitaryDrop.log("team " .. tostring(teamId) .. ": liaison post lost")
     Post.notifyTeam(teamId)
@@ -703,13 +704,72 @@ function Post.bayView(teamId)
     }
 end
 
---- Fin du chargement d'un chunk : revérifie les postes qui s'y trouvent.
+-- Côté d'un chunk en cases (Build 42).
+Post.CHUNK_SIZE = 8
+
+--- Clé du chunk qui contient la case x, y (tous étages confondus).
+function Post.chunkKey(x, y)
+    return math.floor(x / Post.CHUNK_SIZE) .. "," .. math.floor(y / Post.CHUNK_SIZE)
+end
+
+-- Index des postes par chunk, recalculé seulement quand la table des postes
+-- change (installation, déplacement, perte ou autre partie chargée).
+local chunkIndex = { posts = nil, byChunk = nil }
+
+function Post.invalidateChunkIndex()
+    chunkIndex.byChunk = nil
+end
+
+local function postsByChunk(posts)
+    if chunkIndex.posts ~= posts or chunkIndex.byChunk == nil then
+        local byChunk = {}
+        for teamId, post in pairs(posts) do
+            local x, y = tonumber(post.x), tonumber(post.y)
+            if x and y then
+                local key = Post.chunkKey(x, y)
+                byChunk[key] = byChunk[key] or {}
+                table.insert(byChunk[key], teamId)
+            end
+        end
+        chunkIndex.posts, chunkIndex.byChunk = posts, byChunk
+    end
+    return chunkIndex.byChunk
+end
+
+--- Clé d'un IsoChunk : il n'expose pas ses coordonnées (champs wx, wy illisibles
+--- en Lua), on les déduit d'une de ses cases. nil si aucune case n'existe.
+local function keyOfChunk(chunk)
+    if not chunk or not chunk.getGridSquare then
+        return nil
+    end
+    local square = chunk:getGridSquare(0, 0, 0)
+    if not square and chunk.getMinLevel and chunk.getMaxLevel then
+        for z = chunk:getMinLevel(), chunk:getMaxLevel() do
+            square = chunk:getGridSquare(0, 0, z)
+            if square then
+                break
+            end
+        end
+    end
+    return square and Post.chunkKey(square:getX(), square:getY()) or nil
+end
+
+--- Fin du chargement d'un chunk : revérifie les postes qui s'y trouvent (seule
+--- l'entrée du chunk chargé est lue ; à défaut de clé, tous les postes).
 function Post.onLoadChunk(chunk)
     local s = state()
     local cell = getCell()
+    local candidates
+    local key = keyOfChunk(chunk)
+    if key then
+        candidates = postsByChunk(s.posts)[key] or {}
+    else
+        candidates = sortedKeys(s.posts)
+    end
     local found = {}
-    for teamId, post in pairs(s.posts) do
-        local square = cell:getGridSquare(post.x, post.y, post.z)
+    for _, teamId in ipairs(candidates) do
+        local post = s.posts[teamId]
+        local square = post and cell:getGridSquare(post.x, post.y, post.z)
         if square and square:getChunk() == chunk then
             found[#found + 1] = teamId
         end
@@ -905,6 +965,7 @@ function Post.install(player, args)
     local post = { x = square:getX(), y = square:getY(), z = square:getZ(), uid = uid }
     post.snapshot = Post.snapshot(object, nil)
     s.posts[teamId] = post
+    Post.invalidateChunkIndex()
     local status = old and "moved" or "installed"
     addSystem(teamId, status)
     MilitaryDrop.log(string.format("team %s: liaison post %s at %d,%d,%d by %s", tostring(teamId), status,
