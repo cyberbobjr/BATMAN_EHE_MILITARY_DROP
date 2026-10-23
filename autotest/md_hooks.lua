@@ -30,6 +30,11 @@ Run state: MilitaryDrop's world state of the COPIED save only (pz-autotest copie
 
 local H = { client = {}, server = {} }
 
+-- -P shots=1: screenshots for a visual check (Zomboid/Screenshots of the cache, copied into runs/... by pz-autotest).
+-- takeScreenshot reads the last presented frame: wait a few frames after a UI change.
+local SHOTS = false
+
+
 local REQUEST_ID = 9001
 local WRONG_CODE = "ZZ99"
 
@@ -48,6 +53,17 @@ end
 
 local function info(text)
     R.lines[#R.lines + 1] = "INFO " .. tostring(text)
+end
+
+local function shotAfter(S, key, frames, name)
+    S[key] = (S[key] or 0) + 1
+    if S[key] < frames then return false end
+    if S[key] == frames then
+        takeScreenshot(name)
+        info("screenshot " .. name)
+        return false
+    end
+    return S[key] >= frames + 5
 end
 
 local function check(name, fn)
@@ -306,6 +322,7 @@ local function addClientSteps(player, waitMs)
         if not window or not window:getIsVisible() or not window.data then return false end
         S.postFrames = (S.postFrames or 0) + 1
         if S.postFrames < 30 then return false end
+        if SHOTS and not shotAfter(S, "postShot", 1, "md_liaison_post.png") then return false end
         local affairs = window.affairList and #window.affairList or -1
         window:close("autotest")
         rec(PW.instances[playerNum] == nil, "liaison post console opens and draws",
@@ -325,6 +342,7 @@ local function addClientSteps(player, waitMs)
         end
         S.sheetFrames = (S.sheetFrames or 0) + 1
         if S.sheetFrames < 30 then return false end
+        if SHOTS and not shotAfter(S, "sheetShot", 1, "md_requisition_sheet.png") then return false end
         local visible = S.sheet:getIsVisible() and RW.instances[playerNum] == S.sheet
         local w, h = S.sheet.width, S.sheet.height
         -- Closed without transmitting or cancelling a real request.
@@ -780,9 +798,46 @@ local function addMarksSteps(player, airMs)
         rec(skull == 1 and countSymbols("Circle", S.c1.x, S.c1.y) == 1 and math.abs(scale - expected) < 0.01,
             "marks: clearance heard: skull and radius circle",
             "skull=" .. skull .. " scale=" .. tostring(scale) .. " expected=" .. tostring(expected))
-        addPlayerCircle(S.c1.x, S.c1.y)
         return true
     end, airMs)
+
+    addStep("marks: world map screenshots of the clearance zone", function()
+        if not SHOTS or not S.c1 then return true end
+        local playerNum = player:getPlayerNum()
+        if not S.mapOpen then
+            S.mapOpen = true
+            ISWorldMap.ShowWorldMap(playerNum, S.c1.x, S.c1.y, 15)
+            return false
+        end
+        local map = ISWorldMap_instance
+        if not map then
+            rec(false, "marks: world map screenshots of the clearance zone", "world map not opened")
+            return true
+        end
+        if not S.zoom1 then
+            map.mapAPI:centerOn(S.c1.x, S.c1.y)
+            map.mapAPI:setZoom(15)
+            if not shotAfter(S, "mapShot1", 20, "md_clearance_circle_zoom15.png") then return false end
+            S.zoom1 = true
+            return false
+        end
+        if not S.zoom2 then
+            map.mapAPI:centerOn(S.c1.x, S.c1.y)
+            map.mapAPI:setZoom(17)
+            if not shotAfter(S, "mapShot2", 20, "md_clearance_circle_zoom17.png") then return false end
+            S.zoom2 = true
+            return false
+        end
+        ISWorldMap.HideWorldMap(playerNum)
+        setGameSpeed(1)
+        rec(true, "marks: world map screenshots of the clearance zone", "zoom 15 and 17")
+        return true
+    end, 30000)
+
+    addStep("marks: player's own circle added", function()
+        if S.c1 then addPlayerCircle(S.c1.x, S.c1.y) end
+        return true
+    end)
 
     addStep("marks: closed clearance removes skull and circle, keeps the player's circle", function()
         if not S.c1 then return true end
@@ -1138,6 +1193,7 @@ end
 -- Solo: authority and client view in the same Lua. mp client 1: client view only.
 function H.client.start(ctx)
     reset()
+    SHOTS = ctx.params.shots == "1"
     if not MilitaryDrop or not MilitaryDrop.Net then return false, "MilitaryDrop not loaded" end
     local player = ctx.players()[1]
     if not player then return false, "no local player" end
