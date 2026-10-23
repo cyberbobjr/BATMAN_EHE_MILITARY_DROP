@@ -239,7 +239,28 @@ Demandes de deux admins de serveurs MP sur Discord (2026-10-04/05). Conception :
 | FULTON-09 | Compatibilité facultative avec Zombie Virus Vaccine (`ZVirusVaccine42BETA`) : échantillons (sang, liquide cérébral selon la qualité, cerveaux), vaccins et remède payés | analyses/idee-12 §6 ; analyses/idee-12-fulton-conception | publié | test_fulton (types `LabItems`, mod actif ou non), contrôle des 23 types dans les scripts du mod installé ; essai en jeu solo de l'utilisateur (2026-10-07) ; 0.4.0 | Paiement au lâcher (lot 3) ; variante 42.20 du mod à tester en 42.21 (F8) |
 | FULTON-10 | Butin : kits endommagés (épaves Mayday, lieux militaires, plus rarement caisses de largage) ; bouteilles d'hélium (magasins de fêtes, de cadeaux et de jouets, lieux militaires) | analyses/idee-12 §6 ; analyses/idee-12-fulton-conception | publié | test_fultonloot (ajout unique et poids, taux et retrait à chaud, liste absente, tirages), test_crate (`damaged_fulton_kit_only_in_crates_without_order`), test_wreck (`pilot_may_carry_a_damaged_fulton_kit_once`), contrôle des listes dans `tests/run_tests.py` (définies et citées par une salle) ; essai en jeu solo de l'utilisateur (2026-10-07) ; 0.4.0 | Poids et chances à régler en jeu (hélium 1,5 / 1 / 0,5 ; kit 0,3 ; épave 25 % ; caisse 5 %) ; ⚠ bouteille de 6 kg dans les petits conteneurs ; en jeu : F7 |
 
+## Améliorations sélectionnées le 2026-10-23
+
+[Plan détaillé](plan-ameliorations-i01-i16.md) : conception proposée, sans code ni publication. Les identifiants `IDEE-NN` correspondent aux idées `INN` du catalogue. Avant code serveur : pattern validé et documenté dans un AGENTS.md du projet. Les réglages restent proposés ; I01 impose le maintien du spawn.
+
+| ID | Élément | Réf. | État | Preuves | Reste |
+|---|---|---|---|---|---|
+| IDEE-01 | Attraction au largage avec spawn maintenu | I01 | conçu | [Plan](plan-ameliorations-i01-i16.md) ; demande du 2026-10-23 | Régler les émissions existantes ; pose différée sans double horde |
+| IDEE-02 | Intensité du bruit de rotor configurable | I02 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Paramétrer le bruit existant ; mesurer attraction et coût |
+| IDEE-04 | Silhouette 3D en vol | I04 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Essai de rendu autonome, sans parachute I03 |
+| IDEE-05 | Mission de réparation du relais | I05 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Fixer périmètre de panne, ressources, installation et site de repli |
+| IDEE-09 | Primes Fulton hebdomadaires | I09 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Contractualiser calendrier, bonus plafonné et devis à la bascule |
+| IDEE-10 | Signalement de concentration | I10 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Fixer seuils et dédoublonnage partagé des rapports |
+| IDEE-11 | Citations aux paliers | I11 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Fixer émission unique, migration et ressource du palier IV |
+| IDEE-12 | Tableau de bord administrateur | I12 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Définir résumés, pagination et effets des actions métier |
+| IDEE-13 | Accusé de réception de caisse | I13 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Preuve après clôture ; confirmation unique et plafonnée |
+| IDEE-14 | Raréfaction des moyens | I14 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Fixer calendrier et restrictions ; protéger les commandes engagées |
+| IDEE-15 | Brouilleur radio PvP | I15 | à décider | [Plan](plan-ameliorations-i01-i16.md) | Étude : C11 reste écarté ; décision avant développement dépendant |
+| IDEE-16 | Demande spéciale au palier IV | I16 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Résolution serveur et extension rétrocompatible du catalogue |
+
 ## Journal
+
+- **2026-10-23** — Planification de I01, I02, I04, I05 et I09 à I16 : [plan](plan-ameliorations-i01-i16.md). I01 cumule attraction et spawn ; I02 part du bruit serveur déjà présent. I15 reste une étude conditionnelle sans annuler le rejet de C11. Aucun code, test en jeu ou changement de version pour cette planification.
 
 - **2026-10-23** — Version 0.7.0 publiée sur le Workshop (`41f1e33`, tag `v0.7.0`, description et 7 traductions, 17 captures inchangées) : QUAL-09 à QUAL-18 passent à « publié ».
 - **2026-10-23** — QUAL-16 (Fulton) : lignes de la base affichées au-dessus du personnage (sans radio en main) séparées par une espace : `HaloTextHelper.addText` réunit les textes d'une même image avec le séparateur passé (`HaloTextHelper.java:113-118`), le mod passait une chaîne vide (« Terminé.Crédit… », vu sur les captures du scénario `fulton`). Test `test_fultonmenu` étendu.

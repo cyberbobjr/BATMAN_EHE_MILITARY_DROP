@@ -38,24 +38,26 @@
 
 ### Idées de fonctionnalités
 
+**Sélection planifiée le 2026-10-23** : I01, I02, I04, I05 et I09 à I16. Voir le [plan détaillé](annexes/plans/plan-ameliorations-i01-i16.md) et le [suivi](annexes/plans/SUIVI.md). Aucun code implémenté. Les réglages du plan restent proposés ; I01 impose le maintien du spawn. I15 reste une étude conditionnelle : C11 demeure écarté.
+
 | ID | Idée | État | Remarque |
 |---|---|---|---|
-| I01 | Horde attirée par le bruit | ⬜ Proposée | |
-| I02 | Bruit du rotor le long de la trajectoire | ⬜ Proposée | |
+| I01 | Horde attirée par le bruit | ⬜ Planifiée | Bruit + spawn maintenu |
+| I02 | Bruit du rotor le long de la trajectoire | ⬜ Planifiée | Paramétrer le bruit existant |
 | I03 | Caisse visible sous parachute | ⬜ Proposée | |
-| I04 | Silhouette 3D de l'hélicoptère | ⬜ Proposée | |
-| I05 | Mission « Remettre le relais en service » | ⬜ Proposée | |
+| I04 | Silhouette 3D de l'hélicoptère | ⬜ Planifiée | Essai indépendant de I03 |
+| I05 | Mission « Remettre le relais en service » | ⬜ Planifiée | Voir le plan sélectionné |
 | I06 | Largage retardé par la météo | ⬜ Proposée | |
 | I07 | Cercle du nettoyage et repères qui s'effacent | ✅ Fait | Repères qui s'effacent (C10) et cercle (C09) |
 | I08 | Noter une grille dans un carnet | ⬜ Proposée | |
-| I09 | Primes Fulton de la semaine | ⬜ Proposée | |
-| I10 | Signaler une horde à la base | ⬜ Proposée | |
-| I11 | Citation officielle au changement de palier | ⬜ Proposée | |
-| I12 | Tableau de bord admin en jeu | ⬜ Proposée | |
-| I13 | Accusé de réception de caisse | ⬜ Proposée | |
-| I14 | Raréfaction progressive des moyens | ⬜ Proposée | |
-| I15 | Brouilleur radio (PvP) | ⬜ Proposée | Dépend de C11 |
-| I16 | Commande d'un objet précis | ⬜ Proposée | |
+| I09 | Primes Fulton de la semaine | ⬜ Planifiée | Voir le plan sélectionné |
+| I10 | Signaler une horde à la base | ⬜ Planifiée | Voir le plan sélectionné |
+| I11 | Citation officielle au changement de palier | ⬜ Planifiée | Voir le plan sélectionné |
+| I12 | Tableau de bord admin en jeu | ⬜ Planifiée | Voir le plan sélectionné |
+| I13 | Accusé de réception de caisse | ⬜ Planifiée | Voir le plan sélectionné |
+| I14 | Raréfaction progressive des moyens | ⬜ Planifiée | Voir le plan sélectionné |
+| I15 | Brouilleur radio (PvP) | ⬜ Étude planifiée | Dépendance C11 à arbitrer, C11 reste écarté |
+| I16 | Commande d'un objet précis | ⬜ Planifiée | Voir le plan sélectionné |
 | I17 | Partage d'un largage avec une autre station | ⬜ Proposée | |
 | I18 | Ravitaillement du poste de liaison | ⬜ Proposée | |
 | I19 | Pilote survivant blessé | ⬜ Proposée | |
@@ -216,13 +218,13 @@ Rappels : les idées déjà analysées ne sont pas reproposées à l'identique.
 
 Chaque effet proposé a une cause visible dans le monde et s'appuie de préférence sur une mécanique vanilla.
 
-### I01 — Horde attirée par le bruit plutôt qu'apparue autour de la caisse
+### I01 — Horde attirée par le bruit avec spawn maintenu
 
-- **Description** : option `HordeMode` : « Apparition » (actuel) ou « Bruit ». En mode bruit, l'atterrissage de la caisse (choc, rotor en vol stationnaire) émet un vrai bruit vanilla qui attire les zombies **déjà présents**, plus quelques zombies apparus hors de vue seulement si la zone est vide.
-- **Intérêt joueur** : la horde a une cause lisible (le bruit), le joueur voit les zombies converger et peut anticiper ; plus de zombies « sortis de nulle part » à côté de lui.
+- **Description révisée le 2026-10-23, demande utilisateur** : le bruit attire les zombies **déjà présents** et le spawn reste systématiquement prévu selon les quantités et contraintes existantes, même en secteur peuplé. Aucun mode ne remplace le spawn par le seul bruit. Le vol émet déjà du bruit : le plan précise son réglage et le cas d'une pose différée, sans émission en double.
+- **Intérêt joueur** : les zombies convergent vers une cause lisible et le danger du spawn reste présent. Leur cumul devra être équilibré en jeu.
 - **Faisabilité** : `getWorldSoundManager():addSound(nil, x, y, 0, rayon, volume)` (source `nil`, sinon les zombies ignorent un bruit dont la source est un zombie) ; base `staging-effects.md` « attirer des zombies avec un bruit » (étage × 3, 16 mises à jour, zombies virtuels sourds sous un rayon de 50) et `sounds-and-noise.md` (formule d'attrait). Le leurre fait déjà la même chose avec `addSoundRepeating` (`MilitaryDrop_Decoy.lua:234`).
 - **Impact MP** : bruit posé par le serveur seulement ; aucun paquet nouveau.
-- **Dépendances** : C01 (aide commune d'apparition) pour le complément hors de vue.
+- **Dépendances** : C01 (aide commune d'apparition conservée pour le spawn) ; coordination avec I02.
 - **Effort** : S.
 
 ### I02 — Bruit du rotor le long de la trajectoire
@@ -249,7 +251,7 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 - **Intérêt joueur** : spectaculaire et cohérent avec l'épave ; aide à suivre la trajectoire.
 - **Faisabilité** : à vérifier (hypothèse) ; le rendu à grande hauteur peut être coupé par la caméra isométrique. Commencer par un essai avec la technique du Fulton. Aujourd'hui : ombre `circle_shadow`, son et flèche (`client/MilitaryDrop/MilitaryDrop_Heli.lua:5-13`).
 - **Impact MP** : aucun.
-- **Dépendances** : I03, C03.
+- **Dépendances révisées pour le plan** : rendu Fulton et C03 ; essai autonome sans I03, hors de la sélection.
 - **Effort** : L.
 
 ### I05 — Panne de relais radio : mission « Remettre le relais en service »
@@ -348,7 +350,7 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 - **Intérêt joueur** : contre-jeu pour les serveurs PvP qui ont demandé les zones (idée 11) ; objet visible et destructible.
 - **Faisabilité** : dépend de C11 (filtrage serveur des annonces par auditeur) ; radio posée lue par le serveur (`power-and-lights.md`, `IsoRadio`/`IsoWaveSignal`).
 - **Impact MP** : fort (logique d'écoute côté serveur).
-- **Dépendances** : C11.
+- **Dépendances** : C11 dans la proposition initiale, mais C11 a été écarté. Étude conditionnelle dans le plan ; aucune réintroduction implicite.
 - **Effort** : M-L.
 
 ### I16 — Commande d'un objet précis contre un gros coût
@@ -406,7 +408,7 @@ Les cinq actions les plus rentables (gain pour les joueurs ou la fiabilité, rap
 2. ✅ **C01** — aide commune d'apparition des zombies hors de l'eau (S, hordes complètes près des rives, journal propre ; prépare I01).
 3. 🟡 **C13** — suite MP automatisée des parcours nominaux avec `pz-autotest` (M, la plupart des lots publiés ne sont pas « testé MP »).
 4. ✅ **C10 + I07** (repères qui s'effacent et cercle du nettoyage) — repères de carte qui s'effacent et cercle du nettoyage (S, gain de lisibilité immédiat pour tous les joueurs).
-5. ⬜ **I01** — horde attirée par le bruit en option (S, une cause visible à l'effet le plus artificiel du mod, mécanique vanilla).
+5. ⬜ **I01** — attraction par le bruit avec spawn maintenu (planifiée ; réglages et équilibre dans le plan sélectionné).
 
 Ensuite : ✅ C03 (fichiers Fulton renommés, menu de debug isolé), ✅ C02 (copie de secours retirée), ⬜ I06 et I13 (petits efforts, boucle radio plus riche).
 

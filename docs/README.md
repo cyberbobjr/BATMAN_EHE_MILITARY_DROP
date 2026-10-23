@@ -11,12 +11,14 @@ La documentation de développement est en français ; le wiki joueur existe en a
 | [architecture.md](architecture.md) | Architecture logicielle : arborescence du mod, modules Lua par côté, flux, persistance, intégrations, outillage. |
 | [specifications-fonctionnelles.md](specifications-fonctionnelles.md) | Fonctionnalités vues par le joueur et l'admin (F01 à F16), solo et MP, limites connues. |
 | [specifications-techniques.md](specifications-techniques.md) | Contrats : objets et recettes, commandes réseau et contrôles serveur, ModData, fichiers, migrations, traductions, options du bac à sable. |
-| [ameliorations-et-idees.md](ameliorations-et-idees.md) | Améliorations de code proposées et idées de fonctionnalités (propositions, rien n'est validé). |
+| [ameliorations-et-idees.md](ameliorations-et-idees.md) | Améliorations de code et idées de fonctionnalités, états et sélection planifiée. |
 | [wiki/](wiki/Home.md) | Source du wiki GitHub : guides joueur et admin en anglais (`en/`) et en français (`fr/`). |
 | [images/](images/) | Images de la documentation, du README et de la page Steam. |
 | [annexes/](annexes/) | Plans, suivi, protocoles de test et recherches. |
 
 ### Annexes
+
+Plan en cours : [améliorations sélectionnées I01 à I16](annexes/plans/plan-ameliorations-i01-i16.md), découpage, dépendances et critères de validation des 12 idées demandées le 2026-10-23.
 
 | Dossier | Contenu |
 |---|---|
