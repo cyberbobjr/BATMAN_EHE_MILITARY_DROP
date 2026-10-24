@@ -241,7 +241,7 @@ Demandes de deux admins de serveurs MP sur Discord (2026-10-04/05). Conception :
 
 ## Améliorations sélectionnées le 2026-10-23
 
-[Plan détaillé](plan-ameliorations-i01-i16.md) : conception proposée, sans code ni publication. Les identifiants `IDEE-NN` correspondent aux idées `INN` du catalogue. Avant code serveur : pattern validé et documenté dans un AGENTS.md du projet. Les réglages restent proposés ; I01 impose le maintien du spawn.
+[Plan détaillé](plan-ameliorations-i01-i16.md) : conception proposée, sans code ni publication. Les identifiants `IDEE-NN` correspondent aux idées `INN` du catalogue. Avant code serveur : pattern validé et documenté dans docs/developpement.md du projet. Les réglages restent proposés ; I01 impose le maintien du spawn.
 
 | ID | Élément | Réf. | État | Preuves | Reste |
 |---|---|---|---|---|---|
