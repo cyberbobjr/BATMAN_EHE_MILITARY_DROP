@@ -1,6 +1,8 @@
 # Validation des correctifs poste et nettoyage
 
-Date : 2026-10-26. Version locale préparée : 0.7.1, Build cible 42.21.
+Date : 2026-10-26. Version 0.7.1 publiée, Build cible 42.21.
+
+Publication demandée après présentation des limites de validation : commit `79acf75` poussé sur `main`, simulation puis envoi Workshop code 0, huit langues et 17 captures conservées. La publication ne constitue pas une validation en jeu.
 
 ## Résultats confirmés hors jeu
 

@@ -4,7 +4,7 @@ Date : 2026-10-26. Référence : Military Drop 0.7.0, variante `42.21`.
 
 ## Portée et statut
 
-**Mise en œuvre autorisée le 2026-10-26** : objectif maintenu à 90 %, progression commune et récompense au meilleur contributeur. Architecture et migration consignées dans [developpement.md](../../developpement.md). Implémentation locale préparée en 0.7.1 ; résultats et limites de validation suivis dans [SUIVI.md](SUIVI.md).
+**Mise en œuvre autorisée le 2026-10-26** : objectif maintenu à 90 %, progression commune et récompense au meilleur contributeur. Architecture et migration consignées dans [developpement.md](../../developpement.md). Version 0.7.1 publiée à la demande de l'utilisateur ; résultats et limites de validation suivis dans [SUIVI.md](SUIVI.md).
 
 Plan demandé à la suite de deux retours de joueur : impossibilité de transmettre un rapport quotidien ou de répondre au contrôle depuis une radio fixe ; nettoyage qui expire malgré de nombreux zombies ambiants abattus dans la zone. La demande autorise la conception, y compris un changement de règle. Les choix ci-dessous constituent la proposition à présenter avant développement.
 
