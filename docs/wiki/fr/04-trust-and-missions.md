@@ -38,7 +38,7 @@ Valeurs par défaut et durées en jeu.
 | Premier rapport de situation du jour | Émetteur | +1 |
 | Chaque plaque nominative valide et inédite | Émetteur | +2 |
 | Première reconnaissance confirmée à 25 cases / sous 48 h | Premier à confirmer | +3 |
-| Plus de victimes dans la horde de nettoyage, morte à 90 % | Personnage ayant le plus de victimes | +5 |
+| Plus de victimes admissibles à l'objectif commun du nettoyage | Personnage ayant le plus de victimes | +5 |
 | Contrôle confirmé sous 4 h, une fois par personnage | Chaque répondant, une fois | +1 |
 | 3 codes faux / appels sur mauvaise fréquence en 1 h | Auteur des appels | −2 |
 | Érosion optionnelle après 24 h sans contact | Personnage sans contact | −1 / +1 |
@@ -88,8 +88,9 @@ Un symbole **œil** bleu marque la grille sur votre carte. Allez-y et appuyez su
 
 Un **crâne** rouge marque le centre de la zone et un **cercle** rouge son rayon. La horde apparaît quand le premier joueur approche, hors de sa vue. Vous avez **72 heures** de jeu.
 
-- **Faire le point** demande à la base où en est le nettoyage : zombies de la horde abattus par votre personnage, et nombre restant. Avant que la horde soit repérée, la base donne la grille et le symbole s'ajoute à votre carte.
-- Quand **90 %** de la horde est mort, le personnage qui en a abattu le plus gagne +5. Le feu et les pièges tuent, mais ne créditent personne.
+- **Faire le point** donne votre contribution, le total commun et le reste à neutraliser. Avant que la horde soit repérée, la base donne la grille et ajoute le symbole à votre carte.
+- Après apparition, tout infecté tué **au sol dans le cercle** compte. Les membres suivis de la horde déployée comptent aussi à l'extérieur. Chaque mort compte une fois, quel que soit le joueur qui tue.
+- L'objectif commun reste fixé à **90 % de la horde effectivement déployée**, arrondis au supérieur : une horde de 30 demande 27 morts admissibles. Les infectés supplémentaires n'augmentent jamais l'objectif. Le personnage avec le plus de victimes créditées gagne +5 ; à égalité, le premier à ce compte gagne. Les morts sans tueur attribuable avancent le total sans crédit personnel.
 
 
 Symboles des missions sur la carte : <img src="../../images/screenshots/map-symbol-recon.png" width="32" alt="Œil bleu"> reconnaissance, <img src="../../images/screenshots/map-symbol-clearance.png" width="32" alt="Tête de mort rouge"> nettoyage (voir [Symboles sur la carte](02-calling-a-drop.md#symboles-sur-la-carte)).

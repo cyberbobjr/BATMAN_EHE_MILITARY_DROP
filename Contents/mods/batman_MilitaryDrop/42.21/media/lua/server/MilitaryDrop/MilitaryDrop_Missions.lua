@@ -27,14 +27,13 @@
 --     qui approche : LoadChunk, lancement, toutes les 10 minutes), le serveur
 --     fait apparaître UNE fois CleanupQuota zombies répartis dans la zone, sur
 --     des cases extérieures libres, loin des joueurs (Missions.spawnHorde).
---     Chaque zombie est suivi par sa tenue persistante (voir plus bas) : seuls
---     ceux-là comptent, où qu'ils meurent. Mort d'un zombie de la horde
---     (OnZombieDead serveur), toute cause : compté pour le « reste » ; tueur
---     zombie:getAttackedBy() IsoPlayer dont la ligne n'est pas coupée : compté
---     aussi pour son personnage (figée à la mort). À HORDE_SHARE (90 %) de la
---     horde morte, arrondi au supérieur, l'ordre se clôt : le personnage qui en a
---     abattu le plus gagne +CleanupGain (égalité : la première à ce compte) ;
---     aucune : clôture sans récompense. Sinon, échéance CleanupHours.
+--     Each tracked member counts anywhere; other ground-level zombies count
+--     inside the fixed circle. Deaths share a target of 90 percent of the
+--     actual horde size, rounded up. All causes advance the common total.
+--     An IsoPlayer killer whose line is not cut also gets personal credit.
+--     At the target, the top contributor gets +CleanupGain (ties: first to
+--     that count); no credited player means closure without a reward.
+--     Otherwise the order expires after CleanupHours.
 --     « Faire le point » (Missions.cleanupStatus) : réponse privée, sans gain ;
 --   * SRC-05 appel de contrôle : chaque personnage qui confirme la réception avant
 --     ControlHours gagne +ControlGain, une fois.
@@ -59,9 +58,9 @@
 --     (v1.3 en essai : les anciens champs a, b, issued, used des plaques
 --     numérotées du mod sont effacés au chargement.)
 --   mission = { id, kind, openedHours, deadline, text, x, y, radius, quota,
---     counts = { characterId = zombies de la horde abattus }, reached = { characterId =
+--     counts = { characterId = eligible deaths }, reached = { characterId =
 --     rang du dernier abattu (égalités) }, seq, horde = { ids = { clé de
---     tenue = zombies vivants }, size, dead, hours } (nettoyage, horde
+--     tenue = zombies vivants }, size, dead, nearbyDead, cleanupSchema = 2, hours } (nettoyage, horde
 --     apparue), responded = { characterId = true } (appel de contrôle) }
 --     Ancien format (nettoyage v1.3 sans horde) : la horde apparaît à la
 --     prochaine arrivée, les anciens comptes sont remis à zéro.
@@ -153,6 +152,13 @@ local function state()
     end
     m.reports = m.reports or {}
     m.open = m.open or {}
+    local cleanup = m.open.cleanup
+    local horde = cleanup and cleanup.horde
+    if type(horde) == "table" and horde.cleanupSchema ~= 2 then
+        -- Additive migration: keep tracked deaths, contributions and deadline.
+        horde.nearbyDead = tonumber(horde.nearbyDead) or 0
+        horde.cleanupSchema = 2
+    end
     m.nextHours = m.nextHours or {}
     m.last = m.last or {}
     if type(m.dogtags) ~= "table" then
@@ -962,9 +968,14 @@ function Missions.hordeTarget(horde)
     return math.max(1, math.floor((size * Missions.HORDE_SHARE_TENTHS + 9) / 10))
 end
 
---- Zombies de la horde encore à abattre avant la clôture (jamais négatif).
+-- Shared eligible deaths: tracked members plus other local deaths.
+function Missions.cleanupDown(horde)
+    return (tonumber(horde and horde.dead) or 0) + (tonumber(horde and horde.nearbyDead) or 0)
+end
+
+-- Eligible deaths still needed before the order closes (never negative).
 function Missions.hordeLeft(horde)
-    return math.max(0, Missions.hordeTarget(horde) - (tonumber(horde and horde.dead) or 0))
+    return math.max(0, Missions.hordeTarget(horde) - Missions.cleanupDown(horde))
 end
 
 --- Clients : un nettoyage est-il en cours (grisé de « Faire le point ») ? À
@@ -1078,7 +1089,7 @@ function Missions.trySpawnHorde(now)
     -- Registre écrit avant les apparitions (un LoadChunk pendant l'une d'elles
     -- ne relance rien) ; comptes remis à zéro (ancien format : morts de
     -- n'importe quel zombie).
-    local horde = { ids = {}, size = 0, dead = 0, hours = now or hoursNow() }
+    local horde = { ids = {}, size = 0, dead = 0, nearbyDead = 0, cleanupSchema = 2, hours = now or hoursNow() }
     mission.horde = horde
     mission.counts, mission.reached, mission.seq = {}, {}, 0
     for i = 1, count do
@@ -1136,9 +1147,8 @@ local function finishCleanup(mission, now)
     end
 end
 
---- Zombie mort (OnZombieDead, serveur) : seul un zombie de la horde compte,
---- où qu'il meure et quelle que soit la cause ; pour le personnage tueur
---- joueur si sa ligne personnelle n'est pas coupée.
+-- Count a tracked zombie anywhere, or any ground-level zombie inside the
+-- fixed clearance circle. One credit per death, shared by all players.
 function Missions.countKill(zombie)
     local now = hoursNow()
     local mission = Missions.openMission("cleanup", now)
@@ -1152,12 +1162,19 @@ function Missions.countKill(zombie)
     end
     local key = Missions.hordeKey(zombie:getPersistentOutfitID())
     local alive = key and tonumber(horde.ids[key]) or 0
-    if alive <= 0 then
+    local dx, dy = zombie:getX() - (mission.x + 0.5), zombie:getY() - (mission.y + 0.5)
+    local radius = tonumber(mission.radius) or Missions.CLEANUP_RADIUS
+    local localDeath = zombie:getZ() == 0 and dx * dx + dy * dy <= radius * radius
+    if alive <= 0 and not localDeath then
         return
     end
     modData[KILL_KEY] = mission.id
-    horde.ids[key] = alive > 1 and alive - 1 or nil
-    horde.dead = (tonumber(horde.dead) or 0) + 1
+    if alive > 0 then
+        horde.ids[key] = alive > 1 and alive - 1 or nil
+        horde.dead = (tonumber(horde.dead) or 0) + 1
+    else
+        horde.nearbyDead = (tonumber(horde.nearbyDead) or 0) + 1
+    end
     local killer = zombie:getAttackedBy()
     if killer and instanceof(killer, "IsoPlayer") then
         local characterId = MilitaryDrop.Trust.idFor(killer)
@@ -1169,15 +1186,14 @@ function Missions.countKill(zombie)
             mission.reached[characterId] = mission.seq
         end
     end
-    if horde.dead >= Missions.hordeTarget(horde) then
+    if Missions.cleanupDown(horde) >= Missions.hordeTarget(horde) then
         finishCleanup(mission, now)
     end
 end
 
---- « Faire le point » : avant l'apparition, la grille à rejoindre ; après, les
---- zombies de la horde abattus par l'équipe et ceux qui restent à abattre
---- avant la clôture (pas les survivants : l'ordre se clôt avant le dernier).
---- Aucun gain.
+-- Clearance status: before spawn, the destination grid; afterwards, personal
+-- contribution, shared progress, fixed target and remaining eligible deaths.
+-- No reward for requesting status.
 function Missions.cleanupStatus(player, args)
     local ctx = begin(player, args, "cleanup")
     if not ctx then
@@ -1196,7 +1212,14 @@ function Missions.cleanupStatus(player, args)
     end
     local mine = tonumber(mission.counts and mission.counts[ctx.characterId]) or 0
     reply(ctx, "ok", { Exchange.line("IGUI_MilitaryDrop_Reply_CleanupStatus", ctx.callsign, tostring(mine),
-        tostring(Missions.hordeLeft(mission.horde))) })
+        tostring(Missions.hordeLeft(mission.horde)), tostring(Missions.cleanupDown(mission.horde)),
+        tostring(Missions.hordeTarget(mission.horde))) })
+end
+
+-- Personal projection for a shared post; no mission registry is transmitted.
+function Missions.postExchanges(characterId)
+    return { reportDone = state().reports[characterId] == currentDay(),
+        fultonOpen = Missions.fultonWindow(characterId) ~= nil }
 end
 
 -- SRC-05 : appel de contrôle
@@ -1244,7 +1267,7 @@ function Missions.listForCharacter(characterId)
                 entry.progress = horde and (tonumber(mission.counts and mission.counts[characterId]) or 0) or 0
                 if horde then
                     entry.left = Missions.hordeLeft(horde)
-                    entry.down = tonumber(horde.dead) or 0
+                    entry.down = Missions.cleanupDown(horde)
                     entry.target = Missions.hordeTarget(horde)
                 end
             elseif kind == "control" then

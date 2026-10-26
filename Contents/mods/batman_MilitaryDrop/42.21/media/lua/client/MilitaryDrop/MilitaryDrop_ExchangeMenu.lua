@@ -128,9 +128,18 @@ end
 --- Lance l'échange (aussi utilisé par le module « Logistique » de la fenêtre
 --- radio, MilitaryDrop_RadioModule.lua) ; renvoie false si la radio n'est pas
 --- utilisable.
-function Menu.onOption(player, device, option)
+function Menu.optionFor(source)
+    for _, option in ipairs(Menu.OPTIONS) do
+        if option.source == source then
+            return option
+        end
+    end
+    return nil
+end
+
+function Menu.onOption(player, device, option, opts)
     local speech = getText(option.speech .. (ZombRand(option.speechCount) + 1), tostring(Menu.dogTagCount(player)))
-    return Exchange.send(player, device, Exchange.COMMANDS[option.command or option.source], {}, speech)
+    return Exchange.send(player, device, Exchange.COMMANDS[option.command or option.source], {}, speech, opts)
 end
 
 local function addTooltip(option, text)

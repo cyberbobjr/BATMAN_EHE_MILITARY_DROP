@@ -38,7 +38,7 @@ All values below are defaults; all durations are game time.
 | First daily situation report | Sender | +1 |
 | Each valid, unused named dog tag | Sender | +2 |
 | First recon confirmation within 25 tiles / 48 h | First confirmer | +3 |
-| Most kills in clearance horde, 90% dead | Character with most kills | +5 |
+| Most eligible kills when the shared clearance target is reached | Character with most kills | +5 |
 | Radio check answered within 4 h, once per character | Each responder, once | +1 |
 | 3 wrong codes / wrong-frequency calls in 1 h | Caller | −2 |
 | Optional erosion after 24 h without contact | Idle character | −1 / +1 |
@@ -86,8 +86,9 @@ A blue **eye** symbol marks the grid on your map. Go there and press **Confirm t
 
 A red **skull** marks the centre of the zone and a red **circle** its radius. The horde appears when the first player comes near, out of sight. You have **72 hours** of game time.
 
-- **Clearance status** asks the base how it is going: zombies of the horde brought down by your character, and how many are left. Before the horde is spotted, the base gives the grid and the symbol is added to your map.
-- When **90%** of the horde is dead, the character that killed the most gets +5. Fire and traps kill zombies but credit nobody.
+- **Clearance status** gives your contribution, the shared total and the remaining target. Before the horde is spotted, the base gives the grid and adds its symbol to your map.
+- Once the horde appears, any infected killed **at ground level inside the circle** counts. Tracked members of the deployed horde also count outside it. Each death counts once, regardless of which player kills it.
+- The fixed shared target is **90% of the actual deployed horde**, rounded up: a horde of 30 requires 27 eligible kills. Additional infected never increase the target. The character with the most credited kills gets +5; ties go to the first to reach that count. Unattributed deaths advance the total without personal credit.
 
 
 Map symbols of the missions: <img src="../../images/screenshots/map-symbol-recon.png" width="32" alt="Blue eye"> reconnaissance, <img src="../../images/screenshots/map-symbol-clearance.png" width="32" alt="Red skull"> clearance (see [Map symbols](02-calling-a-drop.md#map-symbols)).

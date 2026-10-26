@@ -21,6 +21,8 @@ A liaison post is a fixed military radio that your station uses as its base. It 
 
 ## The console
 
+No portable radio is needed for your daily report or a radio check: select **Send situation report** or the open check in the affairs list and use its action button. Recon confirmation, clearance status and Fulton passage requests are also available there. A completed report or check cannot pay twice, even if you switch radios. Recon still requires your character to be inside its mission area.
+
 **Top**: three lamps. **ON** (powered and on), **RX** (blinks when a message comes in), **PWR** with the power source (mains, generator, battery) and the battery level. On the right: your call sign and the frequency.
 
 **LOG**: everything the base says to your station or to all stations, with the date and time. The post only receives while it is on, powered and tuned. Otherwise a line marks the gap: *"-- no reception (3 message(s) missed) --"*. The post keeps receiving while you are away.

@@ -9,6 +9,7 @@ La documentation de développement est en français ; le wiki joueur existe en a
 | Document | Rôle |
 |---|---|
 | [architecture.md](architecture.md) | Architecture logicielle : arborescence du mod, modules Lua par côté, flux, persistance, intégrations, outillage. |
+| [developpement.md](developpement.md) | Architecture modulaire validée, responsabilités et migration du correctif poste/nettoyage. |
 | [specifications-fonctionnelles.md](specifications-fonctionnelles.md) | Fonctionnalités vues par le joueur et l'admin (F01 à F16), solo et MP, limites connues. |
 | [specifications-techniques.md](specifications-techniques.md) | Contrats : objets et recettes, commandes réseau et contrôles serveur, ModData, fichiers, migrations, traductions, options du bac à sable. |
 | [ameliorations-et-idees.md](ameliorations-et-idees.md) | Améliorations de code et idées de fonctionnalités, états et sélection planifiée. |
@@ -19,6 +20,10 @@ La documentation de développement est en français ; le wiki joueur existe en a
 ### Annexes
 
 Plan en cours : [améliorations sélectionnées I01 à I16](annexes/plans/plan-ameliorations-i01-i16.md), découpage, dépendances et critères de validation des 12 idées demandées le 2026-10-23.
+
+Plan correctif : [échanges depuis le poste et comptage du nettoyage](annexes/plans/plan-poste-et-nettoyage.md), demandé le 2026-10-26 ; actions radio manquantes, règle de comptage mixte, migration et validations solo/MP.
+
+Correctif local 0.7.1 : [résultats hors jeu et protocole restant](annexes/tests/correctifs-poste-nettoyage.md).
 
 | Dossier | Contenu |
 |---|---|

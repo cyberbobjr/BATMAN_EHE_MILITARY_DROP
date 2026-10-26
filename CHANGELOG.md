@@ -3,6 +3,17 @@
 Each `## <version> — <date>` section is published as the Steam Workshop change note
 (`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
 
+## 0.7.1 — 2026-10-26
+
+### Fixed
+
+- Fixed military radios and liaison posts can now send the daily report, answer radio checks, confirm recon, request clearance status and request a Fulton passage from the console. No portable radio is needed. Completed reports and checks are shown as completed; recon still requires being in the mission area.
+
+### Changed
+
+- Clearance orders now also count any infected killed at ground level inside the marked circle. Tracked members of the deployed horde still count outside it. The shared target stays fixed at 90 percent of the actual horde size, rounded up, and each death counts once. The top contributor receives the existing reward; nearby infected never increase the target.
+- Clearance radio replies show your contribution, the shared total and the remaining target. Ongoing missions keep their progress when updating.
+
 ## 0.7.0 — 2026-10-23
 
 ### Added

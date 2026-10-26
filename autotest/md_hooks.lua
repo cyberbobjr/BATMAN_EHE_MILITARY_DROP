@@ -1463,6 +1463,95 @@ end
 -- Server side of the mp scenario: one handler per op, answered to the sender.
 local ServerOps = { finished = false }
 
+-- Corrections scenario: real fixed radio, console actions and zombie death events.
+-- Only the launcher's disposable copy is changed by these helpers.
+local function correctionPrepare(player)
+    local MD = MilitaryDrop
+    local cfg = SandboxVars.MilitaryDrop
+    cfg.ReportGain, cfg.ControlGain, cfg.CleanupGain = 1, 1, 5
+    cfg.CleanupQuota, cfg.TrustDailyCap, cfg.TrustPostBonus = 10, 100, 50
+    local cid = MD.Trust.idFor(player)
+    local private = MD.Secrets.privateState()
+    private.characterTrust[cid].value = 25
+    private.characterTrust[cid].dayGain = 0
+    private.characterTrust[cid].lockedUntil = nil
+    MD.Missions.postExchanges(cid)
+    private.missions.reports[cid] = nil
+    private.missions.open.control = nil
+    MD.Missions.launch("control")
+    local square = player:getCurrentSquare()
+    local object = IsoRadio.new(getCell(), square, getSprite("appliances_com_01_8"))
+    square:AddSpecialObject(object)
+    local dd = object:getDeviceData()
+    dd:setIsBatteryPowered(true)
+    dd:setPower(1)
+    dd:setChannelRaw(MD.Config.getChannel())
+    dd:setIsTurnedOn(true)
+    if isServer() then object:transmitCompleteItemToClients() end
+    MD.Post.install(player, { radio = MD.Radio.makeRef(object) })
+    local ok = MD.Post.ownerOf(object) == MD.Teams.idFor(player) and dd:getIsTurnedOn()
+    rec(ok, "corrections: powered fixed post installed")
+    return { ok = ok, x = square:getX(), y = square:getY(), z = square:getZ() }
+end
+
+local function correctionKills(player)
+    local MD = MilitaryDrop
+    local Missions, Trust = MD.Missions, MD.Trust
+    local cid = Trust.idFor(player)
+    local state = MD.Secrets.privateState()
+    local postDone = state.missions.reports[cid] ~= nil
+        and state.missions.open.control and state.missions.open.control.responded[cid]
+    rec(postDone == true, "corrections: report and control accepted by the authority")
+    rec(Trust.get(cid) == 29, "corrections: both post bonuses credited once", "trust=" .. Trust.get(cid))
+    state.missions.open.cleanup = nil
+    local square = MD.Server.findLandingNear(math.floor(player:getX()) + 18, math.floor(player:getY()))
+    if not square then return { ok = false, error = "no loaded outdoor square" } end
+    local mission = Missions.launch("cleanup")
+    if not mission then return { ok = false, error = "mission launch failed" } end
+    mission.x, mission.y, mission.horde = square:getX(), square:getY(), nil
+    Missions.trySpawnHorde()
+    if not mission.horde then return { ok = false, error = "horde not spawned" } end
+    local target = Missions.hordeTarget(mission.horde)
+    rec(target == 9 and mission.horde.size == 10, "corrections: target is 90 percent", "target=" .. target)
+    local other
+    if isServer() then
+        local players = getOnlinePlayers()
+        for i = 0, players:size() - 1 do
+            if players:get(i) ~= player then other = players:get(i); break end
+        end
+        rec(other ~= nil, "corrections: second real player participates")
+    end
+    local winner = other or player
+    local wid = Trust.idFor(winner)
+    local before = Trust.get(wid)
+    for i = 1, target do
+        local zombies = getCell():getZombieList()
+        local count = zombies:size()
+        spawnHorde(square:getX() + 0.5, square:getY() + 0.5, square:getX() + 0.5, square:getY() + 0.5, 0, 1)
+        if zombies:size() <= count then return { ok = false, error = "ambient spawn failed" } end
+        local zombie = zombies:get(zombies:size() - 1)
+        local killer = i <= 3 and player or winner
+        if isServer() then
+            zombie:setAttackedBy(killer)
+            zombie:die()
+        else
+            zombie:Kill(nil, killer)
+        end
+        -- Simulate the duplicate death notification seen with burning zombies.
+        Missions.countKill(zombie)
+        if i == target - 1 then
+            rec(Missions.openMission("cleanup") ~= nil and Missions.cleanupDown(mission.horde) == target - 1,
+                "corrections: local deaths shared and deduplicated before threshold")
+        end
+    end
+    local last = state.missions.last.cleanup
+    local ok = Missions.openMission("cleanup") == nil and last and last.character == wid
+    rec(ok == true, "corrections: shared order closed with one winner")
+    rec(Trust.get(wid) == before + 5, "corrections: winner paid exactly once", "trust=" .. Trust.get(wid))
+    if other then rec(Trust.get(cid) == 29, "corrections: other contributor not paid") end
+    return { ok = ok == true }
+end
+
 local function serverOp(module, command, player, args)
     if module ~= OPS_MODULE or not player then return end
     local MD = MilitaryDrop
@@ -1475,7 +1564,11 @@ local function serverOp(module, command, player, args)
         end
         return "none"
     end
-    if command == "giveRadio" then
+    if command == "correctionPrepare" then
+        reply = correctionPrepare(player)
+    elseif command == "correctionKills" then
+        reply = correctionKills(player)
+    elseif command == "giveRadio" then
         local inv = player:getInventory()
         local radio = inv:AddItem("Base.WalkieTalkie5")
         local channel = MD.Config.getChannel()
@@ -1673,6 +1766,81 @@ end
 
 -- ------------------------------------------------------------------ hooks
 
+local function addCorrectionsSteps(player)
+    local MD, S = MilitaryDrop, {}
+    if isClient() and not Ops.installed then
+        Ops.installed = true
+        Events.OnServerCommand.Add(onOpReply)
+    end
+    addStep("corrections: prepare post without portable radio", function()
+        player:setGodMod(true)
+        player:setInvisible(true)
+        player:setPrimaryHandItem(nil)
+        player:setSecondaryHandItem(nil)
+        if isClient() then sendPlayerExtraInfo(player) end
+        local r
+        if isClient() then r = asked(S, "prepareAsked", player, "correctionPrepare")
+        else r = correctionPrepare(player) end
+        if not r then return false end
+        S.post = r
+        rec(r.ok == true, "corrections: post preparation received")
+        return true
+    end, 30000)
+    addStep("corrections: open real post console", function()
+        if not S.post or not S.post.ok then return true end
+        S.radio = S.radio or ownPostNear(player)
+        if not S.radio then return false end
+        if not S.openAsked then
+            S.openAsked = true
+            MD.PostWindow.requestOpen(player, S.radio)
+        end
+        S.window = MD.PostWindow.instances[player:getPlayerNum()]
+        if not S.window or not S.window.data then return false end
+        rec(true, "corrections: console opened")
+        return true
+    end, 30000)
+    for _, spec in ipairs({ { key = "exchange:report", state = "reportDone" },
+        { key = "mission:control", state = "control" } }) do
+        local actionSpec = spec
+        addStep("corrections: " .. actionSpec.key .. " through console action", function()
+            local w = S.window
+            if not w then return true end
+            if not S[actionSpec.key] then
+                if ISTimedActionQueue.isPlayerDoingAction(player) then return false end
+                w:select(actionSpec.key)
+                local action = w:actions()
+                if not action or not action.enabled then return false end
+                w:activate("primary")
+                S[actionSpec.key] = true
+            end
+            local done = w.data.exchanges and w.data.exchanges[actionSpec.state]
+            if actionSpec.state == "control" then
+                for _, mission in ipairs(w.data.missions) do
+                    if mission.kind == "control" then done = mission.progress == 1 end
+                end
+            end
+            if not done then return false end
+            rec(not w:actions().enabled, "corrections: " .. actionSpec.key .. " completed and disabled")
+            return true
+        end, 45000)
+    end
+    addStep("corrections: draw and capture the fixed post", function()
+        if not S.window then return true end
+        if SHOTS and not shotAfter(S, "correctionShot", 10, "md_post_corrections.png") then return false end
+        return true
+    end, 10000)
+    addStep("corrections: real shared clearance deaths", function()
+        local r
+        if isClient() then r = asked(S, "killsAsked", player, "correctionKills")
+        else r = correctionKills(player) end
+        if not r then return false end
+        rec(r.ok == true, "corrections: clearance outcome received", r.error)
+        if S.window then S.window:close("corrections complete") end
+        if isClient() then request(player, "finish") end
+        return true
+    end, 30000)
+end
+
 local function seconds(value, default)
     return (tonumber(value) or default) * 1000
 end
@@ -1685,6 +1853,10 @@ function H.client.start(ctx)
     local player = ctx.players()[1]
     if not player then return false, "no local player" end
     installObserver()
+    if ctx.params.scenario == "corrections" then
+        addCorrectionsSteps(player)
+        return true
+    end
     if isClient() then
         if ctx.params.scenario == "marks" then
             addMarksClientSteps(player, seconds(ctx.params.airSec, 240))
@@ -1727,7 +1899,7 @@ function H.server.start(ctx)
     if not MilitaryDrop or not MilitaryDrop.Server then return false, "MilitaryDrop.Server missing" end
     local player = ctx.players()[1]
     if not player then return false, "no connected player (mode server alone: use mp)" end
-    if ctx.params.scenario == "marks" or ctx.params.scenario == "fulton" then
+    if ctx.params.scenario == "marks" or ctx.params.scenario == "fulton" or ctx.params.scenario == "corrections" then
         ServerOps.finished = false
         ServerOps.started = nowMs()
         ServerOps.limitMs = seconds(ctx.params.airSec, 240) * 6

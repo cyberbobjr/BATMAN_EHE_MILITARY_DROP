@@ -61,9 +61,13 @@ Chaque personnage a sa propre note (départ 25 sur 100), jamais affichée en chi
 
 ### F09 — Sources de confiance et missions
 
+Nettoyage : après apparition, les morts au sol dans le cercle et les membres suivis de la horde tués hors cercle alimentent un objectif commun fixe à 90 % de la horde réelle, arrondis au supérieur. Une mort ne compte qu'une fois ; le meilleur contributeur reçoit le gain existant. Les missions en cours conservent leur progression lors de la mise à jour.
+
 Par la section « Logistique » d'une radio militaire, sans code : rapport de situation quotidien, transmission des plaques d'identité vanilla des morts, confirmation d'une reconnaissance (grille annoncée à tous, premier arrivé), nettoyage d'une horde annoncée (quota de zombies abattus), réponse à un appel de contrôle. Chaque source a son gain, désactivable à 0. Options : `ReportGain`, `DogTagGain`, `ReconGain`, `ReconHours`, `ReconIntervalHours`, `CleanupGain`, `CleanupHours`, `CleanupQuota`, `CleanupIntervalHours`, `ControlGain`, `ControlHours`, `ControlIntervalHours`.
 
 ### F10 — Poste de liaison
+
+La console permet de transmettre le rapport quotidien, répondre à un contrôle, confirmer une reconnaissance, faire le point sur un nettoyage et demander un passage Fulton, sans radio portable. Ces échanges gardent leurs vérifications et bonus existants ; une reconnaissance exige toujours la présence du personnage dans sa zone. Le rapport déjà envoyé et le contrôle déjà confirmé sont désactivés pour ce personnage.
 
 Une radio militaire fixe (posée, haut de gamme, émettrice) devient la console de la station, une par équipe : voyants, indicatif, journal des messages reçus par le poste (même en zone déchargée, selon son alimentation), ordres de mission, casier des plaques, galons de confiance, appel de largage, baie de lecture de l'enregistreur de vol. Bonus de confiance du poste (`TrustPostBonus`).
 

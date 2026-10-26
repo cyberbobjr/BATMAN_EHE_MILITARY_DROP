@@ -70,6 +70,7 @@ require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Exchange"
 require "MilitaryDrop/MilitaryDrop_Client"
+require "MilitaryDrop/MilitaryDrop_ExchangeMenu"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
@@ -85,6 +86,7 @@ PostWindow.REFRESH_MS = 10000
 -- Rafraîchissement anticipé (lecture de la baie estimée finie, fin annoncée) :
 -- au plus une demande par intervalle, en ms réelles.
 PostWindow.EARLY_REFRESH_MS = 1000
+PostWindow.EXCHANGE_LOCK_MS = 10000
 -- Fermeture quand le joueur s'éloigne : même portée que le serveur
 -- (Radio.isNear), sinon la console resterait ouverte sans pouvoir agir.
 PostWindow.CLOSE_DISTANCE = Radio.MAX_WORLD_DISTANCE + 0.5
@@ -770,6 +772,49 @@ function PostWindow:onSendRecorder()
     sendToServer(self.player, "PostRecorderTransmit", self.object)
 end
 
+-- Reuse the portable radio's options and timed exchanges on the post radio.
+function PostWindow:exchangeReason(option, entry)
+    if getTimestampMs() < (self.exchangeLockedUntil or 0) then
+        return "IGUI_MilitaryDrop_RadioModule_Sending"
+    end
+    if self.data == nil or not PostWindow.lamps(self.data).on then
+        return "IGUI_MilitaryDrop_TurnOn"
+    end
+    if self.data.lineCut then
+        return "IGUI_MilitaryDrop_PostResult_lineCut"
+    end
+    local reason = MilitaryDrop.ExchangeMenu.reason(self.player, self.object, option)
+    if reason then
+        return reason
+    end
+    local states = self.data.exchanges or {}
+    if option.source == "report" and states.reportDone then
+        return "IGUI_MilitaryDrop_PostReportDone"
+    elseif option.source == "fulton" and states.fultonOpen then
+        return "IGUI_MilitaryDrop_PostFultonOpen"
+    elseif option.source == "control" and entry.mission and entry.mission.progress == 1 then
+        return "IGUI_MilitaryDrop_PostControlDone"
+    end
+    return nil
+end
+
+function PostWindow:onExchange(option, entry)
+    if not self:objectValid() or self:exchangeReason(option, entry) then
+        return false
+    end
+    self.exchangeLockedUntil = getTimestampMs() + PostWindow.EXCHANGE_LOCK_MS
+    local started = MilitaryDrop.ExchangeMenu.onOption(self.player, self.object, option, {
+        onReply = function()
+            self.exchangeLockedUntil = 0
+            self:refreshSoon()
+        end,
+    })
+    if not started then
+        self.exchangeLockedUntil = 0
+    end
+    return started
+end
+
 --- Actions du volet : principale (bouton de droite, A) et secondaire (bouton
 --- de gauche, X), chacune { text, enabled, reason, run } ou nil.
 function PostWindow:actions()
@@ -793,6 +838,14 @@ function PostWindow:actions()
             { text = getText("IGUI_MilitaryDrop_PostDeposit", tostring(self.tagCount)), enabled = self:canDeposit(),
                 reason = not self:canDeposit() and "IGUI_MilitaryDrop_PostResult_noTags" or nil,
                 run = function() self:onDeposit() end }
+    elseif entry.kind == "exchange" or entry.kind == "mission" then
+        local source = entry.source or (entry.mission and entry.mission.kind)
+        local option = MilitaryDrop.ExchangeMenu.optionFor(source)
+        if option then
+            local reason = self:exchangeReason(option, entry)
+            return { text = getText(option.label), enabled = reason == nil, reason = reason,
+                run = function() self:onExchange(option, entry) end }, nil
+        end
     end
     return nil, nil
 end

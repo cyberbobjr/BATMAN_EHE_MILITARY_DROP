@@ -258,6 +258,13 @@ Demandes de deux admins de serveurs MP sur Discord (2026-10-04/05). Conception :
 | IDEE-15 | Brouilleur radio PvP | I15 | à décider | [Plan](plan-ameliorations-i01-i16.md) | Étude : C11 reste écarté ; décision avant développement dépendant |
 | IDEE-16 | Demande spéciale au palier IV | I16 | conçu | [Plan](plan-ameliorations-i01-i16.md) | Résolution serveur et extension rétrocompatible du catalogue |
 
+## Correctifs du poste et du nettoyage — 0.7.1
+
+| ID | Élément | Réf. | État | Preuves | Reste |
+|---|---|---|---|---|---|
+| FIX-01 | Échanges depuis un poste fixe sans portable : rapport, contrôle, reconnaissance, statut du nettoyage et passage Fulton | [Plan](plan-poste-et-nettoyage.md) | testé hors jeu | `test_postwindow`, `test_post`, `test_missions` ; `run_tests.py --require-luacheck` code 0, 920 cas Lua et 7 contrôles réseau simulé ; [validation](../tests/correctifs-poste-nettoyage.md) | Scénario `corrections` préparé ; solo et MP à deux clients non exécutés (jeu utilisateur ouvert) ; rendu et manette |
+| FIX-02 | Objectif commun fixe à 90 pour cent, morts ambiantes au sol dans le cercle et membres suivis hors cercle ; migration additive | [Plan](plan-poste-et-nettoyage.md) | testé hors jeu | `test_missions` : zone, double événement, attribution, rechargement ; suite complète code 0 ; [validation](../tests/correctifs-poste-nettoyage.md) | Vrai redémarrage et MP à deux clients ; scénario `corrections` préparé, non exécuté |
+
 ## Journal
 
 - **2026-10-23** — Planification de I01, I02, I04, I05 et I09 à I16 : [plan](plan-ameliorations-i01-i16.md). I01 cumule attraction et spawn ; I02 part du bruit serveur déjà présent. I15 reste une étude conditionnelle sans annuler le rejet de C11. Aucun code, test en jeu ou changement de version pour cette planification.

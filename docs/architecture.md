@@ -1,6 +1,6 @@
 # Architecture de Military Drop
 
-État au 2026-10-21, version 0.5.4 (`modversion` de `mod.info`), Build 42.21. Les contrats détaillés (commandes, ModData, fichiers, options) sont dans [specifications-techniques.md](specifications-techniques.md) ; ce document décrit l'organisation et les flux.
+État au 2026-10-26, version 0.7.1 (`modversion` de `mod.info`), Build 42.21. L'architecture modulaire à autorité serveur est validée dans [developpement.md](developpement.md). Les contrats détaillés sont dans [specifications-techniques.md](specifications-techniques.md) ; ce document décrit l'organisation et les flux.
 
 Dans ce document, `lua/` désigne `Contents/mods/batman_MilitaryDrop/42.21/media/lua/` et chaque module `MilitaryDrop_X.lua` est cité par son nom court `X`.
 
@@ -112,7 +112,7 @@ Chaque module serveur inscrit ses propres commandes dans `Server.COMMANDS` (voir
 2. **Vol** : `Flights` avance chaque vol sur `OnTick`, envoie `FlightStart`/`FlightSync`/`FlightEnd`, fait du bruit, annonce la grille (`Broadcast` + `DropAnnounce`) ; un crash éventuel (`Crash.roll`, `GroundFire`, `AdminCrashNext`) passe par `Wreck`.
 3. **Livraison** : quand la case est chargée (`LoadChunk`, sondage), `Crate` crée le véhicule `Base.MilitaryDrop_SupplyCrate`, son coffre est rempli par `OnFillContainer`, la horde apparaît ; leurre : `Decoy.onDelivered`. `Server.pollCollected` (chaque minute) clôt le largage quand une caisse est ouverte ou vidée.
 4. **Confiance** : `Exchange` → commandes `Mission*` → `Missions` → `Trust.add` ; missions planifiées sur `EveryTenMinutes`, nettoyage suivi par `OnZombieDead`.
-5. **Poste de liaison** : commandes `Post*` → `Post` ; journal rafraîchi chaque minute (`EveryOneMinute`), état relu au `LoadChunk`.
+5. **Poste de liaison** : commandes `Post*` → `Post` ; journal rafraîchi chaque minute (`EveryOneMinute`), état relu au `LoadChunk`. Les actions des affaires de la console utilisent `ExchangeMenu` → `Exchange.send` → `Missions` comme une radio portable ; la réponse déclenche une nouvelle lecture de la console.
 6. **Fulton** : `MissionFulton` ouvre un créneau ; `FultonLaunch` → `FultonServer.launch` (revérification complète) → paiement, vol `FultonFlightServer`, `Snapshot` aux clients.
 7. **Zones** : `ZoneList`/`ZoneAdd`/… → `Zones.handleCommand` (droit `ChangeAndReloadServerOptions`, cadence) → `ZonesFile` écrit `dropzones.txt`, réponses `ZoneReply` puis `ZoneListReply`.
 

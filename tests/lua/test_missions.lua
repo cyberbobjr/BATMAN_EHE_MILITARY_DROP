@@ -630,6 +630,7 @@ local function makeZombie(outfit, x, y, killer, outfitId)
     function zombie.getOutfitName(self) return self.outfit end
     function zombie.getX(self) return self.x end
     function zombie.getY(self) return self.y end
+    function zombie.getZ(self) return self.z or 0 end
     function zombie.getAttackedBy(self) return self.killer end
     function zombie.getInventory(self)
         return {
@@ -1150,21 +1151,25 @@ function T.horde_identifiers_survive_virtualization()
     assertEq(horde.dead, 1, "un autre zombie de même tenue ne compte plus")
 end
 
-function T.only_horde_zombies_count()
+function T.local_zombies_and_tracked_zombies_outside_count_once()
     SandboxVars.MilitaryDrop.CleanupQuota = 10
     local alice = makePlayer("alice", 0, 0)
     Missions.launch("cleanup")
     Missions.countKill(makeZombie("Tourist", 300, 400, alice, 77 * 65536 + 1))
     local horde = spawnNow()
-    Missions.countKill(makeZombie("Tourist", 300, 400, alice, 77 * 65536 + 1))
-    assertEq(cleanup().horde.dead, 0, "zombie de la zone hors horde : rien")
-    assertEq(cleanup().counts["C:alice"], nil, "rien pour l'équipe")
+    local ambient = makeZombie("Tourist", 300, 400, alice, 77 * 65536 + 1)
+    Missions.countKill(ambient)
+    Missions.countKill(ambient)
+    assertEq(cleanup().horde.dead, 0, "ambient death does not consume a tracked slot")
+    assertEq(cleanup().horde.nearbyDead, 1, "local death counted once")
+    assertEq(cleanup().counts["C:alice"], 1, "personal credit")
     local zombie = hordeZombie(horde[1], alice)
     zombie.x, zombie.y = 2000, 2000
     Missions.countKill(zombie)
     Missions.countKill(zombie)
     assertEq(cleanup().horde.dead, 1, "zombie de la horde sorti de la zone : compté, une fois")
-    assertEq(cleanup().counts["C:alice"], 1, "pour l'équipe du tueur")
+    assertEq(cleanup().counts["C:alice"], 2, "both eligible deaths credited")
+    assertEq(Missions.cleanupDown(cleanup().horde), 2, "common progress")
 end
 
 function T.horde_deaths_without_a_player_count_only_for_the_rest()
@@ -1310,7 +1315,7 @@ function T.status_report_before_and_after_the_horde_appears()
     Missions.countKill(hordeZombie(horde[3], bob))
     Missions.countKill(hordeZombie(horde[4], nil))
     call("MissionCleanupStatus", alice)
-    assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_CleanupStatus|" .. callsign .. "|2|5",
+    assertEq(lastReply(alice).lines[1], "IGUI_MilitaryDrop_Reply_CleanupStatus|" .. callsign .. "|2|5|4|9",
         "deux abattus par la station ; reste 9 - 4 = 5 avant la clôture")
     assertEq(Trust.get("C:alice"), 25, "aucun gain pour faire le point")
     SandboxVars.MilitaryDrop.CleanupGain = 0
@@ -1447,6 +1452,105 @@ function T.private_report_payload_never_uses_server_translations()
     getText = function(key, callsign) return "FR: " .. callsign .. " — rapport déjà reçu" end
     assertTrue(MilitaryDrop.Exchange.lineText(args.lines[1]):find("rapport déjà reçu", 1, true) ~= nil,
         "résolution par le client après réception")
+end
+
+function T.circle_boundary_floor_and_deadline_filter_ambient_deaths()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    local alice = makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    Missions.countKill(makeZombie("Ambient", 300.5, 400.5, alice))
+    spawnNow()
+    assertEq(Missions.cleanupDown(cleanup().horde), 0, "no retroactive credit before spawn")
+    local upstairs = makeZombie("Ambient", 300.5, 400.5, alice)
+    upstairs.z = 1
+    Missions.countKill(upstairs)
+    Missions.countKill(makeZombie("Ambient", 340.501, 400.5, alice))
+    assertEq(Missions.cleanupDown(cleanup().horde), 0, "other floor and just outside excluded")
+    Missions.countKill(makeZombie("Ambient", 340.5, 400.5, alice))
+    assertEq(cleanup().horde.nearbyDead, 1, "exact edge included")
+    wait(72)
+    Missions.countKill(makeZombie("Ambient", 300.5, 400.5, alice))
+    assertEq(cleanup().horde.nearbyDead, 1, "expired mission ignores local deaths")
+end
+
+function T.shared_mixed_progress_closes_at_ninety_percent_and_rewards_the_leader()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    local alice, bob = makePlayer("alice", 0, 0), makePlayer("bob", 0, 0)
+    Missions.launch("cleanup")
+    local horde = spawnNow()
+    local tracked = hordeZombie(horde[1], alice)
+    Missions.countKill(tracked)
+    Missions.countKill(tracked)
+    for _ = 1, 3 do Missions.countKill(makeZombie("Ambient", 300.5, 400.5, alice)) end
+    for _ = 1, 4 do Missions.countKill(makeZombie("Ambient", 300.5, 400.5, bob)) end
+    local m = cleanup()
+    assertEq(Missions.cleanupDown(m.horde), 8, "shared 8 of 9, tracked death not doubled")
+    local list = Missions.listForCharacter("C:alice")
+    assertEq(list[1].down, 8, "post displays both sources")
+    assertEq(list[1].left, 1, "post and threshold agree")
+    assertEq(list[1].progress, 4, "personal contribution")
+    Missions.countKill(makeZombie("Ambient", 300.5, 400.5, bob))
+    assertEq(cleanup(), nil, "9 of 10 closes the public order")
+    assertEq(STATE.missions.last.cleanup.character, "C:bob", "most kills across both sources")
+    assertEq(Trust.get("C:bob"), 30, "one reward")
+    assertEq(Trust.get("C:alice"), 25, "other participant not rewarded")
+    Missions.countKill(makeZombie("Ambient", 300.5, 400.5, alice))
+    assertEq(Trust.get("C:alice"), 25, "closed mission cannot pay again")
+end
+
+function T.old_tracked_progress_migrates_additively_on_reload()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    local alice = makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    local horde = spawnNow()
+    Missions.countKill(hordeZombie(horde[1], alice))
+    local m = cleanup()
+    local deadline, target = m.deadline, Missions.hordeTarget(m.horde)
+    m.horde.cleanupSchema, m.horde.nearbyDead = nil, nil
+    loadMod("server/MilitaryDrop/MilitaryDrop_Missions.lua")
+    Missions = MilitaryDrop.Missions
+    Missions.listForCharacter("C:alice")
+    assertEq(m.horde.cleanupSchema, 2, "new schema")
+    assertEq(m.horde.dead, 1, "tracked progress retained")
+    assertEq(m.horde.nearbyDead, 0, "no retroactive ambient kills")
+    assertEq(m.counts["C:alice"], 1, "contribution retained")
+    assertEq(m.deadline, deadline, "deadline retained")
+    assertEq(Missions.hordeTarget(m.horde), target, "target retained")
+    Missions.countKill(makeZombie("Ambient", 300.5, 400.5, alice))
+    loadMod("server/MilitaryDrop/MilitaryDrop_Missions.lua")
+    Missions = MilitaryDrop.Missions
+    Missions.listForCharacter("C:alice")
+    assertEq(m.horde.nearbyDead, 1, "second reload preserves new progress")
+    assertEq(Missions.cleanupDown(m.horde), 2, "same total after reload")
+end
+
+function T.ambient_fire_and_locked_players_count_without_personal_credit()
+    SandboxVars.MilitaryDrop.CleanupQuota = 10
+    local alice = makePlayer("alice", 0, 0)
+    Missions.launch("cleanup")
+    spawnNow()
+    local fire = makeZombie("Ambient", 300.5, 400.5, nil)
+    Missions.countKill(fire)
+    Missions.countKill(fire)
+    STATE.characterTrust = { ["C:alice"] = { value = 10, lockedUntil = WORLD_HOURS + 72 } }
+    Missions.countKill(makeZombie("Ambient", 300.5, 400.5, alice))
+    assertEq(Missions.cleanupDown(cleanup().horde), 2, "common credit without duplicates")
+    assertEq(cleanup().counts["C:alice"], nil, "no personal credit for a cut line")
+end
+
+function T.post_exchange_projection_is_personal_and_expires()
+    local alice, bob = makePlayer("alice"), makePlayer("bob")
+    call("MissionReport", alice)
+    call("MissionFulton", alice)
+    assertTrue(Missions.postExchanges("C:alice").reportDone, "report sent today")
+    assertTrue(Missions.postExchanges("C:alice").fultonOpen, "passage active")
+    assertTrue(not Missions.postExchanges("C:bob").reportDone, "shared post does not share reports")
+    assertTrue(not Missions.postExchanges("C:bob").fultonOpen, "personal passage")
+    CLOCK = CLOCK + 24
+    WORLD_HOURS = WORLD_HOURS + 24
+    assertTrue(not Missions.postExchanges("C:alice").reportDone, "next day available")
+    assertTrue(not Missions.postExchanges("C:alice").fultonOpen, "expired passage available")
+    assertTrue(bob ~= nil, "second character")
 end
 
 return T

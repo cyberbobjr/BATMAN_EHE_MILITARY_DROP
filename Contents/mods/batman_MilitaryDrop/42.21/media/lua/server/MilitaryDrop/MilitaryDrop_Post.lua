@@ -865,6 +865,10 @@ function Post.consoleData(teamId, object, player)
         mail[i] = { id = entry.id, name = entry.name, by = entry.by }
     end
     local Trust = MilitaryDrop.Trust
+    -- The post already supports the missions module being unavailable; keep
+    -- its personal projection optional, like Post.missions above.
+    local Missions = MilitaryDrop.Missions
+    local exchanges = Missions and Missions.postExchanges and Missions.postExchanges(characterId) or nil
     return {
         x = post.x, y = post.y, z = post.z,
         callsign = Teams.callsign(teamId),
@@ -878,6 +882,7 @@ function Post.consoleData(teamId, object, player)
         lineCut = Trust.isLineCut(characterId),
         lines = lines,
         missions = Post.missions(characterId),
+        exchanges = exchanges,
         mail = mail,
         bay = Post.bayView(teamId),
     }

@@ -121,6 +121,14 @@ Les actions chronométrées partagées `MilitaryDrop.SirenAction` et `MilitaryDr
 
 La ModData globale est relue à chaque usage (`ModData.getOrCreate`) : le moteur la vide et la relit juste avant `OnInitGlobalModData`.
 
+### Nettoyage et état personnel du poste (0.7.1)
+
+`missions.open.cleanup.horde` conserve `ids`, `size`, `dead` (morts reconnues par le suivi), `hours` et ajoute `nearbyDead` (autres morts admissibles dans le cercle) et `cleanupSchema = 2`. La migration initialise `nearbyDead` à zéro sans effacer contributions, signatures, cible ni échéance. La progression commune est `dead + nearbyDead` ; l'objectif fixe est `ceil(size * 0.9)` (au moins 1).
+
+Après apparition et avant échéance : un zombie reconnu par le suivi compte partout ; sinon sa mort compte si `z = 0` et si sa distance au centre `(x + 0.5, y + 0.5)` est au plus le rayon de la mission. `MilitaryDrop_cleanup` dédoublonne les deux chemins. Les morts sans joueur attribuable avancent le total sans contribution personnelle. Récompense unique au meilleur contributeur, égalité au premier à ce compte, selon les règles existantes de ligne coupée et de plafond.
+
+`PostData.exchanges = { reportDone, fultonOpen }` ne concerne que le personnage consultant la console. Les actions utilisent les commandes `Mission*` et le transport `Exchange` existants ; `ExchangeReply` du statut de nettoyage contient contribution personnelle, reste, total commun et cible. La référence par tenue reste non unique, comme avant ; le comptage géographique ne dépend pas de cette reconnaissance.
+
 ### ModData d'objets
 
 | Clé | Objet | Valeur |
@@ -219,9 +227,9 @@ Page `MilitaryDrop`, noms complets `MilitaryDrop.<Option>`, lues à chaque usage
 | `ReconGain` | integer | 3 | 0 à 20 | Confiance : reconnaissance | Confiance gagnée par la première station qui confirme une reconnaissance depuis la grille annoncée (25 cases au plus). 0 désactive les reconnaissances. |
 | `ReconHours` | integer | 48 | 1 à 720 | Échéance de la reconnaissance (heures) | Heures de jeu pour confirmer une reconnaissance. |
 | `ReconIntervalHours` | integer | 24 | 1 à 720 | Heures entre deux reconnaissances | Heures de jeu après la clôture d'une reconnaissance avant la suivante (à 25 pour cent près). |
-| `CleanupGain` | integer | 5 | 0 à 20 | Confiance : nettoyage | Confiance pour le personnage qui abat le plus de zombies de la horde annoncée quand 90 pour cent sont morts. Les morts sont comptés personnellement, même dans une faction. 0 désactive les nettoyages. |
-| `CleanupHours` | integer | 72 | 1 à 720 | Échéance du nettoyage (heures) | Heures de jeu pour abattre 90 pour cent de la horde. |
-| `CleanupQuota` | integer | 30 | 1 à 1000 | Taille de la horde du nettoyage | Zombies de la horde qui apparaît dans la zone annoncée à l'arrivée du premier joueur. L'ordre est rempli quand 90 pour cent de la horde est morte. |
+| `CleanupGain` | integer | 5 | 0 à 20 | Confiance : nettoyage | Gain au meilleur contributeur à l'objectif commun, selon le comptage mixte décrit plus haut. 0 désactive les nettoyages. |
+| `CleanupHours` | integer | 72 | 1 à 720 | Échéance du nettoyage (heures) | Heures de jeu pour atteindre l'objectif commun. |
+| `CleanupQuota` | integer | 30 | 1 à 1000 | Taille de la horde du nettoyage | Horde déployée à l'arrivée. Objectif fixe à 90 pour cent de la taille réelle, arrondis au supérieur ; les morts ambiantes au sol dans le cercle comptent aussi. |
 | `CleanupIntervalHours` | integer | 48 | 1 à 720 | Heures entre deux nettoyages | Heures de jeu après la clôture d'un nettoyage avant le suivant (à 25 pour cent près). |
 | `ControlGain` | integer | 1 | 0 à 20 | Confiance : appel de contrôle | Confiance pour chaque personnage qui confirme à temps un appel de contrôle, une fois par personnage. 0 désactive les appels de contrôle. |
 | `ControlHours` | integer | 4 | 1 à 72 | Durée de l'appel de contrôle (heures) | Heures de jeu pour confirmer la réception. |

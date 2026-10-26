@@ -16,11 +16,12 @@ local function arrayList(values)
 end
 
 function T.setup()
-    SandboxVars = { MilitaryDrop = { Frequency = 151.4 } }
+    SandboxVars = { MilitaryDrop = { Frequency = 151.4, FultonValue = 100 } }
     isClient = function() return true end
     isServer = function() return false end
     getText = function(k, a, b) return k .. "|" .. tostring(a) .. "|" .. tostring(b) end
     getTimestampMs = function() return 0 end
+    getSoundManager = function() return { playUISound = function() end } end
     ItemTag = { DOG_TAG = "base:dogtag" }
     ISPanelJoypad = { derive = function(self, name)
         return setmetatable({ Type = name }, { __index = self })
@@ -38,6 +39,7 @@ function T.setup()
     loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Codes.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Exchange.lua")
+    loadMod("client/MilitaryDrop/MilitaryDrop_ExchangeMenu.lua")
     MilitaryDrop.Client = { HANDLERS = {} }
     loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_PostWindow_Affairs.lua")
@@ -376,7 +378,7 @@ function T.affairs_list_recorders_tags_then_orders()
     data.missions = { { kind = "recon", title = "Recon", remaining = 40, hours = 48, x = 1711, y = 6016 },
         { kind = "control", title = "Control", remaining = 2, hours = 4, progress = 0, quota = 1 } }
     local list = W.affairs(data, { recorderItem(7, "W3"), recorderItem(8, "W5", { MilitaryDrop_crashX = 10 }) }, 2)
-    assertEq(keysOf(list), "[header] bay rec:W5 tags [header] mission:recon mission:control",
+    assertEq(keysOf(list), "[header] bay rec:W5 tags [header] mission:recon mission:control exchange:report exchange:fulton",
         "à traiter (baie, inventaire, plaques), puis ordres")
     assertEq(list[2].icon, "MilitaryDrop.FlightRecorder", "icône de l'enregistreur")
     assertEq(list[2].sub, "IGUI_MilitaryDrop_PostRecorderReading|40|nil", "lecture en pour-cent")
@@ -393,7 +395,7 @@ function T.affairs_list_recorders_tags_then_orders()
     data.missions = {}
     data.bay = nil
     local empty = W.affairs(data, {}, 0)
-    assertEq(keysOf(empty), "[header] tags [header] [empty]", "sans mission : mention, plaques toujours là")
+    assertEq(keysOf(empty), "[header] tags [header] [empty] exchange:report exchange:fulton", "communications without missions")
     assertEq(W.pickAffair(list, "rec:W5").key, "rec:W5", "sélection gardée")
     assertEq(W.pickAffair(list, "gone").key, "bay", "sinon la première ligne")
 end
@@ -438,6 +440,7 @@ local function window(data, recorders, tags)
         getZ = function() return 0 end,
         getObjects = function() return { indexOf = function(_, o) return o == object and 0 or -1 end } end }
     object.getSquare = function() return square end
+    object.getDeviceData = function() return { getIsTurnedOn = function() return data.on end } end
     local w = setmetatable({ player = player, playerNum = 0, object = object, data = data,
         L = W.computeLayout(data), tagCount = tags or 0, tagLabels = {}, recorderItems = recorders or {},
         affairList = {}, rackScroll = 0, listScroll = 0 }, { __index = W })
@@ -485,9 +488,9 @@ function T.each_affair_has_its_own_actions()
     assertEq(w.selectedKey, "tags", "bas : affaire suivante")
     primary, secondary = w:actions()
     assertTrue(secondary.enabled and not primary.enabled, "une plaque sur soi, casier vide")
-    -- Mission : aucune action.
+    -- Communications remain reachable after the mailbox.
     w:moveSelection(5)
-    assertEq(w:selectedAffair().kind, "tags", "dernière ligne sélectionnable")
+    assertEq(w:selectedAffair().source, "fulton", "last selectable communication")
 end
 
 function T.bay_progress_moves_between_two_refreshes_without_finishing()
@@ -576,6 +579,65 @@ function T.end_click_refreshes_the_console_open_on_that_post()
     W.onBaySound({ x = 10, y = 10, z = 0, event = "done", reading = false })
     assertEq(#sent, 1, "fin sur ce poste : console rafraîchie")
     W.instances = {}
+end
+
+function T.post_communications_use_the_shared_exchange_and_refresh_on_reply()
+    local data = sampleData()
+    data.missions = { { kind = "control", progress = 0, remaining = 2, quota = 1 },
+        { kind = "recon", remaining = 2 }, { kind = "cleanup", remaining = 2 } }
+    local w, sent = window(data)
+    local Menu = MilitaryDrop.ExchangeMenu
+    Menu.cleanupState.open = true
+    Menu.dogTags = function() return {} end
+    ZombRand = function() return 0 end
+    local calls = {}
+    MilitaryDrop.Exchange.send = function(player, device, command, args, speech, opts)
+        calls[#calls + 1] = { player = player, device = device, command = command, args = args,
+            speech = speech, opts = opts }
+        return true
+    end
+    local order = { { "exchange:report", "MissionReport" }, { "mission:control", "MissionControl" },
+        { "mission:recon", "MissionRecon" }, { "mission:cleanup", "MissionCleanupStatus" },
+        { "exchange:fulton", "MissionFulton" } }
+    for _, pair in ipairs(order) do
+        w:select(pair[1])
+        local action = w:actions()
+        assertTrue(action and action.enabled, pair[1] .. " available without portable radio")
+        action.run()
+        assertEq(calls[#calls].command, pair[2], "existing server command")
+        assertEq(calls[#calls].device, w.object, "post radio")
+        assertTrue(not w:actions().enabled, "locked during timed action and reply")
+        calls[#calls].opts.onReply({ status = "ok" })
+        assertTrue(w:actions().enabled, "reply releases the lock")
+    end
+    assertTrue(#sent >= 1, "post refresh requested after exchange")
+end
+
+function T.completed_and_unavailable_post_communications_have_reasons()
+    local data = sampleData()
+    data.exchanges = { reportDone = true, fultonOpen = true }
+    data.missions = { { kind = "control", progress = 1, remaining = 2, quota = 1 } }
+    local w = window(data)
+    for _, pair in ipairs({ { "exchange:report", "IGUI_MilitaryDrop_PostReportDone" },
+        { "exchange:fulton", "IGUI_MilitaryDrop_PostFultonOpen" },
+        { "mission:control", "IGUI_MilitaryDrop_PostControlDone" } }) do
+        w:select(pair[1])
+        local action = w:actions()
+        assertTrue(not action.enabled, "completed action disabled")
+        assertEq(action.reason, pair[2], "completion reason")
+    end
+    data.exchanges.reportDone = false
+    w:select("exchange:report")
+    data.on = false
+    assertEq(w:actions().reason, "IGUI_MilitaryDrop_TurnOn", "powered radio required")
+    data.on, data.lineCut = true, true
+    assertEq(w:actions().reason, "IGUI_MilitaryDrop_PostResult_lineCut", "cut personal line")
+    data.lineCut = false
+    w.player.getX = function() return 100 end
+    assertEq(w:actions().reason, "IGUI_MilitaryDrop_TooFar", "distance checked on client")
+    SandboxVars.MilitaryDrop.ReportGain = 0
+    w:refreshAffairs()
+    for _, entry in ipairs(w.affairList) do assertTrue(entry.source ~= "report", "disabled source hidden") end
 end
 
 return T

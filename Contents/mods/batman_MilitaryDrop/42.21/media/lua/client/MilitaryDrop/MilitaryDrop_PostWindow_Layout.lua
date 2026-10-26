@@ -328,6 +328,9 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
         "IGUI_MilitaryDrop_PostRecorderInsert", "IGUI_MilitaryDrop_PostTransmit" }) do
         btnW = math.max(btnW, measure(getText(key)) + 3 * u + fh)
     end
+    for _, option in ipairs(MilitaryDrop.ExchangeMenu.OPTIONS) do
+        btnW = math.max(btnW, measure(getText(option.label)) + 3 * u + fh)
+    end
     L.tagW = math.floor(math.max(fh * 5, measure("Xxxxxxx Xxxxxxx", mono) * 0.8 + 2 * u))
     L.tagH = fh + 10
     L.boxSize = math.max(48, 3 * fh)
@@ -423,7 +426,7 @@ function PostWindow.computeLayout(data, maxWidth, maxHeight)
     L.tagsHint = rect(dx, L.btnB.y - u - fh, dw, fh)
     -- Mission : fiche de l'ordre, puis texte complet de la base.
     L.missionCard = rect(dx, L.detailTop, dw, L.cardH)
-    L.missionText = rect(dx, L.missionCard.y + L.cardH + u, dw, d.y + d.h - u - (L.missionCard.y + L.cardH + u))
+    L.missionText = rect(dx, L.missionCard.y + L.cardH + u, dw, L.btnA.y - u - (L.missionCard.y + L.cardH + u))
 
     -- Bande du bas.
     y = d.y + d.h + u

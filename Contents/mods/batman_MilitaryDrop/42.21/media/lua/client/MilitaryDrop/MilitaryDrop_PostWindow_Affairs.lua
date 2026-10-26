@@ -100,6 +100,17 @@ function PostWindow.affairs(data, recorders, tagCount)
             title = view.title, sub = view.sub ~= "" and view.sub or view.due, due = view.due,
             lamp = view.done and "green" or ((view.bar and view.bar.urgent) and "red" or nil) }
     end
+    for _, source in ipairs({ "report", "fulton" }) do
+        if MilitaryDrop.Exchange.isEnabled(source) then
+            local option = MilitaryDrop.ExchangeMenu.optionFor(source)
+            local states = data and data.exchanges or {}
+            local done = source == "report" and states.reportDone or source == "fulton" and states.fultonOpen
+            local doneKey = source == "report" and "IGUI_MilitaryDrop_PostReportDone" or "IGUI_MilitaryDrop_PostFultonOpen"
+            list[#list + 1] = { kind = "exchange", key = "exchange:" .. source, source = source,
+                title = getText(option.label), sub = getText(done and doneKey or option.tooltip),
+                lamp = done and "green" or nil }
+        end
+    end
     return list
 end
 

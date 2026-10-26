@@ -638,7 +638,10 @@ end
 
 function T.console_data_has_labels_but_no_trust_number()
     WORLD_HOURS = 1000
-    MilitaryDrop.Missions = { listForCharacter = function(teamId)
+    MilitaryDrop.Missions = { postExchanges = function(characterId)
+        assertEq(characterId, "C:alice", "personal exchange state")
+        return { reportDone = true, fultonOpen = false }
+    end, listForCharacter = function(teamId)
         assertEq(teamId, "C:alice", "missions du personnage")
         -- Format du module des missions : deadline absolue, deadlineHours restantes.
         return { { kind = "cleanup", title = "Nettoyage", text = "Zone", deadline = 1030, deadlineHours = 30,
@@ -654,6 +657,8 @@ function T.console_data_has_labels_but_no_trust_number()
     assertEq(data.tier, 2, "palier d'une équipe neuve à 25 (libellé côté client)")
     assertEq(data.value, nil, "aucune note chiffrée")
     assertEq(data.receiving, nil, "rien ne dit si le canal est le bon")
+    assertTrue(data.exchanges.reportDone, "report status sent to the consulting character")
+    assertTrue(not data.exchanges.fultonOpen, "passage status")
     assertEq(data.missions[1].remaining, 30, "échéance restante")
     assertEq(data.missions[1].progress, 12, "abattus par l'équipe")
     assertEq(data.missions[1].spotted, true, "horde repérée")

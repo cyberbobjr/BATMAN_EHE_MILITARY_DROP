@@ -623,6 +623,22 @@ function PostWindow:drawDetail(hover, payload)
         self:drawTagsDetail(hover, payload)
     elseif entry.kind == "mission" then
         self:drawMissionDetail(entry, hover)
+    elseif entry.kind == "exchange" then
+        self:drawDetailTape(entry.title)
+        local option = MilitaryDrop.ExchangeMenu.optionFor(entry.source)
+        local box = L.missionText
+        local y = L.detailTop
+        local text = getText(option.tooltip)
+        if entry.sub ~= text then
+            text = text .. " " .. entry.sub
+        end
+        for _, line in ipairs(PostWindow.wrap(text, UIFont.Small, box.w)) do
+            if y + L.fh > L.btnA.y - L.u then
+                break
+            end
+            self:drawText(line, box.x, y, PAINT[1], PAINT[2], PAINT[3], 0.9, UIFont.Small)
+            y = y + L.fh
+        end
     end
     local primary, secondary = self:actions()
     local joypad = self.drawJoypadFocus and Joypad and Joypad.Texture

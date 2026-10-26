@@ -5,6 +5,7 @@
 //   python .claude/tools/pz-autotest/pz_autotest.py sp    MilitaryDrop --wait-idle 3600
 //   python .claude/tools/pz-autotest/pz_autotest.py mp    MilitaryDrop --clients 1 --client-run --wait-idle 3600
 // Scenarios: -P scenario=marks (map markers), -P scenario=fulton (real Fulton launch); -P shots=1 for screenshots.
+// -P scenario=corrections: fixed post report/check and real clearance deaths (mp: --clients 2 --client-run).
 {
   "name": "MilitaryDrop",
   "gameVersion": "42.21",

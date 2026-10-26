@@ -25,6 +25,8 @@ Un poste de liaison est une radio militaire fixe dont votre station fait sa base
 
 ## La console
 
+Le rapport quotidien et le contrôle radio ne demandent aucune radio portable : sélectionnez le rapport ou le contrôle ouvert dans la liste des affaires, puis utilisez son bouton d'action. La confirmation de reconnaissance, le statut du nettoyage et la demande de passage Fulton sont aussi disponibles. Un rapport ou contrôle déjà validé ne paie pas deux fois, même en changeant de radio. La reconnaissance exige toujours la présence de votre personnage dans sa zone.
+
 **En haut** : trois voyants. **MARCHE** (alimenté et allumé), **RÉCEP.** (clignote à l'arrivée d'un message), **ALIM.** avec la source (secteur, groupe électrogène, pile) et la charge de la pile. À droite : votre indicatif et la fréquence.
 
 **JOURNAL** : tout ce que la base dit à votre station ou à toutes les stations, avec la date et l'heure. Le poste ne reçoit que s'il est allumé, alimenté et réglé. Sinon, une ligne marque le trou : *« -- aucune réception (3 message(s) manqué(s)) -- »*. Le poste continue de recevoir pendant votre absence.
