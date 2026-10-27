@@ -107,7 +107,7 @@ Missed it? The base repeats the grid of every drop whose supply cases are all st
 
 ### Map symbols
 
-The base marks your map only if one of your radios **hears** the announcement or one of its reminders, or when the base gives you a mission grid in a reply on your radio (recon too far, clearance status). The symbols are the game's own map symbols: you can erase them like any map note.
+For drops and clearance, the base marks your map when one of your radios **hears** the announcement, a reminder or a reply giving the grid. Recon and relay repair missions also have automatic markers synchronized while active, including after reconnecting. These are the game's own map symbols: you can erase them like any map note; synchronization may restore an active mission marker.
 
 | Symbol | Meaning | Where |
 |---|---|---|
@@ -136,3 +136,9 @@ Be quick: the first case opened by the requesting character gives **+10 trust**.
 ### Dismantle the empty crate
 
 Empty the crate, carry a **hammer** and a **saw**, right-click it: **Dismantle the crate**. You get planks (or unusable wood) and Carpentry experience, like dismantling wooden furniture. The option is greyed with the reason if the crate is not empty or a tool is missing.
+
+## Noise and interrupted calls — 0.8.0
+
+Rotor noise attracts existing infected along the route; actual delivery makes a separate noise. Lowering these sounds does not remove the configured drop horde. A delayed delivery never plays its arrival noise before landing.
+
+A relay failure suspends new calls: listen to the order and [repair the designated cabinet](04-trust-and-missions.md). With the optional submod, **Link jammed** indicates an [active RJ-93](10-radio-jammer.md): move away or switch off its source. Public broadcasts remain audible. These interruptions are separate from a wrong code or the wait between drops.

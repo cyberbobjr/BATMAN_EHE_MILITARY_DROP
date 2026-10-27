@@ -350,23 +350,24 @@ function Panel:layout()
         self.codeY = y
         y = y + self.buttonH + gap
     end
-    local buttons = { self.requestButton }
-    for _, button in ipairs(self.optionButtons) do
-        buttons[#buttons + 1] = button
-    end
-    for i, button in ipairs(buttons) do
-        button:setX(b)
-        button:setY(y)
-        button:setWidth(w)
+    self.requestButton:setX(b)
+    self.requestButton:setY(y)
+    self.requestButton:setWidth(w)
+    self.requestButton:setHeight(self.buttonH)
+    setButtonTitle(self, self.requestButton, self.requestButton.fullTitle)
+    y = y + self.buttonH + gap
+    self.ruleY = y
+    y = y + gap
+    -- Two columns keep the additional exchanges reachable at 720p.
+    local columnW = math.floor((w - gap) / 2)
+    for i, button in ipairs(self.optionButtons) do
+        button:setX(b + ((i - 1) % 2) * (columnW + gap))
+        button:setY(y + math.floor((i - 1) / 2) * (self.buttonH + gap))
+        button:setWidth(columnW)
         button:setHeight(self.buttonH)
         setButtonTitle(self, button, button.fullTitle)
-        y = y + self.buttonH + gap
-        if i == 1 then
-            -- Séparation entre le largage et les échanges.
-            self.ruleY = y
-            y = y + gap
-        end
     end
+    y = y + math.ceil(#self.optionButtons / 2) * (self.buttonH + gap)
     self.replyTitleY = y
     y = y + self.fh
     self.replyY = y
@@ -492,7 +493,12 @@ function Panel:render()
     end
     self:drawRect(b, self.ruleY, self.width - 2 * b, 1, 0.3, 1, 1, 1)
     local w = self.width - 2 * b
-    self:drawText(RM.fit(getText("IGUI_MilitaryDrop_RadioModule_LastReply"), self.font, w), b, self.replyTitleY,
+    local title = getText("IGUI_MilitaryDrop_RadioModule_LastReply")
+    for _, provider in pairs(MilitaryDrop.Extensions and MilitaryDrop.Extensions.radioStatus or {}) do
+        local key = provider(self.player)
+        if key then title = getText(key); break end
+    end
+    self:drawText(RM.fit(title, self.font, w), b, self.replyTitleY,
         0.7, 0.7, 0.7, 1, self.font)
     if #self.replyLines == 0 then
         self:drawText(RM.fit(getText("IGUI_MilitaryDrop_RadioModule_NoReply"), self.font, w), b, self.replyY,

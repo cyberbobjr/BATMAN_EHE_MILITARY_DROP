@@ -23,6 +23,9 @@
 
 MilitaryDrop = MilitaryDrop or {}
 
+-- Optional extensions register by stable key; the base mod loads no optional data.
+MilitaryDrop.Extensions = MilitaryDrop.Extensions or { commandGates = {}, radioStatus = {} }
+
 -- Rechargement de ce fichier : un seul abonné au sondage (Events.X.Add ne
 -- dédoublonne pas).
 local previousPoll = MilitaryDrop.Config and MilitaryDrop.Config.poll
@@ -43,6 +46,8 @@ Config.RESERVED_CHANNELS = { [112200] = true }
 
 local DEFAULTS = {
     CooldownHours = 168,
+    RotorNoisePercent = 100,
+    LandingNoisePercent = 100,
     -- 0 : fréquence libre tirée par le serveur (MilitaryDrop_Broadcast.lua), secrète.
     Frequency = 0,
     MinZombies = 3,

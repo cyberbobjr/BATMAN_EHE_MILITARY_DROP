@@ -49,3 +49,7 @@ Le mod fonctionne dans les deux modes. En multijoueur, le serveur décide de tou
 - **Signal Smoke** (requis) : une fumée verte signale la caisse pendant 60 minutes de jeu.
 - **Mods d'objets et d'armes** : le contenu des caisses vient des tables de butin du jeu, y compris les objets ajoutés par vos autres mods.
 - **Expanded Helicopter Events** n'est pas nécessaire. Military Drop est une réécriture autonome du mod Build 41 « Drop Military Cargo ».
+
+## Sous-mod facultatif : brouilleur RJ-93 — 0.8.0
+
+Le même projet fournit `batman_MilitaryDropJammer`, à activer **en plus** du principal uniquement si vous voulez le brouillage, surtout sur un serveur PvP. Il n'est pas une dépendance du principal ; laissez-le désactivé pour une partie sans brouillage. Aucun abonnement Workshop supplémentaire. En serveur dédié, ajoutez cet ID à `Mods=` sans ajouter un autre ID à `WorkshopItems=`. Avant publication, utilisez la branche locale identique sur serveur et clients. [Recette et commandes](10-radio-jammer.md).

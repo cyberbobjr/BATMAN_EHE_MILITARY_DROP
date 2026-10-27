@@ -49,3 +49,7 @@ The mod works in both. In multiplayer the server decides everything:
 - **Signal Smoke** (required): green smoke marks the crate for 60 minutes of game time.
 - **Item and weapon mods**: crate contents come from the game's loot tables, including the items added by your other mods.
 - **Expanded Helicopter Events** is not needed. Military Drop is a standalone rewrite of the Build 41 mod "Drop Military Cargo".
+
+## Optional RJ-93 jammer submod — 0.8.0
+
+The same project includes `batman_MilitaryDropJammer`. Enable it **in addition** to the main mod only if you want jamming, mainly for PvP servers. The main mod does not require it; leave it disabled for a game without jamming. No additional Workshop subscription. On a dedicated server, add this mod ID to `Mods=` without adding another Workshop ID. Before publication, use the same local branch on server and clients. See [recipe and controls](10-radio-jammer.md).

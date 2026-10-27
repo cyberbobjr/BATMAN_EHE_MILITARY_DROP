@@ -1,14 +1,12 @@
 [h1]Military Drop - Lançamentos de suprimentos por rádio[/h1]
 
-[h1]⚠ MUDANÇA INCOMPATÍVEL — versão 0.6.0 (2026-10-21) ⚠[/h1]
-[h1]O SIGNAL SMOKE AGORA É OBRIGATÓRIO[/h1]
-[b]Este mod agora exige [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Inscreva-se nos três e ative-os junto com este mod. Servidores dedicados: adicione 3817018338;3694097672;3811010882 em WorkshopItems= e batman_BeltRadio;TooltipLib;batman_SignalSmoke em Mods=; senão, o jogo não carrega este mod (só um aviso no log).[/b]
+[b]Mods necessários[/b]: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url].
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
 [b]Build 42.21 · Um jogador e multijogador · Independente[/b]
 
-[i]Feito para servidores dedicados (o servidor decide tudo), testado principalmente em um jogador por enquanto. Relate qualquer problema no multijogador.[/i]
+[i]0.8.0[/i]
 
 Sintonize um rádio militar na frequência certa, informe o código da semana e requisite suprimentos. Um helicóptero lança uma caixa ao longe e anuncia a grade para todos que estão ouvindo... e o barulho atrai os mortos.
 
@@ -43,13 +41,24 @@ Cada personagem tem a própria reputação, nunca mostrada em números. Ela encu
 [*][b]Helicópteros abatidos[/b], com mais frequência durante tempestades: um MAYDAY indica o setor; os destroços guardam peças, documentos e uma caixa-preta.
 [*][b]Posto de ligação[/b]: um rádio militar fixo vira o console da sua estação (assuntos, ordens, registro, leitor).
 [*][b]Zonas de lançamento disputadas[/b] para servidores PvP, desenhadas no jogo pelo administrador.
-[*]60 opções de sandbox, aplicadas sem reiniciar; multijogador em que o servidor decide; ferramentas de administração a partir de um rádio militar.
+[*]71 opções de sandbox; autoridade do servidor no multijogador.
+[/list]
+
+[h2]0.8.0[/h2]
+
+[list]
+[*]Limpezas concluídas: notificação, histórico no posto e marca verde temporária. Os objetivos de reconhecimento e reparo de retransmissores aparecem no mapa.
+[*]Conserte relés com sucata eletrônica. Eletricidade reduz custo e duração; concede XP, sem gerador.
+[*]Bônus Fulton semanais, relatos de hordas, confirmações de entrega e condecorações pessoais.
+[*]Ruídos do rotor e da entrega ajustáveis separadamente; a horda configurada continua aparecendo.
+[*]Console admin: SP Debug → Main; MP clique direito em qualquer lugar → Military Drop Admin Menu. Código/frequências, lançamento, queda e testes Fulton. Menus das zonas mantidos.
+[*]Submod opcional [b]batman_MilitaryDropJammer[/b] incluído: fabrique e coloque o RJ-93, insira/remova a pilha e veja a carga na janela. Padrão: 100 quadrados, 24 horas de jogo por pilha cheia. Bloqueia chamadas Military Drop, inclusive as suas; os anúncios continuam audíveis. Estática, mensagem e estado explicam a interferência. Deixe desativado para jogar sem bloqueio.
+[*]Desmonte gravadores antes ou depois da transmissão; o aparelho é devolvido. Admins podem iniciar missões de relé no local escolhido.
 [/list]
 
 [h2]Compatibilidade[/h2]
 
 [list]
-[*]Nenhum outro mod necessário.
 [*]Requer o [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: o comportamento comum do walkie-talkie no cinto para todos os mods que o usam.
 [*]Feito para conviver com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Requer o [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]: uma fumaça verde marca a caixa.

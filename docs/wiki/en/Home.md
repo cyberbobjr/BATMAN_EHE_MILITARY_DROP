@@ -1,5 +1,7 @@
 # Military Drop: player's guide
 
+> Guide for Military Drop 0.8.0.
+
 [Français](../fr/Home.md) · [Guide home](../Home.md)
 
 Military Drop is a Project Zomboid Build 42.21 mod: call the army by radio, fill a requisition form, and race the dead to the supply crate.
@@ -15,3 +17,5 @@ Military Drop is a Project Zomboid Build 42.21 mod: call the army by radio, fill
 7. [Fulton extraction](07-fulton.md): send intelligence and gear by balloon for trust.
 8. [FAQ](08-faq.md)
 9. [Helicopter crash](09-helicopter-crash.md): the MAYDAY, the crash site, wreck salvage and the flight recorder.
+
+10. [RJ-93 radio jammer (optional)](10-radio-jammer.md) : recipe, battery, controls and interference.

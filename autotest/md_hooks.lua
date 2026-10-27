@@ -408,6 +408,13 @@ local function addAuthoritySteps(player, deliveryMs, crateWaitMs, leadMs, other)
     end
 
     addStep("setup", function()
+        -- The nominal delivery scenario must not turn into a random Mayday.
+        -- These options belong only to the copied test world.
+        for _, name in ipairs({ "CrashChance", "CrashStormBonus" }) do
+            getSandboxOptions():getOptionByName("MilitaryDrop." .. name):setValue(0)
+            SandboxVars.MilitaryDrop[name] = 0
+        end
+        info("nominal fixture disables random flight crashes in the copied test world")
         S.channel = Config.getChannel()
         S.cid = Trust.idFor(player)
         S.teamId = MD.Teams.idFor(player)
@@ -1470,6 +1477,10 @@ local function correctionPrepare(player)
     local cfg = SandboxVars.MilitaryDrop
     cfg.ReportGain, cfg.ControlGain, cfg.CleanupGain = 1, 1, 5
     cfg.CleanupQuota, cfg.TrustDailyCap, cfg.TrustPostBonus = 10, 100, 50
+    -- Config.get prioritizes the live Java options in B42.21, not the Lua mirror.
+    for _, key in ipairs({ "ReportGain", "ControlGain", "CleanupGain", "CleanupQuota", "TrustDailyCap", "TrustPostBonus" }) do
+        getSandboxOptions():getOptionByName("MilitaryDrop." .. key):setValue(cfg[key])
+    end
     local cid = MD.Trust.idFor(player)
     local private = MD.Secrets.privateState()
     private.characterTrust[cid].value = 25
@@ -1807,6 +1818,7 @@ local function addCorrectionsSteps(player)
             if not w then return true end
             if not S[actionSpec.key] then
                 if ISTimedActionQueue.isPlayerDoingAction(player) then return false end
+                if S.previousExchangeAt and getTimestampMs() - S.previousExchangeAt < 3500 then return false end
                 w:select(actionSpec.key)
                 local action = w:actions()
                 if not action or not action.enabled then return false end
@@ -1820,6 +1832,7 @@ local function addCorrectionsSteps(player)
                 end
             end
             if not done then return false end
+            S.previousExchangeAt = getTimestampMs()
             rec(not w:actions().enabled, "corrections: " .. actionSpec.key .. " completed and disabled")
             return true
         end, 45000)

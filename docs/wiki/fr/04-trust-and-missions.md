@@ -70,7 +70,7 @@ Les zombies militaires laissent les plaques d'identité du jeu, gravées au nom 
 
 ## Missions
 
-De temps en temps, la base donne un ordre à **toutes les stations** sur la fréquence militaire. Les missions sont publiques : toutes les stations qui les entendent peuvent les remplir. Seuls les auditeurs reçoivent le repère sur la carte. Vous l'avez manqué ? Tant qu'un ordre de reconnaissance ou de nettoyage est ouvert, la base répète sa grille toutes les **6 heures** de jeu par défaut (même option que les rappels des largages), et chaque rappel marque la carte de ceux qui l'entendent.
+De temps en temps, la base donne un ordre à **toutes les stations** sur la fréquence militaire. Les missions sont publiques. Tant qu'un ordre de reconnaissance ou de nettoyage est ouvert, la base répète sa grille toutes les **6 heures** de jeu par défaut (même option que les rappels des largages). La reconnaissance reçoit aussi un repère automatique, même si vous manquez l'annonce ; le nettoyage reste marqué à la réception de l'annonce, d'un rappel ou d'une réponse de la base.
 
 ![Missions sur la console et annonce en jeu](../../images/screenshots/ingame-console-missions.png)
 
@@ -80,9 +80,13 @@ De temps en temps, la base donne un ordre à **toutes les stations** sur la fré
 
 *« À toutes les stations, ici Logistique. Reconnaissance demandée en grille X / Y. Premier survivant à confirmer sur place dans les 48 heures. »*
 
-Un symbole **œil** bleu marque la grille sur votre carte. Allez-y et appuyez sur **Confirmer la reconnaissance** à **25 cases** au plus du point. Le premier personnage gagne +3. Trop loin, la base vous redonne la grille et le symbole s'ajoute à votre carte.
+Un symbole **œil** bleu marque automatiquement la grille sur votre carte dès le lancement, y compris après reconnexion si la mission est encore active. Il disparaît à sa clôture. Allez-y et appuyez sur **Confirmer la reconnaissance** à **25 cases** au plus du point. Le premier personnage gagne +3. Trop loin, la base vous redonne la grille.
 
 ### Nettoyage
+
+À la réussite, chaque participant connecté reçoit une notification indiquant sa contribution et son gain réel de confiance, même si le plafond quotidien limite ce gain à zéro. La récompense reste attribuée au meilleur contributeur selon les règles ordinaires. Le crâne et le cercle sont remplacés par une **coche verte pendant une heure de jeu**, puis retirés automatiquement ; une reconnexion conserve seulement la durée restante.
+
+Le poste de liaison conserve les **20 derniers résultats de nettoyage** sous « Missions terminées » : résultat, grille, date de clôture, votre contribution et votre gain de confiance. L'historique reste consultable après reconnexion et après disparition de la coche. Une mission expirée ou clôturée sans réussite apparaît comme telle, sans notification de succès ni coche verte. Les missions terminées avant cette mise à jour ne peuvent pas être reconstituées avec leurs détails manquants.
 
 *« À toutes les stations, ici Logistique. Horde d'infectés signalée dans un rayon de 40 cases autour de la grille X / Y, environ 30 individus… »*
 
@@ -108,3 +112,42 @@ Appuyez à temps sur **Confirmer réception**. Chaque personnage qui répond gag
 - Un nouveau personnage repart à 25 ; les anciens largages et sanctions restent rattachés au précédent.
 - Les factions conservent leur indicatif et leur poste de liaison partagé. La console affiche la confiance du personnage qui l'utilise.
 - Mise à jour depuis l'ancien système : les notes collectives sont conservées dans les anciennes données, sans transfert ; chaque personnage commence à 25. Les largages antérieurs ne modifient pas les nouvelles notes.
+
+## Nouveautés 0.8.0 : relais et transmissions
+
+Fonctions disponibles dans la version 0.8.0. Les gains ci-dessous sont les valeurs par défaut et restent dans le plafond quotidien.
+
+### Réparer un relais
+
+Un orage ou la coupure du réseau électrique peut provoquer une panne. La base annonce le relais concerné : les nouveaux largages sont suspendus, les vols déjà partis continuent. Apportez des **déchets électroniques** (`Base.ElectronicsScrap`), rejoignez l'armoire annoncée et faites **clic droit → Armoire de relais → Réparer**. Restez près de l'armoire pendant l'action chronométrée. Aucun générateur, carburant ou outil supplémentaire.
+
+| Électricité | Déchets consommés | Durée à vitesse normale |
+|---|---|---|
+| 0 | 20 | 15 s |
+| 5 | 11 | 9 s |
+| 10 | 2 | 3 s |
+
+Le premier joueur qui termine rétablit le service et reçoit **10 XP de base en Électricité** et **+3 de confiance**. Les autres réparations en cours sont annulées. Sans réparation, une liaison de secours revient après **72 heures de jeu** ; un délai de réarmement de **7 jours** évite les pannes répétées.
+
+Les quatre emplacements utilisent les coordonnées X/Y de projectzomboidmap.com, au rez-de-chaussée. Une mission désigne une seule armoire ; réparer une autre ne valide rien.
+
+Un **« ! » orange** indique l’armoire à réparer sur votre carte dès la synchronisation de la mission, y compris après reconnexion. Le repère disparaît après réparation, rétablissement administratif ou liaison de secours ; vos annotations personnelles sont conservées.
+
+| Site | X | Y | Carte |
+|---|---|---|---|
+| 1 | 4832 | 6281 | [Voir](https://projectzomboidmap.com/#4832x6281x38) |
+| 2 | 1625 | 5755 | [Voir](https://projectzomboidmap.com/#1625x5755x38) |
+| 3 | 10277 | 8744 | [Voir](https://projectzomboidmap.com/#10277x8744x38) |
+| 4 | 1513 | 14851 | [Voir](https://projectzomboidmap.com/#1513x14851x38) |
+
+### Signaler un rassemblement
+
+Dans **Logistique**, choisissez **Signaler un rassemblement**. Il faut au moins **10 zombies vivants à 30 cases**, au rez-de-chaussée. Un signalement accepté rapporte **+1**. Une même zone de **80 cases** ne rapporte qu'une fois par **24 heures de jeu**, tous joueurs confondus. S'il n'existe pas déjà de nettoyage ouvert, la base peut lancer un ordre sur les zombies signalés : aucun groupe supplémentaire n'apparaît.
+
+### Confirmer la réception
+
+Après ouverture réussie de votre largage personnel, **Confirmer la réception** reste disponible pendant **72 heures de jeu**. L'accusé rapporte **+1**, une seule fois par largage. Il ne remplace pas la récompense d'ouverture, et les rappels de grille s'arrêtent toujours automatiquement.
+
+### Citations nominatives
+
+Chaque nouveau palier de confiance est mémorisé pour la vie du personnage. La citation arrive dans le prochain largage personnel admissible. Au palier IV, une plaque honorifique est ajoutée ; elle ne rapporte rien si on tente de l'échanger ou de l'envoyer par Fulton. Les personnages existants commencent à leur palier courant, sans remise rétroactive de toutes les citations.

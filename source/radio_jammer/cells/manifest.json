@@ -1,0 +1,386 @@
+{
+  "elements": {
+    "MD_RJ93_vent.015": [
+      0.9,
+      0.9,
+      0.9
+    ],
+    "MD_RJ93_vent.014": [
+      0.6,
+      0.9,
+      0.9
+    ],
+    "MD_RJ93_vent.013": [
+      0.35,
+      0.9,
+      0.9
+    ],
+    "MD_RJ93_vent.012": [
+      0.15,
+      0.9,
+      0.9
+    ],
+    "MD_RJ93_vent.011": [
+      0.75,
+      0.9,
+      0.9
+    ],
+    "MD_RJ93_vent.010": [
+      0.9,
+      0.6,
+      0.9
+    ],
+    "MD_RJ93_vent.009": [
+      0.6,
+      0.6,
+      0.9
+    ],
+    "MD_RJ93_vent.008": [
+      0.35,
+      0.6,
+      0.9
+    ],
+    "MD_RJ93_switch_guard.001": [
+      0.15,
+      0.6,
+      0.9
+    ],
+    "MD_RJ93_status_lens.001": [
+      0.75,
+      0.6,
+      0.9
+    ],
+    "MD_RJ93_status_bezel.001": [
+      0.9,
+      0.35,
+      0.9
+    ],
+    "MD_RJ93_rubber_foot.007": [
+      0.6,
+      0.35,
+      0.9
+    ],
+    "MD_RJ93_rubber_foot.006": [
+      0.35,
+      0.35,
+      0.9
+    ],
+    "MD_RJ93_rubber_foot.005": [
+      0.15,
+      0.35,
+      0.9
+    ],
+    "MD_RJ93_rubber_foot.004": [
+      0.75,
+      0.35,
+      0.9
+    ],
+    "MD_RJ93_power_toggle.001": [
+      0.9,
+      0.15,
+      0.9
+    ],
+    "MD_RJ93_panel_screw.007": [
+      0.6,
+      0.15,
+      0.9
+    ],
+    "MD_RJ93_panel_screw.006": [
+      0.35,
+      0.15,
+      0.9
+    ],
+    "MD_RJ93_panel_screw.005": [
+      0.15,
+      0.15,
+      0.9
+    ],
+    "MD_RJ93_panel_screw.004": [
+      0.75,
+      0.15,
+      0.9
+    ],
+    "MD_RJ93_paint_chip.005": [
+      0.9,
+      0.75,
+      0.9
+    ],
+    "MD_RJ93_paint_chip.004": [
+      0.6,
+      0.75,
+      0.9
+    ],
+    "MD_RJ93_paint_chip.003": [
+      0.35,
+      0.75,
+      0.9
+    ],
+    "MD_RJ93_nameplate.001": [
+      0.15,
+      0.75,
+      0.9
+    ],
+    "MD_RJ93_meter_tick.009": [
+      0.75,
+      0.75,
+      0.9
+    ],
+    "MD_RJ93_meter_tick.008": [
+      0.9,
+      0.9,
+      0.6
+    ],
+    "MD_RJ93_meter_tick.007": [
+      0.6,
+      0.9,
+      0.6
+    ],
+    "MD_RJ93_meter_tick.006": [
+      0.35,
+      0.9,
+      0.6
+    ],
+    "MD_RJ93_meter_tick.005": [
+      0.15,
+      0.9,
+      0.6
+    ],
+    "MD_RJ93_meter_needle.001": [
+      0.75,
+      0.9,
+      0.6
+    ],
+    "MD_RJ93_meter_frame.001": [
+      0.9,
+      0.6,
+      0.6
+    ],
+    "MD_RJ93_meter_face.001": [
+      0.6,
+      0.6,
+      0.6
+    ],
+    "MD_RJ93_lid_latch.003": [
+      0.35,
+      0.6,
+      0.6
+    ],
+    "MD_RJ93_lid_latch.002": [
+      0.15,
+      0.6,
+      0.6
+    ],
+    "MD_RJ93_lid_gasket.001": [
+      0.75,
+      0.6,
+      0.6
+    ],
+    "MD_RJ93_lid.001": [
+      0.9,
+      0.35,
+      0.6
+    ],
+    "MD_RJ93_knob_index.001": [
+      0.6,
+      0.35,
+      0.6
+    ],
+    "MD_RJ93_hatch_screw.007": [
+      0.35,
+      0.35,
+      0.6
+    ],
+    "MD_RJ93_hatch_screw.006": [
+      0.15,
+      0.35,
+      0.6
+    ],
+    "MD_RJ93_hatch_screw.005": [
+      0.75,
+      0.35,
+      0.6
+    ],
+    "MD_RJ93_hatch_screw.004": [
+      0.9,
+      0.15,
+      0.6
+    ],
+    "MD_RJ93_handle_upright.003": [
+      0.6,
+      0.15,
+      0.6
+    ],
+    "MD_RJ93_handle_upright.002": [
+      0.35,
+      0.15,
+      0.6
+    ],
+    "MD_RJ93_handle_mount.003": [
+      0.15,
+      0.15,
+      0.6
+    ],
+    "MD_RJ93_handle_mount.002": [
+      0.75,
+      0.15,
+      0.6
+    ],
+    "MD_RJ93_front_protector.003": [
+      0.9,
+      0.75,
+      0.6
+    ],
+    "MD_RJ93_front_protector.002": [
+      0.6,
+      0.75,
+      0.6
+    ],
+    "MD_RJ93_frequency_knob.001": [
+      0.35,
+      0.75,
+      0.6
+    ],
+    "MD_RJ93_control_recess.001": [
+      0.15,
+      0.75,
+      0.6
+    ],
+    "MD_RJ93_control_plate.001": [
+      0.75,
+      0.75,
+      0.6
+    ],
+    "MD_RJ93_case.001": [
+      0.9,
+      0.9,
+      0.35
+    ],
+    "MD_RJ93_carry_grip.001": [
+      0.6,
+      0.9,
+      0.35
+    ],
+    "MD_RJ93_bottom_bumper.001": [
+      0.35,
+      0.9,
+      0.35
+    ],
+    "MD_RJ93_battery_pull.001": [
+      0.15,
+      0.9,
+      0.35
+    ],
+    "MD_RJ93_battery_hatch.001": [
+      0.75,
+      0.9,
+      0.35
+    ],
+    "MD_RJ93_battery_gasket.001": [
+      0.9,
+      0.6,
+      0.35
+    ],
+    "MD_RJ93_antenna_tip.003": [
+      0.6,
+      0.6,
+      0.35
+    ],
+    "MD_RJ93_antenna_tip.002": [
+      0.35,
+      0.6,
+      0.35
+    ],
+    "MD_RJ93_antenna_socket.003": [
+      0.15,
+      0.6,
+      0.35
+    ],
+    "MD_RJ93_antenna_socket.002": [
+      0.75,
+      0.6,
+      0.35
+    ],
+    "MD_RJ93_antenna_collar.003": [
+      0.9,
+      0.35,
+      0.35
+    ],
+    "MD_RJ93_antenna_collar.002": [
+      0.6,
+      0.35,
+      0.35
+    ],
+    "MD_RJ93_antenna.003": [
+      0.35,
+      0.35,
+      0.35
+    ],
+    "MD_RJ93_antenna.002": [
+      0.15,
+      0.35,
+      0.35
+    ]
+  },
+  "toon": false,
+  "view": [
+    0.612372,
+    -0.612372,
+    0.5
+  ],
+  "sheet": "md_rj93_draft",
+  "cell": [
+    128,
+    256
+  ],
+  "scale": "2x",
+  "footprint": [
+    1,
+    1
+  ],
+  "isolate_tiles": false,
+  "facings": [
+    "S",
+    "E",
+    "N",
+    "W"
+  ],
+  "clear_height_m": 2.4495,
+  "cells": [
+    {
+      "file": "md_rj93_draft_S_x0_y0.png",
+      "facing": "S",
+      "x": 0,
+      "y": 0,
+      "normal": "md_rj93_draft_S_x0_y0_N.png",
+      "element": "md_rj93_draft_S_x0_y0_E.png",
+      "light": "md_rj93_draft_S_x0_y0_L.png"
+    },
+    {
+      "file": "md_rj93_draft_E_x0_y0.png",
+      "facing": "E",
+      "x": 0,
+      "y": 0,
+      "normal": "md_rj93_draft_E_x0_y0_N.png",
+      "element": "md_rj93_draft_E_x0_y0_E.png",
+      "light": "md_rj93_draft_E_x0_y0_L.png"
+    },
+    {
+      "file": "md_rj93_draft_N_x0_y0.png",
+      "facing": "N",
+      "x": 0,
+      "y": 0,
+      "normal": "md_rj93_draft_N_x0_y0_N.png",
+      "element": "md_rj93_draft_N_x0_y0_E.png",
+      "light": "md_rj93_draft_N_x0_y0_L.png"
+    },
+    {
+      "file": "md_rj93_draft_W_x0_y0.png",
+      "facing": "W",
+      "x": 0,
+      "y": 0,
+      "normal": "md_rj93_draft_W_x0_y0_N.png",
+      "element": "md_rj93_draft_W_x0_y0_E.png",
+      "light": "md_rj93_draft_W_x0_y0_L.png"
+    }
+  ]
+}

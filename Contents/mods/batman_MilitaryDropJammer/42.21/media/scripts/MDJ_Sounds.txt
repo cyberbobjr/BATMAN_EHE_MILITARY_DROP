@@ -1,0 +1,26 @@
+module Base
+{
+    sound MDJ_Static
+    {
+        category = World,
+        is3D = false,
+        clip
+        {
+            file = media/sound/MDJ_Static.ogg,
+            volume = 0.15,
+        }
+    }
+    sound MDJ_Hum
+    {
+        category = World,
+        is3D = true,
+        loop = true,
+        clip
+        {
+            file = media/sound/MDJ_Hum.ogg,
+            volume = 0.08,
+            distanceMin = 1,
+            distanceMax = 10,
+        }
+    }
+}

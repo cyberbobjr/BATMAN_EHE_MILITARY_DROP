@@ -1,14 +1,12 @@
 [h1]Military Drop - Lanzamientos de suministros por radio[/h1]
 
-[h1]⚠ CAMBIO INCOMPATIBLE — versión 0.6.0 (2026-10-21) ⚠[/h1]
-[h1]SIGNAL SMOKE AHORA ES OBLIGATORIO[/h1]
-[b]Este mod ahora requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Suscríbete a los tres y actívalos junto con este mod. Servidores dedicados: añade 3817018338;3694097672;3811010882 a WorkshopItems= y batman_BeltRadio;TooltipLib;batman_SignalSmoke a Mods=; si no, el juego no carga este mod (solo un aviso en el registro).[/b]
+[b]Mods necesarios[/b]: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url].
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
 [b]Build 42.21 · Un jugador y multijugador · Independiente[/b]
 
-[i]Pensado para servidores dedicados (el servidor lo decide todo), probado sobre todo en un jugador por ahora. Informa de cualquier problema en multijugador.[/i]
+[i]0.8.0[/i]
 
 Sintoniza una radio militar en la frecuencia correcta, da el código de la semana y solicita suministros. Un helicóptero lanza una caja a lo lejos y anuncia la cuadrícula a todos los que escuchan... y el ruido atrae a los muertos.
 
@@ -43,13 +41,24 @@ Cada personaje tiene su propia reputación, nunca mostrada en cifras. Acorta la 
 [*][b]Helicópteros derribados[/b], más a menudo con tormenta: un MAYDAY da el sector; los restos guardan piezas, documentos y una caja negra.
 [*][b]Puesto de enlace[/b]: una radio militar fija se convierte en la consola de tu estación (asuntos, órdenes, registro, lector).
 [*][b]Zonas de lanzamiento disputadas[/b] para servidores PvP, trazadas en el juego por el administrador.
-[*]60 opciones de sandbox, aplicadas sin reiniciar; multijugador donde decide el servidor; herramientas de administración desde una radio militar.
+[*]71 opciones de entorno; multijugador con autoridad del servidor.
+[/list]
+
+[h2]0.8.0[/h2]
+
+[list]
+[*]Las limpiezas completadas tienen aviso, historial en el puesto y una marca verde temporal. Los objetivos de reconocimiento y reparación de repetidores aparecen en el mapa.
+[*]Repara relés averiados con chatarra electrónica. Electricidad reduce coste y duración; otorga XP, sin generador.
+[*]Bonificaciones Fulton semanales, avisos de hordas, confirmaciones de entrega y condecoraciones personales.
+[*]Ruido del rotor y de entrega ajustables por separado; la horda configurada sigue apareciendo.
+[*]Consola admin: SP Debug → Main; MP clic derecho en cualquier lugar → Military Drop Admin Menu. Código/frecuencias, lanzamiento, accidente y pruebas Fulton. Menús de zonas sin cambios.
+[*]Submod opcional [b]batman_MilitaryDropJammer[/b] incluido: fabrica y coloca el RJ-93, inserta/retira la pila y consulta su carga en la ventana. Valores por defecto: 100 casillas, 24 horas de juego por pila llena. Bloquea llamadas salientes de Military Drop, también las tuyas; los anuncios siguen oyéndose. Estática, mensaje y estado explican la interferencia. Déjalo desactivado para jugar sin interferencias.
+[*]Desmonta grabadoras antes o después de transmitir; el aparato se devuelve. Los admins pueden iniciar misiones de relé en el sitio elegido.
 [/list]
 
 [h2]Compatibilidad[/h2]
 
 [list]
-[*]No requiere ningún otro mod.
 [*]Requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: el comportamiento común del walkie-talkie en el cinturón para todos los mods que lo usan.
 [*]Pensado para convivir con [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Requiere [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]: un humo verde señala la caja.

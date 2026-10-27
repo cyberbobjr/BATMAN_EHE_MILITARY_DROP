@@ -149,5 +149,19 @@
     "Sandbox_MilitaryDrop_FultonWindowMinutes": "Fulton : créneau de passage (minutes)",
     "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "Minutes de jeu pendant lesquelles un Fulton peut être lâché après une demande de passage par radio.",
     "Sandbox_MilitaryDrop_FultonLootRate": "Fulton : fréquence dans le butin (pour cent)",
-    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Fréquence des bouteilles d'hélium et des kits Fulton endommagés dans le monde, les épaves et les caisses de largage. 0 : aucun."
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Fréquence des bouteilles d'hélium et des kits Fulton endommagés dans le monde, les épaves et les caisses de largage. 0 : aucun.",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent": "Bonus Fulton hebdomadaire (pour cent)",
+    "Sandbox_MilitaryDrop_RotorNoisePercent": "Bruit attractif des rotors (pour cent)",
+    "Sandbox_MilitaryDrop_LandingNoisePercent": "Bruit attractif du largage (pour cent)",
+    "Sandbox_MilitaryDrop_RelayEnabled": "Missions de réparation des relais",
+    "Sandbox_MilitaryDrop_RelayRearmDays": "Jours minimum entre deux pannes",
+    "Sandbox_MilitaryDrop_HordeReportGain": "Confiance pour un rassemblement vérifié",
+    "Sandbox_MilitaryDrop_ReceiptGain": "Confiance pour confirmation de réception",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent_tooltip": "Bonus sur deux catégories, renouvelées chaque lundi. Inclus dans le plafond quotidien. 0 désactive le bonus.",
+    "Sandbox_MilitaryDrop_RotorNoisePercent_tooltip": "100 : attraction normale, 0 : aucune attraction par les rotors. La horde prévue au largage apparaît toujours.",
+    "Sandbox_MilitaryDrop_LandingNoisePercent_tooltip": "100 : attraction normale à la livraison effective, 0 : aucune attraction à l’arrivée. La horde prévue apparaît toujours.",
+    "Sandbox_MilitaryDrop_RelayEnabled_tooltip": "Un orage ou la coupure du réseau électrique peut endommager un relais. Réparation avec déchets électroniques uniquement. Secours après 72 heures de jeu.",
+    "Sandbox_MilitaryDrop_RelayRearmDays_tooltip": "Jours de jeu minimum après réparation ou secours avant une nouvelle panne.",
+    "Sandbox_MilitaryDrop_HordeReportGain_tooltip": "Confiance plafonnée pour un rassemblement vérifié. 0 désactive les signalements. Même zone : une fois par 24 heures de jeu.",
+    "Sandbox_MilitaryDrop_ReceiptGain_tooltip": "Confiance plafonnée pour une confirmation par largage personnel récupéré. 0 désactive les confirmations."
 }

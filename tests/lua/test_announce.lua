@@ -131,7 +131,7 @@ function T.recon_and_drop_codes_are_distinct()
     assertEq(SYMBOLS[2].getSymbolID(), "Target", "symbole du largage")
 end
 
-function T.recon_needs_a_radio_that_hears_it()
+function T.recon_radio_path_ignores_unheard_lines()
     MilitaryDrop.Announce.onReconAnnounce({ id = "M1", x = 700, y = 800 })
     triggerEvent("OnDeviceText", "guid", "MDRC", 300, 300, 0, "line", {})
     triggerEvent("OnDeviceText", "guid", "", -1, -1, -1, "line", {})
@@ -270,6 +270,65 @@ function T.cleanup_circle_is_not_duplicated_and_needs_a_radius()
     assertEq(A.markCircle(700, 800, nil), false, "sans rayon : rien")
     assertEq(A.markCircle(700, 800, 0), false, "rayon nul : rien")
     assertEq(#SYMBOLS, 1, "un seul cercle")
+end
+
+function T.relay_marker_appears_once_resynchronizes_and_only_removes_its_own_symbol()
+    local A = MilitaryDrop.Announce
+    MilitaryDrop.Relay = { SITES = { { x = 4832, y = 6281 } } }
+    local update = { phase = "failed", site = 1, serial = 7 }
+    assertEq(A.onRelayState(update), true)
+    assertEq(A.onRelayState(update), false)
+    assertEq(#SYMBOLS, 1)
+    assertEq(SYMBOLS[1].getSymbolID(), "Exclamation")
+    assertEq(SYMBOLS[1].getWorldX(), 4832)
+    assertEq(SYMBOLS[1].getWorldY(), 6281)
+    local own = MAKE_SYMBOL("Exclamation", 5000, 6300, 0.65, 0.054, 0.054)
+    SYMBOLS[#SYMBOLS + 1] = own
+    assertEq(A.onActiveMarks({ relay = { { x = 4832, y = 6281 } } }), 0)
+    loadMod("client/MilitaryDrop/MilitaryDrop_Announce.lua")
+    A = MilitaryDrop.Announce
+    A.onRelayState(update)
+    assertEq(#SYMBOLS, 2, "a saved marker is not duplicated after reconnect")
+    assertEq(A.onActiveMarks({ relay = {} }), 1)
+    assertEq(SYMBOLS[1], own, "personal notes are retained")
+    assertEq(A.onRelayState({ phase = "operational", site = 1, serial = 7 }), false)
+    assertEq(A.onRelayState({ phase = "failed", site = 99, serial = 8 }), false)
+end
+
+function T.secured_marker_replaces_cleanup_and_expires_without_touching_personal_notes()
+    local A = MilitaryDrop.Announce
+    A.markMission({ kind = "cleanup", id = "M_done", x = 700, y = 800, radius = 40 })
+    SYMBOLS[#SYMBOLS + 1] = MAKE_SYMBOL("Checkmark", 710, 810, 1, 0, 0)
+    A.onActiveMarks({ cleanup = {}, secured = { { x = 700, y = 800 } } })
+    assertEq(#SYMBOLS, 2, "only personal note and secured marker remain")
+    assertEq(SYMBOLS[2].getSymbolID(), "Checkmark")
+    loadMod("client/MilitaryDrop/MilitaryDrop_Announce.lua")
+    A = MilitaryDrop.Announce
+    A.onActiveMarks({ secured = { { x = 700, y = 800 } } })
+    assertEq(#SYMBOLS, 2, "reconnection does not duplicate saved marker")
+    A.onActiveMarks({ secured = {} })
+    assertEq(#SYMBOLS, 1, "expired secured marker removed")
+    assertEq(SYMBOLS[1].getWorldX(), 710, "personal annotation retained")
+end
+
+function T.active_recon_is_marked_without_radio_and_restored_after_reconnect()
+    local A = MilitaryDrop.Announce
+    local state = { drops = {}, recon = { { x = 700, y = 800 } }, cleanup = {}, relay = {} }
+    A.onActiveMarks(state)
+    assertEq(#SYMBOLS, 1)
+    assertEq(SYMBOLS[1].getSymbolID(), "Eye")
+    assertEq(SYMBOLS[1].getWorldX(), 700)
+    A.onActiveMarks(state)
+    assertEq(#SYMBOLS, 1, "periodic state does not duplicate the eye")
+    loadMod("client/MilitaryDrop/MilitaryDrop_Announce.lua")
+    A = MilitaryDrop.Announce
+    A.onActiveMarks(state)
+    assertEq(#SYMBOLS, 1, "saved map remains deduplicated after reconnect")
+    SYMBOLS[1] = nil
+    A.onActiveMarks(state)
+    assertEq(#SYMBOLS, 1, "missing active marker is restored")
+    assertEq(A.onActiveMarks({ recon = {} }), 1, "closed mission removes the eye")
+    assertEq(#SYMBOLS, 0)
 end
 
 return T

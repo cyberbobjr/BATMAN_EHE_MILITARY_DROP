@@ -1,5 +1,6 @@
 # Spécifications techniques de Military Drop
 
+
 Contrats précis du mod, relevés dans le code de la version 0.5.4 (2026-10-21). Organisation générale : [architecture.md](architecture.md). Comportement vu par le joueur : [specifications-fonctionnelles.md](specifications-fonctionnelles.md).
 
 `lua/` désigne `Contents/mods/batman_MilitaryDrop/42.21/media/lua/`, `scripts/` le dossier `media/scripts/` de la même variante.
@@ -188,9 +189,71 @@ Les textes composés sur le serveur (station de chiffres, notes, documents, jour
 - Fonctions vanilla enveloppées (original toujours appelé) : `ISRadioWindow.createChildren`, `ISAdminPanelUI:create` et `updateButtons`, `ISDebugMenu` (onglet Main), `ISVehicleMenu.FillMenuOutsideVehicle`, `ISUninstallVehiclePart.complete`, `ISInstallVehiclePart.complete`, `ISRemoveBurntVehicle.isValid` et `complete` (sans effet hors des scripts d'épave du mod).
 - Compatibilités vérifiées dans le code : Belt Walkie-Talkie, Signal Smoke, HEF (départ retardé, bruits modérés), mods qui re-remplissent les coffres de véhicules (marqueur `resetedContainers`), objets des mods de butin (tirés des tables fusionnées).
 
+## Contrats supplémentaires de la branche d’essai
+
+La branche `feature/planned-improvements-testing` ajoute les contrats ci-dessous.
+
+| Fonction | Contrat |
+|---|---|
+| Bruits | `RotorNoisePercent` et `LandingNoisePercent` : 0–300, défaut 100. Rotor toutes les 3 secondes ; arrivée seulement après livraison. La horde dépend toujours de `MinZombies`/`MaxZombies`. `deliver` d’un dossier déjà livré est idempotent. |
+| Relais | `RelaySync`, `RelayBegin`, `RelayComplete`, `RelayCancel` ; réponses `RelayState` et `RelayReply`. État persistant phase/numéro/site/début/cooldown/armoire créée ; sessions transitoires par personnage. Validation de proximité, du vrai sprite, du niveau, des composants et du délai avant mutation. Le premier achèvement ferme la panne et invalide toutes les sessions. |
+| Réparation | Coût `floor(20 - 1.8 × niveau + 0.5)` borné 2–20 ; secondes `15 - 1.2 × niveau` bornées 3–15. Inventaires imbriqués pris en compte ; retrait et XP sur l’autorité, synchronisation native MP. Session figée au début, pas de gain lors d’une annulation. |
+| Cycle | `RelayEnabled=true`, `RelayRearmDays=7` (1–365). Démarrage sur transition observée d’orage ou d’alimentation, secours après 72 h, sans obligation d’alimentation à la réparation. Les nouveaux `Request` et `RequisitionOrder` sont bloqués ; contournement administratif déjà autorisé conservé. |
+| Fulton | `WeeklyBonusPercent` 0–200, défaut 50 ; semaine civile existante de `Codes`, deux catégories distinctes sur six vanilla, aucune intégration requise. `Fulton.evaluate` renvoie aussi `week` et `bonus`. La confirmation capture la semaine, transmise au lâcher ; semaine changée : refus avant consommation. |
+| Terrain | `MissionConcentration`, `MissionReceipt`, `WeeklyNeeds`, par le transport d’échange existant, avec validation radio et cadence commune. Rapports persistants pendant 24 h, dédoublonnage spatial partagé, 256 entrées récentes au maximum. |
+| Citations | `citationHistory[characterId]` conserve palier maximal et attente, même si l’entrée de confiance inactive est retirée. Réservation entre dossiers en attente ; crash avant livraison libère la réservation. Nom figé au franchissement. L’objet conserve nom/palier en métadonnées et compose le document dans la langue du lecteur. |
+| Accusés | `receipts[dropId]` conserve personnage/heure/confirmation pendant 72 h ; purge horaire et lors de la confirmation. Validation du bénéficiaire et marqueur de confirmation avant gain. `ReceiptGain` et `HordeReportGain` : 0–20, défaut 1. |
+| Administration I12 | `AdminDashboard` : `list`, `preview`, `commit` ; groupe, recherche bornée, filtre et pages de 24. Aperçu valable 60 s, lié au joueur et à l’empreinte de la cible ; confirmation unique avec motif. Droits `ChangeAndReloadServerOptions` + capacité du rôle revérifiés ; solo exige debug. Cadence 200 ms avec retour explicite. Métier délégué à `Missions.adminIntervene`, `Trust.adminClose`, `Flights.cancelDrop`, `RelayServer.adminRestore`. Téléportation : case chargée libre, hors eau/véhicule, rayon 1–6 ; MP via `/teleportto` natif, premier joueur local ; refus sans arrivée vérifiable. Projection privée : aucun secret dans les groupes ordinaires ; le groupe `radio` fournit uniquement à un admin autorisé le code courant et les fréquences actives. Aucune graine ni synchronisation publique supplémentaire. Logs anglais ancien/nouvel état et motif. |
+
+### Sous-mod `batman_MilitaryDropJammer`
+
+Identifiant d’objet et modèle : `MilitaryDropJammer.RJ93`. Module réseau distinct
+`MilitaryDropJammer` ; commandes `Inspect`, `Insert`, `Remove`, `Toggle`, `Coverage`,
+réponse `State`. La référence contient X/Y/Z et l’ID persistant de l’objet d’inventaire
+posé. Le serveur retrouve l’objet réel, vérifie le type, le sol et la portée d’interaction
+(3 cases, même étage), puis valide la pile possédée dans l’inventaire.
+
+`MilitaryDropJammerPrivate`, schéma 1 : registre des appareils par ID, avec position,
+charge, condition de pile, état, révision et heure de calcul. L’insertion retire la pile
+réelle ; le retrait en crée une avec la condition et les utilisations restantes, arrondies
+vers le bas selon la précision native des piles B42. Le retrait à inventaire plein ne
+modifie pas l’appareil. Les commandes concurrentes sont sérialisées par le serveur.
+Un objet ramassé ou déplacé cesse d’émettre ; un chunk déchargé conserve son énergie
+et son état. Une option désactivée ou une charge vide coupe l’appareil.
+
+Limites : 16 appareils actifs, 2 048 entrées persistantes ; purge des entrées vides
+inactives après 72 h. Cadence 100 ms par commande/joueur, inspection 250 ms ; calcul
+d’énergie à la demande et toutes les secondes. Fenêtres et couverture rafraîchies
+toutes les 2 secondes. Aucun emplacement global envoyé : seule une source à moins
+de 10 cases est décrite au client pour le bourdonnement local. La couverture utilise
+la distance X/Y, tous étages ; la manipulation exige le même étage.
+
+Options propres : `Enabled=true`, `Radius=100` (10–200), `BatteryHours=24` (1–168).
+La recette native `MilitaryDropJammer.MakeRJ93` requiert Électricité 3, 20 déchets
+électroniques, 4 ferrailles, 2 fils électriques, 2 utilisations de ruban adhésif et un
+tournevis conservé. `time=600` correspond à environ 60 secondes avec l’action native
+42.21 (`getDuration = time × 5`, environ 50 unités/seconde). Sortie éteinte sans pile.
+
+### Catalogue des armoires I05
+
+Les points des pylônes validés restent les repères géographiques ; les interactions
+se font sur les armoires suivantes, en coordonnées monde/projectzomboidmap.com, Z=0.
+
+| Site | Armoire X,Y | Sprite | Création |
+|---|---|---|---|
+| Ouest de Riverside | 4832,6281 | `industry_02_165` | Créée une fois sur le sol libre du bâtiment technique lors d’une panne, si absente |
+| Brandenburg | 1625,5755 | `industry_02_165` | Armoire vanilla existante |
+| Nord-ouest de Muldraugh | 10277,8744 | `industry_02_170` | Armoire vanilla existante |
+| Sud-ouest d’Irvington | 1513,14851 | `industry_02_169` | Armoire vanilla existante |
+
+La disponibilité a été vérifiée en jeu dans le monde copié, en plus de la lecture des
+fichiers de carte 42.21. Une carte modifiée peut remplacer ces cases ; le serveur refuse
+alors la réparation et le secours à 72 h évite le blocage permanent. Le catalogue reste
+un module partagé à adapter par compatibilité ; il n’est pas encore un éditeur de sites.
+
 ## Options du bac à sable
 
-Page `MilitaryDrop`, noms complets `MilitaryDrop.<Option>`, lues à chaque usage (`Config.get` : options Java puis `SandboxVars`) ; un changement en cours de partie est détecté chaque minute de jeu (`Config.poll`). Tableau généré depuis `sandbox-options.txt` et `Translate/FR/Sandbox.json` (64 options).
+Page `MilitaryDrop`, noms complets `MilitaryDrop.<Option>`, lues à chaque usage (`Config.get` : options Java puis `SandboxVars`) ; un changement en cours de partie est détecté chaque minute de jeu (`Config.poll`). Tableau généré depuis `sandbox-options.txt` et `Translate/FR/Sandbox.json` (71 options ; les sept options de branche sont détaillées dans les contrats ci-dessus, les 64 options antérieures dans le tableau ci-dessous).
 
 | Option | Type | Défaut | Bornes / valeurs | Libellé FR | Effet (infobulle FR) |
 |---|---|---|---|---|---|
@@ -258,3 +321,21 @@ Page `MilitaryDrop`, noms complets `MilitaryDrop.<Option>`, lues à chaque usage
 | `FultonValue` | integer | 100 | 0 à 500 | Fulton : récompense (pour cent) | Confiance payée pour le renseignement et le matériel envoyés par Fulton, en pourcentage du barème. Toujours limitée par le plafond quotidien, sauf le remède (Zombie Virus Vaccine). 0 : extractions Fulton désactivées. |
 | `FultonWindowMinutes` | integer | 30 | 5 à 240 | Fulton : créneau de passage (minutes) | Minutes de jeu pendant lesquelles un Fulton peut être lâché après une demande de passage par radio. |
 | `FultonLootRate` | integer | 100 | 0 à 500 | Fulton : fréquence dans le butin (pour cent) | Fréquence des bouteilles d'hélium et des kits Fulton endommagés dans le monde, les épaves et les caisses de largage. 0 : aucun. |
+
+
+### Extensions administratives et récupération — 0.8.0
+
+- `AdminDashboard` : opération confirmée `launchRelay`, cible `relay:<site>`, délégation à `RelayServer.adminLaunch(player, site)`. Autorisation et empreinte revérifiées ; `launchable` tient compte du réglage RelayEnabled et de toute panne en cours. La sélection réelle vient de la ligne serveur. Le déclenchement réutilise `RelayServer.fail` sans attendre le cooldown ; annonces et RelayState ordinaires.
+- `MilitaryDrop.DismantleMilitaryFlightRecorder` : craftRecipe native, DismantleElectrical, time 120, InHandCraft/Electrical, sans compétence minimale, 5 XP Electricity. Tournevis conservé non cassé et FlightRecorder détruit ; sorties ElectronicsScrap ×6, ElectricWire ×1, ScrapMetal ×2. Aucune restriction sur les données de transmission.
+- `Post.transmitRecorder` recrée le même type d’objet depuis la baie avec site/coordonnées/horloge, le rend et synchronise l’inventaire sur l’autorité. La baie est vidée une fois ; `recordersUsed[site]` reste le verrou de confiance et d’insertion. Aucun changement de schéma ni migration d’objets disparus.
+
+- `RelayServer.postMission()` projette la panne active en ordre public `kind=relay`, coordonnées, durée de 72 h et échéance absolue. `Post.missions()` agrège cet ordre avec reconnaissance/nettoyage/contrôle sans modifier leurs registres. Titre et consignes sont traduits côté client.
+- `MilitaryDrop_Recorders` définit la propriété facultative `MilitaryDrop_recorderTransmitted`. Seul le booléen `true` signifie transmis ; une propriété absente ou inattendue n’est pas une erreur. Les accès à ModData sont gardés. Aucune réinitialisation de `recordersUsed`, des baies ou des lectures.
+- Le boîtier renvoyé après transmission est marqué avant `sendAddItemToContainer`. Les anciens objets en inventaire (sacs compris) sont marqués depuis `recordersUsed[site]` à l’ouverture du poste et lors du rafraîchissement périodique, puis `syncItemFields` côté serveur. Seule cette propriété est ajoutée ; coordonnées et données d’autres mods sont conservées. Le marqueur sert à l’affichage, jamais à autoriser une récompense.
+- `MilitaryDrop_RecorderTooltip` enregistre le fournisseur TooltipLib `batman_MilitaryDrop_RecorderStatus`, cible item, sans cache de contenu ; un rechargement remplace le fournisseur existant. Le principal déclare désormais explicitement sa dépendance TooltipLib, déjà requise par Belt Walkie-Talkie. Le poste exclut les boîtiers marqués de sa sélection ; la recette de démontage reste disponible.
+
+- Carte relais : RelayState déclenche un repère Exclamation orange, signé par la couleur du mod et identifié en mémoire par `relay:<serial>`. Les synchronisations répétées et les symboles sauvegardés ne créent pas de doublons. `MarksActive` inclut une liste publique `relay` et sa clé de changement ; les transitions de RelayServer synchronisent immédiatement les repères. Réparation, rétablissement et secours suppriment uniquement le repère signé du relais. Les paquets sans champ relay restent acceptés.
+- Carte reconnaissance : le lancement envoie immédiatement `MarksActive`. Côté client, la liste `recon` restaure les yeux bleus manquants sans dépendre de la réception radio, y compris après reconnexion, sans doublonner les symboles sauvegardés. La clôture conserve le retrait des repères signés devenus inactifs.
+- Connexion MP : `Client.queueSync` attend un identifiant réseau valide et une case chargée avant `Sync`. Trois envois maximum, espacés de deux secondes, arrêtés par la réponse unicast `MarksActive.username` du joueur concerné. L'écouteur temporaire OnTick est retiré après réponse, après la dernière attente ou après 30 secondes sans connexion prête. Aucun état persistant ni récompense n'est modifié. Le test réel précédent a reproduit l'absence de repère après reconnexion ; le correctif est validé hors jeu, son nouvel essai natif est laissé à l'utilisateur à sa demande.
+- Résultats nettoyage : `missions.cleanupHistory` est initialisé de façon additive, borné aux 20 dernières clôtures, sans reconstituer les anciens résultats incomplets. `close` copie les contributions et enregistre résultat, coordonnées, heure monde/calendrier, bénéficiaire et retour effectif de `Trust.add`. `completedForCharacter` projette uniquement les chiffres personnels vers `Post.consoleData.completedMissions`. Le client traduit et affiche ces fiches sans action métier. Succès : commande privée `CleanupCompleted` aux participants connectés, nom local vérifié et dédoublonnage côté client, bandeau client non modal pendant huit secondes réelles, indépendant des bulles radio. `MarksActive.secured` contient seulement les grilles réussies dont `completedHours + 1` est strictement supérieur à l'heure monde actuelle. Synchronisation à la clôture, à la connexion et chaque minute de jeu ; repère natif `Checkmark` vert signé, sans toucher aux annotations personnelles. Aucun gain supplémentaire depuis l'historique ni lors d'une reconnexion.
+- Le poste affiche le texte de la mission sélectionnée dans sa fiche ; les survols des cartes et des lignes de mission ne répètent plus ce texte en infobulle. Les infobulles utiles des autres commandes restent disponibles.

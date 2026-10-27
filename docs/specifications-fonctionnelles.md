@@ -1,10 +1,11 @@
 # Spécifications fonctionnelles de Military Drop
 
-Ce que fait le mod du point de vue du joueur et de l'administrateur, version 0.5.4, Build 42.21, solo et multijoueur. Les guides détaillés, avec captures, sont dans le [wiki](wiki/fr/Home.md) ; les contrats techniques (commandes, données, valeurs des options) dans [specifications-techniques.md](specifications-techniques.md). L'état de chaque élément (codé, testé, publié) est suivi dans [annexes/plans/SUIVI.md](annexes/plans/SUIVI.md) ; la colonne « Suivi » renvoie à ses familles d'identifiants.
+Ce que fait le mod du point de vue du joueur et de l'administrateur, version 0.8.0, Build 42.21, solo et multijoueur. Les guides détaillés, avec captures, sont dans le [wiki](wiki/fr/Home.md) ; les contrats techniques (commandes, données, valeurs des options) dans [specifications-techniques.md](specifications-techniques.md). Les identifiants historiques de la colonne « Suivi » sont conservés comme repères.
 
 Règles communes : le serveur décide de tout et revérifie chaque action ; aucun chiffre de confiance n'est affiché au joueur ; aucun objet vanilla n'est nommé dans le code, le contenu vient des tables de butin du jeu et des mods actifs.
 
 ## Liste des fonctionnalités
+
 
 | Id | Fonctionnalité | Suivi | Guide |
 |---|---|---|---|
@@ -63,6 +64,8 @@ Chaque personnage a sa propre note (départ 25 sur 100), jamais affichée en chi
 
 Nettoyage : après apparition, les morts au sol dans le cercle et les membres suivis de la horde tués hors cercle alimentent un objectif commun fixe à 90 % de la horde réelle, arrondis au supérieur. Une mort ne compte qu'une fois ; le meilleur contributeur reçoit le gain existant. Les missions en cours conservent leur progression lors de la mise à jour.
 
+La réussite déclenche un bandeau personnel de huit secondes pour chaque participant connecté, indiquant contribution et gain réellement attribué. Le crâne et le cercle deviennent une coche verte pendant une heure de jeu ; elle est synchronisée après reconnexion et supprimée automatiquement. Le poste conserve les 20 derniers résultats de nettoyage, avec statut, grille, date, contribution et gain personnels. Expiration et clôture sans réussite restent visibles dans cet historique mais ne déclenchent ni succès ni coche. Consulter une fiche ne redonne aucune récompense. Les anciennes clôtures ne possédant pas ces détails ne sont pas reconstituées.
+
 Par la section « Logistique » d'une radio militaire, sans code : rapport de situation quotidien, transmission des plaques d'identité vanilla des morts, confirmation d'une reconnaissance (grille annoncée à tous, premier arrivé), nettoyage d'une horde annoncée (quota de zombies abattus), réponse à un appel de contrôle. Chaque source a son gain, désactivable à 0. Options : `ReportGain`, `DogTagGain`, `ReconGain`, `ReconHours`, `ReconIntervalHours`, `CleanupGain`, `CleanupHours`, `CleanupQuota`, `CleanupIntervalHours`, `ControlGain`, `ControlHours`, `ControlIntervalHours`.
 
 ### F10 — Poste de liaison
@@ -101,9 +104,55 @@ Droits du jeu : capacité « événements » (`MakeEventsAlarmGunshot`, comme `/
 - En MP, seul le serveur lit les secrets (graine, code fixe, fréquence libre, état privé) ; les clients ne reçoivent que des clés de traduction, des positions publiques et leurs propres données.
 - Les sons (hélicoptère, sirène, baie de lecture) et les repères sont joués localement par chaque client ; seul le bruit pour les zombies est émis par le serveur.
 
+## Fonctions de la version 0.8.0
+
+Ces fonctions sont intégrées à la version 0.8.0.
+Les tests automatiques ne remplacent pas les contrôles sensoriels ou interactifs manuels.
+
+- **I01/I02** : l’hélicoptère attire les zombies présents pendant son passage ; la livraison
+  effective émet un bruit distinct. Le réglage de ces bruits ne supprime jamais la horde
+  configurée pour le largage. Une livraison différée n’émet pas le bruit d’arrivée avant sa pose.
+- **I05** : une transition d’orage ou de coupure électrique peut mettre un relais en panne.
+  Les nouveaux largages sont suspendus ; les vols engagés continuent. L’ordre indique l’armoire,
+  les déchets électroniques et l’interaction clic droit → Réparer. Coût 20 → 2 déchets et durée
+  15 → 3 secondes entre Électricité 0 et 10 ; 10 XP de base et 3 points de confiance plafonnés
+  à la réussite. Aucun générateur, carburant ou outil supplémentaire. Une liaison de secours
+  rétablit le service au bout de 72 heures de jeu si la mission demeure non résolue.
+- **I09** : deux catégories vanilla de fret Fulton reçoivent une prime hebdomadaire de 50 %
+  par défaut, renouvelée le lundi. La prime reste dans le plafond quotidien ; le remède garde
+  sa règle particulière. Un changement de semaine après ouverture de la confirmation exige
+  de confirmer à nouveau, sans consommer le kit ou l’hélium.
+- **I10** : un signalement est accepté pour au moins 10 zombies vivants à 30 cases au
+  rez-de-chaussée. Une même zone de 80 cases ne rapporte qu’une fois par 24 heures de jeu,
+  tous joueurs confondus. Gain par défaut : 1 point plafonné. Un nettoyage libre peut être
+  créé sur les zombies signalés, sans en faire apparaître un autre groupe.
+- **I11** : les nouveaux paliers sont mémorisés à vie pour le personnage ; une citation
+  nominative part dans le prochain largage personnel admissible. Les personnages existants
+  démarrent à leur palier courant, sans rattrapage rétroactif. Au palier IV, une plaque
+  honorifique vanilla est ajoutée. Cette plaque n’est échangeable ni par radio ni par Fulton.
+- **I12** : console native avec rubriques Largages, Missions, Relais, Personnages et Épaves, recherche, filtres, pagination et fiches détaillées. Accessible par le bouton Debug/Main en solo debug et par clic droit n’importe où en MP admin, sous le libellé Military Drop Admin Menu, sans radio. Communications affiche code en vigueur et fréquences ; Outils centralise largage forcé, crash programmé et tests Fulton. Les zones de largage restent dans leurs menus actuels. Téléportation de l’admin seul près d’une cible chargée vérifiable ; annonce de caisse posée ; annulation avant livraison ; clôture de dossier livré sans supprimer son contenu. Missions : lancement, réussite avec récompense normale ou clôture sans récompense ; le gagnant de nettoyage reste celui des contributions, reconnaissance/contrôle demandent un bénéficiaire explicite. Rétablissement de relais sans composants/XP/confiance et de ligne sans changer son score. Chaque intervention affiche ses conséquences et son résultat.
+- **I13** : après ouverture réussie d’un largage personnel, un accusé de réception unique
+  reste disponible pendant 72 heures de jeu ; gain par défaut : 1 point plafonné. La preuve
+  survit au dossier du largage. La clôture et l’arrêt des rappels existants restent automatiques.
+- **I15** : le sous-mod facultatif ajoute le RJ-93, sa recette et son interface. Une pile alimente
+  un rayon de 100 cases par défaut, pendant 24 heures de jeu à charge pleine. Il bloque les
+  nouvelles demandes et transmissions, y compris celles du poseur ; les annonces publiques
+  restent reçues. Le joueur affecté reçoit un grésillement, un message explicite et le statut
+  Liaison brouillée. La fenêtre permet de choisir, insérer et retirer une pile, voir sa charge et
+  allumer/éteindre l’appareil. Le retrait conserve la charge, coupe l’émission et est unique même
+  à deux joueurs. Le ramassage arrête l’émission ; fermer la fenêtre la laisse fonctionner.
+
+I04, I14 et I16 sont retirées. I04 ne possède plus de rendu, ressource ou option dans le mod. Les valeurs d’équilibrage sont modifiables avant la fusion.
+
 ## Limites connues
 
 - Un point de largage lointain est tiré sans charger la carte : l'eau d'une cellule jamais approchée est inconnue ; la livraison attend alors une case sèche (jamais de caisse dans l'eau).
 - Le bruit de la sirène n'atteint les zombies que si sa zone est chargée (limite du moteur).
 - `requisition.txt` et `dropzones.txt` sont communs à toutes les parties du compte système qui lance le jeu ou le serveur.
-- Le mod a surtout été testé en solo ; plusieurs parcours MP restent à valider (voir [annexes/tests/test-protocol.md](annexes/tests/test-protocol.md) et [annexes/plans/SUIVI.md](annexes/plans/SUIVI.md)).
+
+
+### Relais manuels et démontage des enregistreurs — branche 0.8.0
+
+Depuis Relais, un admin sélectionne un site et confirme le lancement de sa mission, avec motif. Météo et délai de réarmement sont ignorés, mais RelayEnabled et l’unicité de la panne restent contrôlés. L’ordre et les récompenses de réparation sont les mêmes que pour une panne naturelle.
+
+La recette DismantleMilitaryFlightRecorder consomme un enregistreur, transmis ou non, avec tournevis conservé : 6 déchets électroniques, 1 fil électrique, 2 ferrailles et 5 XP de base en Électricité. La transmission rend désormais le boîtier, sans supprimer le verrou de récompense par site. Aucun rétablissement rétroactif des anciens objets consommés.

@@ -111,7 +111,7 @@ Vous l'avez manquée ? La base répète la grille de chaque largage dont aucune 
 
 ### Symboles sur la carte
 
-La base marque votre carte seulement si l'une de vos radios **entend** l'annonce ou l'un de ses rappels, ou quand la base vous donne la grille d'une mission en réponse sur votre radio (reconnaissance trop loin, point du nettoyage). Ce sont les symboles de carte du jeu : on les efface comme n'importe quelle note de carte.
+Pour les largages et les nettoyages, la base marque votre carte si l'une de vos radios **entend** l'annonce, un rappel ou une réponse donnant la grille. Les missions de reconnaissance et de réparation de relais ont aussi un repère automatique synchronisé tant qu'elles sont actives, y compris après reconnexion. Ce sont les symboles de carte du jeu : on les efface comme n'importe quelle note de carte ; une synchronisation peut restaurer un repère de mission active.
 
 | Symbole | Signification | Où |
 |---|---|---|
@@ -141,3 +141,8 @@ Faites vite : la première caisse ouverte par le personnage demandeur rapporte *
 
 Videz la caisse, munissez-vous d'un **marteau** et d'une **scie**, clic droit : **Démonter la caisse**. Vous récupérez des planches (ou du bois inutilisable) et de l'expérience en Menuiserie, comme pour un meuble en bois. L'option est grisée avec sa raison si la caisse n'est pas vide ou s'il manque un outil.
 
+## Bruit et interruptions — 0.8.0
+
+Le rotor attire les infectés présents le long du trajet ; la pose effective produit un bruit distinct. Réduire ces bruits ne retire pas la horde configurée au largage. Une livraison retardée n'émet pas son bruit de pose en avance.
+
+Une panne de relais suspend les nouveaux appels : écoutez l'ordre et [réparez l'armoire indiquée](04-trust-and-missions.md). Avec le sous-mod facultatif, **Liaison brouillée** signale un [RJ-93 actif](10-radio-jammer.md) : éloignez-vous ou coupez sa source. Les annonces publiques restent reçues. Ces deux situations sont différentes d'un mauvais code ou de l'attente entre deux largages.

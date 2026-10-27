@@ -43,3 +43,11 @@ Non. Military Drop est une réécriture autonome : il exige seulement Belt Walki
 
 **Où signaler un bug ?**
 Sur la page du Workshop Steam ou dans les [issues GitHub](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/issues). Joignez `Zomboid/console.txt` et, si possible, activez l'option **Journal de débogage** du bac à sable.
+
+## Pourquoi la base refuse-t-elle mon appel en 0.8.0 ?
+
+- **Relais en panne** : rejoindre l'armoire annoncée avec des déchets électroniques ; aucun générateur requis. La liaison de secours revient après 72 h de jeu.
+- **Liaison brouillée** : le sous-mod RJ-93 est actif. Éloignez-vous du brouilleur, éteignez-le ou retirez sa pile. Recevoir une annonce ne signifie pas pouvoir transmettre.
+- **Attente, code ou confiance** : suivez la raison donnée par la base ; réparer un relais ne supprime pas ces règles.
+
+Pour jouer sans brouillage, laissez `batman_MilitaryDropJammer` désactivé. [Guide du RJ-93](10-radio-jammer.md).

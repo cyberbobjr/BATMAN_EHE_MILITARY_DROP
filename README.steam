@@ -1,14 +1,12 @@
 [h1]Military Drop - Radio Supply Airdrops[/h1]
 
-[h1]⚠ BREAKING CHANGE — version 0.6.0 (2026-10-21) ⚠[/h1]
-[h1]SIGNAL SMOKE IS NOW REQUIRED[/h1]
-[b]This mod now requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Subscribe to all three and enable them together with this mod. Dedicated servers: add 3817018338;3694097672;3811010882 to WorkshopItems= and batman_BeltRadio;TooltipLib;batman_SignalSmoke to Mods=, otherwise the game does not load this mod (only a warning in the log).[/b]
+[b]Required mods[/b]: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url].
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
 [b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]
 
-[i]Built for dedicated servers (the server decides everything), mostly tested in singleplayer so far. Please report any multiplayer issue.[/i]
+[i]0.8.0[/i]
 
 Tune a military radio to the right frequency, give this week's code and requisition supplies. A helicopter drops a crate far away and announces the grid to everyone listening... and the noise draws the dead.
 
@@ -43,13 +41,24 @@ Each character has a personal reputation, never shown as a number. It shortens t
 [*][b]Helicopter crashes[/b], more frequent in storms: a MAYDAY gives the sector; the wreck holds parts, documents and a flight recorder.
 [*][b]Liaison post[/b]: a fixed military radio becomes your station's console (tasks, orders, log, recorder bay).
 [*][b]Contested drop zones[/b] for PvP servers, drawn in game by the admin.
-[*]60 sandbox options, applied without restarting; server-authoritative multiplayer; admin tools from a military radio.
+[*]71 sandbox options; server-authoritative multiplayer.
+[/list]
+
+[h2]0.8.0[/h2]
+
+[list]
+[*]Clearance success notifications, result history at the liaison post and temporary green map checks. Recon and relay repair objectives are marked on your map.
+[*]Repair relay cabinets after outages using electronic scrap; Electricity reduces cost and time. Earn XP, no generator required.
+[*]Weekly Fulton cargo bonuses, horde reports, delivery receipts and personal commendations.
+[*]Separate rotor/delivery noise controls; the configured drop horde remains.
+[*]Admin console: SP Debug → Main; MP right-click anywhere → Military Drop Admin Menu. Current code/frequencies, forced drops, next crash and Fulton tests. Drop-zone menus unchanged.
+[*]Optional [b]batman_MilitaryDropJammer[/b] submod in this package: craft and place the RJ-93, insert/remove a battery and view charge in its window. Default: 100 tiles, 24 game hours per full battery. Blocks outgoing Military Drop calls, including yours; broadcasts remain audible. Static, a message and link status identify jamming. Leave this submod disabled to play without it.
+[*]Flight recorders: dismantle before or after transmission; the physical recorder is now returned. Admins can launch relay repair orders at a selected site.
 [/list]
 
 [h2]Compatibility[/h2]
 
 [list]
-[*]No other mod required.
 [*]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: the shared belt walkie-talkie behaviour of all the mods that use it.
 [*]Designed to coexist with [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Requires [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]: green smoke marks the crate.

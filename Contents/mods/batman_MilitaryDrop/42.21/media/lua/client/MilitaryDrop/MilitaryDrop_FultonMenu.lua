@@ -150,13 +150,14 @@ if ISBaseTimedAction then
             return
         end
         MilitaryDrop.Net.toServer(self.character, "FultonLaunch", { kitId = self.kit:getID(), tankId = self.tank:getID(),
-            x = square:getX(), y = square:getY(), z = square:getZ() })
+            x = square:getX(), y = square:getY(), z = square:getZ(), week = self.week })
     end
 
-    function Action.new(_, character, kit, tank)
+    function Action.new(_, character, kit, tank, week)
         local o = ISBaseTimedAction.new(Action, character)
         o.kit = kit
         o.tank = tank
+        o.week = week or (MilitaryDrop.Weekly and MilitaryDrop.Weekly.week())
         o.maxTime = FultonMenu.ACTION_TIME
         o.stopOnWalk = true
         o.stopOnRun = true
@@ -167,7 +168,7 @@ end
 
 --- Met en file : marche jusqu'au kit, bouteille dans l'inventaire principal,
 --- puis le gonflage.
-function FultonMenu.queueLaunch(player, kit)
+function FultonMenu.queueLaunch(player, kit, week)
     local tank = Fulton.findTank(player:getInventory(), true)
     local square = FultonMenu.kitSquare(kit)
     if not tank or not square then
@@ -177,7 +178,7 @@ function FultonMenu.queueLaunch(player, kit)
         return false
     end
     ISInventoryPaneContextMenu.transferIfNeeded(player, tank)
-    ISTimedActionQueue.add(MilitaryDrop.FultonLaunchAction.new(nil, player, kit, tank))
+    ISTimedActionQueue.add(MilitaryDrop.FultonLaunchAction.new(nil, player, kit, tank, week))
     return true
 end
 
@@ -187,14 +188,14 @@ function FultonMenu.onConfirm(target, button)
     end
     local player = getSpecificPlayer(target.playerNum)
     if player and FultonMenu.reason(player, target.kit) == nil then
-        FultonMenu.queueLaunch(player, target.kit)
+        FultonMenu.queueLaunch(player, target.kit, target.week)
     end
 end
 
 --- Ouvre la confirmation (manette comprise).
 function FultonMenu.confirm(player, kit)
     local playerNum = player:getPlayerNum()
-    local target = { playerNum = playerNum, kit = kit }
+    local target = { playerNum = playerNum, kit = kit, week = MilitaryDrop.Weekly and MilitaryDrop.Weekly.week() }
     local modal = ISModalDialog:new(0, 0, 420, 200, FultonMenu.confirmText(player, kit), true, target,
         FultonMenu.onConfirm, playerNum)
     modal:initialise()

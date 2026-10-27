@@ -29,7 +29,7 @@
 -- La fréquence militaire n'est connue du client MP que si l'option Frequency
 -- la fixe ; par défaut, elle est tirée par le serveur et lue sur les notes.
 --
--- Réquisition (v1.4, docs/annexes/plans/plan-v14.md) : un appel accepté peut recevoir
+-- Réquisition (v1.4, docs/specifications-techniques.md) : un appel accepté peut recevoir
 -- Result « form » au lieu de « accepted ». La base le dit à la radio, puis le
 -- formulaire s'ouvre (MilitaryDrop.RequisitionWindow) ; la demande reste en
 -- attente jusqu'à la commande (RequisitionOrder, même requestId et même
@@ -487,6 +487,24 @@ local FLIGHT_COMMANDS = {
 --- d'OnServerCommand : un seul point d'entrée dans les deux cas.
 Client.HANDLERS = {}
 
+local completedNotices = {}
+Client.HANDLERS.CleanupCompleted = function(args)
+    if type(args.id) ~= "string" or type(args.username) ~= "string" then return end
+    local key = args.username .. ":" .. args.id
+    if completedNotices[key] then return end
+    for i = 0, getNumActivePlayers() - 1 do
+        local player = getSpecificPlayer(i)
+        if player and tostring(player:getUsername()) == args.username then
+            completedNotices[key] = true
+            local text = getText("IGUI_MilitaryDrop_CleanupSuccess", tostring(math.floor(tonumber(args.contribution) or 0)),
+                tostring(math.floor(tonumber(args.gain) or 0)))
+            require "MilitaryDrop/MilitaryDrop_CleanupFeedback"
+            MilitaryDrop.CleanupFeedback.show(player, text)
+            return
+        end
+    end
+end
+
 Client.HANDLERS.CharacterIdentity = function(args)
     if type(args.id) ~= "string" or not args.id:match("^C:") then
         return
@@ -528,6 +546,7 @@ function Client.onServerCommand(module, command, args)
     end
     if command == "MarksActive" then
         MilitaryDrop.Announce.onActiveMarks(args)
+        Client.finishSync(args.username)
         return
     end
     local request = pending[args.requestId]
@@ -614,30 +633,7 @@ Client.HANDLERS.ReloadLotsReply = Client.onReloadLotsReply
 -- Menus contextuels
 -- ----------------------------------------------------------------------------
 
---- Menu contextuel d'une radio militaire : seulement le largage admin.
---- Les joueurs passent par la section « Logistique » de la fenêtre radio
---- (MilitaryDrop_RadioModule.lua, RADIO-06), ouverte par « Options de
---- l'appareil » : elle remplace le menu « Logistique » et « Demander un
---- largage » (décision de l'utilisateur du 2026-10-01).
-function Client.addOptions(player, context, device)
-    -- Largage admin : jamais grisé, le serveur n'exige pas la radio en main.
-    if Client.canForce(player) then
-        context:addOption(getText("IGUI_MilitaryDrop_RequestDropAdmin"), player, Client.onRequest, device, true)
-        -- Missions à la demande (admin) : le serveur revérifie le droit.
-        local parent = context:addOption(getText("IGUI_MilitaryDrop_AdminMissions"))
-        local sub = ISContextMenu:getNew(context)
-        context:addSubMenu(parent, sub)
-        for _, kind in ipairs(Client.ADMIN_MISSIONS) do
-            sub:addOption(getText("IGUI_MilitaryDrop_AdminMission_" .. kind), player, Client.onAdminMission, kind)
-        end
-        for _, kind in ipairs(Client.ADMIN_MISSIONS) do
-            sub:addOption(getText("IGUI_MilitaryDrop_AdminMissionClose_" .. kind), player, Client.onAdminMission, kind,
-                "close")
-        end
-        context:addOption(getText("IGUI_MilitaryDrop_AdminCrashNext"), player, Client.onAdminCrashNext)
-    end
-end
-
+-- Administrative actions are launched from the central console.
 -- Missions qu'un admin peut lancer (MilitaryDrop.Missions.KINDS côté serveur).
 Client.ADMIN_MISSIONS = { "recon", "cleanup", "control" }
 
@@ -649,64 +645,62 @@ function Client.onAdminCrashNext(player)
     Net.toServer(player, "AdminCrashNext", {})
 end
 
-function Client.onFillInventoryContextMenu(playerNum, context, items)
-    local player = getSpecificPlayer(playerNum)
-    if not player then
-        return
-    end
-    for _, entry in ipairs(items) do
-        local item = entry
-        if not instanceof(entry, "InventoryItem") then
-            item = entry.items and entry.items[1]
-        end
-        if Radio.isInventoryRadio(item) and Radio.isMilitary(item) then
-            Client.addOptions(player, context, item)
-            return
-        end
+-- OnGameStart precedes sendPlayerConnect in 42.21. Wait for a connected player.
+local pendingSync = {}
+local syncTickAttached = false
+local function stopSyncIfEmpty()
+    local hasPending = false
+    for _ in pairs(pendingSync) do hasPending = true end
+    if hasPending then return end
+    if syncTickAttached then
+        Events.OnTick.Remove(Client.onSyncTick)
+        syncTickAttached = false
     end
 end
 
-function Client.onFillWorldContextMenu(playerNum, context, worldObjects, test)
-    if test then
-        return
+function Client.finishSync(username)
+    if type(username) ~= "string" then return end
+    for index, entry in pairs(pendingSync) do
+        local player = getSpecificPlayer(index)
+        if entry.attempts > 0 and player and tostring(player:getUsername()) == username then pendingSync[index] = nil end
     end
-    local player = getSpecificPlayer(playerNum)
-    if not player then
-        return
-    end
-    local seen = {}
-    for _, object in ipairs(worldObjects) do
-        local square = object and object:getSquare()
-        if square and not seen[square] then
-            seen[square] = true
-            local objects = square:getObjects()
-            for i = 0, objects:size() - 1 do
-                local candidate = objects:get(i)
-                if Radio.isWorldRadio(candidate) and Radio.isMilitary(candidate) then
-                    Client.addOptions(player, context, candidate)
-                    return
-                end
+    stopSyncIfEmpty()
+end
+
+function Client.onSyncTick()
+    local now = getTimestampMs()
+    for index, entry in pairs(pendingSync) do
+        if not isClient() or now >= entry.deadline or (entry.attempts >= 3 and now >= entry.nextAt) then
+            pendingSync[index] = nil
+        elseif now >= entry.nextAt then
+            local player = getSpecificPlayer(index)
+            if player and player:getOnlineID() >= 0 and player:getSquare() then
+                entry.attempts, entry.nextAt = entry.attempts + 1, now + 2000
+                Net.toServer(player, "Sync", {})
             end
         end
     end
+    stopSyncIfEmpty()
 end
 
---- MP : à l'arrivée en jeu, demande les vols déjà en cours (reconnexion).
-function Client.onGameStart()
-    local player = getSpecificPlayer(0)
-    if isClient() and player then
-        Net.toServer(player, "Sync", {})
+function Client.queueSync(index)
+    if not isClient() or pendingSync[index] then return end
+    local now = getTimestampMs()
+    pendingSync[index] = { attempts = 0, nextAt = now, deadline = now + 30000 }
+    if not syncTickAttached then
+        Events.OnTick.Add(Client.onSyncTick)
+        syncTickAttached = true
     end
+end
+
+function Client.onGameStart()
+    Client.queueSync(0)
 end
 
 Events.OnGameStart.Add(Client.onGameStart)
-Events.OnCreatePlayer.Add(function(index, player)
-    if isClient() and index > 0 then
-        Net.toServer(player, "Sync", {})
-    end
+Events.OnCreatePlayer.Add(function(index)
+    if index > 0 then Client.queueSync(index) end
 end)
-Events.OnFillInventoryObjectContextMenu.Add(Client.onFillInventoryContextMenu)
-Events.OnFillWorldObjectContextMenu.Add(Client.onFillWorldContextMenu)
 Events.OnServerCommand.Add(Client.onServerCommand)
 
 return Client

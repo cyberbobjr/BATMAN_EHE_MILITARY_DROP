@@ -149,5 +149,19 @@
     "Sandbox_MilitaryDrop_FultonWindowMinutes": "Fulton: Abholfenster (Minuten)",
     "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "Spielminuten, in denen ein Fulton nach einer Abholanfrage per Funk gestartet werden kann.",
     "Sandbox_MilitaryDrop_FultonLootRate": "Fulton: Fundrate (Prozent)",
-    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Wie oft Heliumflaschen und beschädigte Fulton-Sets in der Welt, in Wracks und Versorgungskisten zu finden sind. 0: keine."
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Wie oft Heliumflaschen und beschädigte Fulton-Sets in der Welt, in Wracks und Versorgungskisten zu finden sind. 0: keine.",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent": "Fulton-Wochenbonus (Prozent)",
+    "Sandbox_MilitaryDrop_RotorNoisePercent": "Rotor-Lockgeräusch (Prozent)",
+    "Sandbox_MilitaryDrop_LandingNoisePercent": "Abwurf-Lockgeräusch (Prozent)",
+    "Sandbox_MilitaryDrop_RelayEnabled": "Relais-Reparaturaufträge",
+    "Sandbox_MilitaryDrop_RelayRearmDays": "Mindesttage zwischen Relaisausfällen",
+    "Sandbox_MilitaryDrop_HordeReportGain": "Vertrauen für bestätigte Ansammlung",
+    "Sandbox_MilitaryDrop_ReceiptGain": "Vertrauen für Empfangsbestätigung",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent_tooltip": "Bonus für zwei Kategorien, jeden Montag neu. Zählt zum Tageslimit. 0 deaktiviert den Bonus.",
+    "Sandbox_MilitaryDrop_RotorNoisePercent_tooltip": "100: normale Anlockung, 0: keine Rotoranlockung. Die konfigurierte Horde erscheint weiterhin.",
+    "Sandbox_MilitaryDrop_LandingNoisePercent_tooltip": "100: normale Anlockung bei Lieferung, 0: keine. Die konfigurierte Horde erscheint weiterhin.",
+    "Sandbox_MilitaryDrop_RelayEnabled_tooltip": "Sturm oder Stromausfall kann ein Relais beschädigen. Reparatur nur mit Elektronikschrott. Ersatzverbindung nach 72 Spielstunden.",
+    "Sandbox_MilitaryDrop_RelayRearmDays_tooltip": "Mindestspieltage nach Reparatur oder Ersatzverbindung bis zum nächsten Ausfall.",
+    "Sandbox_MilitaryDrop_HordeReportGain_tooltip": "Täglich begrenztes Vertrauen für bestätigte Ansammlungen. 0 deaktiviert. Gleiches Gebiet: einmal pro 24 Spielstunden.",
+    "Sandbox_MilitaryDrop_ReceiptGain_tooltip": "Täglich begrenztes Vertrauen für eine Bestätigung pro geborgenem eigenem Abwurf. 0 deaktiviert."
 }

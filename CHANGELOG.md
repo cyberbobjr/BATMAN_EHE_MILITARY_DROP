@@ -1,7 +1,45 @@
 # Changelog
 
-Each `## <version> — <date>` section is published as the Steam Workshop change note
-(`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
+Technical version history. Player-facing Steam notes are kept separately in
+`workshop-changenote.md` and published through `tools/publish_workshop.py`.
+The top version must match `modversion=` in `mod.info`.
+
+## 0.8.0 — 2026-10-27
+
+Version 0.8.0. Native validation limits are recorded under Validation below.
+
+### Added
+
+- Clearance completion feedback: participants receive a personal success notification with their contribution and actual trust gain. The liaison post retains the latest 20 clearance results, including expired/cancelled orders, with date, grid and personal figures. Successful clearance replaces its map markers with a green checkmark for one game hour, also synchronized after reconnecting. History cannot grant another reward.
+- Relay repair missions after a thunderstorm or power-grid failure. Bring electronic scrap and right-click the designated cabinet to repair it: 20 scrap and 15 seconds at Electricity 0, down to 2 scrap and 3 seconds at Electricity 10. Repairs grant Electricity XP and trust. No generator or fuel is required; an emergency bypass restores service after 72 game hours if nobody repairs it.
+- Weekly Fulton priorities: two cargo categories earn a 50 percent bonus by default, within the daily trust cap. Ask the base for this week's needs; priorities change on Monday.
+- Radio actions to report concentrations of at least 10 nearby infected and to confirm receipt of your opened supply drop. Reports reject duplicates in the same area; each drop receipt can earn trust only once.
+- Personal commendations when reaching a new trust tier, delivered in the next eligible personal drop. Tier IV also awards an honorary dog tag, which cannot be traded for trust.
+- Administration console from Debug → Main in solo debug, or right-click anywhere → Military Drop Admin Menu for authorized MP admins; no radio needed: searchable drops, missions, relays, characters and wrecks. Private Communications shows the current code and frequencies. Tools consolidates forced drops, the next-crash order and Fulton tests; their old context entries are removed. Drop-zone menus are retained. Actions explain their effects and require confirmation; interventions are logged. Mission success with normal rewards and closure without rewards are separate actions. Safe teleportation requires a loaded, verifiable destination.
+- Optional `batman_MilitaryDropJammer` submod: craft the RJ-93 at Electricity 3, place it on the ground and insert a battery through its control window. View charge, insert/remove the battery and switch transmission on or off. Default range: 100 tiles; a full battery lasts 24 game hours. Blocks outgoing Military Drop radio requests, including the owner's, while public broadcasts remain audible. A static sound, explicit message and jammed-link status explain the interruption. The main mod works without this submod.
+
+- Admins can launch a relay repair mission at any of the four sites from Relays, with preview and confirmation. Manual launch bypasses weather/rearm timing, respects the relay-enabled setting and never replaces an active repair order.
+- Flight recorders can be dismantled with a screwdriver, before or after transmission, into 6 electronic scrap, 1 electric wire and 2 scrap metal, with 5 base Electricity XP. Transmission now returns the physical recorder to the sender; the per-crash trust reward remains single-use.
+
+### Changed
+
+- Separate sandbox controls for rotor and delivery noise. Noise attracts existing infected; the configured drop horde still spawns. Arrival noise is emitted only when supplies actually land.
+- The abandoned helicopter silhouette is removed, together with its option and assets. Existing helicopter sounds, shadow and directional marker remain.
+
+### Fixed
+
+- Multiplayer recon markers now resynchronize after the character is connected and its square is loaded. Startup synchronization retries at most three times, two seconds apart, stops on the player's active-mark reply, and removes its temporary callback. This restores missing blue eyes after reconnecting without duplicating saved markers or changing mission progress.
+- Active reconnaissance missions now automatically add their blue eye marker at launch and after reconnecting, even when the radio announcement was missed. Closing the mission removes the marker.
+- Active relay repair missions now mark the cabinet on the map with an amber exclamation point, including after reconnecting. The marker is removed after repair, admin restoration or emergency bypass; personal map notes are retained.
+- Removed redundant mission tooltips from the liaison post; order instructions remain in the selected mission's detail pane.
+- Relay repair orders now appear in the liaison post alongside recon, clearance and radio checks, including the grid, remaining time and repair instructions.
+- Transmitted flight recorders are hidden from the liaison post's pending list. A TooltipLib notice identifies them as already sent and available for dismantling. Existing returned recorders are marked from the server's original per-site reward registry; old saves without the optional marker remain supported.
+- Opening the solo Debug menu no longer fails when `addButtonInfo` returns a non-table value. The Military Drop entry is built directly in the button list, preserving the existing debug tools.
+
+### Validation
+
+- The deferred reconnect synchronization fix passes offline regression tests for connection readiness, reply ownership, retry spacing, retry limits and callback removal. Its new in-game reconnect check is left to player testing; no game was launched for this final fix at the player's request.
+- Automated Lua, translation and Steam-description checks; local Windows Build 42.21.0 singleplayer and dedicated-server multiplayer scenarios were exercised during development. Manual player review is pending; no Linux production-server validation is claimed.
 
 ## 0.7.1 — 2026-10-26
 

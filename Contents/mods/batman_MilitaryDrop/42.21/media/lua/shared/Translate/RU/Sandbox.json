@@ -149,5 +149,19 @@
     "Sandbox_MilitaryDrop_FultonWindowMinutes": "Фултон: окно подбора (минуты)",
     "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "Игровые минуты, в течение которых можно выпустить «Фултон» после запроса подбора по радио.",
     "Sandbox_MilitaryDrop_FultonLootRate": "Фултон: частота в добыче (проценты)",
-    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Как часто баллоны с гелием и повреждённые комплекты «Фултон» встречаются в мире, обломках и ящиках снабжения. 0: никогда."
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Как часто баллоны с гелием и повреждённые комплекты «Фултон» встречаются в мире, обломках и ящиках снабжения. 0: никогда.",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent": "Недельная надбавка Fulton (проценты)",
+    "Sandbox_MilitaryDrop_RotorNoisePercent": "Шум ротора для привлечения (проценты)",
+    "Sandbox_MilitaryDrop_LandingNoisePercent": "Шум сброса для привлечения (проценты)",
+    "Sandbox_MilitaryDrop_RelayEnabled": "Задания по ремонту ретрансляторов",
+    "Sandbox_MilitaryDrop_RelayRearmDays": "Минимум дней между поломками",
+    "Sandbox_MilitaryDrop_HordeReportGain": "Доверие за подтверждённое скопление",
+    "Sandbox_MilitaryDrop_ReceiptGain": "Доверие за подтверждение получения",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent_tooltip": "Надбавка для двух категорий с понедельника. Входит в дневной лимит. 0 отключает.",
+    "Sandbox_MilitaryDrop_RotorNoisePercent_tooltip": "100: обычное привлечение, 0: ротор не привлекает. Настроенная орда всё равно появляется.",
+    "Sandbox_MilitaryDrop_LandingNoisePercent_tooltip": "100: обычное привлечение при доставке, 0: нет. Настроенная орда всё равно появляется.",
+    "Sandbox_MilitaryDrop_RelayEnabled_tooltip": "Гроза или отключение сети могут сломать ретранслятор. Нужен только электронный лом. Резерв через 72 игровых часа.",
+    "Sandbox_MilitaryDrop_RelayRearmDays_tooltip": "Минимум игровых дней после ремонта или резерва до новой поломки.",
+    "Sandbox_MilitaryDrop_HordeReportGain_tooltip": "Доверие с дневным лимитом. 0 отключает. Тот же район: раз в 24 игровых часа.",
+    "Sandbox_MilitaryDrop_ReceiptGain_tooltip": "Доверие с лимитом за одно подтверждение полученного личного сброса. 0 отключает."
 }

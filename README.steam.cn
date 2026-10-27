@@ -1,14 +1,12 @@
 [h1]Military Drop - 无线电补给空投[/h1]
 
-[h1]⚠ 不兼容变更 — 版本 0.6.0（2026-10-21）⚠[/h1]
-[h1]现在必须安装 SIGNAL SMOKE[/h1]
-[b]本模组现在需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]。请订阅这三个模组并与本模组一起启用。专用服务器：将 3817018338;3694097672;3811010882 加入 WorkshopItems=，将 batman_BeltRadio;TooltipLib;batman_SignalSmoke 加入 Mods=，否则游戏不会加载本模组（日志中只有一条警告）。[/b]
+[b]必需模组[/b]: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url].
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
 [b]Build 42.21 · 单人与多人 · 独立运行[/b]
 
-[i]专为专用服务器设计(一切由服务器决定),目前主要在单人模式下测试。如遇多人问题请反馈。[/i]
+[i]0.8.0[/i]
 
 把军用无线电调到正确频率,报出本周认证码并申请补给。直升机会在远处投下补给箱,并向所有收听者播报网格坐标……而噪音会引来死者。
 
@@ -43,13 +41,24 @@
 [*][b]直升机坠毁[/b],雷雨时更常见:MAYDAY 会给出区域;残骸里有零件、文件和飞行记录仪。
 [*][b]联络站[/b]:固定式军用无线电会变成你站点的控制台(事务、命令、日志、读取槽)。
 [*]面向 PvP 服务器的[b]争夺空投区[/b],由管理员在游戏中绘制。
-[*]60 项沙盒选项,无需重启即可生效;多人模式由服务器决定一切;可通过军用无线电使用管理员工具。
+[*]71 项沙盒选项；多人模式由服务器决定。
+[/list]
+
+[h2]0.8.0[/h2]
+
+[list]
+[*]清理成功后会显示通知，联络站保留任务记录，地图上短暂显示绿色勾号。侦察与中继站维修目标也会标记在地图上。
+[*]用电子废料修复故障中继柜。电工技能降低消耗和时间，并获得经验，无需发电机。
+[*]每周 Fulton 货物奖励、尸群报告、收货确认和个人嘉奖。
+[*]分别调整旋翼和投递噪声；设定的尸群仍会生成。
+[*]管理员面板：单人 Debug → Main；多人任意位置右键 → Military Drop Admin Menu。查看代码和频率、强制空投、坠机与Fulton测试。空投区域菜单保持原样。
+[*]同包可选子模组 [b]batman_MilitaryDropJammer[/b]：制作 RJ-93 后放在地面，通过窗口装卸电池、查看电量并开关。默认半径100格，满电可用24游戏小时。阻断 Military Drop 对外呼叫，包括部署者自己的呼叫；公共广播仍可接收。杂音、提示和连接状态说明干扰。无需干扰机制时不要启用此子模组。
+[*]飞行记录器在传输后返还，传输前后均可拆解。管理员可在选定地点启动中继维修任务。
 [/list]
 
 [h2]兼容性[/h2]
 
 [list]
-[*]不需要其他模组。
 [*]需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]：为所有使用它的模组提供统一的腰间对讲机行为。
 [*]设计为可与 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url] 共存。
 [*]需要 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]：绿色烟雾会标出补给箱。

@@ -17,5 +17,6 @@
     "MilitaryDrop.FultonHarnessBag": "Fulton-Gurtsack (Bauteil)",
     "MilitaryDrop.FultonKit": "Fulton-Bergungsset",
     "MilitaryDrop.FultonKitDamaged": "Beschädigtes Fulton-Bergungsset",
-    "MilitaryDrop.HeliumTank": "Heliumflasche"
+    "MilitaryDrop.HeliumTank": "Heliumflasche",
+    "ItemName_MilitaryDrop.CommandCitation": "Auszeichnung des Kommandos"
 }

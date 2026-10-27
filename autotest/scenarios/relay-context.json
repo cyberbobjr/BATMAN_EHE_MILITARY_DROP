@@ -1,0 +1,58 @@
+{
+  "name": "MilitaryDropRelayContext",
+  "gameVersion": "42.21",
+  "mods": [
+    {
+      "workshop": "3694097672",
+      "id": "TooltipLib"
+    },
+    {
+      "path": "../../../BeltRadio/Contents/mods/batman_BeltRadio"
+    },
+    {
+      "path": "../../../SignalSmoke/Contents/mods/batman_SignalSmoke"
+    },
+    {
+      "path": "../../Contents/mods/batman_MilitaryDrop"
+    }
+  ],
+  "hooks": "../../autotest/relay_context_hooks.lua",
+  "params": {
+    "deliverySec": "240",
+    "clientWaitSec": "420",
+    "crateWaitSec": "30",
+    "serverLeadSec": "20"
+  },
+  "sp": {
+    "save": "2026-10-17_17-50-04",
+    "gameMode": "Sandbox",
+    "saveMods": "replace",
+    "timeoutSec": 900,
+    "startDelaySec": 5
+  },
+  "server": {
+    "serverName": "pzat_militarydrop",
+    "port": 17401,
+    "timeoutSec": 600,
+    "ini": {
+      "Map": "Muldraugh, KY",
+      "MaxPlayers": 4
+    }
+  },
+  "mp": {
+    "serverName": "pzat_militarydrop_mp",
+    "port": 17411,
+    "spawn": "10276,8744,0",
+    "clients": 1,
+    "clientXmx": "4096m",
+    "serverRun": true,
+    "clientRun": true,
+    "timeoutSec": 1800,
+    "joinTimeoutSec": 600,
+    "ini": {
+      "Map": "Muldraugh, KY",
+      "MaxPlayers": 4
+    }
+  },
+  "runsDir": "../../runs"
+}

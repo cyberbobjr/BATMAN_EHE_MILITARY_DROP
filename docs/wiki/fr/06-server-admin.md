@@ -283,13 +283,13 @@ Avec **Zones si l'une est proche**, un appel loin de toute zone tombe simplement
 
 ## Outils d'admin en jeu
 
-Clic droit sur une radio militaire (dans l'inventaire ou posée) :
+Les outils ci-dessous sont regroupés dans la console **Military Drop Admin Menu** : rubrique **Outils** pour le largage forcé et le crash programmé, rubrique **Missions** pour lancer ou clôturer un ordre.
 
 - **Forcer un largage (admin)** : ouvre le formulaire tamponné **ADMIN**, avec tous les lots et 20 points. Ni code, ni contrôle de la radio, ni attente. Les coordonnées vous sont envoyées en privé, le largage ne compte pas pour la confiance et l'attente entre deux largages ne démarre pas. Formulaire désactivé : le largage part aussitôt avec des caisses aléatoires. Il suit le **Placement des largages** comme un appel de joueur, distances mesurées depuis vous : avec des zones de largage, il tombe dans une zone, le formulaire peut afficher le champ **Secteur de largage** et son leurre propose les secteurs.
 - **Missions (admin)** : **Lancer une reconnaissance**, **Lancer un nettoyage**, **Lancer un appel de contrôle**, ou clore la mission en cours (**Clore … en cours**). Une mission close est annoncée comme annulée, sans récompense.
 - **Faire crasher le prochain hélicoptère** : programme un seul crash au prochain départ du mod, y compris un largage forcé ou un leurre. Confirmation privée, ordre conservé avec la sauvegarde ; cliquer plusieurs fois ne cumule pas les crashes. Un vol déjà parti continue et une attente HEF ne consomme pas l’ordre. Pour essayer : activer l’option, puis forcer un largage et valider le formulaire.
 
-Qui les voit : en solo, le mode debug seulement. En multijoueur, les rôles qui peuvent déclencher des événements (admin, et tout rôle doté de la capacité `MakeEventsAlarmGunshot`). Le serveur revérifie.
+Dans la console, le largage forcé et le crash exigent aussi le droit de déclencher des événements (`MakeEventsAlarmGunshot`), en plus du droit d’accès administratif. Le serveur revérifie ces droits.
 
 Les zones de largage ont leur propre outil, dans le panneau d'admin du jeu : voir [Outil en jeu](#outil-en-jeu).
 
@@ -339,6 +339,63 @@ Ces commandes lisent la mémoire du serveur : elles marchent en solo, pas depuis
 
 ## Notes pour le multijoueur
 
-- Le serveur décide et vérifie tout ; les clients ne reçoivent jamais la fréquence tirée au hasard ni le code (seules les notes et la station de chiffres les donnent).
+- Le serveur décide et vérifie tout ; les joueurs ordinaires ne reçoivent pas les secrets par la synchronisation du mod. La rubrique Communications constitue un accès privé réservé aux admins autorisés.
 - Un talkie-walkie doit être en main pour émettre : le mod le prend en main automatiquement.
 - Trois codes faux d'un joueur ne font pas taire la base pour les autres.
+
+## Console d'administration — 0.8.0
+
+**Solo debug** : ouvrez la fenêtre Debug (icône insecte), onglet **Main**, puis le bouton **Military Drop Admin Menu**. **MP admin** : clic droit n’importe où dans le monde → **Military Drop Admin Menu**. Aucune radio nécessaire. Disponible en **solo debug** et en **MP pour les rôles autorisés à modifier/recharger les options serveur** (`ChangeAndReloadServerOptions`). Le serveur revérifie chaque intervention. Les anciens outils de déclenchement d'événements gardent leurs droits propres ; leur présence ne donne pas accès à cette console.
+
+Choisissez **Largages**, **Missions**, **Relais**, **Personnages**, **Épaves**, **Communications** ou **Outils**. Recherchez une cible, filtrez son état, puis sélectionnez sa ligne : la fiche explique les données et les actions disponibles. Les listes sont paginées par 24 ; utilisez l'actualisation si nécessaire.
+
+| Action | Effet |
+|---|---|
+| Téléporter | Déplace uniquement l'admin près de la cible. Arrivée chargée, libre, hors eau et véhicule requise ; sinon refus expliqué. En écran partagé MP, premier joueur local seulement. |
+| Répéter l'annonce | Réémet la grille d'une caisse livrée encore ouverte, avec délai de 60 s entre annonces. |
+| Annuler un largage | Arrête un largage avant livraison. |
+| Clôturer un dossier livré | Arrête son suivi sans supprimer la caisse ni son contenu, sans récompense ultérieure de récupération. |
+| Lancer une mission | Ouvre l'ordre du type sélectionné s'il n'y en a pas déjà un actif. |
+| Valider la réussite | Applique la récompense normale, dans le plafond quotidien. Nettoyage : gagnant déterminé par les contributions ; reconnaissance/contrôle : bénéficiaire connecté admissible à choisir. Aucun gain double. |
+| Clôturer sans récompense | Ferme la mission sans payer ni simuler sa réussite. |
+| Rétablir le relais | Lève la panne et annule les réparations en cours, sans consommer de composants ni donner XP/confiance. |
+| Rétablir la ligne | Retire la coupure du personnage sélectionné, sans changer sa note de confiance. |
+
+L'aperçu expose la cible, le bénéficiaire et les conséquences. Les mutations exigent un **motif** ; la confirmation expire après **60 s** et devient invalide si la cible change. Les interventions sont consignées dans le journal serveur. La téléportation nécessite aussi la permission native `TeleportToCoordinates`.
+
+![Fiche d'une mission dans la console native, test SP 42.21.0](../../images/screenshots/administration-2026-10-27/sp-admin-missions-details.png)
+
+## Réglages supplémentaires — 0.8.0
+
+| Page | Clé | Défaut | Effet |
+|---|---|---|---|
+| Military Drop | `RotorNoisePercent` | 100 | Bruit du rotor, 0–300 %. La horde configurée reste présente. |
+| Military Drop | `LandingNoisePercent` | 100 | Bruit de livraison, 0–300 %. |
+| Military Drop | `RelayEnabled` | vrai | Missions de réparation des relais. |
+| Military Drop | `RelayRearmDays` | 7 | Délai de réarmement des pannes, jours de jeu. |
+| Military Drop | `WeeklyBonusPercent` | 50 | Prime Fulton sur les catégories de la semaine. |
+| Military Drop | `HordeReportGain` | 1 | Confiance du signalement accepté. |
+| Military Drop | `ReceiptGain` | 1 | Confiance de l'accusé de réception unique. |
+| MilitaryDropJammer | `Enabled` | vrai | Brouillage, uniquement si le sous-mod est chargé. |
+| MilitaryDropJammer | `Radius` | 100 | Rayon de 10–200 cases, sans filtrage par étage. |
+| MilitaryDropJammer | `BatteryHours` | 24 | Autonomie d'une pile pleine, 1–168 heures de jeu. |
+
+Le principal reste fonctionnel sans le sous-mod. [Installation et recette RJ-93](10-radio-jammer.md).
+
+
+### Communications et outils regroupés
+
+**Communications** affiche le code d’authentification en vigueur (périodique ou fixe selon les options), la fréquence militaire et celle de la station de chiffres, en MHz. Si aucun code n’est requis ou si la station est inactive, la fiche le précise. Les valeurs viennent du serveur et sont actualisées avec la console ; elles ne sont ni diffusées aux joueurs ordinaires ni inscrites au journal.
+
+**Outils** regroupe le largage forcé sans radio et le crash programmé, avec confirmation, puis tous les anciens tests Fulton : lancement normal ou comparaison vanilla, pause/reprise, arrêt, câble visible/masqué et modes de rendu automatique/monde/après le monde. Les tests Fulton conservent l’exigence du mode debug et leurs droits spécifiques ; les contrôles de vol exigent un test actif. Les demandes passent par les gestionnaires existants et leur retour habituel, sans annoncer une réussite avant réponse.
+
+Les missions se gèrent dans **Missions** ; leurs anciens raccourcis radio sont retirés. Les **zones de largage restent dans leurs menus actuels**, y compris Debug → Main : leur outil n’est pas déplacé. Les anciens sous-menus Fulton du clic droit sont retirés.
+
+La capture ci-dessus montre la version précédente du panneau ; les nouvelles rubriques restent à contrôler visuellement après redémarrage complet du jeu.
+
+
+### Lancer une mission relais
+
+Dans **Relais**, sélectionnez l’un des quatre emplacements puis **Lancer une mission relais**. L’aperçu précise les conséquences ; saisissez un motif et confirmez. Le serveur met ce relais en panne, annonce la réparation et suspend les nouveaux largages. Les vols engagés continuent. La réparation normale conserve composants, durée, XP et confiance.
+
+Le lancement manuel n’attend ni orage, ni coupure, ni délai de réarmement. Il respecte `RelayEnabled` et refuse de remplacer une mission relais déjà active : réparez-la ou rétablissez d’abord le relais. Le bouton est grisé avec le motif quand le lancement est impossible.

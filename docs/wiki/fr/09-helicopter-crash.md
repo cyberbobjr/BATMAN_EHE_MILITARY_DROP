@@ -43,3 +43,10 @@ Une fois toutes les pièces retirées, l'épave se découpe comme en vanilla (**
 ## L'enregistreur de vol
 
 Rapportez l'enregistreur au [poste de liaison](05-liaison-post.md) de votre station : insérez-le dans la baie de lecture, gardez la radio du poste allumée et alimentée pendant 10 minutes de jeu (la lecture s'interrompt sans courant et reprend ensuite), puis **Transmettre à la base**. Le personnage qui le transmet gagne de la confiance, hors plafond quotidien, une fois par lieu de crash.
+
+
+## Démonter un enregistreur — 0.8.0
+
+La recette **Démonter un enregistreur de vol**, catégorie **Électricité**, consomme un enregistreur et conserve un **tournevis en état**. Aucun niveau minimum requis. Elle rend **6 déchets électroniques**, **1 fil électrique** et **2 ferrailles**, avec **5 XP de base en Électricité**.
+
+Elle accepte les enregistreurs **transmis ou non**. Après transmission, le boîtier revient désormais dans l’inventaire de l’émetteur ; le même site de crash ne peut toujours rapporter de la confiance qu’une fois. TooltipLib indique les données déjà transmises et ces boîtiers ne figurent plus parmi les enregistreurs à traiter au poste. Pour démonter un enregistreur encore dans la baie, retirez-le d’abord. Démonter avant transmission détruit cet exemplaire et empêche d’en transmettre les données ensuite. Les enregistreurs déjà consommés par une ancienne version ne sont pas recréés rétroactivement.

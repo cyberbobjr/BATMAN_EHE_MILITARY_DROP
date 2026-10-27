@@ -149,5 +149,19 @@
     "Sandbox_MilitaryDrop_FultonWindowMinutes": "富尔顿:回收时段(分钟)",
     "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "通过无线电请求回收后,可以放飞富尔顿的游戏分钟数。",
     "Sandbox_MilitaryDrop_FultonLootRate": "富尔顿:战利品频率(百分比)",
-    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "氦气瓶和损坏的富尔顿套件在世界、残骸和补给箱中出现的频率。0:不出现。"
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "氦气瓶和损坏的富尔顿套件在世界、残骸和补给箱中出现的频率。0:不出现。",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent": "富尔顿每周加成（百分比）",
+    "Sandbox_MilitaryDrop_RotorNoisePercent": "旋翼吸引噪声（百分比）",
+    "Sandbox_MilitaryDrop_LandingNoisePercent": "空投吸引噪声（百分比）",
+    "Sandbox_MilitaryDrop_RelayEnabled": "中继维修任务",
+    "Sandbox_MilitaryDrop_RelayRearmDays": "中继故障最短间隔天数",
+    "Sandbox_MilitaryDrop_HordeReportGain": "核实尸群报告的信任奖励",
+    "Sandbox_MilitaryDrop_ReceiptGain": "确认收到补给的信任奖励",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent_tooltip": "每周一轮换两类加成。计入每日信任上限。0禁用加成。",
+    "Sandbox_MilitaryDrop_RotorNoisePercent_tooltip": "100为正常吸引，0关闭旋翼吸引。仍生成配置的空投尸群。",
+    "Sandbox_MilitaryDrop_LandingNoisePercent_tooltip": "100为实际交付时的正常吸引，0关闭。仍生成配置的尸群。",
+    "Sandbox_MilitaryDrop_RelayEnabled_tooltip": "雷暴或停电可导致中继故障。仅需电子废料维修。72游戏小时后启用备用通信。",
+    "Sandbox_MilitaryDrop_RelayRearmDays_tooltip": "维修或备用通信后再次故障的最短游戏天数。",
+    "Sandbox_MilitaryDrop_HordeReportGain_tooltip": "核实尸群的信任奖励受每日上限限制。0禁用。同一区域每24游戏小时一次。",
+    "Sandbox_MilitaryDrop_ReceiptGain_tooltip": "每次收回的个人空投可确认一次，奖励受每日上限限制。0禁用。"
 }

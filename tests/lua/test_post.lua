@@ -133,6 +133,15 @@ end
 
 local function makeInventory(items)
     local inventory = { items = {} }
+    function inventory.getAllTypeRecurse(self, itemType)
+        local found = {}
+        for _, item in ipairs(self.items) do
+            if item.getFullType and item:getFullType():match("%.([^%.]+)$") == itemType then
+                found[#found + 1] = item
+            end
+        end
+        return arrayList(found)
+    end
     function inventory.getItemWithIDRecursiv(self, id)
         for _, item in ipairs(self.items) do
             if item.id == id then
@@ -225,9 +234,11 @@ function T.setup()
         SENT[#SENT + 1] = { player = player, command = command, args = args }
     end
     sendRemoveItemFromContainer = function() end
+    syncItemFields = function() end
     getNumActivePlayers = function() return 1 end
     getSpecificPlayer = function() return PLAYERS.alice end
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Recorders.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
     ItemTag = { DOG_TAG = "base:dogtag" }
@@ -1121,6 +1132,51 @@ local function insertRecorder(player, id)
     command("PostRecorderInsert", player, { radio = ref(RADIO), item = id })
     return lastSent("PostResult", player)
 end
+function T.legacy_transmitted_recorders_are_marked_and_synced_without_new_rewards()
+    local old = makeRecorder(7, "W3")
+    old.modData.MilitaryDrop_crashX = 4832
+    old.modData.otherMod = { retained = true }
+    local fresh = makeRecorder(8, "W4")
+    local unrelated = makeRecorder(9, "W3"); unrelated.fullType = "AnotherMod.FlightRecorder"
+    ALICE.inventory = makeInventory({ old, fresh, unrelated })
+    STATE.recordersUsed = { W3 = "C:alice" }
+    local synced = 0
+    isServer = function() return true end
+    syncItemFields = function(p, item)
+        assertEq(p, ALICE); assertEq(item, old); synced = synced + 1
+    end
+    Post.refreshRecorderMarks(ALICE)
+    Post.refreshRecorderMarks(ALICE)
+    assertTrue(MilitaryDrop.Recorders.isTransmitted(old))
+    assertEq(MilitaryDrop.Recorders.isTransmitted(fresh), false)
+    assertEq(unrelated.modData.MilitaryDrop_recorderTransmitted, nil)
+    assertEq(synced, 1, "only newly marked items are synced")
+    assertEq(old.modData.MilitaryDrop_crashX, 4832)
+    assertEq(old.modData.otherMod.retained, true, "unrelated metadata is preserved")
+    assertEq(STATE.recordersUsed.W3, "C:alice", "reward lock is unchanged")
+end
+function T.post_includes_recon_cleanup_control_and_relay_without_mutating_source_list()
+    local missions = { { kind = "recon", deadline = WORLD_HOURS + 10 },
+        { kind = "cleanup", deadline = WORLD_HOURS + 20, progress = 3, target = 9 },
+        { kind = "control", deadline = WORLD_HOURS + 2, progress = 1, quota = 1 } }
+    MilitaryDrop.Missions = { listForCharacter = function() return missions end }
+    MilitaryDrop.RelayServer = { postMission = function()
+        return { kind = "relay", x = 4832, y = 6281, deadline = WORLD_HOURS + 32, hours = 72 }
+    end }
+    local list = Post.missions("C:alice")
+    assertEq(#list, 4)
+    assertEq(#missions, 3)
+    assertEq(list[1].kind, "recon")
+    assertEq(list[2].kind, "cleanup")
+    assertEq(list[2].target, 9)
+    assertEq(list[3].kind, "control")
+    assertEq(list[3].progress, 1)
+    assertEq(list[4].kind, "relay")
+    assertEq(list[4].remaining, 32)
+    assertEq(list[4].x, 4832)
+    MilitaryDrop.RelayServer.postMission = function() return nil end
+    assertEq(#Post.missions("C:alice"), 3)
+end
 
 local function sysEntries(teamId, kind)
     local found = {}
@@ -1137,6 +1193,7 @@ local function trustOf(player)
 end
 
 function T.recorder_is_read_while_powered_then_credited_once_out_of_the_daily_cap()
+    instanceItem = function() return makeRecorder(100, nil) end
     -- Plafond du jour déjà atteint : le gain de l'enregistreur passe quand même.
     SandboxVars.MilitaryDrop.TrustDailyCap = 0
     ALICE.inventory = makeInventory({ makeRecorder(7, "W3",
@@ -1168,6 +1225,14 @@ function T.recorder_is_read_while_powered_then_credited_once_out_of_the_daily_ca
     assertEq(trustOf(ALICE), before + 10, "+10 hors plafond quotidien")
     assertEq(STATE.recordersUsed.W3, "C:alice", "crédit noté pour le site")
     assertEq(Post.bayView("SOLO"), nil, "baie vide")
+    assertEq(#ALICE.inventory.items, 1, "physical recorder returned after transmission")
+    local returned = ALICE.inventory.items[1]
+    assertEq(returned.modData.MilitaryDrop_crashSite, "W3")
+    assertEq(returned.modData.MilitaryDrop_crashX, 1570)
+    assertTrue(MilitaryDrop.Recorders.isTransmitted(returned), "returned recorder carries its transmitted marker")
+    command("PostRecorderTransmit", ALICE, { radio = ref(RADIO) })
+    assertEq(#ALICE.inventory.items, 1, "replayed transmission cannot duplicate the recorder")
+    assertEq(trustOf(ALICE), before + 10, "replayed transmission cannot duplicate trust")
     assertTrue(MilitaryDrop.Exchange.lineText(lastEntry("SOLO").t):find("IGUI_MilitaryDrop_Reply_Recorder", 1, true) ~= nil,
         "réponse de la base au journal")
     -- Même site une seconde fois : refusé, l'objet reste au joueur.
@@ -1196,6 +1261,34 @@ function T.recorder_reading_pauses_without_power_then_resumes()
     assertEq(#sysEntries("SOLO", "recorderResumed"), 1, "reprise notée")
     assertTrue(math.abs(Post.bayView("SOLO").progress - 0.2) < 1e-9, "reprise où elle en était, canal indifférent")
     assertTrue(not Post.bayView("SOLO").paused, "plus en pause")
+end
+
+function T.transmitted_recorder_is_returned_once_and_synced_by_mp_authority()
+    multiplayer()
+    getOnlinePlayers = function() return arrayList({ ALICE }) end
+    local synced = 0
+    sendAddItemToContainer = function(container, item)
+        assertEq(container, ALICE.inventory)
+        assertEq(item:getFullType(), "MilitaryDrop.FlightRecorder")
+        synced = synced + 1
+    end
+    instanceItem = function() return makeRecorder(100, nil) end
+    ALICE.inventory = makeInventory({ makeRecorder(7, "W9") })
+    install(ALICE, RADIO)
+    insertRecorder(ALICE, 7)
+    wait(Post.READ_HOURS)
+    Post.refreshAll()
+    command("PostRecorderTransmit", ALICE, { radio = ref(RADIO) })
+    assertEq(lastSent("PostResult").status, "recorderSent")
+    assertEq(synced, 1)
+    local returned = ALICE.inventory.items[1]
+    assertEq(returned.modData.MilitaryDrop_crashSite, "W9")
+    local trust = trustOf(ALICE)
+    command("PostRecorderTransmit", ALICE, { radio = ref(RADIO) })
+    assertEq(synced, 1)
+    assertEq(trustOf(ALICE), trust)
+    assertEq(insertRecorder(ALICE, returned.id).status, "recorderUsed")
+    assertEq(#ALICE.inventory.items, 1)
 end
 
 function T.console_receives_the_exact_reading_between_two_game_minutes()

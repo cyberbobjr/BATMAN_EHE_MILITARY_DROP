@@ -1,0 +1,13 @@
+module MilitaryDrop
+{
+    item CommandCitation
+    {
+        ItemType = base:literature,
+        DisplayCategory = Literature,
+        Icon = Paperwork1,
+        Weight = 0.01,
+        PageToWrite = 0,
+        NumberOfPages = 1,
+        Tags = base:fastread,
+    }
+}

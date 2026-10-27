@@ -667,6 +667,8 @@ end
 --- sèche la plus proche sans borne de zone.
 function Server.deliver(x, y, requester, dropId, opts)
     opts = opts or {}
+    local existing = dropId and MilitaryDrop.Trust and MilitaryDrop.Trust.drop(dropId)
+    if existing and existing.deliveredHours then return true end
     -- Largage d'une zone (idée 11) : jamais hors du rectangle, ni dans une
     -- zone non-PvP ou un refuge ; sinon la livraison attend. Rien à
     -- RELOCATE_RADIUS cases : second passage sur les cases chargées du
@@ -707,6 +709,10 @@ function Server.deliver(x, y, requester, dropId, opts)
     x, y = square:getX(), square:getY()
     -- Fumée de repérage (Signal Smoke, prérequis).
     if not opts.crash then MilitaryDrop.Smoke.markCrate(x, y) end
+    if not opts.crash then
+        local factor = math.max(0, math.min(3, (tonumber(Config.get("LandingNoisePercent")) or 100) / 100))
+        if factor > 0 then addSound(nil, x, y, 0, math.floor(150 * factor), math.floor(100 * factor)) end
+    end
     local zombies = opts.crash and 0 or Server.hordeSize()
     if zombies > 0 then
         zombies = Server.spawnHordeAround(x, y, Server.HORDE_RADIUS, zombies)
@@ -1005,6 +1011,11 @@ function Server.onClientCommand(module, command, player, args)
     end
     local handler = type(command) == "string" and Server.COMMANDS[command]
     if handler then
+        for _, gate in pairs(MilitaryDrop.Extensions and MilitaryDrop.Extensions.commandGates or {}) do
+            if gate(player, command, type(args) == "table" and args or {}) == false then
+                return
+            end
+        end
         handler(player, type(args) == "table" and args or {})
     end
 end

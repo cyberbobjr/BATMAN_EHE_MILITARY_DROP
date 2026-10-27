@@ -7,5 +7,6 @@
     "MakeFultonHarnessBag": "Сделать мешок с подвесной системой «Фултон»",
     "AssembleFultonKit": "Собрать комплект эвакуации «Фултон»",
     "RepairFultonKit": "Починить комплект эвакуации «Фултон»",
-    "SalvageHeliumTank": "Разрезать пустой баллон с гелием"
+    "SalvageHeliumTank": "Разрезать пустой баллон с гелием",
+    "DismantleMilitaryFlightRecorder": "Разобрать бортовой самописец"
 }

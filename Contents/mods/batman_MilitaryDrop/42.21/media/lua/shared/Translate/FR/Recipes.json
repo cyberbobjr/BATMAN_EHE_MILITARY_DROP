@@ -7,5 +7,6 @@
     "MakeFultonHarnessBag": "Fabriquer un sac à harnais Fulton",
     "AssembleFultonKit": "Assembler un kit d'extraction Fulton",
     "RepairFultonKit": "Réparer un kit d'extraction Fulton",
-    "SalvageHeliumTank": "Découper une bouteille d'hélium vide"
+    "SalvageHeliumTank": "Découper une bouteille d'hélium vide",
+    "DismantleMilitaryFlightRecorder": "Démonter un enregistreur de vol"
 }

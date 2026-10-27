@@ -1,5 +1,7 @@
 # Military Drop : guide du joueur
 
+> Guide de Military Drop 0.8.0.
+
 [English](../en/Home.md) · [Accueil du guide](../Home.md)
 
 Military Drop est un mod Project Zomboid Build 42.21 : appelez l'armée par radio, remplissez un formulaire de réquisition, et arrivez à la caisse avant les morts.
@@ -15,3 +17,5 @@ Military Drop est un mod Project Zomboid Build 42.21 : appelez l'armée par radi
 7. [Extraction Fulton](07-fulton.md) : envoyer renseignement et matériel par ballon contre de la confiance.
 8. [FAQ](08-faq.md)
 9. [Hélicoptère abattu](09-helicopter-crash.md) : le MAYDAY, le lieu du crash, la récupération de l'épave et l'enregistreur de vol.
+
+10. [Brouilleur radio RJ-93 (facultatif)](10-radio-jammer.md) : recette, pile, interface et brouillage.

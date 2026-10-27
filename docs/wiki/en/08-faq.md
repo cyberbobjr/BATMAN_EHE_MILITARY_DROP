@@ -43,3 +43,11 @@ No. Military Drop is a standalone rewrite: it only requires Belt Walkie-Talkie (
 
 **Where do I report a bug?**
 On the Steam Workshop page or in the [GitHub issues](https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/issues). Please attach `Zomboid/console.txt`, and enable the **Debug log** sandbox option if you can.
+
+## Why does the base refuse my call in 0.8.0?
+
+- **Relay down**: reach the announced cabinet with electronic scrap; no generator required. An emergency link returns after 72 game hours.
+- **Link jammed**: the RJ-93 submod is enabled. Move away from the jammer, switch it off or remove its battery. Hearing broadcasts does not mean you can transmit.
+- **Cooldown, code or trust**: follow the base's stated reason; repairing a relay does not bypass these rules.
+
+For a game without jamming, leave `batman_MilitaryDropJammer` disabled. [RJ-93 guide](10-radio-jammer.md).

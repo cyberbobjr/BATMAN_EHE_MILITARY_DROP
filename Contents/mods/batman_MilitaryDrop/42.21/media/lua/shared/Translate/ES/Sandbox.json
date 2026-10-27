@@ -149,5 +149,19 @@
     "Sandbox_MilitaryDrop_FultonWindowMinutes": "Fulton: ventana de recogida (minutos)",
     "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "Minutos de juego durante los que se puede soltar un Fulton tras pedir una recogida por radio.",
     "Sandbox_MilitaryDrop_FultonLootRate": "Fulton: frecuencia en el botín (por ciento)",
-    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Frecuencia de bombonas de helio y kits Fulton dañados en el mundo, los restos y las cajas de suministros. 0: ninguno."
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "Frecuencia de bombonas de helio y kits Fulton dañados en el mundo, los restos y las cajas de suministros. 0: ninguno.",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent": "Bonificación semanal Fulton (por ciento)",
+    "Sandbox_MilitaryDrop_RotorNoisePercent": "Ruido de atracción del rotor (por ciento)",
+    "Sandbox_MilitaryDrop_LandingNoisePercent": "Ruido de atracción de la entrega (por ciento)",
+    "Sandbox_MilitaryDrop_RelayEnabled": "Misiones de reparación de repetidores",
+    "Sandbox_MilitaryDrop_RelayRearmDays": "Días mínimos entre averías",
+    "Sandbox_MilitaryDrop_HordeReportGain": "Confianza por concentración verificada",
+    "Sandbox_MilitaryDrop_ReceiptGain": "Confianza por confirmar recepción",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent_tooltip": "Bonificación para dos categorías cada lunes. Cuenta para el límite diario. 0 la desactiva.",
+    "Sandbox_MilitaryDrop_RotorNoisePercent_tooltip": "100: atracción normal, 0: sin atracción del rotor. La horda configurada sigue apareciendo.",
+    "Sandbox_MilitaryDrop_LandingNoisePercent_tooltip": "100: atracción normal al entregar, 0: ninguna. La horda configurada sigue apareciendo.",
+    "Sandbox_MilitaryDrop_RelayEnabled_tooltip": "Tormentas o apagones pueden averiar un repetidor. Solo requiere chatarra electrónica. Respaldo tras 72 horas de juego.",
+    "Sandbox_MilitaryDrop_RelayRearmDays_tooltip": "Días de juego mínimos tras reparación o respaldo antes de otra avería.",
+    "Sandbox_MilitaryDrop_HordeReportGain_tooltip": "Confianza con límite diario. 0 desactiva. Misma zona: una vez por 24 horas de juego.",
+    "Sandbox_MilitaryDrop_ReceiptGain_tooltip": "Confianza limitada por una confirmación por entrega propia recuperada. 0 desactiva."
 }

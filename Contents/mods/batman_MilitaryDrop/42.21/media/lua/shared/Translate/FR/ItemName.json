@@ -17,5 +17,6 @@
     "MilitaryDrop.FultonHarnessBag": "Sac à harnais Fulton (pièce)",
     "MilitaryDrop.FultonKit": "Kit d'extraction Fulton",
     "MilitaryDrop.FultonKitDamaged": "Kit d'extraction Fulton endommagé",
-    "MilitaryDrop.HeliumTank": "Bouteille d'hélium"
+    "MilitaryDrop.HeliumTank": "Bouteille d'hélium",
+    "ItemName_MilitaryDrop.CommandCitation": "Citation du commandement"
 }
