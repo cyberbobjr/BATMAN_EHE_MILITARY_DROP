@@ -1,6 +1,6 @@
 # Military Drop — améliorations de code et idées de fonctionnalités
 
-**État de branche du 2026-10-27 :** I01, I02, I05, I09, I10, I11, I13 et I15 sont implémentées ; I12 est refondue après validation de la maquette et testée dans le vrai jeu en SP/MP. I04 est abandonnée et retirée du code. Les changements sont sur `feature/planned-improvements-testing`, sans fusion ni publication. I14 et I16 sont retirées. Les versions et constats d’audit ci-dessous décrivent leur date d’origine.
+**État de livraison du 2026-10-27 :** I01, I02, I05, I09, I10, I11, I13 et I15 sont implémentées ; I12 est refondue après validation de la maquette et testée dans le vrai jeu en SP/MP. I04 est abandonnée et retirée du code. Les changements sont fusionnés dans `main` et publiés dans la version 0.8.0 du Workshop. I14 et I16 sont retirées. Les versions et constats d’audit ci-dessous décrivent leur date d’origine.
 
 - **Mod** : Military Drop (`id=batman_MilitaryDrop`, Workshop 3811752923), version **0.5.4** (`mod.info`, `modversion=0.5.4`, `versionMin=42.21`, `require=\batman_BeltRadio`).
 - **Date** : 2026-10-21 ; **avancement mis à jour le 2026-10-23, après les corrections C03 à C14** (version publiée : 0.7.0, le 2026-10-23).

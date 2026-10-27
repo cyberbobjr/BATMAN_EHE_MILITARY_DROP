@@ -6,7 +6,7 @@ The top version must match `modversion=` in `mod.info`.
 
 ## 0.8.0 — 2026-10-27
 
-Version 0.8.0. Native validation limits are recorded under Validation below.
+Published to Steam Workshop on 2026-10-27. Native validation limits are recorded under Validation below.
 
 ### Added
 
