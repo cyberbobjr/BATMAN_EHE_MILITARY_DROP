@@ -220,6 +220,18 @@ end
 --- Ajoute amount à la note (négatif : perte). Sources de Trust.UNCAPPED : hors plafond ;
 --- "code" : perte ; autres sources : gains plafonnés par jour, opts.fromPost
 --- applique le bonus du poste. Renvoie la variation réellement appliquée.
+local function citationEntry(characterId)
+    local s = state()
+    s.citationHistory = s.citationHistory or {}
+    if not s.citationHistory[characterId] then
+        local e = entry(characterId)
+        s.citationHistory[characterId] = { high = e.citationHigh or Trust.tier(characterId),
+            pending = e.pendingCitations or {} }
+        e.citationHigh, e.pendingCitations = nil, nil
+    end
+    return s.citationHistory[characterId]
+end
+
 function Trust.add(characterId, amount, source, opts)
     amount = tonumber(amount)
     if not characterId or not amount then
@@ -248,7 +260,15 @@ function Trust.add(characterId, amount, source, opts)
         e.lastCallHours = hoursNow()
     end
     local old = tonumber(e.value) or Trust.START
+    local history = citationEntry(characterId)
     e.value = clamp(old + amount)
+    local afterTier = Trust.tier(characterId)
+    if afterTier > history.high then
+        for tier = history.high + 1, afterTier do
+            history.pending[tostring(tier)] = { name = Trust.name(characterId) }
+        end
+        history.high = afterTier
+    end
     local applied = e.value - old
     if capped then
         e.dayGain = (tonumber(e.dayGain) or 0) + applied
@@ -308,6 +328,12 @@ function Trust.onDropDelivered(dropId, placed)
     end
     local hours = hoursNow()
     drop.deliveredHours = hours
+    if drop.character and drop.citations then
+        local history = citationEntry(drop.character)
+        for _, tier in ipairs(drop.citations) do
+            history.pending[tostring(tier)] = nil
+        end
+    end
     drop.deadline = hours + math.max(1, tonumber(Config.get("TrustDropLostHours")) or 48)
     if type(placed) == "table" and (tonumber(placed.cases) or 0) > 0 then
         drop.placed = { x = placed.x, y = placed.y, cases = placed.cases }
@@ -423,6 +449,62 @@ function Trust.onCaseOpened(item, character)
         Trust.add(drop.character, Trust.DROP_TAKEN, "drop")
     end
     MilitaryDrop.log("drop " .. dropId .. " " .. drop.outcome .. " by " .. username)
+    if drop.outcome == "recovered" then
+        local s = state()
+        s.receipts = s.receipts or {}
+        s.receipts[dropId] = { character = drop.character, hours = hoursNow() }
+    end
+end
+
+function Trust.citationsFor(dropId)
+    local drop = Trust.drop(dropId)
+    if not drop or not drop.character or drop.decoy then return {} end
+    if not drop.citations then
+        drop.citations = {}
+        drop.citationNames = {}
+        local history = citationEntry(drop.character)
+        for tier = 2, 4 do
+            local pending = history.pending[tostring(tier)]
+            local reserved = false
+            for otherId, other in pairs(state().drops) do
+                if otherId ~= dropId and other.character == drop.character and not other.outcome
+                    and not other.deliveredHours then
+                    for _, otherTier in ipairs(other.citations or {}) do
+                        if otherTier == tier then reserved = true end
+                    end
+                end
+            end
+            if pending and not reserved then
+                drop.citations[#drop.citations + 1] = tier
+                drop.citationNames[tostring(tier)] = type(pending) == "table" and pending.name or Trust.name(drop.character)
+            end
+        end
+    end
+    return drop.citations
+end
+
+function Trust.confirmReceipt(player)
+    local id, latestId, latest = Trust.idFor(player)
+    local receipts = state().receipts or {}
+    local expired = {}
+    for dropId, receipt in pairs(receipts) do
+        if hoursNow() - receipt.hours > 72 then expired[#expired + 1] = dropId
+        elseif receipt.character == id and not receipt.ack and (not latest or receipt.hours > latest.hours) then
+            latestId, latest = dropId, receipt
+        end
+    end
+    for _, key in ipairs(expired) do receipts[key] = nil end
+    if not latest then return false end
+    latest.ack = true
+    Trust.markCollected(latestId)
+    Trust.add(id, tonumber(Config.get("ReceiptGain")) or 1, "receipt")
+    return true
+end
+
+function Trust.unlock(characterId)
+    if not characterId then return false end
+    entry(characterId).lockedUntil = nil
+    return true
 end
 
 --- Livraison abandonnée (aucune case ne convient, MilitaryDrop_Flights.lua) :
@@ -437,6 +519,17 @@ function Trust.expireUndelivered(dropId)
     drop.closedHours = hoursNow()
     drop.suppliesPending = nil
     MilitaryDrop.log("drop " .. tostring(dropId) .. " expired (never delivered)")
+    return true
+end
+
+-- Close only the delivered dossier. Physical crates and contents are left untouched.
+function Trust.adminClose(player, dropId)
+    if not MilitaryDrop.Admin.allowed(player) then return false end
+    local drop = Trust.drop(dropId)
+    if not drop or drop.outcome or not drop.deliveredHours then return false end
+    drop.outcome, drop.closedHours = "cancelled", hoursNow()
+    drop.collectedHours = drop.collectedHours or hoursNow()
+    if MilitaryDrop.Missions then MilitaryDrop.Missions.sendMarks() end
     return true
 end
 
@@ -565,6 +658,11 @@ function Trust.onEveryHour()
     Trust.checkDrops(hours)
     Trust.erode(hours)
     Trust.forgetIdle(hours)
+    local receipts, expired = state().receipts or {}, {}
+    for id, receipt in pairs(receipts) do
+        if hours - receipt.hours > 72 then expired[#expired + 1] = id end
+    end
+    for _, id in ipairs(expired) do receipts[id] = nil end
 end
 
 -- ----------------------------------------------------------------------------

@@ -161,6 +161,7 @@ local function state()
     end
     m.nextHours = m.nextHours or {}
     m.last = m.last or {}
+    if type(m.cleanupHistory) ~= "table" then m.cleanupHistory = {} end
     if type(m.dogtags) ~= "table" then
         m.dogtags = {}
     end
@@ -515,6 +516,26 @@ local function close(kind, now, outcome, characterId, text)
     if not mission then
         return
     end
+    if kind == "cleanup" then
+        local counts = {}
+        for cid, count in pairs(mission.counts or {}) do counts[cid] = count end
+        local result = { id = mission.id, kind = kind, x = mission.x, y = mission.y,
+            outcome = outcome, completedHours = now, clock = MilitaryDrop.Server.clock(),
+            winner = characterId, gain = tonumber(mission.rewardGained) or 0, counts = counts }
+        table.insert(s.cleanupHistory, 1, result)
+        while #s.cleanupHistory > 20 do table.remove(s.cleanupHistory) end
+        if outcome == "done" or outcome == "destroyed" then
+            for _, player in ipairs(MilitaryDrop.Net.players({ alive = true })) do
+                local cid = MilitaryDrop.Trust.idFor(player)
+                if (tonumber(counts[cid]) or 0) > 0 then
+                    MilitaryDrop.Net.toPlayer(player, "CleanupCompleted", {
+                        id = result.id, username = tostring(player:getUsername()),
+                        contribution = counts[cid], gain = cid == characterId and result.gain or 0,
+                        x = result.x, y = result.y })
+                end
+            end
+        end
+    end
     s.open[kind] = nil
     s.last[kind] = { id = mission.id, outcome = outcome, character = characterId, hours = now }
     s.nextHours[kind] = now + interval(kind)
@@ -723,7 +744,7 @@ end
 --- Lance une mission du type (aucune si déjà ouverte, source désactivée,
 --- chaîne militaire absente ou aucun joueur connecté). Aussi appelable depuis
 --- la console du serveur pour un essai. Renvoie la mission, ou nil.
-function Missions.launch(kind, now)
+function Missions.launch(kind, now, reported)
     now = now or hoursNow()
     local s = state()
     if not HOURS_OPTIONS[kind] or s.open[kind] or not Exchange.isEnabled(kind)
@@ -742,6 +763,7 @@ function Missions.launch(kind, now)
     else
         local around = players[ZombRand(#players) + 1]
         local x, y, how = Missions.pickSite(kind, math.floor(around:getX()), math.floor(around:getY()))
+        if kind == "cleanup" and type(reported) == "table" then x, y, how = reported.x, reported.y, "reported" end
         if not x then
             return nil
         end
@@ -752,6 +774,7 @@ function Missions.launch(kind, now)
         else
             mission.radius = Missions.CLEANUP_RADIUS
             mission.quota = math.floor(optionNumber("CleanupQuota", 1))
+            if reported and type(reported.zombies) == "table" then mission.quota = math.max(1, #reported.zombies) end
             mission.counts = {}
         end
     end
@@ -759,8 +782,8 @@ function Missions.launch(kind, now)
     mission.repeats = 0
     s.open[kind] = mission
     s.nextHours[kind] = nil
-    -- Reconnaissance et nettoyage : coordonnées envoyées avant l'annonce ;
-    -- seuls les clients dont une radio reçoit une ligne codée marquent leur carte.
+    -- Publish radio coordinates before the announcement. Recon also restores
+    -- its marker through active-state synchronization; clearance uses the radio path.
     local code = nil
     local Broadcast = MilitaryDrop.Broadcast
     if kind == "recon" and Broadcast.reconAnnounced then
@@ -773,11 +796,21 @@ function Missions.launch(kind, now)
     MilitaryDrop.log("mission " .. mission.id .. " (" .. kind .. ") until " .. mission.deadline)
     if kind == "cleanup" then
         mission.reached, mission.seq = {}, 0
+        if reported and type(reported.zombies) == "table" then
+            mission.horde = { ids = {}, size = #reported.zombies, dead = 0, nearbyDead = 0, cleanupSchema = 2, hours = now }
+            for _, zombie in ipairs(reported.zombies) do
+                local key = Missions.hordeKey(zombie:getPersistentOutfitID())
+                if key then
+                    mission.horde.ids[key] = (mission.horde.ids[key] or 0) + 1
+                end
+            end
+        end
         Missions.sendCleanupState()
         -- Centre déjà chargé (lancement près d'un joueur) : LoadChunk ne
         -- reviendra pas pour ses chunks.
         Missions.trySpawnHorde(now)
     end
+    if kind == "recon" then Missions.sendMarks() end
     return mission
 end
 
@@ -861,7 +894,7 @@ end
 --- fenêtre de récupération (TrustDropLostHours), comme les rappels.
 function Missions.activeMarks(now)
     now = now or hoursNow()
-    local marks = { drops = {}, recon = {}, cleanup = {} }
+    local marks = { drops = {}, recon = {}, cleanup = {}, relay = {}, secured = {} }
     local window = math.max(1, tonumber(Config.get("TrustDropLostHours")) or 48)
     for _, entry in ipairs(MilitaryDrop.Trust.announcedDrops()) do
         local drop = entry.drop
@@ -875,7 +908,27 @@ function Missions.activeMarks(now)
             marks[kind][1] = { x = mission.x, y = mission.y }
         end
     end
+    local relay = MilitaryDrop.RelayServer and MilitaryDrop.RelayServer.postMission()
+    if relay then marks.relay[1] = { x = relay.x, y = relay.y } end
+    for _, result in ipairs(state().cleanupHistory) do
+        if (result.outcome == "done" or result.outcome == "destroyed")
+            and now < result.completedHours + 1 and type(result.x) == "number" and type(result.y) == "number" then
+            marks.secured[#marks.secured + 1] = { x = result.x, y = result.y }
+        end
+    end
     return marks
+end
+
+-- Personal projection only: never expose another character's contribution or reward.
+function Missions.completedForCharacter(characterId)
+    local list = {}
+    for _, result in ipairs(state().cleanupHistory) do
+        list[#list + 1] = { id = result.id, kind = "cleanup", history = true,
+            outcome = result.outcome, x = result.x, y = result.y, clock = result.clock,
+            contribution = tonumber(result.counts[characterId]) or 0,
+            gain = result.winner == characterId and result.gain or 0 }
+    end
+    return list
 end
 
 local lastMarksKey = nil
@@ -890,9 +943,9 @@ end
 
 local function marksKey(marks)
     local parts = {}
-    for _, field in ipairs({ "drops", "recon", "cleanup" }) do
+    for _, field in ipairs({ "drops", "recon", "cleanup", "relay", "secured" }) do
         parts[#parts + 1] = field
-        for _, grid in ipairs(marks[field]) do
+        for _, grid in ipairs(marks[field] or {}) do
             parts[#parts + 1] = grid.x .. "," .. grid.y
         end
     end
@@ -904,6 +957,7 @@ end
 function Missions.sendMarks(player)
     local marks = Missions.activeMarks()
     if player then
+        marks.username = tostring(player:getUsername())
         MilitaryDrop.Net.toPlayer(player, "MarksActive", marks)
         return true
     end
@@ -1139,7 +1193,7 @@ local function finishCleanup(mission, now)
     local winner = Missions.cleanupWinner(mission)
     local x, y = tostring(mission.x), tostring(mission.y)
     if winner then
-        MilitaryDrop.Trust.add(winner, Exchange.gain("cleanup"), "cleanup")
+        mission.rewardGained = MilitaryDrop.Trust.add(winner, Exchange.gain("cleanup"), "cleanup")
         close("cleanup", now, "done", winner, getText("IGUI_MilitaryDrop_Broadcast_CleanupDone", x, y,
             MilitaryDrop.Trust.name(winner)))
     else
@@ -1290,6 +1344,47 @@ end
 
 -- Une commande d'admin par seconde réelle au plus ; réponse privée (Notice).
 Missions.ADMIN_INTERVAL_MS = 1000
+-- Administrative success uses the ordinary reward source and close transition.
+-- Recon/control require an explicitly selected connected character; cleanup keeps its winner.
+function Missions.adminReward(kind, id, beneficiary)
+    local mission = Missions.openMission(kind)
+    if not mission or mission.id ~= id then return nil, "stale" end
+    local cid = kind == "cleanup" and Missions.cleanupWinner(mission) or beneficiary
+    if not cid then return nil, "noBeneficiary" end
+    if kind ~= "cleanup" then
+        local connected = false
+        for _, player in ipairs(MilitaryDrop.Net.players({ alive = true })) do
+            if MilitaryDrop.Trust.idFor(player) == cid then connected = true end
+        end
+        if not connected or MilitaryDrop.Trust.isLineCut(cid) then return nil, "noBeneficiary" end
+    end
+    if kind == "control" and mission.responded[cid] then return nil, "alreadyRewarded" end
+    local base = math.max(0, math.floor(Exchange.gain(kind) + 0.5))
+    return { beneficiary = cid, baseGain = base, reward = math.min(base, MilitaryDrop.Trust.dailyLeft(cid)) }
+end
+function Missions.adminIntervene(player, kind, id, success, beneficiary)
+    if not MilitaryDrop.Admin.allowed(player) then return false, "denied" end
+    local mission = Missions.openMission(kind)
+    if not mission or mission.id ~= id then return false, "stale" end
+    local now = hoursNow()
+    if not success then
+        close(kind, now, "cancelled", nil, getText("IGUI_MilitaryDrop_AdminUI_MissionCancelled"))
+        return true
+    end
+    local reward, reason = Missions.adminReward(kind, id, beneficiary)
+    if not reward then return false, reason end
+    if kind == "cleanup" then
+        finishCleanup(mission, now)
+    else
+        local cid = reward.beneficiary
+        if kind == "control" then mission.responded[cid] = true end
+        MilitaryDrop.Trust.add(cid, Exchange.gain(kind), kind)
+        local text = kind == "recon" and getText("IGUI_MilitaryDrop_Broadcast_ReconDone", tostring(mission.x),
+            tostring(mission.y), MilitaryDrop.Trust.name(cid)) or getText("IGUI_MilitaryDrop_AdminUI_MissionSucceeded")
+        close(kind, now, "done", cid, text)
+    end
+    return true
+end
 Missions.ADMIN_RESULTS = {
     launched = "IGUI_MilitaryDrop_AdminMission_Launched",
     open = "IGUI_MilitaryDrop_AdminMission_Open",
@@ -1353,6 +1448,8 @@ COMMANDS[Exchange.COMMANDS.cleanupStatus] = function(player, args) Missions.clea
 COMMANDS[Exchange.COMMANDS.fulton] = function(player, args) Missions.requestFulton(player, args) end
 
 Events.EveryTenMinutes.Add(function() Missions.update() end)
+-- Expire secured map markers promptly, independently of mission scheduling.
+Events.EveryOneMinute.Add(function() Missions.sendMarks() end)
 Events.OnZombieDead.Add(Missions.onZombieDead)
 Events.LoadChunk.Add(Missions.onLoadChunk)
 

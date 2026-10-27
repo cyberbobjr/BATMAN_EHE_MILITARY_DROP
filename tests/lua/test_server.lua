@@ -1042,4 +1042,26 @@ function T.horde_stops_at_the_first_refused_zombie()
     assertEq(#calls, 0, "aucun appel sur l'eau")
 end
 
+function T.landing_noise_and_spawn_are_independent_and_delivery_is_idempotent()
+    local S, Trust = MilitaryDrop.Server, MilitaryDrop.Trust
+    SandboxVars.MilitaryDrop.MinZombies, SandboxVars.MilitaryDrop.MaxZombies = 7, 7
+    SandboxVars.MilitaryDrop.LandingNoisePercent = 0
+    ZombRand = function(low) return low end
+    local spawned = 0
+    S.spawnHordeAround = function(_, _, _, count) spawned = spawned + count; return count end
+    local id = Trust.registerDrop(Trust.idFor(PLAYER), PLAYER:getUsername(), false)
+    assertTrue(S.deliver(115, 200, PLAYER:getUsername(), id), "delivery")
+    assertEq(spawned, 7, "configured horde spawns even with attraction disabled")
+    assertEq(#SOUNDS, 0, "no landing attraction at zero intensity")
+    assertTrue(S.deliver(115, 200, PLAYER:getUsername(), id), "idempotent retry")
+    assertEq(spawned, 7, "retry creates no second horde")
+    SandboxVars.MilitaryDrop.LandingNoisePercent = 200
+    id = Trust.registerDrop(Trust.idFor(PLAYER), PLAYER:getUsername(), false)
+    assertTrue(S.deliver(115, 200, PLAYER:getUsername(), id), "second delivery")
+    assertEq(#SOUNDS, 1, "one landing attraction event")
+    assertEq(SOUNDS[1][3], 300, "scaled radius")
+    assertEq(SOUNDS[1][4], 200, "scaled volume")
+    assertEq(spawned, 14, "intensity does not alter horde size")
+end
+
 return T

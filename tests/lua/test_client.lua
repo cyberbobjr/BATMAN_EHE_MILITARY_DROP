@@ -38,6 +38,73 @@ function T.handheld_radio_gets_colors_from_0_to_1()
     assertEq(device.said.g, 0.85, "vert 0-1")
 end
 
+local function syncWorld()
+    local world = { now = 0, online = -1, loaded = false, sent = {}, adds = 0, removes = 0 }
+    local player = { getOnlineID = function() return world.online end,
+        getSquare = function() return world.loaded and {} or nil end,
+        getUsername = function() return "alice" end }
+    getTimestampMs = function() return world.now end
+    isClient = function() return true end
+    getSpecificPlayer = function() return player end
+    Events.OnTick = { Add = function() world.adds = world.adds + 1 end,
+        Remove = function() world.removes = world.removes + 1 end }
+    MilitaryDrop.Net.toServer = function(p, command)
+        world.sent[#world.sent + 1] = { player = p, command = command, at = world.now }
+    end
+    return MilitaryDrop.Client, world
+end
+
+function T.initial_sync_waits_for_network_identity_and_loaded_square()
+    local C, world = syncWorld()
+    C.onGameStart(); C.onGameStart()
+    assertEq(world.adds, 1, "single temporary tick subscription")
+    C.onSyncTick()
+    assertEq(#world.sent, 0, "no request before player connect")
+    world.online = 7
+    C.onSyncTick()
+    assertEq(#world.sent, 0, "no request before loaded square")
+    world.loaded = true
+    C.onSyncTick()
+    assertEq(#world.sent, 1)
+    assertEq(world.sent[1].command, "Sync")
+end
+
+function T.initial_sync_retries_only_three_times_two_seconds_apart()
+    local C, world = syncWorld()
+    world.online, world.loaded = 7, true
+    C.onGameStart(); C.onSyncTick()
+    world.now = 1999; C.onSyncTick()
+    assertEq(#world.sent, 1)
+    world.now = 2000; C.onSyncTick()
+    world.now = 4000; C.onSyncTick()
+    assertEq(#world.sent, 3)
+    world.now = 6000; C.onSyncTick()
+    assertEq(#world.sent, 3)
+    assertTrue(world.removes > 0, "temporary callback detached at retry limit")
+end
+
+function T.initial_sync_stops_only_on_its_own_marks_reply()
+    local C, world = syncWorld()
+    world.online, world.loaded = 7, true
+    MilitaryDrop.Announce = { onActiveMarks = function() end }
+    C.onGameStart(); C.onSyncTick()
+    C.onServerCommand("MilitaryDrop", "MarksActive", {})
+    C.onServerCommand("MilitaryDrop", "MarksActive", { username = "bob" })
+    assertEq(world.removes, 0, "broadcast and another player's reply do not acknowledge this request")
+    C.onServerCommand("MilitaryDrop", "MarksActive", { username = "alice" })
+    assertTrue(world.removes > 0)
+    world.now = 2000; C.onSyncTick()
+    assertEq(#world.sent, 1, "no request after acknowledgement")
+end
+
+function T.initial_sync_times_out_if_the_player_never_connects()
+    local C, world = syncWorld()
+    C.onGameStart()
+    world.now = 30000; C.onSyncTick()
+    assertEq(#world.sent, 0)
+    assertTrue(world.removes > 0)
+end
+
 function T.placed_radio_gets_integer_colors_from_0_to_255()
     local device = makeDevice("IsoWaveSignal")
     MilitaryDrop.Client.radioSay({ playerNum = 0, device = device }, "ok")
@@ -71,6 +138,22 @@ function T.cleanup_announce_reaches_the_map_module()
     MilitaryDrop.Announce = { onCleanupAnnounce = function(args) received = args end }
     MilitaryDrop.Client.onServerCommand("MilitaryDrop", "CleanupAnnounce", { id = "M3", x = 1, y = 2, radius = 40 })
     assertEq(received and received.radius, 40, "zone transmise au repère de carte")
+end
+
+function T.cleanup_success_notifies_only_the_target_local_player_once()
+    local alice = { getUsername = function() return "alice" end }
+    local bob = { getUsername = function() return "bob" end }
+    getNumActivePlayers = function() return 2 end
+    getSpecificPlayer = function(i) return i == 0 and alice or bob end
+    local notices = {}
+    MilitaryDrop.CleanupFeedback = { show = function(p, text) notices[#notices + 1] = { player = p, text = text } end }
+    getText = function(key, a, b) return key .. "|" .. tostring(a) .. "|" .. tostring(b) end
+    local args = { id = "M1", username = "bob", contribution = 3, gain = 0 }
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "CleanupCompleted", args)
+    MilitaryDrop.Client.onServerCommand("MilitaryDrop", "CleanupCompleted", args)
+    assertEq(#notices, 1)
+    assertEq(notices[1].player, bob)
+    assertEq(notices[1].text, "IGUI_MilitaryDrop_CleanupSuccess|3|0")
 end
 
 -- ----------------------------------------------------------------------------
@@ -402,45 +485,23 @@ function T.code_survives_a_reload_per_character()
     assertEq(writes, 0, "inchangé : pas de réécriture")
 end
 
-function T.context_menu_keeps_only_the_admin_entries()
-    -- RADIO-06 : la section « Logistique » de la fenêtre radio remplace le menu ;
-    -- un admin garde le largage forcé et les missions à la demande.
-    getText = getText or function(key) return key end
-    local options, subOptions, sent, callbacks = {}, {}, {}, {}
-    local context = { addOption = function(_, name, target, fn)
-        options[#options + 1] = name
-        callbacks[#options] = {target=target, fn=fn}
-        return {}
-    end,
-        addSubMenu = function() end }
-    ISContextMenu = { getNew = function()
-        return { addOption = function(_, name, target, fn, arg, arg2)
-            subOptions[#subOptions + 1] = { name = name, fn = fn, target = target, arg = arg, arg2 = arg2 }
-        end }
-    end }
-    local Client = MilitaryDrop.Client
-    local canForce, toServer = Client.canForce, MilitaryDrop.Net.toServer
-    MilitaryDrop.Net.toServer = function(player, command, args) sent[#sent + 1] = { command, args.kind, args.action } end
-    Client.canForce = function() return false end
-    Client.addOptions({}, context, {})
-    assertEq(#options, 0, "joueur : plus de « Demander un largage » au clic droit")
-    Client.canForce = function() return true end
-    Client.addOptions({}, context, {})
-    assertEq(options[1], "IGUI_MilitaryDrop_RequestDropAdmin", "admin : largage forcé")
-    assertEq(options[2], "IGUI_MilitaryDrop_AdminMissions", "admin : sous-menu des missions")
-    assertEq(options[3], "IGUI_MilitaryDrop_AdminCrashNext", "admin : prochain hélicoptère")
-    assertEq(#subOptions, 6, "lancer puis clore : reconnaissance, nettoyage, appel de contrôle")
-    assertEq(subOptions[5].name, "IGUI_MilitaryDrop_AdminMissionClose_cleanup", "clore le nettoyage")
-    subOptions[5].fn(subOptions[5].target, subOptions[5].arg, subOptions[5].arg2)
-    assertEq(subOptions[2].name, "IGUI_MilitaryDrop_AdminMission_cleanup", "libellé du nettoyage")
-    subOptions[2].fn(subOptions[2].target, subOptions[2].arg)
-    assertEq(sent[1][1] .. ":" .. sent[1][2], "AdminMission:cleanup", "commande envoyée au serveur")
-    assertEq(sent[1][3], "close", "action de clôture")
-    subOptions[2].fn(subOptions[2].target, subOptions[2].arg, subOptions[2].arg2)
-    assertEq(sent[2][3], nil, "lancement sans action")
-    callbacks[3].fn(callbacks[3].target)
-    assertEq(sent[#sent][1], "AdminCrashNext", "ordre de crash envoyé au serveur")
-    Client.canForce, MilitaryDrop.Net.toServer = canForce, toServer
+function T.central_admin_callbacks_send_existing_commands()
+    local Client, sent = MilitaryDrop.Client, {}
+    local original = MilitaryDrop.Net.toServer
+    MilitaryDrop.Net.toServer = function(player, command, args)
+        sent[#sent + 1] = { command, args.kind, args.action }
+    end
+    Client.onAdminMission({}, "cleanup", "close")
+    Client.onAdminMission({}, "cleanup")
+    Client.onAdminCrashNext({})
+    assertEq(sent[1][1], "AdminMission")
+    assertEq(sent[1][2], "cleanup")
+    assertEq(sent[1][3], "close")
+    assertEq(sent[2][3], nil)
+    assertEq(sent[3][1], "AdminCrashNext")
+    assertEq(Client.onFillInventoryContextMenu, nil, "no radio admin context hook")
+    assertEq(Client.onFillWorldContextMenu, nil, "no radio admin world hook")
+    MilitaryDrop.Net.toServer = original
 end
 
 function T.character_identity_is_applied_only_to_the_named_local_player()

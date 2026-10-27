@@ -69,6 +69,7 @@ require "MilitaryDrop/MilitaryDrop_Net"
 require "MilitaryDrop/MilitaryDrop_Radio"
 require "MilitaryDrop/MilitaryDrop_Codes"
 require "MilitaryDrop/MilitaryDrop_Exchange"
+require "MilitaryDrop/MilitaryDrop_Recorders"
 require "MilitaryDrop/MilitaryDrop_Client"
 require "MilitaryDrop/MilitaryDrop_ExchangeMenu"
 
@@ -110,7 +111,8 @@ PostWindow.HOURS_OPTIONS = { recon = "ReconHours", cleanup = "CleanupHours", con
 -- Titre d'une mission, traduit ici dans la langue du joueur (le serveur
 -- n'envoie que kind).
 PostWindow.MISSION_TITLES = { recon = "IGUI_MilitaryDrop_Mission_Recon",
-    cleanup = "IGUI_MilitaryDrop_Mission_Cleanup", control = "IGUI_MilitaryDrop_Mission_Control" }
+    cleanup = "IGUI_MilitaryDrop_Mission_Cleanup", control = "IGUI_MilitaryDrop_Mission_Control",
+    relay = "IGUI_MilitaryDrop_Mission_Relay" }
 -- Langues dont l'alphabet tient dans la police à chasse fixe du jeu (Latin-1) :
 -- journal et plaques en caractères de téléimprimeur ; sinon police normale.
 PostWindow.MONO_LANGUAGES = {
@@ -822,6 +824,7 @@ function PostWindow:actions()
     if not entry then
         return nil, nil
     end
+    if entry.mission and entry.mission.history then return nil, nil end
     if entry.kind == "bay" then
         return { text = getText("IGUI_MilitaryDrop_PostRecorderSend"), enabled = self:canSendRecorder(),
                 reason = self:sendReason(), run = function() self:onSendRecorder() end },
@@ -1089,10 +1092,10 @@ function PostWindow:tooltipFor(target, payload)
         return nil
     end
     if target == "mission" then
-        return PostWindow.missionTooltip(payload)
+        return nil
     elseif target == "affair" then
         if payload.kind == "mission" then
-            return PostWindow.missionTooltip(payload.mission)
+            return nil
         end
         return escape(payload.title) .. " <LINE> " .. escape(payload.sub or "")
     elseif target == "tag" then

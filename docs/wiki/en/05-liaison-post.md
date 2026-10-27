@@ -1,5 +1,7 @@
 # Liaison post
 
+> Local version 0.8.0: transmissions also include **Weekly requirements**, **Report zombie concentration** and **Confirm supply receipt**; see [trust and missions](04-trust-and-missions.md). A relay outage or an [RJ-93 jammer](10-radio-jammer.md) may reject transmission with an explicit reason.
+
 [Français](../fr/05-liaison-post.md) · [Guide home](Home.md) · Previous: [Trust and missions](04-trust-and-missions.md) · Next: [Server admin](06-server-admin.md)
 
 A liaison post is a fixed military radio that your station uses as its base. It keeps a log of what the base says, shows your orders and trust, and gives more trust for announced dog tags.
@@ -42,3 +44,12 @@ The console stays open while you use its buttons, and closes if you walk away fr
 ![The console and the form in game](../../images/screenshots/ingame-console-requisition.png)
 
 > The console never tells you whether the radio is on the military frequency. Use the memos.
+
+
+In 0.8.0, transmitting the data returns the physical recorder to your inventory and removes it from the post’s pending recorder list. A **TooltipLib** notice reads **“Data already transmitted to the base”** and explains that you can [dismantle it](09-helicopter-crash.md). Trust remains unique per crash site. Older returned recorders are recognized from the existing registry when opening the post or during periodic inventory updates; no mission state is reset.
+
+### Orders shown at the post
+
+The **Orders** list shows active **recon**, **clearance**, **radio check** and **relay repair** missions. Select one for its grid, remaining time and instructions; clearance also shows progress. Existing confirmation actions remain available for the relevant mission types.
+
+A relay mission launched by an admin appears just like a natural outage on the next post refresh. It identifies the cabinet and the electronic scrap to bring. Repair the cabinet on site, never remotely from the post. The order disappears after repair or emergency bypass.

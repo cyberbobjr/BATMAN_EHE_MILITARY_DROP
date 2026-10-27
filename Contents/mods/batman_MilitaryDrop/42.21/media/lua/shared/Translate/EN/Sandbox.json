@@ -149,5 +149,19 @@
     "Sandbox_MilitaryDrop_FultonWindowMinutes": "Fulton: pick-up window (minutes)",
     "Sandbox_MilitaryDrop_FultonWindowMinutes_tooltip": "In-game minutes during which a Fulton can be released after requesting a pick-up by radio.",
     "Sandbox_MilitaryDrop_FultonLootRate": "Fulton: loot rate (percent)",
-    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "How often helium tanks and damaged Fulton kits are found in the world, wrecks and supply crates. 0: none."
+    "Sandbox_MilitaryDrop_FultonLootRate_tooltip": "How often helium tanks and damaged Fulton kits are found in the world, wrecks and supply crates. 0: none.",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent": "Weekly Fulton bonus (percent)",
+    "Sandbox_MilitaryDrop_RotorNoisePercent": "Rotor attraction noise (percent)",
+    "Sandbox_MilitaryDrop_LandingNoisePercent": "Drop attraction noise (percent)",
+    "Sandbox_MilitaryDrop_RelayEnabled": "Relay repair missions",
+    "Sandbox_MilitaryDrop_RelayRearmDays": "Minimum days between relay failures",
+    "Sandbox_MilitaryDrop_HordeReportGain": "Trust for a verified concentration report",
+    "Sandbox_MilitaryDrop_ReceiptGain": "Trust for supply receipt acknowledgement",
+    "Sandbox_MilitaryDrop_WeeklyBonusPercent_tooltip": "Bonus for two categories, rotated each Monday. Included in the daily trust cap. 0 disables the bonus.",
+    "Sandbox_MilitaryDrop_RotorNoisePercent_tooltip": "100: normal attraction, 0: no rotor attraction. The configured landing horde still spawns.",
+    "Sandbox_MilitaryDrop_LandingNoisePercent_tooltip": "100: normal attraction at actual delivery, 0: no landing attraction. The configured horde still spawns.",
+    "Sandbox_MilitaryDrop_RelayEnabled_tooltip": "A storm or power-grid outage can damage a relay. Repairs use Electronic Scrap only. Backup link after 72 game hours.",
+    "Sandbox_MilitaryDrop_RelayRearmDays_tooltip": "Minimum game days after repair or backup before another relay failure.",
+    "Sandbox_MilitaryDrop_HordeReportGain_tooltip": "Daily capped trust for a verified concentration. 0 disables reports. Same area: one report per 24 game hours.",
+    "Sandbox_MilitaryDrop_ReceiptGain_tooltip": "Daily capped trust for one acknowledgement per personal recovered drop. 0 disables acknowledgements."
 }

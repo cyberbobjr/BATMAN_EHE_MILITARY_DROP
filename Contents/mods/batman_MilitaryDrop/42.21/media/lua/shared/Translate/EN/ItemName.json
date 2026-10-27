@@ -17,5 +17,6 @@
     "MilitaryDrop.FultonHarnessBag": "Fulton harness bag (part)",
     "MilitaryDrop.FultonKit": "Fulton recovery kit",
     "MilitaryDrop.FultonKitDamaged": "Damaged Fulton recovery kit",
-    "MilitaryDrop.HeliumTank": "Helium tank"
+    "MilitaryDrop.HeliumTank": "Helium tank",
+    "ItemName_MilitaryDrop.CommandCitation": "Command citation"
 }

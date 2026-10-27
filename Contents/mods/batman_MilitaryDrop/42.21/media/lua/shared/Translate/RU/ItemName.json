@@ -17,5 +17,6 @@
     "MilitaryDrop.FultonHarnessBag": "Мешок с подвесной системой «Фултон» (деталь)",
     "MilitaryDrop.FultonKit": "Комплект эвакуации «Фултон»",
     "MilitaryDrop.FultonKitDamaged": "Повреждённый комплект эвакуации «Фултон»",
-    "MilitaryDrop.HeliumTank": "Баллон с гелием"
+    "MilitaryDrop.HeliumTank": "Баллон с гелием",
+    "ItemName_MilitaryDrop.CommandCitation": "Благодарность командования"
 }

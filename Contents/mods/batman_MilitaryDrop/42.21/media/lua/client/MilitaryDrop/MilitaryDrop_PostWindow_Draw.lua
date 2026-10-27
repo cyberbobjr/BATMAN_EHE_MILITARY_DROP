@@ -599,7 +599,8 @@ function PostWindow:drawMissionDetail(entry, hover)
     self:drawOrder(L.missionCard, entry.mission, hover == "mission")
     local box = L.missionText
     local y = box.y
-    for _, line in ipairs(PostWindow.wrap(tostring(entry.mission.text or ""), UIFont.Small, box.w)) do
+    local body = PostWindow.missionText(entry.mission)
+    for _, line in ipairs(PostWindow.wrap(body, UIFont.Small, box.w)) do
         if y + L.fh > box.y + box.h then
             break
         end

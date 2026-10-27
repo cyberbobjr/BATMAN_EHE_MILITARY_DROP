@@ -5,7 +5,7 @@
 -- Le serveur fait autorité (solo, ou serveur MP) : il classe le contenu du kit
 -- au lâcher et paie. Le client n'utilise ce module que pour l'aperçu avant
 -- confirmation ; ses noms d'objets traduits peuvent différer de ceux du serveur.
--- Conception : docs/annexes/recherches/idee-12-fulton-conception.md §2.
+-- Conception : docs/specifications-techniques.md.
 --
 -- Seuls les objets directement dans le kit comptent ; un conteneur imbriqué part
 -- avec le kit sans être payé. Tout ce qui est envoyé est détruit : aucun registre
@@ -32,6 +32,7 @@
 -- ============================================================================
 
 require "MilitaryDrop/MilitaryDrop_Core"
+require "MilitaryDrop/MilitaryDrop_Weekly"
 
 local Config = MilitaryDrop.Config
 
@@ -171,6 +172,7 @@ function Fulton.category(item, player, vaccine)
     if not item or instanceof(item, "InventoryContainer") then
         return nil
     end
+    if item.getModData and item:getModData().MilitaryDropHonorary then return nil end
     local fullType = item:getFullType()
     if vaccine then
         local category = Fulton.VACCINE_TYPES[fullType]
@@ -223,6 +225,11 @@ function Fulton.evaluate(items, player)
         end
     end
     result.capped = scaled(cappedPoints, percent)
+    if MilitaryDrop.Weekly then
+        result.week = MilitaryDrop.Weekly.week()
+        result.bonus = MilitaryDrop.Weekly.bonus(result.counts, Fulton.VALUES, percent, result.week)
+        result.capped = result.capped + result.bonus
+    end
     result.uncapped = scaled(uncappedPoints, percent)
     return result
 end

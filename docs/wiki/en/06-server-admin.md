@@ -283,13 +283,13 @@ With **Zones if one is near**, a call far from every zone simply falls near the 
 
 ## Admin tools in game
 
-Right-click a military radio (in the inventory or placed):
+Open **Military Drop Admin Menu**: **Tools** contains forced drops and the next-crash order; **Missions** contains mission launch and closure actions. No radio is needed.
 
 - **Force a supply drop (admin)**: opens the form stamped **ADMIN**, with every lot and 20 points. No code, no radio check, no wait. The coordinates are sent to you privately, the drop is not tracked for trust, and the wait between drops does not start. With the form disabled, the drop leaves at once with random cases. It follows **Drop placement** like a player's call, with distances measured from you: with drop zones, it falls in a zone, the form can show the **Drop sector** field, and its decoy offers the sectors.
 - **Missions (admin)**: **Launch a reconnaissance**, **Launch a cleanup**, **Launch a radio check**, or close the current one (**Close the current ...**). A closed mission is announced as cancelled, without reward.
 - **Crash the next helicopter**: arms one crash for the next mod helicopter to take off, including an admin drop or decoy. Private confirmation ; saved with the world ; repeated clicks do not stack crashes. Flights already airborne continue, and waiting for HEF does not consume the order. To try it, arm the crash, then force a drop and submit its form.
 
-Who sees them: in single player, debug mode only. In multiplayer, the roles allowed to trigger events (admin, and any role with the `MakeEventsAlarmGunshot` capability). The server checks again.
+Inside the console, forced drops and the next-crash order also require the event permission (`MakeEventsAlarmGunshot`), in addition to administration access. The server rechecks these permissions.
 
 Drop zones have their own tool, in the game's admin panel: see [In-game tool](#in-game-tool).
 
@@ -342,3 +342,60 @@ These read the server's memory: they work in single player, not from a multiplay
 - The server decides and checks everything; clients never receive the random frequency or the code (only the memos and the numbers station give them).
 - A walkie-talkie must be in hand to transmit: the mod takes it in hand automatically.
 - Three wrong codes from one player do not silence the base for the others.
+
+## Administration console — 0.8.0
+
+**Solo debug**: open the Debug window (bug icon), **Main** tab, then **Military Drop Admin Menu**. **MP admin**: right-click anywhere in the world → **Military Drop Admin Menu**. No radio required. Available in **solo debug** and **MP to roles permitted to change/reload server options** (`ChangeAndReloadServerOptions`). The server rechecks every intervention. Older event tools retain their separate permissions; seeing those tools does not grant access to this console.
+
+Choose **Drops**, **Missions**, **Relays**, **Characters**, **Wrecks**, **Communications** or **Tools**. Search, filter by state and select a row: its details explain the available actions. Lists have 24 rows per page; refresh when needed.
+
+| Action | Effect |
+|---|---|
+| Teleport | Moves only the admin near the target. Requires a loaded, free arrival tile without water or a vehicle; otherwise explains the refusal. In MP split-screen, first local player only. |
+| Repeat announcement | Broadcasts an open delivered crate's grid again, with a 60-second cooldown. |
+| Cancel drop | Stops a drop before delivery. |
+| Close delivered file | Ends tracking without removing the crate or its contents, with no later recovery reward. |
+| Launch mission | Opens an order of the selected type if none is active. |
+| Validate success | Applies the normal reward within the daily cap. Clearance uses the contribution winner; recon/radio checks require an explicit eligible connected recipient. No duplicate rewards. |
+| Close without reward | Closes the mission without payment or simulated success. |
+| Restore relay | Clears the outage and pending repairs without consuming scrap or awarding XP/trust. |
+| Restore line | Clears the selected character's line suspension without changing their trust score. |
+
+The preview identifies the target, recipient and consequences. Mutations require a **reason**; confirmation expires after **60 seconds** and becomes invalid if the target changes. Interventions are recorded in the server log. Teleportation also requires the native `TeleportToCoordinates` permission.
+
+![Native mission details, SP 42.21.0 test with French UI](../../images/screenshots/administration-2026-10-27/sp-admin-missions-details.png)
+
+## Additional settings — 0.8.0
+
+| Page | Key | Default | Effect |
+|---|---|---|---|
+| Military Drop | `RotorNoisePercent` | 100 | Rotor noise, 0–300 percent; configured horde is retained. |
+| Military Drop | `LandingNoisePercent` | 100 | Delivery noise, 0–300 percent. |
+| Military Drop | `RelayEnabled` | true | Relay repair missions. |
+| Military Drop | `RelayRearmDays` | 7 | Rearm delay for outages, game days. |
+| Military Drop | `WeeklyBonusPercent` | 50 | Bonus for the week's Fulton cargo categories. |
+| Military Drop | `HordeReportGain` | 1 | Trust for an accepted report. |
+| Military Drop | `ReceiptGain` | 1 | Trust for a unique drop receipt. |
+| MilitaryDropJammer | `Enabled` | true | Jamming, only when the submod is loaded. |
+| MilitaryDropJammer | `Radius` | 100 | Radius of 10–200 tiles, without a floor filter. |
+| MilitaryDropJammer | `BatteryHours` | 24 | Full-battery runtime, 1–168 game hours. |
+
+The main mod works without the submod. See [RJ-93 installation and recipe](10-radio-jammer.md).
+
+
+### Communications and consolidated tools
+
+**Communications** shows the current authentication code (rotating or fixed according to settings), military frequency and numbers-station frequency, in MHz. It explicitly shows when no code is required or a station is inactive. Values come from the server and refresh with the console; they are never broadcast to ordinary players or written to logs.
+
+**Tools** includes a forced drop without a radio and the next-crash order, with confirmation, plus all former Fulton tests: normal/vanilla comparison launch, pause/resume, stop, cable visibility and automatic/world/post-world rendering modes. Fulton tests retain debug-mode and specific-permission requirements; flight controls require an active test. Requests use existing handlers and their normal feedback, rather than claiming success before a reply.
+
+Mission actions remain in **Missions**; their old radio shortcuts are removed. **Drop zones keep their existing menus**, including Debug → Main; their editor is not moved. The separate Fulton world context submenu is removed.
+
+The screenshot above shows the previous panel revision; the new sections still need visual review after a full game restart.
+
+
+### Launch a relay mission
+
+In **Relays**, select one of the four sites and **Launch relay mission**. Review the consequences, enter a reason and confirm. The server disables that relay, announces its repair and suspends new drops. Flights already underway continue. Normal repairs retain their component costs, duration, XP and trust rewards.
+
+Manual launch bypasses weather, power-grid transitions and the rearm delay. It respects `RelayEnabled` and refuses to replace an active relay mission: repair or administratively restore it first. Disabled actions explain why launch is unavailable.

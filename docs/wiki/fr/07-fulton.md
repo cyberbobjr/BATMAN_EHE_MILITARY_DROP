@@ -69,3 +69,9 @@ Ces gains partagent le **plafond quotidien** (10 par défaut) avec les rapports,
 ## Multijoueur
 
 Le serveur revérifie tout au lâcher : kit au sol à 2 cases au plus, bouteille dans l'inventaire principal, créneau ouvert, lieu, météo, zones protégées. C'est lui aussi qui paie et retire le kit pour tout le monde. Chaque joueur proche du point de lâcher voit le ballon et entend l'avion. Le vol va à son terme même si vous mourez ou vous déconnectez.
+
+## Besoins de la semaine — 0.8.0
+
+Dans **Logistique**, **Besoins de la semaine** indique les deux catégories recherchées. Elles changent le lundi ; leur valeur reçoit **+50 %** par défaut, dans le plafond quotidien. La prime concerne les catégories vanilla sélectionnées, pas le remède et sa règle particulière. La confirmation Fulton inclut le calcul : vérifiez-le avant de lâcher le ballon.
+
+Si la semaine change entre l'ouverture de la confirmation et le départ, le mod demande de revoir le chargement et de confirmer à nouveau : ni kit ni hélium n'est consommé par ce refus.

@@ -1,0 +1,6 @@
+{
+    "Sandbox_MilitaryDropJammer": "RJ-93 Radio Jammer",
+    "Sandbox_MilitaryDropJammer_Enabled": "Enable jammers",
+    "Sandbox_MilitaryDropJammer_Radius": "Range (squares)",
+    "Sandbox_MilitaryDropJammer_BatteryHours": "Battery lifetime (game hours)"
+}

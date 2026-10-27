@@ -76,6 +76,11 @@ Announce.CIRCLE_RING_TILES = 20 * 50 / 64
 Announce.MAYDAY_CODE = "MDAY"
 Announce.MAYDAY_SYMBOL = "Question"
 Announce.MAYDAY_COLOR = { r = 0.85, g = 0.35, b = 0.1, a = 1 }
+Announce.RELAY_CODE = "MDRL"
+Announce.RELAY_SYMBOL = "Exclamation"
+Announce.RELAY_COLOR = { r = 0.9, g = 0.65, b = 0.12, a = 1 }
+Announce.SECURED_SYMBOL = "Checkmark"
+Announce.SECURED_COLOR = { r = 0.12, g = 0.68, b = 0.32, a = 1 }
 -- Radio posée : OnDeviceText donne sa position, même loin du joueur (solo).
 Announce.HEARING_DISTANCE = 5
 -- Durée (ms réelles) pendant laquelle une grille annoncée attend d'être
@@ -98,6 +103,7 @@ local MISSION_MARKS = {
     { kind = "recon", code = "RECON_CODE", symbol = "RECON_SYMBOL", color = "RECON_COLOR" },
     { kind = "cleanup", code = "CLEANUP_CODE", symbol = "CLEANUP_SYMBOL", color = "CLEANUP_COLOR" },
     { kind = "mayday", code = "MAYDAY_CODE", symbol = "MAYDAY_SYMBOL", color = "MAYDAY_COLOR" },
+    { kind = "relay", code = "RELAY_CODE", symbol = "RELAY_SYMBOL", color = "RELAY_COLOR" },
 }
 
 local function addPending(x, y, now)
@@ -241,6 +247,14 @@ function Announce.markMission(mark)
     return false
 end
 
+function Announce.onRelayState(args)
+    if type(args) ~= "table" or args.phase ~= "failed" or type(args.serial) ~= "number" then return false end
+    local relay = MilitaryDrop.Relay
+    local site = relay and relay.SITES[args.site]
+    if not site then return false end
+    return Announce.markMission({ kind = "relay", id = "relay:" .. tostring(args.serial), x = site.x, y = site.y })
+end
+
 local function sameColor(symbol, c)
     local tolerance = Announce.COLOR_TOLERANCE
     return math.abs(symbol:getRed() - c.r) <= tolerance and math.abs(symbol:getGreen() - c.g) <= tolerance
@@ -253,6 +267,8 @@ local REMOVABLE = {
     { symbol = "RECON_SYMBOL", color = "RECON_COLOR", field = "recon" },
     { symbol = "CLEANUP_SYMBOL", color = "CLEANUP_COLOR", field = "cleanup" },
     { symbol = "CLEANUP_CIRCLE_SYMBOL", color = "CLEANUP_CIRCLE_COLOR", field = "cleanup" },
+    { symbol = "RELAY_SYMBOL", color = "RELAY_COLOR", field = "relay" },
+    { symbol = "SECURED_SYMBOL", color = "SECURED_COLOR", field = "secured" },
 }
 
 local function activeSet(list)
@@ -297,6 +313,21 @@ function Announce.onActiveMarks(args)
     end
     if removed > 0 then
         MilitaryDrop.log("removed " .. removed .. " outdated map marker(s)")
+    end
+    -- Active reconnaissance orders must remain locatable even if their radio announcement was missed.
+    for _, grid in ipairs(type(args.recon) == "table" and args.recon or {}) do
+        if type(grid) == "table" and type(grid.x) == "number" and type(grid.y) == "number" then
+            Announce.markMap(math.floor(grid.x), math.floor(grid.y), Announce.RECON_SYMBOL, Announce.RECON_COLOR)
+        end
+    end
+    for _, grid in ipairs(type(args.secured) == "table" and args.secured or {}) do
+        if type(grid) == "table" and type(grid.x) == "number" and type(grid.y) == "number" then
+            Announce.markMap(math.floor(grid.x), math.floor(grid.y), Announce.SECURED_SYMBOL, Announce.SECURED_COLOR)
+        end
+    end
+    local cleanup = lastMission.cleanup
+    if cleanup and not activeSet(args.cleanup)[math.floor(cleanup.x) .. "," .. math.floor(cleanup.y)] then
+        lastMission.cleanup = nil
     end
     return removed
 end

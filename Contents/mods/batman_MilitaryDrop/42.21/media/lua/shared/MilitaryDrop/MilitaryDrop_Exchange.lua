@@ -65,6 +65,9 @@ Exchange.COMMANDS = {
     cleanupStatus = "MissionCleanupStatus",
     -- Demande de passage Fulton (FULTON-06) : ouvre un créneau de lâcher.
     fulton = "MissionFulton",
+    concentration = "MissionConcentration",
+    receipt = "MissionReceipt",
+    weekly = "WeeklyNeeds",
 }
 -- Plaques traitées par transmission radio (MilitaryDrop_Missions.lua).
 Exchange.DOGTAGS_PER_CALL = 10
@@ -83,10 +86,15 @@ Exchange.GAIN_OPTIONS = {
     control = "ControlGain",
     -- Barème Fulton en pour cent (MilitaryDrop_Fulton.lua) : 0 désactive.
     fulton = "FultonValue",
+    concentration = "HordeReportGain",
+    receipt = "ReceiptGain",
+    weekly = "WeeklyBonusPercent",
 }
 
 Config.addDefaults({
     ReportGain = 1,
+    HordeReportGain = 1,
+    ReceiptGain = 1,
     DogTagGain = 2,
     ReconGain = 3,
     ReconHours = 48,
@@ -192,6 +200,7 @@ end
 --- Vrai pour une plaque transmissible : plaque vanilla renommée, et pas
 --- celle du joueur lui-même (player facultatif).
 function Exchange.isDogTag(item, player)
+    if item and item.getModData and item:getModData().MilitaryDropHonorary then return false end
     local soldier = Exchange.dogTagSoldier(item)
     if not soldier then
         return false

@@ -51,6 +51,7 @@ require "MilitaryDrop/MilitaryDrop_Wreck"
 local Flight = MilitaryDrop.Flight
 local Net = MilitaryDrop.Net
 local Server = MilitaryDrop.Server
+local Config = MilitaryDrop.Config
 
 local Flights = {}
 MilitaryDrop.Flights = Flights
@@ -237,7 +238,7 @@ end
 local function drop(flight)
     flight.dropped = true
     local x, y = math.floor(flight.tx), math.floor(flight.ty)
-    addSound(nil, x, y, 0, Flights.DROP_NOISE_RADIUS, Flights.DROP_NOISE_VOLUME)
+    -- Landing noise is emitted by Server.deliver only after the crate actually lands.
     -- Grille gardée pour les rappels de la base (Server.repeatGrids).
     if MilitaryDrop.Trust then
         MilitaryDrop.Trust.onDropAnnounced(flight.dropId, x, y)
@@ -253,6 +254,20 @@ local function removeFlight(index)
     local flight = flights[index]
     table.remove(flights, index)
     Net.toAll("FlightEnd", { id = flight.id })
+end
+
+function Flights.cancelDrop(dropId)
+    local dossier = MilitaryDrop.Trust.drop(dropId)
+    if not dossier or dossier.deliveredHours or dossier.outcome then return false end
+    local keys = {}
+    for key, pending in pairs(state().pending) do if pending.dropId == dropId then keys[#keys + 1] = key end end
+    for _, key in ipairs(keys) do state().pending[key] = nil end
+    for i = #state().flights, 1, -1 do
+        if state().flights[i].dropId == dropId then removeFlight(i) end
+    end
+    MilitaryDrop.Trust.expireUndelivered(dropId)
+    if MilitaryDrop.Missions then MilitaryDrop.Missions.sendMarks() end
+    return true
 end
 
 --- Avance un vol de dt secondes ; renvoie true quand il est terminé.
@@ -293,7 +308,11 @@ function Flights.advance(flight, dt)
     flight.noiseIn = (flight.noiseIn or 0) - dt
     if flight.noiseIn <= 0 then
         flight.noiseIn = Flights.NOISE_SECONDS
-        addSound(nil, math.floor(x), math.floor(y), 0, Flights.NOISE_RADIUS, Flights.NOISE_VOLUME)
+        local factor = math.max(0, math.min(3, (tonumber(Config.get("RotorNoisePercent")) or 100) / 100))
+        if factor > 0 then
+            addSound(nil, math.floor(x), math.floor(y), 0, math.floor(Flights.NOISE_RADIUS * factor),
+                math.floor(Flights.NOISE_VOLUME * factor))
+        end
     end
     flight.syncIn = (flight.syncIn or Flights.SYNC_SECONDS) - dt
     if flight.syncIn <= 0 then

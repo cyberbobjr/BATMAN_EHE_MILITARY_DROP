@@ -10,3 +10,5 @@
 - [Fulton extraction](07-fulton.md)
 - [FAQ](08-faq.md)
 - [Helicopter crash (Mayday)](09-helicopter-crash.md)
+
+- [RJ-93 radio jammer (optional)](10-radio-jammer.md)

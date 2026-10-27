@@ -25,11 +25,7 @@ end
 
 --- Site d'épave d'un enregistreur de vol, ou nil pour un autre objet.
 function PostWindow.recorderSite(item)
-    if not item or item:getFullType() ~= PostWindow.RECORDER_TYPE then
-        return nil
-    end
-    local site = item:getModData()[PostWindow.SITE_KEY]
-    return type(site) == "string" and site ~= "" and site or nil
+    return MilitaryDrop.Recorders.site(item)
 end
 
 --- Enregistreurs de vol de l'inventaire (sacs compris), ni en main ni
@@ -37,7 +33,7 @@ end
 function PostWindow.recorders(player)
     local found, seen = {}, {}
     local items = player:getInventory():getAllEvalRecurse(function(item)
-        return PostWindow.recorderSite(item) ~= nil
+        return PostWindow.recorderSite(item) ~= nil and not MilitaryDrop.Recorders.isTransmitted(item)
     end, ArrayList.new())
     for i = 0, items:size() - 1 do
         local item = items:get(i)
@@ -75,7 +71,7 @@ function PostWindow.affairs(data, recorders, tagCount)
     end
     for _, item in ipairs(recorders or {}) do
         local site = PostWindow.recorderSite(item)
-        if site and not (bay and bay.site == site) then
+        if site and not MilitaryDrop.Recorders.isTransmitted(item) and not (bay and bay.site == site) then
             local modData = item:getModData()
             list[#list + 1] = { kind = "recorder", key = "rec:" .. site, site = site, itemId = item:getID(),
                 icon = PostWindow.RECORDER_TYPE, title = getText("IGUI_MilitaryDrop_PostRecorderName", site),
@@ -109,6 +105,15 @@ function PostWindow.affairs(data, recorders, tagCount)
             list[#list + 1] = { kind = "exchange", key = "exchange:" .. source, source = source,
                 title = getText(option.label), sub = getText(done and doneKey or option.tooltip),
                 lamp = done and "green" or nil }
+        end
+    end
+    local completed = data and data.completedMissions
+    if type(completed) == "table" and #completed > 0 then
+        list[#list + 1] = { kind = "header", text = getText("IGUI_MilitaryDrop_PostCompletedMissions") }
+        for _, mission in ipairs(completed) do
+            local view = PostWindow.missionView(mission)
+            list[#list + 1] = { kind = "mission", key = "completed:" .. tostring(mission.id), mission = mission,
+                title = view.title, sub = view.sub, due = view.due, lamp = view.success and "green" or "red" }
         end
     end
     return list

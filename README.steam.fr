@@ -1,14 +1,12 @@
 [h1]Military Drop - Largages de ravitaillement par radio[/h1]
 
-[h1]⚠ CHANGEMENT INCOMPATIBLE — version 0.6.0 (2026-10-21) ⚠[/h1]
-[h1]SIGNAL SMOKE EST DÉSORMAIS OBLIGATOIRE[/h1]
-[b]Ce mod nécessite désormais [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Abonnez-vous aux trois et activez-les avec ce mod. Serveurs dédiés : ajoutez 3817018338;3694097672;3811010882 à WorkshopItems= et batman_BeltRadio;TooltipLib;batman_SignalSmoke à Mods=, sinon le jeu ne charge pas ce mod (seul un avertissement apparaît dans le journal).[/b]
+[b]Mods requis[/b]: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url].
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
 [b]Build 42.21 · Solo et multijoueur · Autonome[/b]
 
-[i]Conçu pour les serveurs dédiés (le serveur décide de tout), testé surtout en solo pour l'instant. Signalez tout problème en multijoueur.[/i]
+[i]0.8.0 — préparée pour essai, non publiée[/i]
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent... et le bruit attire les morts.
 
@@ -43,13 +41,23 @@ Chaque personnage a sa propre réputation, jamais affichée en chiffres. Elle ra
 [*][b]Hélicoptères abattus[/b], plus souvent par orage : un MAYDAY donne le secteur ; l'épave contient des pièces, des documents et un enregistreur de vol.
 [*][b]Poste de liaison[/b] : une radio militaire fixe devient la console de votre station (affaires, ordres, journal, baie de lecture).
 [*][b]Zones de largage disputées[/b] pour les serveurs PvP, tracées en jeu par l'admin.
-[*]60 options du bac à sable, appliquées sans redémarrer ; multijoueur où le serveur décide ; outils d'admin depuis une radio militaire.
+[*]71 options du bac à sable ; autorité serveur en multijoueur.
+[/list]
+
+[h2]0.8.0[/h2]
+
+[list]
+[*]Réparez les relais en panne avec des déchets électroniques : l'Électricité réduit coût et durée. Gain d'XP, aucun générateur requis.
+[*]Primes Fulton hebdomadaires, signalements de hordes, accusés de réception et citations nominatives.
+[*]Bruits du rotor et de livraison réglables séparément ; la horde configurée reste présente.
+[*]Console admin : SP Debug → Main ; MP clic droit partout → Military Drop Admin Menu. Code/fréquences, largage forcé, crash programmé et tests Fulton. Menus des zones conservés.
+[*]Sous-mod [b]batman_MilitaryDropJammer[/b] facultatif dans ce paquet : fabriquez et posez le RJ-93, insérez/retirez la pile et voyez sa charge dans la fenêtre. Par défaut : 100 cases, 24 h de jeu par pile pleine. Bloque les appels Military Drop, y compris les vôtres ; annonces toujours reçues. Grésillement, message et statut expliquent le brouillage. Laissez ce sous-mod désactivé pour jouer sans lui.
+[*]Enregistreurs : démontage avant ou après transmission ; le boîtier est désormais rendu. Les admins peuvent lancer une mission relais sur le site choisi.
 [/list]
 
 [h2]Compatibilité[/h2]
 
 [list]
-[*]Aucun autre mod requis.
 [*]Nécessite [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] : le comportement commun du talkie-walkie à la ceinture pour tous les mods qui l'utilisent.
 [*]Conçu pour cohabiter avec [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Nécessite [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url] : une fumée verte signale la caisse.

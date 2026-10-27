@@ -46,6 +46,7 @@ end
 
 require "Vehicles/VehicleDistributions"
 require "MilitaryDrop/MilitaryDrop_Loot"
+require "MilitaryDrop/MilitaryDrop_Citation"
 
 local Config = MilitaryDrop.Config
 local Loot = MilitaryDrop.Loot
@@ -102,7 +103,7 @@ function Crate.rollCases(rand)
 end
 
 --- Contenu d'un largage : { { fullType, name?, lot? }, … }.
-function Crate.contentsFor(dropId)
+local function contentsFor(dropId)
     local Requisition = MilitaryDrop.Requisition
     local order = dropId and Requisition and Requisition.orderOf(dropId)
     if order and order.decoy then
@@ -143,11 +144,34 @@ function Crate.contentsFor(dropId)
     return entries
 end
 
+function Crate.contentsFor(dropId)
+    local contents = contentsFor(dropId)
+    local Trust = MilitaryDrop.Trust
+    if Trust and Trust.citationsFor then
+        for _, tier in ipairs(Trust.citationsFor(dropId)) do
+            local drop = Trust.drop(dropId)
+            local name = drop.citationNames and drop.citationNames[tostring(tier)] or Trust.name(drop.character)
+            contents[#contents + 1] = { fullType = "MilitaryDrop.CommandCitation", citationTier = tier,
+                citationName = name }
+            if tier == 4 then
+                contents[#contents + 1] = { fullType = "Base.Necklace_DogTag", honorary = true,
+                    name = getText("IGUI_MilitaryDrop_HonoraryTag", tostring(name)) }
+            end
+        end
+    end
+    return contents
+end
+
 --- Marque un objet créé pour un largage : dropId (confiance), lot d'une
 --- caisse de réquisition, nom composé (setName + setCustomName, sauvegardé et
 --- transmis au client).
 function Crate.applyEntry(item, entry, dropId)
     local modData = item:getModData()
+    if entry.honorary then modData.MilitaryDropHonorary = true end
+    if entry.citationTier then
+        modData.MilitaryDropCitation = { name = entry.citationName, tier = entry.citationTier }
+        modData.printMedia = MilitaryDrop.Citation.media(entry.citationName, entry.citationTier)
+    end
     if dropId then
         modData[Crate.DROP_KEY] = dropId
     end

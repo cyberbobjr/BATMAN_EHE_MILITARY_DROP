@@ -1,5 +1,43 @@
 VERSION = 1,
 
+option MilitaryDrop.RelayEnabled
+{
+    type = boolean, default = true,
+    page = MilitaryDrop, translation = MilitaryDrop_RelayEnabled,
+}
+option MilitaryDrop.RelayRearmDays
+{
+    type = integer, min = 1, max = 365, default = 7,
+    page = MilitaryDrop, translation = MilitaryDrop_RelayRearmDays,
+}
+option MilitaryDrop.HordeReportGain
+{
+    type = integer, min = 0, max = 20, default = 1,
+    page = MilitaryDrop, translation = MilitaryDrop_HordeReportGain,
+}
+option MilitaryDrop.ReceiptGain
+{
+    type = integer, min = 0, max = 20, default = 1,
+    page = MilitaryDrop, translation = MilitaryDrop_ReceiptGain,
+}
+
+option MilitaryDrop.WeeklyBonusPercent
+{
+    type = integer, min = 0, max = 200, default = 50,
+    page = MilitaryDrop, translation = MilitaryDrop_WeeklyBonusPercent,
+}
+
+option MilitaryDrop.RotorNoisePercent
+{
+    type = integer, min = 0, max = 300, default = 100,
+    page = MilitaryDrop, translation = MilitaryDrop_RotorNoisePercent,
+}
+option MilitaryDrop.LandingNoisePercent
+{
+    type = integer, min = 0, max = 300, default = 100,
+    page = MilitaryDrop, translation = MilitaryDrop_LandingNoisePercent,
+}
+
 option MilitaryDrop.CooldownHours
 {
     type = integer, min = 1, max = 8760, default = 168,

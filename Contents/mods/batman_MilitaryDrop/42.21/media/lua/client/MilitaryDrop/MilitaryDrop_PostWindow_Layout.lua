@@ -147,6 +147,12 @@ function PostWindow.missionView(mission)
     local titleKey = PostWindow.MISSION_TITLES[mission.kind]
     local view = { title = titleKey and getText(titleKey) or tostring(mission.title or mission.kind or ""),
         due = "", sub = "" }
+    if mission.history then
+        view.success = mission.outcome == "done" or mission.outcome == "destroyed"
+        view.due = getText(view.success and "IGUI_MilitaryDrop_CleanupSecured" or "IGUI_MilitaryDrop_CleanupUnsuccessful")
+        view.sub = getText("IGUI_MilitaryDrop_PostGrid", tostring(mission.x or "?"), tostring(mission.y or "?"))
+        return view
+    end
     local remaining = tonumber(mission.remaining)
     if remaining then
         if remaining >= 1 then
@@ -191,17 +197,17 @@ function PostWindow.missionView(mission)
     return view
 end
 
---- Infobulle d'un ordre : texte complet de la base.
-function PostWindow.missionTooltip(mission)
-    local view = PostWindow.missionView(mission)
-    local parts = { " <RGB:1,1,1> " .. escape(view.title) .. " <LINE> " }
-    if mission.text and mission.text ~= "" then
-        parts[#parts + 1] = " <RGB:0.85,0.85,0.85> " .. escape(mission.text) .. " <LINE> "
+--- Instructions displayed directly in the selected order's detail pane.
+function PostWindow.missionText(mission)
+    if mission.history then
+        local status = mission.outcome == "expired" and "IGUI_MilitaryDrop_CleanupExpired"
+            or mission.outcome == "cancelled" and "IGUI_MilitaryDrop_CleanupCancelled"
+            or "IGUI_MilitaryDrop_CleanupSecured"
+        return getText(status) .. "\n" .. getText("IGUI_MilitaryDrop_CleanupHistory",
+            PostWindow.stamp(mission.clock), tostring(mission.contribution or 0), tostring(mission.gain or 0))
     end
-    if view.due ~= "" then
-        parts[#parts + 1] = " <RGB:0.7,0.7,0.7> " .. escape(view.due)
-    end
-    return table.concat(parts)
+    if mission.kind == "relay" then return getText("IGUI_MilitaryDrop_PostRelayInstructions") end
+    return tostring(mission.text or "")
 end
 
 --- Nom gravé sur une plaque du casier ({ id, name, by } ; ancien format : serial).

@@ -1,0 +1,37 @@
+module MilitaryDropJammer
+{
+    model RJ93
+    {
+        mesh = WorldItems/MDJ_RJ93,
+        texture = WorldItems/MDJ_RJ93,
+        scale = 0.01,
+    }
+    item RJ93
+    {
+        ItemType = base:normal,
+        DisplayCategory = Electronics,
+        Icon = MDJ_RJ93,
+        Weight = 3.0,
+        WorldStaticModel = MilitaryDropJammer.RJ93,
+    }
+    craftRecipe MakeRJ93
+    {
+        timedAction = MakingElectrical,
+        time = 600,
+        Tags = InHandCraft;Electrical,
+        category = Electrical,
+        SkillRequired = Electricity:3,
+        inputs
+        {
+            item 1 tags[base:screwdriver] mode:keep flags[NoBrokenItems],
+            item 20 [Base.ElectronicsScrap],
+            item 4 [Base.ScrapMetal],
+            item 2 [Base.ElectricWire],
+            item 2 [Base.DuctTape],
+        }
+        outputs
+        {
+            item 1 MilitaryDropJammer.RJ93,
+        }
+    }
+}

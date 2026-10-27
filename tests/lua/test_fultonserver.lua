@@ -239,6 +239,20 @@ local function assertUntouched(tank, message, uses)
     assertEq(#LAUNCHED, 0, message .. " : pas de vol")
 end
 
+function T.weekly_quote_must_be_present_and_current_before_consumption()
+    MilitaryDrop.Weekly = { week = function() return 123 end, bonus = function() return 0 end }
+    local player, kit, tank = ready({ item("Base.Paperwork") })
+    NOW_MS = NOW_MS + 5000
+    assertEq(FultonServer.launch(player, { kitId = kit.id, tankId = tank.id, x = 100, y = 200, z = 0 }), "site")
+    assertUntouched(tank, "missing quote")
+    NOW_MS = NOW_MS + 5000
+    assertEq(FultonServer.launch(player, { kitId = kit.id, tankId = tank.id, x = 100, y = 200, z = 0, week = 122 }), "site")
+    assertUntouched(tank, "outdated week")
+    NOW_MS = NOW_MS + 5000
+    assertEq(FultonServer.launch(player, { kitId = kit.id, tankId = tank.id, x = 100, y = 200, z = 0, week = 123 }), "ok")
+    assertEq(tank.uses, 3, "current quote permits one launch")
+end
+
 function T.refusals_change_nothing()
     local cases = {
         { "noKit", function(_, kit) kit.id = 99 end },

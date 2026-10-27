@@ -56,6 +56,12 @@ Menu.OPTIONS = {
     -- Passage Fulton (FULTON-06) : ouvre un créneau de lâcher (MilitaryDrop_FultonClient.lua).
     { source = "fulton", label = "IGUI_MilitaryDrop_Exchange_Fulton",
         tooltip = "IGUI_MilitaryDrop_Exchange_FultonTooltip", speech = "IGUI_MilitaryDrop_Say_Fulton_", speechCount = 2 },
+    { source = "concentration", label = "IGUI_MilitaryDrop_HordeReport",
+        tooltip = "IGUI_MilitaryDrop_HordeReportTip", speech = "IGUI_MilitaryDrop_Say_Report_", speechCount = 3 },
+    { source = "receipt", label = "IGUI_MilitaryDrop_Receipt",
+        tooltip = "IGUI_MilitaryDrop_ReceiptTip", speech = "IGUI_MilitaryDrop_Say_Control_", speechCount = 2 },
+    { source = "weekly", label = "IGUI_MilitaryDrop_Weekly",
+        tooltip = "IGUI_MilitaryDrop_WeeklyTip", speech = "IGUI_MilitaryDrop_Say_Report_", speechCount = 3 },
     -- « Faire le point » : source « cleanup » (désactivée avec les nettoyages),
     -- commande propre, grisé sans nettoyage en cours.
     { source = "cleanup", command = "cleanupStatus", needsCleanup = true,

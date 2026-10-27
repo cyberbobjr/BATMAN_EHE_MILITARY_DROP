@@ -7,10 +7,8 @@
 3. scripts du jeu : accolades équilibrées ; traductions : JSON valides, mêmes clés et mêmes paramètres que EN, pas de % seul ;
 4. descriptions Steam (README.steam*) : 8 000 octets UTF-8 au plus, BBCode équilibré,
    mêmes liens et images que l'anglais, description de workshop.txt identique à README.steam ;
-5. suivi de l'implémentation (docs/annexes/plans/SUIVI.md) : identifiants uniques, états connus,
-   preuve exigée pour un état « testé », commits cités présents dans git ;
-6. tests Lua (tests/lua/test_*.lua) sous lupa, avec l'API du jeu simulée ;
-7. protocole Fulton : serveur et deux clients Lua isolés, transport simulé.
+5. tests Lua (tests/lua/test_*.lua) sous lupa, avec l'API du jeu simulée ;
+6. protocole Fulton : serveur et deux clients Lua isolés, transport simulé.
 
 Dépendances : pip install lupa ; luacheck facultatif en local, exigé par la CI.
 Les tests qui lisent les fichiers vanilla sont ignorés si le jeu est absent
@@ -69,7 +67,7 @@ class Report:
 
 
 def mod_lua_files():
-    return sorted(MOD_LUA.rglob("*.lua"))
+    return sorted((REPO / 'Contents/mods').glob('*/42.21/media/lua/**/*.lua'))
 
 
 def check_radio_common(report):
@@ -177,7 +175,7 @@ def check_references(report):
     report.section("Clés de traduction et options citées par le Lua")
     game_keys = vanilla_keys()
     keys = set()
-    for path in (TRANSLATE / REFERENCE_LANGUAGE).glob("*.json"):
+    for path in (REPO / 'Contents/mods').glob('*/42.21/media/lua/shared/Translate/EN/*.json'):
         try:
             keys.update(json.loads(path.read_text(encoding="utf-8-sig")))
         except json.JSONDecodeError:
@@ -216,7 +214,7 @@ def check_references(report):
 def check_scripts(report):
     """Scripts du jeu (media/scripts) : accolades équilibrées, commentaires /* */ exclus."""
     report.section("Scripts d'objets et de véhicules")
-    scripts = sorted((MOD_LUA.parent / "scripts").rglob("*.txt"))
+    scripts = sorted((REPO / 'Contents/mods').glob('*/42.21/media/scripts/**/*.txt'))
     for path in scripts:
         text = re.sub(r"/\*.*?\*/", "", path.read_text(encoding="utf-8"), flags=re.S)
         depth = 0
@@ -230,19 +228,19 @@ def check_scripts(report):
     report.ok(f"{len(scripts)} scripts relus")
 
 
-def check_translations(report):
+def check_translations(report, translate_root=TRANSLATE):
     report.section("Traductions")
-    reference_dir = TRANSLATE / REFERENCE_LANGUAGE
+    reference_dir = translate_root / REFERENCE_LANGUAGE
     reference = {}
     for path in sorted(reference_dir.glob("*.json")):
         data = load_json(path, report)
         if data is not None:
             reference[path.name] = data
             check_lone_percent(report, path, data)
-    languages = sorted(p.name for p in TRANSLATE.iterdir() if p.is_dir() and p.name != REFERENCE_LANGUAGE)
+    languages = sorted(p.name for p in translate_root.iterdir() if p.is_dir() and p.name != REFERENCE_LANGUAGE)
     for language in languages:
         before = report.failures
-        folder = TRANSLATE / language
+        folder = translate_root / language
         names = {p.name for p in folder.glob("*.json")}
         for missing in sorted(set(reference) - names):
             report.fail(f"{language} : {missing} manquant")
@@ -326,86 +324,6 @@ def check_lua_tests(report):
                 report.fail(f"{label}\n        {error}")
             else:
                 report.ok(label)
-
-
-TRACKING = REPO / "docs" / "annexes" / "plans" / "SUIVI.md"
-TRACKING_STATES = {
-    "à décider", "décidé", "conçu", "codé", "testé hors jeu", "testé solo", "testé MP",
-    "publié", "bloqué", "abandonné",
-}
-TRACKING_ID = re.compile(r"^[A-Z]+-\d{2}$")
-TRACKING_COMMIT = re.compile(r"`([0-9a-f]{7,40})`")
-TRACKING_NEEDS_PROOF = {"testé hors jeu", "testé solo", "testé MP", "publié"}
-
-
-def tracking_rows(text):
-    """Lignes des tableaux de suivi : (numéro de ligne, cellules) dont la 1re cellule est un ID.
-
-    Une ligne d'élément qui n'a pas 6 cellules (un « | » dans un texte) est rendue
-    avec ses cellules telles quelles : check_tracking la signale au lieu de l'ignorer.
-    """
-    for number, line in enumerate(text.splitlines(), 1):
-        if not line.startswith("|"):
-            continue
-        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if re.match(r"^[A-Z]+-\d", cells[0]):
-            yield number, cells
-
-
-def commit_exists(sha):
-    result = subprocess.run(
-        ["git", "-C", str(REPO), "cat-file", "-e", f"{sha}^{{commit}}"],
-        capture_output=True,
-    )
-    return result.returncode == 0
-
-
-def shallow_clone():
-    """Vrai pour un clone tronqué (CI par défaut) : les anciens commits y sont absents."""
-    result = subprocess.run(
-        ["git", "-C", str(REPO), "rev-parse", "--is-shallow-repository"],
-        capture_output=True, text=True,
-    )
-    return result.returncode != 0 or result.stdout.strip() == "true"
-
-
-def check_tracking(report):
-    report.section("Suivi de l'implémentation (docs/annexes/plans/SUIVI.md)")
-    if not TRACKING.exists():
-        report.fail("docs/annexes/plans/SUIVI.md absent")
-        return
-    seen = {}
-    rows = 0
-    git = shutil.which("git") is not None and not shallow_clone()
-    for number, cells in tracking_rows(TRACKING.read_text(encoding="utf-8")):
-        rows += 1
-        if len(cells) != 6:
-            report.fail(f"SUIVI.md:{number} {cells[0]} : {len(cells)} cellules au lieu de 6 (« | » dans un texte ?)")
-            continue
-        ident, _, _, state, proofs, _ = cells
-        where = f"SUIVI.md:{number} {ident}"
-        if not TRACKING_ID.match(ident):
-            report.fail(f"{where} : identifiant mal formé (FAMILLE-NN attendu)")
-        if ident in seen:
-            report.fail(f"{where} : identifiant déjà utilisé ligne {seen[ident]}")
-        seen.setdefault(ident, number)
-        if state not in TRACKING_STATES:
-            report.fail(f"{where} : état inconnu « {state} »")
-        if state in TRACKING_NEEDS_PROOF and proofs in ("", "—"):
-            report.fail(f"{where} : état « {state} » sans preuve")
-        if git:
-            for sha in TRACKING_COMMIT.findall(proofs):
-                if not commit_exists(sha):
-                    report.fail(f"{where} : commit {sha} introuvable")
-    if rows == 0:
-        report.fail("aucune ligne de suivi trouvée")
-    else:
-        states = Counter(cells[3] for _, cells in tracking_rows(TRACKING.read_text(encoding="utf-8"))
-                         if len(cells) == 6)
-        summary = ", ".join(f"{count} {state}" for state, count in states.most_common())
-        report.ok(f"{rows} éléments : {summary}")
-    if not git:
-        report.skip("git absent ou historique tronqué : commits cités non vérifiés")
 
 
 FULTON_LUA = MOD_LUA / "shared" / "MilitaryDrop" / "MilitaryDrop_Fulton.lua"
@@ -497,8 +415,8 @@ def main():
     check_fulton_vanilla(report)
     check_references(report)
     check_translations(report)
+    check_translations(report, REPO / 'Contents/mods/batman_MilitaryDropJammer/42.21/media/lua/shared/Translate')
     check_steam_descriptions(report)
-    check_tracking(report)
     check_lua_tests(report)
     report.section("Fulton : serveur et deux clients Lua isolés (réseau simulé)")
     for name, error in fulton_multiplayer_checks():

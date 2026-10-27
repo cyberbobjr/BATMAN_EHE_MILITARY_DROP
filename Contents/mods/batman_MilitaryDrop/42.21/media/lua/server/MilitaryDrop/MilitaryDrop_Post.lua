@@ -85,6 +85,7 @@ require "MilitaryDrop/MilitaryDrop_Guard"
 require "MilitaryDrop/MilitaryDrop_Teams"
 require "MilitaryDrop/MilitaryDrop_Trust"
 require "MilitaryDrop/MilitaryDrop_Exchange"
+require "MilitaryDrop/MilitaryDrop_Recorders"
 
 local Config = MilitaryDrop.Config
 local Net = MilitaryDrop.Net
@@ -563,6 +564,11 @@ function Post.refreshAll()
         Post.refresh(teamId)
     end
     Post.advanceBays()
+    local hasUsed = false
+    for _ in pairs(state().recordersUsed) do hasUsed = true end
+    if hasUsed then
+        for _, player in ipairs(Net.players({ alive = true })) do Post.refreshRecorderMarks(player) end
+    end
 end
 
 -- ----------------------------------------------------------------------------
@@ -571,11 +577,7 @@ end
 
 --- Site d'épave d'un enregistreur de vol (chaîne), ou nil pour un autre objet.
 function Post.recorderSite(item)
-    if not item or item:getFullType() ~= Post.RECORDER_TYPE then
-        return nil
-    end
-    local site = item:getModData()[Post.SITE_KEY]
-    return type(site) == "string" and site ~= "" and site or nil
+    return MilitaryDrop.Recorders.site(item)
 end
 
 --- Joueurs vivants à SOUND_RANGE cases du poste, même étage (serveur MP : en
@@ -786,6 +788,13 @@ function Post.missions(characterId)
     if type(list) ~= "table" then
         return out
     end
+    local relay = MilitaryDrop.RelayServer and MilitaryDrop.RelayServer.postMission()
+    if relay then
+        local combined = {}
+        for _, mission in ipairs(list) do combined[#combined + 1] = mission end
+        combined[#combined + 1] = relay
+        list = combined
+    end
     local now = hoursNow()
     for _, mission in ipairs(list) do
         if type(mission) == "table" and #out < Post.MISSION_MAX then
@@ -847,6 +856,7 @@ end
 
 --- Tout ce qu'affiche la console du poste de l'équipe (object : radio chargée).
 function Post.consoleData(teamId, object, player)
+    Post.refreshRecorderMarks(player)
     local characterId = MilitaryDrop.Trust.idFor(player)
     local post = state().posts[teamId]
     post.snapshot = Post.snapshot(object, post.snapshot)
@@ -882,6 +892,7 @@ function Post.consoleData(teamId, object, player)
         lineCut = Trust.isLineCut(characterId),
         lines = lines,
         missions = Post.missions(characterId),
+        completedMissions = Missions and Missions.completedForCharacter and Missions.completedForCharacter(characterId) or {},
         exchanges = exchanges,
         mail = mail,
         bay = Post.bayView(teamId),
@@ -1130,6 +1141,35 @@ end
 
 --- « Retirer de la baie » : l'enregistreur revient au joueur (même site, même
 --- point du crash) ; la lecture acquise reste attachée au site.
+function Post.refreshRecorderMarks(player)
+    local used = state().recordersUsed
+    local items = player:getInventory():getAllTypeRecurse("FlightRecorder")
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        local site = MilitaryDrop.Recorders.site(item)
+        if site and used[site] and not MilitaryDrop.Recorders.isTransmitted(item) then
+            item:getModData()[MilitaryDrop.Recorders.SENT_KEY] = true
+            if isServer() then syncItemFields(player, item) end
+        end
+    end
+end
+
+local function recorderFromBay(bay, transmitted)
+    local item = instanceItem(Post.RECORDER_TYPE)
+    if not item then return nil end
+    local data = item:getModData()
+    data[Post.SITE_KEY] = bay.site
+    data[Post.CRASH_X_KEY], data[Post.CRASH_Y_KEY], data[Post.CRASH_CLOCK_KEY] = bay.cx, bay.cy, bay.cc
+    if transmitted or state().recordersUsed[bay.site] then data[MilitaryDrop.Recorders.SENT_KEY] = true end
+    return item
+end
+
+local function returnRecorder(player, item)
+    local inventory = player:getInventory()
+    inventory:AddItem(item)
+    if isServer() then sendAddItemToContainer(inventory, item) end
+end
+
 function Post.ejectRecorder(player, args)
     local teamId, object, reason = resolvePost(player, args)
     if not teamId then
@@ -1140,18 +1180,11 @@ function Post.ejectRecorder(player, args)
     if not bay then
         return reply(player, "bayEmpty")
     end
-    local item = instanceItem(Post.RECORDER_TYPE)
+    local item = recorderFromBay(bay)
     if not item then
         return reply(player, "unavailable")
     end
-    local data = item:getModData()
-    data[Post.SITE_KEY] = bay.site
-    data[Post.CRASH_X_KEY], data[Post.CRASH_Y_KEY], data[Post.CRASH_CLOCK_KEY] = bay.cx, bay.cy, bay.cc
-    local inventory = player:getInventory()
-    inventory:AddItem(item)
-    if isServer() then
-        sendAddItemToContainer(inventory, item)
-    end
+    returnRecorder(player, item)
     s.postBays[teamId] = nil
     addSystem(teamId, "recorderOut", bay.site)
     Post.baySound(teamId, nil, false)
@@ -1185,8 +1218,12 @@ function Post.transmitRecorder(player, args)
     if object:getDeviceData():getChannel() ~= Config.getChannel() then
         return reply(player, "noAnswer")
     end
+    -- Return the physical recorder for salvage; the per-site reward stays single-use.
+    local item = recorderFromBay(bay, true)
+    if not item then return reply(player, "unavailable") end
     s.postBays[teamId] = nil
     s.recorderReads[bay.site] = nil
+    returnRecorder(player, item)
     if s.recordersUsed[bay.site] then
         reply(player, "recorderUsed")
         return Post.sendConsole(player, teamId, object)

@@ -847,8 +847,25 @@ function T.mission_closed_before_any_update_still_clears_its_marker()
     MilitaryDrop.Server.canForce = function() return true end
     Missions.adminLaunch(ONLINE[1], { kind = "recon", action = "close" })
     local sent = sentToAll("MarksActive")
-    assertEq(#sent, count + 1, "liste renvoyée à la clôture")
+    assertEq(#sent, count + 2, "launch publishes the eye immediately and closure clears it")
     assertEq(#sent[#sent].recon, 0, "reconnaissance close absente")
+end
+function T.relay_mark_is_synchronized_and_cleared_when_the_outage_ends()
+    local active = true
+    MilitaryDrop.RelayServer = { postMission = function()
+        if active then return { kind = "relay", x = 4832, y = 6281 } end
+    end }
+    assertEq(Missions.sendMarks(), true)
+    local sent = sentToAll("MarksActive")
+    assertEq(#sent[#sent].relay, 1)
+    assertEq(sent[#sent].relay[1].x, 4832)
+    local bob = makePlayer("bob")
+    Missions.sendMarks(bob)
+    assertEq(lastSentArgs(bob, "MarksActive").relay[1].y, 6281)
+    active = false
+    assertEq(Missions.sendMarks(), true)
+    sent = sentToAll("MarksActive")
+    assertEq(#sent[#sent].relay, 0)
 end
 
 function T.no_mission_without_players_channel_or_gain()
@@ -1238,6 +1255,8 @@ function T.horde_destroyed_without_any_player_kill_closes_without_reward()
     assertEq(STATE.missions.last.cleanup.outcome, "destroyed", "sans vainqueur")
     assertEq(Trust.get("C:alice"), 25, "aucune récompense")
     assertEq(lastBroadcast(), "IGUI_MilitaryDrop_Broadcast_CleanupNoWinner|300|400", "annonce sans vainqueur")
+    assertEq(#Missions.activeMarks().secured, 1, "secured even without a reward recipient")
+    assertEq(Missions.completedForCharacter("C:alice")[1].gain, 0)
 end
 
 function T.team_is_frozen_at_the_kill()
@@ -1266,6 +1285,8 @@ function T.cleanup_expires_after_72_hours()
     Missions.update()
     assertEq(STATE.missions.last.cleanup.outcome, "expired", "expirée")
     assertEq(Trust.get("C:alice"), 25, "aucun gain")
+    assertEq(Missions.completedForCharacter("C:alice")[1].outcome, "expired")
+    assertEq(#Missions.activeMarks().secured, 0, "expired mission never shows a green checkmark")
     -- Sans apparition (zone jamais visitée) : expire aussi.
     STATE.missions.nextHours.cleanup = WORLD_HOURS
     LOADED = function() return false end
@@ -1337,6 +1358,11 @@ function T.clients_learn_whether_a_cleanup_is_open()
     assertTrue(lastState().all and lastState().args.open == true, "ouverture annoncée à tous")
     Missions.sync(alice)
     assertTrue(lastState().player == alice and lastState().args.open == true, "à l'arrivée d'un joueur")
+    local marks
+    for _, message in ipairs(SENT) do
+        if message.command == "MarksActive" and message.player == alice then marks = message.args end
+    end
+    assertEq(marks.username, "alice", "unicast marks acknowledge the intended player's startup sync")
     wait(72)
     Missions.update()
     assertTrue(lastState().all and lastState().args.open == false, "clôture annoncée à tous")
@@ -1553,4 +1579,105 @@ function T.post_exchange_projection_is_personal_and_expires()
     assertTrue(bob ~= nil, "second character")
 end
 
+function T.reported_cleanup_uses_existing_group_size_and_never_spawns_another()
+    makePlayer("alice")
+    local group = { makeZombie("Existing", 100, 200, nil, 1001), makeZombie("Existing", 100, 200, nil, 0) }
+    local mission = Missions.launch("cleanup", WORLD_HOURS, { x = 100, y = 200, zombies = group })
+    assertTrue(mission ~= nil)
+    assertEq(mission.quota, 2, "announcement uses observed group size")
+    assertEq(mission.horde.size, 2, "even a zombie without a trackable outfit is included")
+    assertEq(#HORDE_SPAWNED, 0, "no extra artificial group")
+    Missions.trySpawnHorde()
+    assertEq(#HORDE_SPAWNED, 0, "chunk callback cannot duplicate the reported group")
+end
+
+function T.admin_cleanup_success_rewards_the_normal_winner_once_with_daily_cap()
+    local alice, bob = makePlayer("alice"), makePlayer("bob")
+    MilitaryDrop.Admin = { allowed = function() return true end }
+    MilitaryDrop.Net.players = function() return { alice, bob } end
+    SandboxVars.MilitaryDrop.TrustDailyCap = 2
+    STATE.missions = { characterSchema = 1, open = { cleanup = {
+        id = "M_admin", kind = "cleanup", deadline = WORLD_HOURS + 24, x = 300, y = 400,
+        counts = { ["C:alice"] = 5, ["C:bob"] = 3 }, reached = { ["C:alice"] = 1, ["C:bob"] = 2 },
+        horde = { ids = {}, size = 30, dead = 8, nearbyDead = 0, cleanupSchema = 2 },
+    } }, last = {}, nextHours = {} }
+    local beforeA, beforeB = Trust.get("C:alice"), Trust.get("C:bob")
+    local reward = Missions.adminReward("cleanup", "M_admin", "C:bob")
+    assertEq(reward.beneficiary, "C:alice", "client selection cannot change the cleanup winner")
+    assertEq(reward.reward, 2)
+    assertTrue(Missions.adminIntervene(alice, "cleanup", "M_admin", true, "C:bob"))
+    assertEq(Trust.get("C:alice"), beforeA + 2)
+    assertEq(Trust.get("C:bob"), beforeB)
+    assertEq(STATE.missions.last.cleanup.character, "C:alice")
+    local historyA, historyB = Missions.completedForCharacter("C:alice"), Missions.completedForCharacter("C:bob")
+    assertEq(#historyA, 1)
+    assertEq(historyA[1].contribution, 5)
+    assertEq(historyA[1].gain, 2, "actual capped reward stored")
+    assertEq(historyB[1].contribution, 3)
+    assertEq(historyB[1].gain, 0, "no collective reward invented")
+    assertEq(historyB[1].counts, nil, "private contributions not exposed")
+    local notices = {}
+    for _, message in ipairs(SENT) do
+        if message.command == "CleanupCompleted" then notices[#notices + 1] = message end
+    end
+    assertEq(#notices, 2, "both participants notified privately")
+    assertEq(notices[1].player, alice)
+    assertEq(notices[1].args.gain, 2)
+    assertEq(notices[2].player, bob)
+    assertEq(notices[2].args.gain, 0)
+    assertEq(#Missions.activeMarks(WORLD_HOURS + 0.999).secured, 1, "visible before one game hour")
+    assertEq(#Missions.activeMarks(WORLD_HOURS + 1).secured, 0, "gone at exactly one game hour")
+    loadMod("server/MilitaryDrop/MilitaryDrop_Missions.lua")
+    Missions = MilitaryDrop.Missions
+    assertEq(Missions.completedForCharacter("C:alice")[1].gain, 2, "history survives module reload")
+    assertTrue(not Missions.adminIntervene(alice, "cleanup", "M_admin", true, "C:bob"))
+    assertEq(Trust.get("C:alice"), beforeA + 2, "replay cannot reward twice")
+    assertEq(#Missions.completedForCharacter("C:alice"), 1, "replay cannot append another result")
+end
+
+function T.cancelled_cleanup_has_history_but_no_success_marker_or_notification()
+    local p = makePlayer("alice")
+    MilitaryDrop.Admin = { allowed = function() return true end }
+    local mission = Missions.launch("cleanup")
+    assertTrue(Missions.adminIntervene(p, "cleanup", mission.id, false))
+    assertEq(Missions.completedForCharacter("C:alice")[1].outcome, "cancelled")
+    assertEq(#Missions.activeMarks().secured, 0)
+    for _, message in ipairs(SENT) do assertTrue(message.command ~= "CleanupCompleted") end
+end
+
+function T.cleanup_history_is_bounded_and_old_saves_initialize_it_additively()
+    local p = makePlayer("alice")
+    MilitaryDrop.Admin = { allowed = function() return true end }
+    STATE.missions = { characterSchema = 1, open = {}, reports = { legacy = 12 }, cleanupHistory = false }
+    assertEq(#Missions.completedForCharacter("C:alice"), 0)
+    for _ = 1, 22 do
+        local mission = Missions.launch("cleanup")
+        assertTrue(Missions.adminIntervene(p, "cleanup", mission.id, false))
+    end
+    local history = Missions.completedForCharacter("C:alice")
+    assertEq(#history, 20)
+    assertEq(history[1].id, "M22")
+    assertEq(history[20].id, "M3")
+    assertEq(STATE.missions.reports.legacy, 12, "unrelated old state retained")
+end
+function T.admin_recon_needs_an_explicit_eligible_character_and_closure_has_no_reward()
+    local alice, bob = makePlayer("alice"), makePlayer("bob")
+    MilitaryDrop.Admin = { allowed = function() return true end }
+    MilitaryDrop.Net.players = function() return { alice, bob } end
+    STATE.missions = { characterSchema = 1, open = { recon = {
+        id = "M_recon", kind = "recon", deadline = WORLD_HOURS + 24, x = 300, y = 400,
+    } }, last = {}, nextHours = {} }
+    assertEq(Missions.adminReward("recon", "M_recon"), nil)
+    assertEq(Missions.adminReward("recon", "M_recon", "C:absent"), nil)
+    local old = Trust.get("C:bob")
+    assertTrue(Missions.adminIntervene(alice, "recon", "M_recon", true, "C:bob"))
+    assertEq(Trust.get("C:bob"), old + MilitaryDrop.Exchange.gain("recon"))
+    STATE.missions.open.control = { id = "M_control", kind = "control", deadline = WORLD_HOURS + 24,
+        responded = { ["C:bob"] = true } }
+    assertEq(Missions.adminReward("control", "M_control", "C:bob"), nil, "already paid recipient rejected")
+    old = Trust.get("C:alice")
+    assertTrue(Missions.adminIntervene(alice, "control", "M_control", false))
+    assertEq(Trust.get("C:alice"), old)
+    assertEq(STATE.missions.last.control.outcome, "cancelled")
+end
 return T

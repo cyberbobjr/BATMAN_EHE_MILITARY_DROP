@@ -287,21 +287,15 @@ def check_test_menu_and_commands_are_admin_only():
     assert vm.eval("MilitaryDrop.FultonRenderDebug") is None, "debug file skipped outside debug mode"
     assert vm.eval('listenerCount("OnFillWorldObjectContextMenu")') == 0, "no test menu handler outside debug mode"
     vm.execute('isDebugEnabled = function() return true end; ' + debug_file)
-    assert vm.eval('listenerCount("OnFillWorldObjectContextMenu")') == 1, "one test menu handler in debug mode"
+    assert vm.eval('listenerCount("OnFillWorldObjectContextMenu")') == 0, "no separate Fulton context entry"
     vm.execute(debug_file)
-    assert vm.eval('listenerCount("OnFillWorldObjectContextMenu")') == 1, "reload keeps a single handler"
-    vm.execute('ADMINS[2] = false; ADDED = 0; ISContextMenu = {getNew = function() return {addOption = function() end} end}; '
-               'CTX = {addOption = function() ADDED = ADDED + 1 return {} end, addSubMenu = function() end}; '
-               'MilitaryDrop.FultonRenderDebug.onContext(0, CTX, {}, false)')
-    assert vm.globals().ADDED == 0, "MP non-admin: no test menu"
-    vm.execute('ADMINS[2] = true; isDebugEnabled = function() return false end; '
-               'MilitaryDrop.FultonRenderDebug.onContext(0, CTX, {}, false)')
-    assert vm.globals().ADDED == 0, "MP admin, debug mode turned off: no test menu"
-    vm.execute('isDebugEnabled = function() return true end; MilitaryDrop.FultonRenderDebug.onContext(0, CTX, {}, false)')
-    assert vm.globals().ADDED == 1, "MP admin in debug mode: test menu shown"
-    vm.execute('ADMINS[2] = false; ADDED = 0; MilitaryDrop.FultonRenderDebug.onContext(0, CTX, {}, false); '
-               'ADMINS[2] = true; isDebugEnabled = function() return false end')
-    assert vm.globals().ADDED == 0, "MP non-admin in debug mode: no test menu"
+    assert vm.eval('listenerCount("OnFillWorldObjectContextMenu")') == 0, "reload leaves context clean"
+    vm.execute('ADMINS[2] = false')
+    assert not vm.eval('MilitaryDrop.FultonRenderDebug.canUse(getSpecificPlayer(0))')
+    vm.execute('ADMINS[2] = true')
+    assert vm.eval('MilitaryDrop.FultonRenderDebug.canUse(getSpecificPlayer(0))')
+    vm.execute('isDebugEnabled = function() return false end')
+    assert not vm.eval('MilitaryDrop.FultonRenderDebug.canUse(getSpecificPlayer(0))')
     n.server.execute('ADMINS[2] = false')
     n.command((1, "MilitaryDropFultonFlight", "Start", {"request": 1}))
     assert not n.packets, "server refuses a forged Start from a non-admin"

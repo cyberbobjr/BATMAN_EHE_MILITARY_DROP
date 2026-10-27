@@ -136,10 +136,42 @@ Migrations présentes : notes collectives de la v1.3 conservées sans transfert 
 - **Mods de butin** : le contenu des caisses et des lots vient des tables fusionnées ; `MilitaryDrop.Loot.CASES[type].sources` est remplaçable par un mod de compatibilité. Le marqueur `resetedContainers` protège la caisse contre les mods qui re-remplissent les coffres de véhicules.
 - **Extension interne** : `Server.COMMANDS`, `Client.HANDLERS`, `Exchange.HANDLERS`, `Config.onChange`.
 
+## Extension sur la branche d’essai du 2026-10-27
+
+La branche `feature/planned-improvements-testing` conserve les couches et les dépendances
+du pattern validé. La version publiée reste 0.7.1 ; aucune publication n’est déclenchée.
+
+| Couche | Nouveaux modules | Responsabilité |
+|---|---|---|
+| Partagée | `Relay`, `Weekly`, `Citation`, `Admin` | Catalogue des quatre armoires, formules de réparation, calendrier des bonus et mise en page localisable des citations |
+| Serveur | `RelayServer`, `FieldActions`, `AdminDashboard` | Pannes/réparations autoritaires, rapports/accusés de réception, projection administrative et mutations contrôlées |
+| Client | `RelayClient`, `CitationClient`, `AdminDashboardClient` | Action chronométrée, lecture dans la langue du joueur, console native par rubrique, aperçu et confirmation d’interventions autoritaires |
+
+`MilitaryDrop.Extensions.commandGates` contient les gardes appelées avant les commandes métier.
+`MilitaryDrop.Extensions.radioStatus` contient les fournisseurs de statut affichés dans Logistique.
+Le principal utilise ces registres sans importer le sous-mod facultatif.
+
+Le dossier frère `Contents/mods/batman_MilitaryDropJammer` est un mod chargeable distinct,
+avec son `common`, sa variante `42.21` et `require=\\batman_MilitaryDrop`. Son espace Lua
+`MDJammer` et ses ressources RJ-93 lui appartiennent. `MDJ_Core` fournit le transport et
+les calculs ; `MDJ_Server` résout l’objet réel, valide les inventaires, conserve l’énergie
+et tranche les commandes ; `MDJ_Client` affiche les états reçus et gère les sons locaux.
+Le principal fonctionne sans le sous-mod.
+
+Les ajouts persistants sont additifs : historique de citations par personnage,
+preuves de réception, rapports récents et cycle du relais dans l’état privé du principal ;
+registre versionné des brouilleurs dans la ModData globale propre au sous-mod. Aucun
+état d’inventaire ou gain d’XP n’est décidé par une fenêtre client.
+
 ## Outillage
 
-- `tests/run_tests.py [--require-luacheck]` : luacheck, syntaxe Lua 5.1, scripts, traductions, descriptions Steam (8 000 octets), suivi `docs/annexes/plans/SUIVI.md`, tests Lua `tests/lua/test_*.lua` sous `lupa` (API du jeu simulée par `tests/lua_harness.py`), protocole Fulton MP (`tests/check_fulton_multiplayer.py`).
+- `tests/run_tests.py [--require-luacheck]` : luacheck, syntaxe Lua 5.1, scripts, traductions, descriptions Steam (8 000 octets), tests Lua `tests/lua/test_*.lua` sous `lupa` (API du jeu simulée par `tests/lua_harness.py`), protocole Fulton MP (`tests/check_fulton_multiplayer.py`).
 - `tests/check_mayday_assets.py` : modèles et textures de l'épave.
 - CI : `.github/workflows/checks.yml` (Ubuntu, Python 3.12, luacheck, lupa, pillow).
 - `tools/wiki_sync.py` : publie `docs/wiki/` vers le wiki GitHub (voir [docs/README.md](README.md#wiki)).
 - `source/` : sources des ressources et outils d'aperçu hors jeu (caisse, épave, documents, console, formulaire, section radio, sons).
+
+
+### Accès à la console administrative
+
+`MilitaryDrop_AdminAccess` ajoute le bouton Debug/Main en solo debug et l’entrée contextuelle mondiale en MP autorisé. `MilitaryDrop_AdminTools` centralise les anciens outils hors zones de largage et délègue aux gestionnaires existants. Le groupe serveur `radio` de la projection AdminDashboard fournit les communications privées aux seuls admins autorisés, sans les ajouter aux synchronisations publiques.

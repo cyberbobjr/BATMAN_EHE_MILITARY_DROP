@@ -1,5 +1,7 @@
 # Poste de liaison
 
+> Version 0.8.0 locale : les transmissions incluent aussi **Besoins de la semaine**, **Signaler un rassemblement** et **Confirmer la réception** ; voir [missions et confiance](04-trust-and-missions.md). Une panne de relais ou un [brouilleur RJ-93](10-radio-jammer.md) peut refuser la transmission, avec un motif explicite.
+
 [English](../en/05-liaison-post.md) · [Sommaire du guide](Home.md) · Précédent : [Confiance et missions](04-trust-and-missions.md) · Suivant : [Administration](06-server-admin.md)
 
 Un poste de liaison est une radio militaire fixe dont votre station fait sa base. Il garde le journal de ce que dit la base, affiche vos ordres et votre confiance, et rapporte davantage pour les matricules annoncés.
@@ -48,3 +50,12 @@ La console reste ouverte quand vous utilisez ses boutons, et se ferme si vous vo
 *En jeu (version anglaise).*
 
 > La console ne dit jamais si la radio est sur la fréquence militaire. Fiez-vous aux notes.
+
+
+En 0.8.0, transmettre les données rend le boîtier dans votre inventaire. Il disparaît alors des enregistreurs à traiter du poste. L’infobulle **TooltipLib** indique **« Données déjà transmises à la base »** et précise que vous pouvez le [démonter](09-helicopter-crash.md). La récompense de confiance reste unique par site de crash. Les anciens boîtiers déjà rendus sont reconnus par le registre existant lors de l’ouverture du poste ou d’une mise à jour périodique de l’inventaire ; aucun état de mission n’est réinitialisé.
+
+### Ordres visibles au poste
+
+La liste **Ordres** affiche les missions actuellement ouvertes : **reconnaissance**, **nettoyage**, **appel de contrôle** et **remise en service d’un relais**. Sélectionnez un ordre pour sa grille, son délai et les consignes ; le nettoyage affiche aussi sa progression. Les actions de confirmation existantes restent accessibles selon le type de mission.
+
+Une mission relais lancée depuis l’administration apparaît comme une panne naturelle au prochain rafraîchissement du poste. Elle indique l’armoire et les déchets électroniques à apporter. La réparation se fait physiquement sur l’armoire annoncée, jamais à distance depuis le poste. Après réparation ou liaison de secours, l’ordre disparaît.

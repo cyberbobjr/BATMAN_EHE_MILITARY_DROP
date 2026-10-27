@@ -70,7 +70,7 @@ Military zombies drop the game's own dog tags, engraved with the soldier's name.
 
 ## Missions
 
-From time to time, the base gives an order to **all stations** on the military frequency. Missions are public: every station that hears them can compete. Only listeners get the map marker. Missed it? While a recon or clearance order is open, the base repeats its grid every **6 hours** of game time by default (same option as the drop reminders), and each reminder marks the map of those who hear it.
+From time to time, the base gives an order to **all stations** on the military frequency. Missions are public. While a recon or clearance order is open, the base repeats its grid every **6 hours** of game time by default (same option as the drop reminders). Recon also receives an automatic marker even if you miss the announcement; clearance is marked when you hear the announcement, a reminder or a reply from the base.
 
 ![Missions on the console and the announcement in game](../../images/screenshots/ingame-console-missions.png)
 
@@ -78,9 +78,13 @@ From time to time, the base gives an order to **all stations** on the military f
 
 *"All stations, Logistics. Recon required at grid X / Y. First survivor to confirm on site within 48 hours."*
 
-A blue **eye** symbol marks the grid on your map. Go there and press **Confirm the recon** within **25 tiles** of the point. The first character gets +3. Pressed too far away, the base gives you the grid again and the symbol is added to your map.
+A blue **eye** symbol automatically marks the grid on your map at launch, including after reconnecting while the mission remains active. It disappears when the mission closes. Go there and press **Confirm the recon** within **25 tiles** of the point. The first character gets +3. Pressed too far away, the base gives you the grid again.
 
 ### Clearance
+
+On success, each connected participant receives a notification showing their contribution and actual trust gain, even when the daily cap reduces that gain to zero. The ordinary best-contributor reward rule remains unchanged. The skull and circle are replaced by a **green checkmark for one game hour**, then automatically removed; reconnecting preserves only the remaining duration.
+
+The liaison post retains the **latest 20 clearance results** under "Completed missions": outcome, grid, completion date, your contribution and your trust gain. History remains available after reconnecting and after the checkmark disappears. Expired orders and orders closed without success are identified accordingly, without a success notification or green checkmark. Missions completed before this update cannot be reconstructed with their missing details.
 
 *"All stations, Logistics. Infected horde reported within 40 tiles of grid X / Y, about 30 strong..."*
 
@@ -106,3 +110,42 @@ Press **Confirm reception** in time. Every character that answers gets +1.
 - A new character starts at 25. Earlier drops and sanctions remain attached to the previous character.
 - Factions keep their call signs and shared liaison posts. The console displays the acting character's trust.
 - Upgrading from collective trust: old scores are preserved in legacy data, without transferring them. Each character starts at 25. Earlier drops do not affect the new scores.
+
+## Version 0.8.0: relays and radio actions
+
+These features belong to the unpublished testing branch. Gains below use default settings and share the daily cap.
+
+### Repair a relay
+
+A thunderstorm or power-grid failure can disable a relay. The base announces the affected cabinet: new supply requests stop, while flights already in progress continue. Bring **Electronics Scrap** (`Base.ElectronicsScrap`), reach the announced cabinet and **right-click → Relay cabinet → Repair**. Stay nearby during the timed action. No generator, fuel or extra tool is needed.
+
+| Electricity | Scrap consumed | Duration at normal speed |
+|---|---|---|
+| 0 | 20 | 15 s |
+| 5 | 11 | 9 s |
+| 10 | 2 | 3 s |
+
+The first player to finish restores service and earns **10 base Electricity XP** and **+3 trust**. Other pending repairs are cancelled. Without a repair, an emergency link returns after **72 game hours**; a **7-day** rearm delay prevents repeated failures.
+
+Four ground-floor locations use projectzomboidmap.com X/Y coordinates. The order identifies one cabinet; repairing another does not complete it.
+
+An **amber exclamation point** marks the cabinet on your map when the mission state synchronizes, including after reconnecting. It disappears after repair, admin restoration or emergency bypass; your personal map notes are retained.
+
+| Site | X | Y | Map |
+|---|---|---|---|
+| 1 | 4832 | 6281 | [View](https://projectzomboidmap.com/#4832x6281x38) |
+| 2 | 1625 | 5755 | [View](https://projectzomboidmap.com/#1625x5755x38) |
+| 3 | 10277 | 8744 | [View](https://projectzomboidmap.com/#10277x8744x38) |
+| 4 | 1513 | 14851 | [View](https://projectzomboidmap.com/#1513x14851x38) |
+
+### Report a concentration
+
+Use **Report zombie concentration** in **Logistics** with at least **10 living zombies within 30 tiles**, at ground level. An accepted report earns **+1 trust**. Reports within **80 tiles** of a recent report earn nothing for **24 game hours**, shared by all players. If no clearance order is already open, the base can issue one for the reported zombies without spawning another group.
+
+### Confirm delivery receipt
+
+After your personal drop has been successfully opened, **Confirm supply receipt** remains available for **72 game hours**. It earns **+1 trust**, once per drop. This is separate from the opening reward; grid reminders still stop automatically.
+
+### Personal commendations
+
+Each new trust tier is remembered for the character's lifetime. A named commendation arrives in the next eligible personal drop. Tier IV also adds an honorary dog tag, which cannot be traded or sent by Fulton for trust. Existing characters start at their current tier without retroactive awards.

@@ -7,5 +7,6 @@
     "MakeFultonHarnessBag": "Make Fulton harness bag",
     "AssembleFultonKit": "Assemble Fulton recovery kit",
     "RepairFultonKit": "Repair Fulton recovery kit",
-    "SalvageHeliumTank": "Cut up empty helium tank"
+    "SalvageHeliumTank": "Cut up empty helium tank",
+    "DismantleMilitaryFlightRecorder": "Dismantle flight recorder"
 }

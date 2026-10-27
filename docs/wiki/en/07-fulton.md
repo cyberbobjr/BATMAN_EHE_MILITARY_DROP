@@ -69,3 +69,9 @@ These gains share the **daily cap** (10 by default) with reports, dog tags and m
 ## Multiplayer
 
 The server checks everything again when you release: kit on the ground within 2 tiles, tank in your main inventory, open window, spot, weather, protected zones. It also pays and removes the kit for everyone. Every player near the release point sees the balloon and hears the aircraft. The flight completes even if you die or disconnect.
+
+## Weekly needs — 0.8.0
+
+Choose **Weekly requirements** in **Logistics** to ask which two cargo categories are wanted. They change on Monday and earn **+50 percent** by default, within the daily cap. The bonus applies to the selected vanilla categories; the cure keeps its separate rule. The Fulton confirmation includes the calculation, so review it before releasing the balloon.
+
+If the week changes after opening the confirmation, review the cargo and confirm again. The rejected attempt consumes neither the kit nor helium.

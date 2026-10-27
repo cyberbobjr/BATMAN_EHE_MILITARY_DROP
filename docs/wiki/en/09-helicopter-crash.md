@@ -43,3 +43,10 @@ Once every part is removed, you can cut up the wreck the vanilla way (**Dismantl
 ## The flight recorder
 
 Bring the recorder to your station's [liaison post](05-liaison-post.md): insert it into the reading bay, keep the post radio on and powered for 10 in-game minutes (reading pauses on a power cut and resumes), then **Send to base**. The character who sends it gains trust, outside the daily cap, once per crash site.
+
+
+## Dismantle a recorder — 0.8.0
+
+Use **Dismantle flight recorder** in the **Electrical** category. It consumes one recorder and keeps an **unbroken screwdriver**, with no minimum skill. Returns **6 Electronics Scrap**, **1 Electric Wire** and **2 Scrap Metal**, plus **5 base Electricity XP**.
+
+Both **transmitted and untransmitted** recorders are accepted. Transmission now returns the physical recorder to the sender; the same crash site still grants trust only once. TooltipLib identifies already-transmitted data, and these recorders no longer appear in the post’s pending list. Eject a recorder from the reading bay before dismantling it. Dismantling before transmission destroys that copy and prevents transmitting its data later. Recorders consumed by an older version are not recreated retroactively.

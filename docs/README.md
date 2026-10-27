@@ -4,6 +4,8 @@ Mod Project Zomboid Build 42.21 (`batman_MilitaryDrop`) : appeler l'armée par r
 
 La documentation de développement est en français ; le wiki joueur existe en anglais et en français. La présentation GitHub est le [README](../README.md) du dépôt, l'historique des versions le [CHANGELOG](../CHANGELOG.md).
 
+Version préparée : **0.8.0**, branche `feature/planned-improvements-testing`, non publiée. Le [guide français](wiki/fr/Home.md) et le [guide anglais](wiki/en/Home.md) décrivent cette version locale, dont les [relais](wiki/fr/04-trust-and-missions.md), la [console admin](wiki/fr/06-server-admin.md) et le [sous-mod RJ-93](wiki/fr/10-radio-jammer.md). Les fichiers `README.steam*` sont les descriptions préparées ; aucune synchronisation publique n'a été effectuée.
+
 ## Documents
 
 | Document | Rôle |
@@ -15,21 +17,6 @@ La documentation de développement est en français ; le wiki joueur existe en a
 | [ameliorations-et-idees.md](ameliorations-et-idees.md) | Améliorations de code et idées de fonctionnalités, états et sélection planifiée. |
 | [wiki/](wiki/Home.md) | Source du wiki GitHub : guides joueur et admin en anglais (`en/`) et en français (`fr/`). |
 | [images/](images/) | Images de la documentation, du README et de la page Steam. |
-| [annexes/](annexes/) | Plans, suivi, protocoles de test et recherches. |
-
-### Annexes
-
-Plan en cours : [améliorations sélectionnées I01 à I16](annexes/plans/plan-ameliorations-i01-i16.md), découpage, dépendances et critères de validation des 12 idées demandées le 2026-10-23.
-
-Plan correctif : [échanges depuis le poste et comptage du nettoyage](annexes/plans/plan-poste-et-nettoyage.md), demandé le 2026-10-26 ; actions radio manquantes, règle de comptage mixte, migration et validations solo/MP.
-
-Correctif local 0.7.1 : [résultats hors jeu et protocole restant](annexes/tests/correctifs-poste-nettoyage.md).
-
-| Dossier | Contenu |
-|---|---|
-| [annexes/plans/](annexes/plans/) | [SUIVI.md](annexes/plans/SUIVI.md) (état de chaque élément, vérifié par `tests/run_tests.py`), plans d'implémentation [plan.md](annexes/plans/plan.md) (v1), [plan-v2.md](annexes/plans/plan-v2.md) (v1.1 à v1.5), [plan-v13.md](annexes/plans/plan-v13.md), [plan-v14.md](annexes/plans/plan-v14.md), [fulton-prototype.md](annexes/plans/fulton-prototype.md). |
-| [annexes/tests/](annexes/tests/) | [test-protocol.md](annexes/tests/test-protocol.md) : protocole de test en jeu. |
-| [annexes/recherches/](annexes/recherches/) | Analyses des idées 3 (balises), 8 (Mayday), 10 (extraction), 11 (zones de largage), 12 (Fulton : idée, conception, rendu) et [third-party-helicopter-mods.md](annexes/recherches/third-party-helicopter-mods.md). |
 
 ### Images
 

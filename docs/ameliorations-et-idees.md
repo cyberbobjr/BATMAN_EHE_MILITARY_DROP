@@ -1,8 +1,10 @@
 # Military Drop — améliorations de code et idées de fonctionnalités
 
+**État de branche du 2026-10-27 :** I01, I02, I05, I09, I10, I11, I13 et I15 sont implémentées ; I12 est refondue après validation de la maquette et testée dans le vrai jeu en SP/MP. I04 est abandonnée et retirée du code. Les changements sont sur `feature/planned-improvements-testing`, sans fusion ni publication. I14 et I16 sont retirées. Les versions et constats d’audit ci-dessous décrivent leur date d’origine.
+
 - **Mod** : Military Drop (`id=batman_MilitaryDrop`, Workshop 3811752923), version **0.5.4** (`mod.info`, `modversion=0.5.4`, `versionMin=42.21`, `require=\batman_BeltRadio`).
 - **Date** : 2026-10-21 ; **avancement mis à jour le 2026-10-23, après les corrections C03 à C14** (version publiée : 0.7.0, le 2026-10-23).
-- **Périmètre** : code chargé `Contents/mods/batman_MilitaryDrop/42.21` et `common` (Lua client, serveur et partagé, scripts, traductions des 8 langues), `README.md`, `CHANGELOG.md`, guide `docs/wiki/`, notes de développement et analyses (déplacées pendant cette analyse de `dev/` vers `docs/annexes/plans/` et `docs/annexes/recherches/` : les chemins cités ci-dessous sont les nouveaux), tests `tests/`. `legacy-b41/` ignoré.
+- **Périmètre** : code chargé `Contents/mods/batman_MilitaryDrop/42.21` et `common` (Lua client, serveur et partagé, scripts, traductions des 8 langues), `README.md`, `CHANGELOG.md`, guide `docs/wiki/`, notes de développement et analyses, tests `tests/`. `legacy-b41/` ignoré.
 - **Méthode** : lecture statique, comparaison avec le Java décompilé 42.21.0 (`E:\pz-decompiled\42.21.0\java`) et la base `.claude/pz-knowledge`. **Rien n'a été testé en jeu** pour ce document. Chaque constat porte la mention « confirmé statiquement » ou « à vérifier en jeu ».
 - **Constat général** : le code est d'une qualité nettement au-dessus de la moyenne des mods : autorité serveur systématique, cadence par commande (`MilitaryDrop_Guard`), secrets hors de la ModData publique, retraits après `pairs`, abonnés uniques au rechargement, traductions serveur rechargées (`MilitaryDrop_ServerTranslations.lua`), 48 fichiers de tests `lupa`. Les 718 clés de traduction sont présentes dans les 8 langues, sans clé manquante ni orpheline (contrôle par script : les 12 clés « absentes » relevées sont des clés vanilla ou des préfixes dynamiques comme `IGUI_MilitaryDrop_AckTier<n>_<m>`). Les constats ci-dessous sont donc surtout des cas limites, de la dette de structure et des écarts de documentation.
 
@@ -10,9 +12,9 @@
 
 ## Tableau de bord — ce qui est fait et ce qui reste
 
-**Légende** : ✅ fait · 🟡 fait en partie · ⬜ pas commencé · ❌ écarté. « Publié » = présent dans une version du Workshop ; « non publié » = sur `main`, pas encore dans une version publiée. Détail de chaque point dans les parties 1 et 2, suivi fin dans `docs/annexes/plans/SUIVI.md`.
+**Légende** : ✅ fait · 🟡 fait en partie · ⬜ pas commencé · ❌ écarté. « Publié » = présent dans une version du Workshop ; « non publié » = sur `main`, pas encore dans une version publiée. Détail de chaque point dans les parties 1 et 2.
 
-**Bilan** : améliorations de code **13 faites, 1 en partie, 1 écartée** (sur 15) ; idées de fonctionnalités **1 faite, 19 à faire** (sur 20).
+**Bilan historique du 2026-10-23** : améliorations de code **13 faites, 1 en partie, 1 écartée** (sur 15) ; idées de fonctionnalités **1 faite, 19 à faire** (sur 20).
 
 **Campagne en jeu du 2026-10-23 sur l'état final** (pz-autotest, code de sortie 0, aucune erreur Lua) : solo nominal 18/18 (`runs/20261023-174824-sp-c9759a119cc5`), solo `marks` 12/12 (`…175032-sp-302aa2bcf033`), MP nominal 1 client serveur 12/12 et client 7/7 (`…175239-mp-d414089ef179`), MP `marks` client 12/12 et serveur 10/10 (`…175541-mp-eb2ceca179e1`), MP nominal 2 clients serveur 12/12 et client 1 7/7, caisse ouverte par le second joueur (`…175837-mp-2099aca9f6c5`).
 
@@ -38,26 +40,26 @@
 
 ### Idées de fonctionnalités
 
-**Sélection planifiée le 2026-10-23** : I01, I02, I04, I05 et I09 à I16. Voir le [plan détaillé](annexes/plans/plan-ameliorations-i01-i16.md) et le [suivi](annexes/plans/SUIVI.md). Aucun code implémenté. Les réglages du plan restent proposés ; I01 impose le maintien du spawn. I15 reste une étude conditionnelle : C11 demeure écarté.
+**Sélection courante, révisée le 2026-10-27** : I01, I02, I05, I09, I10, I11, I12, I13 et I15. I04 est abandonnée ; la première version I12 a été remplacée par la refonte validée. I14 et I16 retirées du plan à la demande de l'utilisateur. Les contrats courants figurent dans les spécifications fonctionnelles et techniques ; C11 demeure écarté.
 
 | ID | Idée | État | Remarque |
 |---|---|---|---|
-| I01 | Horde attirée par le bruit | ⬜ Planifiée | Bruit + spawn maintenu |
-| I02 | Bruit du rotor le long de la trajectoire | ⬜ Planifiée | Paramétrer le bruit existant |
+| I01 | Horde attirée par le bruit | ✅ Codée sur branche | Bruit + spawn maintenu |
+| I02 | Bruit du rotor le long de la trajectoire | ✅ Codée sur branche | Paramétrer le bruit existant |
 | I03 | Caisse visible sous parachute | ⬜ Proposée | |
-| I04 | Silhouette 3D de l'hélicoptère | ⬜ Planifiée | Essai indépendant de I03 |
-| I05 | Mission « Remettre le relais en service » | ⬜ Planifiée | Voir le plan sélectionné |
+| I04 | Silhouette 3D de l’hélicoptère | ❌ Abandonnée | Rendu refusé ; code, option et ressources retirés |
+| I05 | Mission « Remettre le relais en service » | ✅ Codée sur branche | Voir les spécifications courantes |
 | I06 | Largage retardé par la météo | ⬜ Proposée | |
 | I07 | Cercle du nettoyage et repères qui s'effacent | ✅ Fait | Repères qui s'effacent (C10) et cercle (C09) |
 | I08 | Noter une grille dans un carnet | ⬜ Proposée | |
-| I09 | Primes Fulton de la semaine | ⬜ Planifiée | Voir le plan sélectionné |
-| I10 | Signaler une horde à la base | ⬜ Planifiée | Voir le plan sélectionné |
-| I11 | Citation officielle au changement de palier | ⬜ Planifiée | Voir le plan sélectionné |
-| I12 | Tableau de bord admin en jeu | ⬜ Planifiée | Voir le plan sélectionné |
-| I13 | Accusé de réception de caisse | ⬜ Planifiée | Voir le plan sélectionné |
-| I14 | Raréfaction progressive des moyens | ⬜ Planifiée | Voir le plan sélectionné |
-| I15 | Brouilleur radio (PvP) | ⬜ Étude planifiée | Dépendance C11 à arbitrer, C11 reste écarté |
-| I16 | Commande d'un objet précis | ⬜ Planifiée | Voir le plan sélectionné |
+| I09 | Primes Fulton de la semaine | ✅ Codée sur branche | Voir les spécifications courantes |
+| I10 | Signaler une horde à la base | ✅ Codée sur branche | Voir les spécifications courantes |
+| I11 | Citation officielle au changement de palier | ✅ Codée sur branche | Voir les spécifications courantes |
+| I12 | Console native d’administration | ✅ Codée et testée SP/MP | Refonte validée ; tests SP/MP effectués |
+| I13 | Accusé de réception de caisse | ✅ Codée sur branche | Voir les spécifications courantes |
+| I14 | Raréfaction progressive des moyens | ❌ Retirée du plan | Demande utilisateur du 2026-10-27 |
+| I15 | Brouilleur radio (PvP) | ✅ Codée sur branche | B retenue, sous-mod facultatif, objet dédié à pile et recette ; C11 reste écarté |
+| I16 | Commande d'un objet précis | ❌ Retirée du plan | Demande utilisateur du 2026-10-27 |
 | I17 | Partage d'un largage avec une autre station | ⬜ Proposée | |
 | I18 | Ravitaillement du poste de liaison | ⬜ Proposée | |
 | I19 | Pilote survivant blessé | ⬜ Proposée | |
@@ -166,7 +168,7 @@
 ### C11 — Coordonnées exactes envoyées à tous les clients avant le filtrage par la radio
 
 - **Problème** : `DropAnnounce { x, y }`, `ReconAnnounce`, `CleanupAnnounce` et `FlightStart` (cible du vol) partent à toutes les connexions ; seul le client décide d'afficher le repère s'il entend la ligne. Le vol en cours (`flights`, avec sa cible) est aussi dans la ModData publique « MilitaryDrop ».
-- **Preuves** : `server/MilitaryDrop/MilitaryDrop_Broadcast.lua:200, 229, 254, 262` ; `server/MilitaryDrop/MilitaryDrop_Flights.lua:225, 231, 343, 374` ; constat déjà noté dans `docs/annexes/recherches/idee-03-balises.md` §1 (« Secret à protéger »).
+- **Preuves** : `server/MilitaryDrop/MilitaryDrop_Broadcast.lua:200, 229, 254, 262` ; `server/MilitaryDrop/MilitaryDrop_Flights.lua:225, 231, 343, 374`.
 - **Risque** : un client modifié connaît la grille sans radio. Sur un serveur entre amis, **ne pas corriger au prix du jeu** (préférence de l'utilisateur) ; à garder en tête seulement si un serveur PvP public le demande.
 - **Correction (si demandée)** : n'envoyer `DropAnnounce` qu'aux joueurs dont une radio reçoit la chaîne (le serveur connaît la radio tenue ou posée), et retirer la cible de `FlightStart` (le client n'a besoin que de la trajectoire visible).
 - **Statut** : confirmé statiquement. **Priorité basse, effort M.**
@@ -184,7 +186,7 @@
 ### C13 — Campagne de tests MP en retard sur le code publié
 
 - **Problème** : la plupart des lots publiés sont « testé hors jeu » ou « testé solo, MP à faire » (v1.0, v1.2, v1.3, v1.4, v1.5, idées 8, 11 et 12), alors que le mod se présente comme multijoueur et serveur-autoritaire.
-- **Preuves** : `docs/annexes/plans/SUIVI.md`, tableau « Vue d'ensemble » ; `docs/annexes/tests/test-protocol.md` (protocoles M1-M8, Z13-Z14…).
+- **Constat historique** : couverture MP incomplète lors de cet audit.
 - **Risque** : bugs MP découverts par les joueurs (historique : 0.3.3, 0.4.2, 0.4.3 ont corrigé des clés brutes et des états périmés propres au MP).
 - **Correction** : outiller les parcours nominaux avec `pz-autotest` (`--mp`, serveur dédié + 2 clients) : appel, annonce entendue par l'un seulement, ouverture de caisse par l'autre (confiance), Fulton, crash et récupération ; la règle de l'utilisateur fait d'une suite MP automatisée verte la preuve « testé MP ».
 - **Avancement : 🟡 en partie (commits dedd363, 91c1383, 99a36aa)** — parcours nominal et scénario `marks` verts en solo et en MP (campagne du 2026-10-23 en tête du document) ; avec 2 clients, le second joueur ouvre la caisse (issue `taken`, confiance du demandeur 25 → 20). Fulton complet scripté depuis le commit d376bbd (scénario `-P scenario=fulton`, solo et MP verts). Restent : annonce entendue par un seul client (seul le client 1 exécute les hooks), crash, refus Fulton et commande forgée (protocoles manuels) (QUAL-19).
@@ -211,7 +213,6 @@
 ## Partie 2 — Idées de fonctionnalités
 
 Rappels : les idées déjà analysées ne sont pas reproposées à l'identique.
-- Idée 3 (balises, détecteur, chasses au trésor) : `docs/annexes/recherches/idee-03-balises.md`, **mise de côté** (BAL-01 à BAL-03).
 - Idée 8 (Mayday, épave démontable) : `idee-08-mayday.md`, codée.
 - Idée 10 (extraction du personnage, pont Opération Artemis) : `idee-10-extraction.md`, **à décider** (EXT-01).
 - Idées 11 et 12 (zones de largage, Fulton) : codées et publiées.
@@ -240,25 +241,20 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 
 - **Description** : quelques secondes avant la pose, chaque client dessine la caisse qui descend sous un parachute à l'aplomb du point, puis le véhicule-caisse apparaît au sol.
 - **Intérêt joueur** : le moment le plus attendu devient visible ; on repère la caisse de loin sans la carte.
-- **Faisabilité** : même technique que le ballon Fulton (rendu local mobile `Render3DItem` à hauteur flottante, base `staging-effects.md` ; `docs/annexes/recherches/idee-12-fulton-rendu.md`) ; modèle de parachute à créer (skill `pz-blender-assets`) ou réutiliser la bâche/ballon. Uniquement visuel : le serveur garde l'heure de pose.
+- **Faisabilité** : même technique que le ballon Fulton (rendu local mobile `Render3DItem` à hauteur flottante, base `staging-effects.md`) ; modèle de parachute à créer (skill `pz-blender-assets`) ou réutiliser la bâche/ballon. Uniquement visuel : le serveur garde l'heure de pose.
 - **Impact MP** : aucun paquet nouveau (le client connaît déjà le vol et son point de largage par `FlightStart`).
 - **Dépendances** : refonte C03 (module de rendu commun au Fulton).
 - **Effort** : M.
 
-### I04 — Silhouette 3D de l'hélicoptère en vol
+### I04 — Abandonnée
 
-- **Description** : remplacer l'ombre seule par un modèle 3D simplifié (réutiliser le maillage de l'épave du Mayday en version intacte) rendu localement au-dessus des toits.
-- **Intérêt joueur** : spectaculaire et cohérent avec l'épave ; aide à suivre la trajectoire.
-- **Faisabilité** : à vérifier (hypothèse) ; le rendu à grande hauteur peut être coupé par la caméra isométrique. Commencer par un essai avec la technique du Fulton. Aujourd'hui : ombre `circle_shadow`, son et flèche (`client/MilitaryDrop/MilitaryDrop_Heli.lua:5-13`).
-- **Impact MP** : aucun.
-- **Dépendances révisées pour le plan** : rendu Fulton et C03 ; essai autonome sans I03, hors de la sélection.
-- **Effort** : L.
+Retirée à la demande de l’utilisateur le 2026-10-27 : rendu sans intérêt jugé inesthétique. Silhouette, option, modèle et sources retirés du mod. Aucun remplacement prévu. L’identifiant est conservé pour le suivi.
 
 ### I05 — Panne de relais radio : mission « Remettre le relais en service »
 
-- **Description** : de temps en temps (orage, coupure du réseau électrique), la base annonce une **panne du relais** (station relais vanilla de Knox, voir `knox-geography.md`). Tant qu'il n'est pas réparé, les appels ont une portée réduite ou ne passent plus. Mission publique : aller au relais, faire tourner un générateur (carburant vanilla) et réparer l'émetteur avec des composants électroniques (`ElectronicsScrap`), comme la réparation vanilla d'un générateur.
+- **Description révisée le 2026-10-27** : la base annonce une **panne d'un relais**, causée par un orage ou une coupure électrique. Mission publique : rejoindre le site désigné, avec des déchets électroniques, puis clic droit sur une armoire de relais → « Relais » → « Réparer ». Coût selon l'électricité : 20 déchets au niveau 0 à 2 au niveau 10 ; TimedAction de 15 à 3 secondes ; expérience en électricité à la réussite. **Aucun générateur, carburant ou maintien d'alimentation exigé.** Une mission vise un seul des quatre relais validés ; leurs positions sont définies dans `MilitaryDrop_Relay.lua` et les barèmes dans les spécifications fonctionnelles.
 - **Intérêt joueur** : objectif concret dans un lieu réel, conséquence directe sur le mod, travail d'équipe en MP.
-- **Faisabilité** : générateur posé par script et lecture de son état (`power-and-lights.md` : `isActivated`, carburant, `getRoom():getLightSwitches()`), coupure du réseau sondée par `doesPowerGridExist` (même fichier) ; cause du début : orage (`getIsThunderStorming`) ou coupure du réseau, jamais un tirage invisible.
+- **Faisabilité** : état de panne/réparation privé côté serveur, contrôle du niveau, de la proximité et de l'armoire ; consommation des composants et attribution d'XP une seule fois à la fin de l'action. Délai de réarmement après réparation, même sans courant. Aucun générateur créé ni état électrique vanilla à entretenir. Les quatre sites sont validés ; les objets d'armoire précis restent à identifier avant implémentation.
 - **Impact MP** : état serveur ; annonce sur la chaîne existante ; réparation validée par le serveur (distance, objets retirés).
 - **Dépendances** : missions existantes (SRC-03 à SRC-05).
 - **Effort** : M-L.
@@ -317,14 +313,9 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 - **Dépendances** : aucune.
 - **Effort** : S.
 
-### I12 — Tableau de bord admin en jeu
+### I12 — Console native d’administration
 
-- **Description** : un onglet dans la fenêtre « Zones de largage » (même capacité d'admin) liste les largages ouverts, vols, épaves, missions, et la confiance des personnages connectés, avec quelques actions (lever une ligne coupée, clore un largage bloqué, relancer une annonce).
-- **Intérêt joueur** : pour l'admin, diagnostic sans console serveur (aujourd'hui `Trust.debugPrint`, `MilitaryDrop_Trust.lua:528`).
-- **Faisabilité** : réutilise la fenêtre et la vérification de capacité de ZONE-03 ; données envoyées à l'admin seulement.
-- **Impact MP** : commande admin revérifiée (`checkPermissions` + `getRole():hasCapability`, base `multiplayer.md`).
-- **Dépendances** : C12 (action « clore »).
-- **Effort** : M.
+Première interface refusée par l’utilisateur le 2026-10-27 : informations, actions et ergonomie insuffisantes. Le nouveau cadrage et la maquette ont ensuite été validés et implémentés : rubriques distinctes, fiche détaillée, téléportation, réussite avec récompenses normales et clôture sans récompense séparées. La refonte est testée en solo debug et MP à deux clients.
 
 ### I13 — Accusé de réception de caisse
 
@@ -337,6 +328,8 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 
 ### I14 — Raréfaction progressive des moyens de la base
 
+**Retirée du plan le 2026-10-27 à la demande de l'utilisateur.** Proposition historique conservée au catalogue, aucune implémentation prévue.
+
 - **Description** : option : au fil des mois de jeu, la base annonce des restrictions (délai plus long, budget de réquisition réduit, lots retirés) puis, éventuellement, un dernier pont aérien. Chaque palier est annoncé à la radio et sur les mémos trouvés.
 - **Intérêt joueur** : arc narratif sur la durée, cohérent avec l'effondrement vanilla (coupures d'eau et d'électricité).
 - **Faisabilité** : lecture de l'âge du monde (`getWorldAgeDaysSinceBegin`) et de la coupure d'électricité ou d'eau (`power-and-lights.md`) comme déclencheurs ; paliers dans `Lots` et `CooldownHours`.
@@ -346,6 +339,8 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 
 ### I15 — Brouilleur radio (PvP, facultatif)
 
+**Décisions du 2026-10-27** : variante B retenue (bloquer les demandes à la base, conserver les annonces publiques), objet dédié à pile, recette de fabrication et **sous-mod facultatif** contenant toute la mécanique et ses ressources. Les contrats courants figurent dans les spécifications fonctionnelles et techniques. La description ci-dessous conserve l'idée initiale A pour contexte ; elle n'est pas la fonctionnalité retenue. C11 reste écarté.
+
 - **Description** : une radio posée, alimentée et réglée sur la fréquence militaire peut être mise en mode « brouillage » par une recette d'électronique ; les annonces de grille ne sont plus entendues dans un rayon autour d'elle, et la base signale « interférences dans le secteur X ».
 - **Intérêt joueur** : contre-jeu pour les serveurs PvP qui ont demandé les zones (idée 11) ; objet visible et destructible.
 - **Faisabilité** : dépend de C11 (filtrage serveur des annonces par auditeur) ; radio posée lue par le serveur (`power-and-lights.md`, `IsoRadio`/`IsoWaveSignal`).
@@ -354,6 +349,8 @@ Chaque effet proposé a une cause visible dans le monde et s'appuie de préfére
 - **Effort** : M-L.
 
 ### I16 — Commande d'un objet précis contre un gros coût
+
+**Retirée du plan le 2026-10-27 à la demande de l'utilisateur.** Proposition historique conservée au catalogue, aucune implémentation prévue.
 
 - **Description** : dans le formulaire, un lot « Demande spéciale » au palier IV : le joueur choisit **une catégorie fine** (par exemple antibiotiques, munitions d'une arme qu'il porte) au lieu d'un tirage, pour un coût élevé.
 - **Intérêt joueur** : la confiance maximale sert enfin à quelque chose de ciblé.
@@ -414,4 +411,4 @@ Ensuite : ✅ C03 (fichiers Fulton renommés, menu de debug isolé), ✅ C02 (co
 
 ---
 
-*Document de proposition mis à jour au fil des corrections : l'état de chaque point est dans le tableau de bord en tête. Les points encore à faire attendent la validation explicite de l'utilisateur avant tout code ; ceux retenus entrent dans `docs/annexes/plans/SUIVI.md` avec leur identifiant.*
+*Document de proposition mis à jour au fil des corrections : l'état de chaque point est dans le tableau de bord en tête. Les points encore à faire attendent la validation explicite de l'utilisateur avant tout code ; ceux retenus conservent leur identifiant dans ce document.*

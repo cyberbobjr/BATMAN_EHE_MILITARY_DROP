@@ -1,0 +1,6 @@
+name=batman_MilitaryDrop Radio Jammer (Optional PvP)
+id=batman_MilitaryDropJammer
+description=Optional battery-powered radio jammer for Military Drop. Blocks outgoing logistics calls; public broadcasts remain audible. Experimental testing branch.
+versionMin=42.21
+modversion=0.8.0
+require=\batman_MilitaryDrop

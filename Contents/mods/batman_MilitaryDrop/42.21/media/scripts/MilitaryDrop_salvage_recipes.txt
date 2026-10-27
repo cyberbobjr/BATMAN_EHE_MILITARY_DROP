@@ -1,5 +1,25 @@
 module MilitaryDrop
 {
+    craftRecipe DismantleMilitaryFlightRecorder
+    {
+        timedAction = DismantleElectrical,
+        time = 120,
+        Tags = InHandCraft;Electrical,
+        category = Electrical,
+        xpAward = Electricity:5,
+        AllowBatchCraft = false,
+        inputs
+        {
+            item 1 tags[base:screwdriver] mode:keep flags[NoBrokenItems],
+            item 1 [MilitaryDrop.FlightRecorder] mode:destroy flags[IsNotWorn;ItemCount],
+        }
+        outputs
+        {
+            item 6 Base.ElectronicsScrap,
+            item 1 Base.ElectricWire,
+            item 2 Base.ScrapMetal,
+        }
+    }
     craftRecipe OpenMilitaryAvionicsSalvage
     {
         timedAction = Making,

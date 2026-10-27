@@ -215,7 +215,7 @@ local function dropOffer(player)
 end
 
 --- Offre d'un personnage : budget, palier de lots, lots (ordre d'affichage),
---- leurre et secteur du largage (drop). Contrat de la réponse « form » (docs/annexes/plans/plan-v14.md). forced :
+--- leurre et secteur du largage (drop). Contrat de la réponse « form » (docs/specifications-techniques.md). forced :
 --- largage admin, tous les paliers et le budget d'une note maximale. player
 --- (facultatif) : demandeur, dont la position fixe les secteurs du leurre et
 --- du largage.

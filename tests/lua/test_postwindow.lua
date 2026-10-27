@@ -8,6 +8,23 @@
 
 local T = {}
 
+function T.completed_cleanup_is_read_only_with_status_grid_and_personal_details()
+    local PW = MilitaryDrop.PostWindow
+    local result = { id = "M_result", kind = "cleanup", history = true, outcome = "done",
+        x = 300, y = 400, contribution = 7, gain = 2, clock = 2400 }
+    local list = PW.affairs({ missions = {}, completedMissions = { result } }, {}, 0)
+    local entry = PW.pickAffair(list, "completed:M_result")
+    assertEq(entry.lamp, "green")
+    assertTrue(entry.due:find("IGUI_MilitaryDrop_CleanupSecured", 1, true) ~= nil)
+    assertTrue(entry.sub:find("300|400", 1, true) ~= nil)
+    assertTrue(PW.missionText(result):find("IGUI_MilitaryDrop_CleanupHistory", 1, true) ~= nil)
+    local primary = PW.actions({ selectedAffair = function() return entry end })
+    assertEq(primary, nil, "no confirmation or reward action on history")
+    result.outcome = "expired"
+    assertEq(PW.affairs({ completedMissions = { result } }, {}, 0)[#list].lamp, "red")
+    assertTrue(PW.missionText(result):find("IGUI_MilitaryDrop_CleanupExpired", 1, true) ~= nil)
+end
+
 local CHAR_W = 7
 local FONT_H = 14
 
@@ -35,6 +52,7 @@ function T.setup()
         }
     end
     loadMod("shared/MilitaryDrop/MilitaryDrop_Core.lua")
+    loadMod("shared/MilitaryDrop/MilitaryDrop_Recorders.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Net.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Radio.lua")
     loadMod("shared/MilitaryDrop/MilitaryDrop_Codes.lua")
@@ -155,8 +173,6 @@ function T.mission_orders_show_deadline_grid_and_bar()
     assertTrue(control.done and control.bar.urgent, "fait, et presque échu")
     local unknown = W.missionView({ kind = "other", title = "X" })
     assertEq(unknown.bar, nil, "sans échéance ni quota : pas de barre")
-    assertTrue(W.missionTooltip({ title = "<b>", text = "a <LINE> b" }):find("&lt;LINE&gt;", 1, true) ~= nil,
-        "texte de la base échappé dans l'infobulle")
 end
 
 function T.cleanup_order_shows_team_kills_and_what_is_left()
@@ -404,7 +420,8 @@ function T.inventory_recorders_are_one_per_site_and_not_worn()
     local a, b, c = recorderItem(1, "W3"), recorderItem(2, "W3"), recorderItem(3, "W4")
     local other = { getFullType = function() return "Base.Battery" end, getModData = function() return {} end }
     local blank = recorderItem(4, nil)
-    local items = { a, b, c, other, blank }
+    local sent = recorderItem(5, "W8", { MilitaryDrop_recorderTransmitted = true })
+    local items = { a, b, c, other, blank, sent }
     ArrayList = { new = function() return {} end }
     local player = {
         getInventory = function()
@@ -424,6 +441,20 @@ function T.inventory_recorders_are_one_per_site_and_not_worn()
     local found = W.recorders(player)
     assertEq(#found, 1, "un par site, ni objet porté, ni autre objet, ni enregistreur sans site")
     assertEq(found[1], a, "le premier du site")
+    local rows = W.affairs(sampleData(), { sent }, 0)
+    for _, row in ipairs(rows) do assertTrue(row.kind ~= "recorder", "sent recorder never appears among affairs") end
+end
+function T.relay_order_has_a_translated_title_grid_and_expiry_bar()
+    local relay = { kind = "relay", x = 4832, y = 6281, remaining = 36, hours = 72 }
+    local rows = W.affairs({ missions = { relay } }, {}, 0)
+    local order
+    for _, row in ipairs(rows) do if row.kind == "mission" then order = row end end
+    assertTrue(order ~= nil)
+    assertEq(order.key, "mission:relay")
+    local view = W.missionView(relay)
+    assertTrue(view.title:find("IGUI_MilitaryDrop_Mission_Relay", 1, true) ~= nil)
+    assertTrue(view.sub:find("4832", 1, true) ~= nil)
+    assertEq(view.bar.fraction, 0.5)
 end
 
 local function window(data, recorders, tags)

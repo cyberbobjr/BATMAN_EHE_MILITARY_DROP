@@ -11,7 +11,7 @@ exclude_files = { "legacy-b41/**" }
 -- Walkie-Talkie, prérequis). Les scripts désignent aussi MilitaryDrop.Recipe.*
 -- par nom. La lecture des globales du jeu (Events, getText, ISButton…), trop
 -- nombreuses pour être listées, reste libre (113, 143).
-globals = { "MilitaryDrop" }
+globals = { "MilitaryDrop", "MDJammer", "ISReadABook" }
 ignore = { "113", "143" }
 
 -- Les tests simulent l'API du jeu par des globales.

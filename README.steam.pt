@@ -1,14 +1,12 @@
 [h1]Military Drop - Abastecimento aéreo por rádio[/h1]
 
-[h1]⚠ ALTERAÇÃO INCOMPATÍVEL — versão 0.6.0 (2026-10-21) ⚠[/h1]
-[h1]O SIGNAL SMOKE PASSA A SER OBRIGATÓRIO[/h1]
-[b]Este mod passa a exigir [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]. Subscreve os três e ativa-os juntamente com este mod. Servidores dedicados: adiciona 3817018338;3694097672;3811010882 a WorkshopItems= e batman_BeltRadio;TooltipLib;batman_SignalSmoke a Mods=; caso contrário, o jogo não carrega este mod (apenas um aviso no registo).[/b]
+[b]Mods necessários[/b]: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url].
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
 [b]Build 42.21 · Um jogador e multijogador · Independente[/b]
 
-[i]Feito para servidores dedicados (o servidor decide tudo), testado sobretudo em um jogador por agora. Reporta qualquer problema em multijogador.[/i]
+[i]0.8.0 — preparada para teste, não publicada[/i]
 
 Sintoniza um rádio militar na frequência certa, dá o código da semana e requisita abastecimentos. Um helicóptero larga uma caixa ao longe e anuncia a quadrícula a todos os que escutam... e o barulho atrai os mortos.
 
@@ -43,13 +41,23 @@ Cada personagem tem a sua própria reputação, nunca mostrada em números. Encu
 [*][b]Helicópteros abatidos[/b], mais vezes com trovoada: um MAYDAY dá o setor; os destroços guardam peças, documentos e uma caixa negra.
 [*][b]Posto de ligação[/b]: um rádio militar fixo torna-se a consola da tua estação (assuntos, ordens, registo, leitor).
 [*][b]Zonas de largada disputadas[/b] para servidores PvP, traçadas no jogo pelo administrador.
-[*]60 opções de sandbox, aplicadas sem reiniciar; multijogador em que o servidor decide; ferramentas de administração a partir de um rádio militar.
+[*]71 opções de sandbox; autoridade do servidor em multijogador.
+[/list]
+
+[h2]0.8.0[/h2]
+
+[list]
+[*]Repara relés avariados com sucata eletrónica. Eletricidade reduz custo e duração; dá XP, sem gerador.
+[*]Bónus Fulton semanais, relatos de hordas, confirmações de entrega e condecorações pessoais.
+[*]Ruídos do rotor e da entrega ajustáveis em separado; a horda configurada continua a aparecer.
+[*]Consola admin: SP Debug → Main; MP clique direito em qualquer local → Military Drop Admin Menu. Código/frequências, lançamento, queda e testes Fulton. Menus das zonas mantidos.
+[*]Submod opcional [b]batman_MilitaryDropJammer[/b] incluído: fabrica e coloca o RJ-93, insere/retira a pilha e vê a carga na janela. Predefinições: 100 quadrados, 24 horas de jogo por pilha cheia. Bloqueia chamadas Military Drop, incluindo as tuas; os anúncios continuam audíveis. Estática, mensagem e estado explicam a interferência. Deixa-o desativado para jogar sem bloqueio.
+[*]Desmonte gravadores antes ou depois da transmissão; o aparelho é devolvido. Os admins podem iniciar missões de relé no local escolhido.
 [/list]
 
 [h2]Compatibilidade[/h2]
 
 [list]
-[*]Nenhum outro mod necessário.
 [*]Requer [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]: o comportamento comum do walkie-talkie no cinto para todos os mods que o usam.
 [*]Feito para conviver com [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url].
 [*]Requer [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]: um fumo verde assinala a caixa.

@@ -188,6 +188,9 @@ function FultonServer.launch(player, args)
     end
 
     local evaluation = Fulton.evaluate(items, player)
+    if evaluation.week and args.week ~= evaluation.week then
+        return refuse(player, "site", "IGUI_MilitaryDrop_WeeklyChanged")
+    end
     tank:UseAndSync()
     square:transmitRemoveItemFromSquare(kitObject)
     local credited = Trust.add(characterId, evaluation.capped, "fulton")

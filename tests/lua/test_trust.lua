@@ -504,4 +504,63 @@ function T.crashed_drop_keeps_its_order_until_the_wreck_supplies_land()
     assertEq(STATE.drops[other], nil, "sans fournitures : oublié après 168 h")
 end
 
+function T.citations_reserve_once_and_survive_crash()
+    local who = "C:alice"
+    setNote(who, 90)
+    local first = Trust.registerDrop(who, "alice", false)
+    local tiers = Trust.citationsFor(first)
+    assertEq(#tiers, 2, "first passage through III and IV")
+    local second = Trust.registerDrop(who, "alice", false)
+    assertEq(#Trust.citationsFor(second), 0, "pending second drop cannot duplicate reserved awards")
+    Trust.onCrash(first)
+    local third = Trust.registerDrop(who, "alice", false)
+    assertEq(#Trust.citationsFor(third), 2, "crash before delivery keeps pending awards")
+    Trust.onDropDelivered(third)
+    setNote(who, 30)
+    setNote(who, 90)
+    local fourth = Trust.registerDrop(who, "alice", false)
+    assertEq(#Trust.citationsFor(fourth), 0, "regaining tier cannot generate rewards")
+end
+
+function T.citation_history_survives_idle_trust_entry_retirement()
+    local who = "C:alice"
+    setNote(who, 90)
+    local first = Trust.registerDrop(who, "alice", false)
+    Trust.citationsFor(first)
+    Trust.onDropDelivered(first)
+    STATE.characterTrust[who] = nil
+    setNote(who, 90)
+    local second = Trust.registerDrop(who, "alice", false)
+    assertEq(#Trust.citationsFor(second), 0, "historical awards outlive idle trust entry")
+end
+
+function T.receipt_is_private_unique_and_outlives_closed_drop_purge()
+    local alice, bob = makePlayer("alice"), makePlayer("bob")
+    local drop = Trust.registerDrop("C:alice", "alice", false)
+    Trust.onDropDelivered(drop)
+    Trust.onCaseOpened(makeCase(drop), alice)
+    STATE.drops[drop] = nil
+    assertTrue(not Trust.confirmReceipt(bob), "another character cannot acknowledge")
+    assertTrue(Trust.confirmReceipt(alice), "receipt independent from purged dossier")
+    assertTrue(not Trust.confirmReceipt(alice), "exactly one acknowledgement")
+    local other = Trust.registerDrop("C:alice", "alice", false)
+    Trust.onDropDelivered(other)
+    Trust.onCaseOpened(makeCase(other), alice)
+    wait(73)
+    assertTrue(not Trust.confirmReceipt(alice), "expired acknowledgement rejected")
+end
+
+function T.admin_closes_a_delivered_dossier_without_reward_penalty_or_physical_removal()
+    MilitaryDrop.Admin = { allowed = function() return true end }
+    local alice = makePlayer("alice")
+    local id = Trust.registerDrop("C:alice", "alice", false)
+    assertTrue(not Trust.adminClose(alice, id), "undelivered dossier uses flight cancellation")
+    Trust.onDropDelivered(id, { x = 100, y = 200, cases = 3 })
+    local before = Trust.get("C:alice")
+    assertTrue(Trust.adminClose(alice, id))
+    assertEq(Trust.get("C:alice"), before)
+    assertEq(Trust.drop(id).placed.cases, 3, "physical record preserved")
+    assertTrue(not Trust.adminClose(alice, id), "close is idempotent")
+    assertTrue(not Trust.onCaseOpened(makeCase(id), alice), "no later recovery reward for a closed dossier")
+end
 return T

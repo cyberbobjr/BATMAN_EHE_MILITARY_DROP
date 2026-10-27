@@ -121,15 +121,9 @@ function T.test_menu_file_loads_only_in_debug_mode()
     isDebugEnabled = function() return true end
     loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender_Debug.lua")
     loadMod("client/MilitaryDrop/MilitaryDrop_FultonRender_Debug.lua")
-    assertEq(listenerCount("OnFillWorldObjectContextMenu"), 1, "one menu handler, even after a reload")
-    local added = {}
-    ISContextMenu = { getNew = function()
-        return { addOption = function(_, text) added[#added + 1] = text end }
-    end }
-    local context = { addOption = function(_, text) added[#added + 1] = text return {} end, addSubMenu = function() end }
-    triggerEvent("OnFillWorldObjectContextMenu", 0, context, {}, false)
-    assertEq(added[1], "Fulton - visual test (debug)", "solo debug: menu shown")
-    assertEq(added[2], "Launch the balloon ascent", "English labels")
+    assertEq(listenerCount("OnFillWorldObjectContextMenu"), 0, "tools live in the central admin console")
+    assertTrue(MilitaryDrop.FultonRenderDebug.canUse(getSpecificPlayer(0)))
+
 end
 
 return T

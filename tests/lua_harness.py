@@ -52,6 +52,10 @@ function loadMod(rel)
     return run(readModFile(rel), rel)
 end
 
+function loadJammer(rel)
+    return run(readJammerFile(rel), "jammer/" .. rel)
+end
+
 -- Charger réellement les seuls modules du récepteur radio commun (Belt
 -- Walkie-Talkie, dépôt voisin ../BeltRadio, et MilitaryDrop_RadioLib), une
 -- fois chacun comme RunLuaInternal ; les autres require gardent les
@@ -231,6 +235,7 @@ def new_runtime():
         return source
 
     globals_.readModFile = read_mod_file
+    globals_.readJammerFile = lambda rel: _read(REPO / 'Contents/mods/batman_MilitaryDropJammer/42.21/media/lua', rel)
     globals_.readVanillaFile = lambda rel: _read(VANILLA_LUA, rel)
     # Ressource du dossier common du mod (textures des documents…).
     globals_.commonFileExists = lambda rel: (MOD_COMMON / rel).is_file()

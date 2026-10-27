@@ -1,0 +1,16 @@
+VERSION = 1,
+option MilitaryDropJammer.Enabled
+{
+    type = boolean, default = true,
+    page = MilitaryDropJammer, translation = MilitaryDropJammer_Enabled,
+}
+option MilitaryDropJammer.Radius
+{
+    type = integer, min = 10, max = 200, default = 100,
+    page = MilitaryDropJammer, translation = MilitaryDropJammer_Radius,
+}
+option MilitaryDropJammer.BatteryHours
+{
+    type = integer, min = 1, max = 168, default = 24,
+    page = MilitaryDropJammer, translation = MilitaryDropJammer_BatteryHours,
+}
