@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Un jugador y multijugador · Independiente[/b]
 
-[i]0.8.0 — preparada para pruebas, sin publicar[/i]
+[i]0.8.0[/i]
 
 Sintoniza una radio militar en la frecuencia correcta, da el código de la semana y solicita suministros. Un helicóptero lanza una caja a lo lejos y anuncia la cuadrícula a todos los que escuchan... y el ruido atrae a los muertos.
 
@@ -47,6 +47,7 @@ Cada personaje tiene su propia reputación, nunca mostrada en cifras. Acorta la 
 [h2]0.8.0[/h2]
 
 [list]
+[*]Las limpiezas completadas tienen aviso, historial en el puesto y una marca verde temporal. Los objetivos de reconocimiento y reparación de repetidores aparecen en el mapa.
 [*]Repara relés averiados con chatarra electrónica. Electricidad reduce coste y duración; otorga XP, sin generador.
 [*]Bonificaciones Fulton semanales, avisos de hordas, confirmaciones de entrega y condecoraciones personales.
 [*]Ruido del rotor y de entrega ajustables por separado; la horda configurada sigue apareciendo.

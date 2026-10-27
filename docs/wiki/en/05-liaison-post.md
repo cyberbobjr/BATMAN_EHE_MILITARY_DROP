@@ -1,6 +1,6 @@
 # Liaison post
 
-> Local version 0.8.0: transmissions also include **Weekly requirements**, **Report zombie concentration** and **Confirm supply receipt**; see [trust and missions](04-trust-and-missions.md). A relay outage or an [RJ-93 jammer](10-radio-jammer.md) may reject transmission with an explicit reason.
+> Version 0.8.0: transmissions also include **Weekly requirements**, **Report zombie concentration** and **Confirm supply receipt**; see [trust and missions](04-trust-and-missions.md). A relay outage or an [RJ-93 jammer](10-radio-jammer.md) may reject transmission with an explicit reason.
 
 [Français](../fr/05-liaison-post.md) · [Guide home](Home.md) · Previous: [Trust and missions](04-trust-and-missions.md) · Next: [Server admin](06-server-admin.md)
 
@@ -53,3 +53,7 @@ In 0.8.0, transmitting the data returns the physical recorder to your inventory 
 The **Orders** list shows active **recon**, **clearance**, **radio check** and **relay repair** missions. Select one for its grid, remaining time and instructions; clearance also shows progress. Existing confirmation actions remain available for the relevant mission types.
 
 A relay mission launched by an admin appears just like a natural outage on the next post refresh. It identifies the cabinet and the electronic scrap to bring. Repair the cabinet on site, never remotely from the post. The order disappears after repair or emergency bypass.
+
+### Completed missions
+
+The **Completed missions** section retains the latest 20 clearance results. Select a result to see its status, grid, completion date, your contribution and the trust you actually received. Successful, expired and cancelled orders are identified separately. These records remain after reconnecting and after the temporary green map check disappears; viewing them never awards another reward. Results from before this feature was installed cannot be reconstructed.

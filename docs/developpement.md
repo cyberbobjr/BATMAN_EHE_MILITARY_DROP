@@ -50,3 +50,9 @@ Lancement manuel de relais : la console délègue à RelayServer, sans déplacer
 Le poste agrège la projection publique de RelayServer avec les missions existantes. Recorders partagé ne contient que les identifiants et les lecteurs gardés de métadonnées ; Post reste seul responsable du marquage serveur et de son rattrapage depuis recordersUsed. Clients : filtrage des affaires et fournisseur TooltipLib uniquement. La nouvelle propriété d’objet est facultative et additive, sans migration destructive des sauvegardes.
 
 Retour de réussite du nettoyage validé le 2026-10-27 : notification personnelle, historique du poste et coche verte pendant une heure de jeu. Missions conserve la clôture, les récompenses et l'historique privé borné ; Post ne reçoit qu'une projection personnelle. Client et Announce assurent le rendu et la carte à partir des messages serveur. Migration additive sans modification du pattern ni reconstruction des anciennes clôtures dépourvues de coordonnées/contributions.
+
+## Publication Steam
+
+Le changelog reste technique. La note anglaise destinée aux joueurs est conservée à la racine dans `workshop-changenote.md`, fichier requis par le lanceur `tools/publish_workshop.py`. Celui-ci délègue les contrôles et l'envoi au publieur commun, conserve les captures de la page et vérifie que les versions de la note, du changelog et des mods concordent.
+
+Simulation : `python tools/publish_workshop.py`. Publication autorisée : `python tools/publish_workshop.py --submit --tag`. Le wiki se synchronise après le push de main avec `python tools/wiki_sync.py --push --prune`.

@@ -2,7 +2,7 @@
 
 [English](../en/10-radio-jammer.md) · [Sommaire](Home.md) · [Administration](06-server-admin.md)
 
-Fonction de la **0.8.0 en essai local, non publiée**. Le RJ-93 appartient au sous-mod **facultatif** `batman_MilitaryDropJammer`, fourni dans le même projet. Activez-le en plus de `batman_MilitaryDrop` si vous voulez du brouillage ; le principal seul n'en ajoute pas. Sur serveur, ajoutez cet ID à `Mods=` ; aucun autre abonnement Workshop.
+Disponible avec la **version 0.8.0**. Le RJ-93 appartient au sous-mod **facultatif** `batman_MilitaryDropJammer`, fourni dans le même projet. Activez-le en plus de `batman_MilitaryDrop` si vous voulez du brouillage ; le principal seul n'en ajoute pas. Sur serveur, ajoutez cet ID à `Mods=` ; aucun autre abonnement Workshop.
 
 ## Fabrication
 

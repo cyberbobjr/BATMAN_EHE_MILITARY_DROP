@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]
 
-[i]0.8.0 — prepared for testing, not published[/i]
+[i]0.8.0[/i]
 
 Tune a military radio to the right frequency, give this week's code and requisition supplies. A helicopter drops a crate far away and announces the grid to everyone listening... and the noise draws the dead.
 
@@ -47,6 +47,7 @@ Each character has a personal reputation, never shown as a number. It shortens t
 [h2]0.8.0[/h2]
 
 [list]
+[*]Clearance success notifications, result history at the liaison post and temporary green map checks. Recon and relay repair objectives are marked on your map.
 [*]Repair relay cabinets after outages using electronic scrap; Electricity reduces cost and time. Earn XP, no generator required.
 [*]Weekly Fulton cargo bonuses, horde reports, delivery receipts and personal commendations.
 [*]Separate rotor/delivery noise controls; the configured drop horde remains.

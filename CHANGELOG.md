@@ -1,11 +1,12 @@
 # Changelog
 
-Each `## <version> — <date>` section is published as the Steam Workshop change note
-(`.claude/tools/steam_workshop_publish.py`). The top version must match `modversion=` in `mod.info`.
+Technical version history. Player-facing Steam notes are kept separately in
+`workshop-changenote.md` and published through `tools/publish_workshop.py`.
+The top version must match `modversion=` in `mod.info`.
 
 ## 0.8.0 — 2026-10-27
 
-Prepared on `feature/planned-improvements-testing`; not published. Player acceptance testing is pending.
+Version 0.8.0. Native validation limits are recorded under Validation below.
 
 ### Added
 

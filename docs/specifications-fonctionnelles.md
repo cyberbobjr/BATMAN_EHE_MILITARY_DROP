@@ -1,6 +1,6 @@
 # Spécifications fonctionnelles de Military Drop
 
-Ce que fait le mod du point de vue du joueur et de l'administrateur, version 0.8.0 en essai local, non publiée, Build 42.21, solo et multijoueur. Les guides détaillés, avec captures, sont dans le [wiki](wiki/fr/Home.md) ; les contrats techniques (commandes, données, valeurs des options) dans [specifications-techniques.md](specifications-techniques.md). Les identifiants historiques de la colonne « Suivi » sont conservés comme repères.
+Ce que fait le mod du point de vue du joueur et de l'administrateur, version 0.8.0, Build 42.21, solo et multijoueur. Les guides détaillés, avec captures, sont dans le [wiki](wiki/fr/Home.md) ; les contrats techniques (commandes, données, valeurs des options) dans [specifications-techniques.md](specifications-techniques.md). Les identifiants historiques de la colonne « Suivi » sont conservés comme repères.
 
 Règles communes : le serveur décide de tout et revérifie chaque action ; aucun chiffre de confiance n'est affiché au joueur ; aucun objet vanilla n'est nommé dans le code, le contenu vient des tables de butin du jeu et des mods actifs.
 
@@ -104,9 +104,9 @@ Droits du jeu : capacité « événements » (`MakeEventsAlarmGunshot`, comme `/
 - En MP, seul le serveur lit les secrets (graine, code fixe, fréquence libre, état privé) ; les clients ne reçoivent que des clés de traduction, des positions publiques et leurs propres données.
 - Les sons (hélicoptère, sirène, baie de lecture) et les repères sont joués localement par chaque client ; seul le bruit pour les zombies est émis par le serveur.
 
-## Fonctions de la branche d’essai du 2026-10-27
+## Fonctions de la version 0.8.0
 
-Ces fonctions sont développées sur `feature/planned-improvements-testing`, sans publication.
+Ces fonctions sont intégrées à la version 0.8.0.
 Les tests automatiques ne remplacent pas les contrôles sensoriels ou interactifs manuels.
 
 - **I01/I02** : l’hélicoptère attire les zombies présents pendant son passage ; la livraison

@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Um jogador e multijogador · Independente[/b]
 
-[i]0.8.0 — preparada para testes, não publicada[/i]
+[i]0.8.0[/i]
 
 Sintonize um rádio militar na frequência certa, informe o código da semana e requisite suprimentos. Um helicóptero lança uma caixa ao longe e anuncia a grade para todos que estão ouvindo... e o barulho atrai os mortos.
 
@@ -47,6 +47,7 @@ Cada personagem tem a própria reputação, nunca mostrada em números. Ela encu
 [h2]0.8.0[/h2]
 
 [list]
+[*]Limpezas concluídas: notificação, histórico no posto e marca verde temporária. Os objetivos de reconhecimento e reparo de retransmissores aparecem no mapa.
 [*]Conserte relés com sucata eletrônica. Eletricidade reduz custo e duração; concede XP, sem gerador.
 [*]Bônus Fulton semanais, relatos de hordas, confirmações de entrega e condecorações pessoais.
 [*]Ruídos do rotor e da entrega ajustáveis separadamente; a horda configurada continua aparecendo.

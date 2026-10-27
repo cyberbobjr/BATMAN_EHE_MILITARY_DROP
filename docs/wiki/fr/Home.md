@@ -1,6 +1,6 @@
 # Military Drop : guide du joueur
 
-> Guide de la branche locale 0.8.0, non publiée. Les pages publiques peuvent encore décrire la version précédente.
+> Guide de Military Drop 0.8.0.
 
 [English](../en/Home.md) · [Accueil du guide](../Home.md)
 

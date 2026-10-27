@@ -113,7 +113,7 @@ Press **Confirm reception** in time. Every character that answers gets +1.
 
 ## Version 0.8.0: relays and radio actions
 
-These features belong to the unpublished testing branch. Gains below use default settings and share the daily cap.
+Available in version 0.8.0. Gains below use default settings and share the daily cap.
 
 ### Repair a relay
 

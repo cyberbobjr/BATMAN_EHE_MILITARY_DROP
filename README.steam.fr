@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Solo et multijoueur · Autonome[/b]
 
-[i]0.8.0 — préparée pour essai, non publiée[/i]
+[i]0.8.0[/i]
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent... et le bruit attire les morts.
 
@@ -47,6 +47,7 @@ Chaque personnage a sa propre réputation, jamais affichée en chiffres. Elle ra
 [h2]0.8.0[/h2]
 
 [list]
+[*]Réussites des nettoyages : notification, historique au poste et coche verte temporaire. Les reconnaissances et les relais à réparer sont indiqués sur la carte.
 [*]Réparez les relais en panne avec des déchets électroniques : l'Électricité réduit coût et durée. Gain d'XP, aucun générateur requis.
 [*]Primes Fulton hebdomadaires, signalements de hordes, accusés de réception et citations nominatives.
 [*]Bruits du rotor et de livraison réglables séparément ; la horde configurée reste présente.

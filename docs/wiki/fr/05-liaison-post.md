@@ -1,6 +1,6 @@
 # Poste de liaison
 
-> Version 0.8.0 locale : les transmissions incluent aussi **Besoins de la semaine**, **Signaler un rassemblement** et **Confirmer la réception** ; voir [missions et confiance](04-trust-and-missions.md). Une panne de relais ou un [brouilleur RJ-93](10-radio-jammer.md) peut refuser la transmission, avec un motif explicite.
+> Version 0.8.0 : les transmissions incluent aussi **Besoins de la semaine**, **Signaler un rassemblement** et **Confirmer la réception** ; voir [missions et confiance](04-trust-and-missions.md). Une panne de relais ou un [brouilleur RJ-93](10-radio-jammer.md) peut refuser la transmission, avec un motif explicite.
 
 [English](../en/05-liaison-post.md) · [Sommaire du guide](Home.md) · Précédent : [Confiance et missions](04-trust-and-missions.md) · Suivant : [Administration](06-server-admin.md)
 
@@ -59,3 +59,7 @@ En 0.8.0, transmettre les données rend le boîtier dans votre inventaire. Il di
 La liste **Ordres** affiche les missions actuellement ouvertes : **reconnaissance**, **nettoyage**, **appel de contrôle** et **remise en service d’un relais**. Sélectionnez un ordre pour sa grille, son délai et les consignes ; le nettoyage affiche aussi sa progression. Les actions de confirmation existantes restent accessibles selon le type de mission.
 
 Une mission relais lancée depuis l’administration apparaît comme une panne naturelle au prochain rafraîchissement du poste. Elle indique l’armoire et les déchets électroniques à apporter. La réparation se fait physiquement sur l’armoire annoncée, jamais à distance depuis le poste. Après réparation ou liaison de secours, l’ordre disparaît.
+
+### Missions terminées
+
+La rubrique **Missions terminées** conserve les 20 derniers résultats de nettoyage. Sélectionnez une fiche pour consulter le résultat, la grille, la date de clôture, votre contribution et la confiance réellement reçue. Réussite, expiration et annulation sont distinguées. Ces fiches restent disponibles après reconnexion et après disparition de la coche verte temporaire ; leur consultation ne redonne aucune récompense. Les résultats antérieurs à l’installation de cette fonctionnalité ne peuvent pas être reconstitués.

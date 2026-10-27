@@ -1,6 +1,6 @@
 # Military Drop: player's guide
 
-> Guide for the unpublished local 0.8.0 branch. Public pages may still describe the previous release.
+> Guide for Military Drop 0.8.0.
 
 [Français](../fr/Home.md) · [Guide home](../Home.md)
 

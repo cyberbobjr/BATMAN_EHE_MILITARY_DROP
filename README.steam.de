@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Einzelspieler & Mehrspieler · Eigenständig[/b]
 
-[i]0.8.0 — zum Test vorbereitet, nicht veröffentlicht[/i]
+[i]0.8.0[/i]
 
 Stellen Sie ein Militärfunkgerät auf die richtige Frequenz, nennen Sie den Code der Woche und fordern Sie Nachschub an. Ein Hubschrauber wirft weit entfernt eine Kiste ab und meldet allen Zuhörern das Raster... und der Lärm lockt die Toten an.
 
@@ -47,6 +47,7 @@ Jeder Charakter hat einen eigenen Ruf, nie als Zahl angezeigt. Er verkürzt die 
 [h2]0.8.0[/h2]
 
 [list]
+[*]Erfolgreiche Säuberungen: Benachrichtigung, Verlauf am Verbindungsposten und vorübergehender grüner Haken. Aufklärung und Relaisreparaturen werden auf der Karte markiert.
 [*]Relais nach Ausfällen mit Elektronikschrott reparieren. Elektrik senkt Kosten und Dauer; bringt XP, kein Generator nötig.
 [*]Wöchentliche Fulton-Boni, Hordenmeldungen, Empfangsbestätigungen und persönliche Auszeichnungen.
 [*]Rotor- und Liefergeräusche getrennt einstellen; die konfigurierte Horde erscheint weiterhin.

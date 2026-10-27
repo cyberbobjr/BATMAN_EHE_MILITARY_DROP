@@ -115,7 +115,7 @@ Appuyez à temps sur **Confirmer réception**. Chaque personnage qui répond gag
 
 ## Nouveautés 0.8.0 : relais et transmissions
 
-Ces fonctions appartiennent à la branche d'essai, non publiée. Les gains ci-dessous sont les valeurs par défaut et restent dans le plafond quotidien.
+Fonctions disponibles dans la version 0.8.0. Les gains ci-dessous sont les valeurs par défaut et restent dans le plafond quotidien.
 
 ### Réparer un relais
 

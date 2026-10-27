@@ -4,7 +4,7 @@ Mod Project Zomboid Build 42.21 (`batman_MilitaryDrop`) : appeler l'armée par r
 
 La documentation de développement est en français ; le wiki joueur existe en anglais et en français. La présentation GitHub est le [README](../README.md) du dépôt, l'historique des versions le [CHANGELOG](../CHANGELOG.md).
 
-Version préparée : **0.8.0**, branche `feature/planned-improvements-testing`, non publiée. Le [guide français](wiki/fr/Home.md) et le [guide anglais](wiki/en/Home.md) décrivent cette version locale, dont les [relais](wiki/fr/04-trust-and-missions.md), la [console admin](wiki/fr/06-server-admin.md) et le [sous-mod RJ-93](wiki/fr/10-radio-jammer.md). Les fichiers `README.steam*` sont les descriptions préparées ; aucune synchronisation publique n'a été effectuée.
+Version : **0.8.0**. Le [guide français](wiki/fr/Home.md) et le [guide anglais](wiki/en/Home.md) décrivent cette version, dont les [relais](wiki/fr/04-trust-and-missions.md), la [console admin](wiki/fr/06-server-admin.md) et le [sous-mod RJ-93](wiki/fr/10-radio-jammer.md). Les fichiers `README.steam*` portent les descriptions multilingues ; la note Steam destinée aux joueurs est [workshop-changenote.md](../workshop-changenote.md), distincte du changelog technique.
 
 ## Documents
 

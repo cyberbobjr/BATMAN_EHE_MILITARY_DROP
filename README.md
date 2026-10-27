@@ -13,9 +13,9 @@ This project is a standalone rewrite for Build 42.21 of [Expanded Helicopter Eve
 - Developer documentation, **in French**: [docs/README.md](docs/README.md) (architecture, functional and technical specifications, improvements).
 - Changes: [CHANGELOG.md](CHANGELOG.md)
 
-## Version 0.8.0 — local testing branch
+## Version 0.8.0
 
-Prepared on `feature/planned-improvements-testing`, **not published**. The wiki below describes this branch; the public GitHub wiki and Steam page are updated only after release.
+Restore damaged relays, follow weekly Fulton priorities and manage your station through the expanded liaison post. See the [Steam release notes](workshop-changenote.md) for the highlights.
 
 - Helicopter and delivery noise attract existing infected; the configured drop horde remains.
 - Repair relay cabinets with electronic scrap and earn Electricity XP. No generator required.
@@ -23,7 +23,7 @@ Prepared on `feature/planned-improvements-testing`, **not published**. The wiki 
 - Administration: **Debug → Main → Military Drop Admin Menu** in solo debug; **right-click anywhere → Military Drop Admin Menu** for authorized MP admins. Includes communications (current code/frequencies), consolidated tools and separate mission success/closure. Drop-zone menus stay in place.
 - Optional battery-powered **RJ-93 radio jammer** for PvP. Leave `batman_MilitaryDropJammer` disabled for a game without jamming. See [the jammer guide](docs/wiki/en/10-radio-jammer.md).
 
-For a local test, enable `batman_MilitaryDrop` and its dependencies in the game's mod list. The game can load this project's `Contents/mods` directly. To test jamming, also enable `batman_MilitaryDropJammer`; on a dedicated server add this ID to `Mods=` alongside the main mod, using the same project build on server and clients. It is a second mod in this project, with no separate Workshop subscription.
+Enable `batman_MilitaryDrop` and its dependencies in the game's mod list. The game can load this project's `Contents/mods` directly. To test jamming, also enable `batman_MilitaryDropJammer`; on a dedicated server add this ID to `Mods=` alongside the main mod, using the same project build on server and clients. It is a second mod in this project, with no separate Workshop subscription.
 
 Suggested player checks: [relay repair and radio actions](docs/wiki/en/04-trust-and-missions.md), [Fulton bonuses](docs/wiki/en/07-fulton.md), [administration](docs/wiki/en/06-server-admin.md) and [jammer battery controls](docs/wiki/en/10-radio-jammer.md). Verify nearby infected react to noise, rewards are granted once, the battery retains its charge after removal/reconnection, and broadcasts remain audible while calls are jammed.
 
@@ -69,9 +69,9 @@ Ce projet est une réécriture autonome pour la Build 42.21 de [Expanded Helicop
 - Documentation de développement : [docs/README.md](docs/README.md) (architecture, spécifications et améliorations).
 
 
-### Version 0.8.0 — essai local
+### Version 0.8.0
 
-Préparée sur `feature/planned-improvements-testing`, **non publiée**. Le wiki du dépôt décrit cette branche ; les pages publiques restent celles de la version publiée.
+Rétablissez les relais, suivez les priorités Fulton et retrouvez vos missions dans le poste de liaison enrichi. Les [notes Steam](workshop-changenote.md) présentent les nouveautés en anglais.
 
 Relais à réparer avec des déchets électroniques, primes Fulton hebdomadaires, signalements de hordes, accusés de réception, citations nominatives et nouvelle console d'administration sont prêts à essayer. La silhouette d'hélicoptère est retirée ; les sons et repères habituels restent.
 

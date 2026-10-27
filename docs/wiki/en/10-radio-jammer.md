@@ -2,7 +2,7 @@
 
 [Français](../fr/10-radio-jammer.md) · [Guide home](Home.md) · [Administration](06-server-admin.md)
 
-Part of the **unpublished 0.8.0 local testing build**. The RJ-93 belongs to the **optional** `batman_MilitaryDropJammer` submod in the same project. Enable it alongside `batman_MilitaryDrop` only if you want jamming. The main mod alone adds none. On servers add this ID to `Mods=`; no additional Workshop subscription.
+Available with **version 0.8.0**. The RJ-93 belongs to the **optional** `batman_MilitaryDropJammer` submod in the same project. Enable it alongside `batman_MilitaryDrop` only if you want jamming. The main mod alone adds none. On servers add this ID to `Mods=`; no additional Workshop subscription.
 
 ## Crafting
 
