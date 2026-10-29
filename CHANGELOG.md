@@ -6,7 +6,7 @@ The top version must match `modversion=` in `mod.info`.
 
 ## 0.8.1 — 2026-10-29
 
-Not yet published.
+Published to Steam Workshop on 2026-10-29. Eight descriptions updated; all 17 additional screenshots preserved. Native gameplay validation remains pending.
 
 ### Changed
 
