@@ -4,7 +4,9 @@
 
 ## 1. Find the military frequency
 
-Military and police zombies sometimes carry a **Military Memo** (about 1 in 50 by default). Right-click it and choose **Inspect**.
+Military and police zombies sometimes carry a **Military Memo** (about 1 in 10 by default). Right-click it and choose **Inspect**. Also search police desks, filing cabinets, file boxes, evidence shelves, armouries and lockers; military bunker lockers and storage, equipment and electronics storage, barracks lockers, army surplus literature shelves; and fire station lockers. These are random finds, not guaranteed documents per building.
+
+Storage additions apply to containers filled after the update; already generated loot is not refilled.
 
 ![Military memo](../../images/screenshots/memo-en.png)
 
@@ -31,7 +33,7 @@ You can hear it with a military radio, a ham radio or the best civilian walkie-t
 
 ### The codebook
 
-Military zombies sometimes carry a **Military Codebook**, and it can be found in army storage. There is one table per game: every codebook you find is the same.
+Military zombies sometimes carry a **Military Codebook** (about 1 in 20 by default). Also search the military storage and police desks, archives and armouries listed above. Police and fire station lockers carry memos only; police zombies do not carry codebooks by default. There is one table per game: every codebook you find is the same.
 
 ![Military codebook](../../images/screenshots/codebook-en.png)
 

@@ -4,6 +4,20 @@ Technical version history. Player-facing Steam notes are kept separately in
 `workshop-changenote.md` and published through `tools/publish_workshop.py`.
 The top version must match `modversion=` in `mod.info`.
 
+## 0.8.1 — 2026-10-29
+
+Not yet published.
+
+### Changed
+
+- Increased document chances at the existing sandbox rarity levels to 1/200, 1/100, 1/20, 1/10, 1/5 and 1/2. Defaults now give military memos a 10 percent chance on eligible military/police zombies and codebooks a 5 percent chance on eligible military zombies. Saved rarity selections retain their indices and use the increased chances.
+- Military memos and encrypted-mode codebooks now appear in targeted military storage, barracks lockers and army surplus literature, as well as police desks, archives, evidence storage and gun storage. Police and fire department lockers also receive memos. Both sandbox rarity settings control their respective storage weights; mode/rate changes rebuild the tables once without duplicate entries. Already generated container contents and existing documents remain unchanged.
+- Updated all eight sandbox translations and the English/French guides with the new rates and search locations.
+
+### Validation
+
+- `python tests/run_tests.py --require-luacheck`: exit 0; 984 Lua test cases passed, no luacheck warnings, 88 Lua files compiled. Document tests cover independent zombie rolls, targeted storage, authentication modes, live sandbox changes, duplicate prevention, preservation of other loot and missing distributions. Target names and injection are also checked against installed vanilla tables. Native gameplay remains to be verified.
+
 ## 0.8.0 — 2026-10-27
 
 Published to Steam Workshop on 2026-10-27. Native validation limits are recorded under Validation below.

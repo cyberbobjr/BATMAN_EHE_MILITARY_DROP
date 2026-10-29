@@ -15,6 +15,18 @@ Contrats précis du mod, relevés dans le code de la version 0.5.4 (2026-10-21).
 | Facultatifs détectés | HEF (`HTT.Server.state`, lecture seule), `ZVirusVaccine42BETA` (barème Fulton) |
 | Globale Lua | `MilitaryDrop` uniquement (`BatmanRadioSupport` est lue, fournie par Belt Walkie-Talkie) |
 
+## Distribution des documents (0.8.1)
+
+`Notes` conserve l'autorité serveur/solo. Les niveaux sandbox existants 1 à 6 deviennent respectivement 1/200, 1/100, 1/20, 1/10, 1/5 et 1/2 ; les indices sauvegardés ne changent pas. Défauts : note 1/10, carnet 1/20 sur zombie admissible. Les tenues autorisées restent inchangées.
+
+| Distributions procédurales vanilla | Note | Carnet (AuthCode 4) |
+|---|---|---|
+| `ArmyBunkerLockers`, `ArmyBunkerStorage`, `ArmyStorageElectronics`, `ArmyStorageOutfit`, `LockerArmyBedroom`, `ArmySurplusLiterature` | Oui | Oui |
+| `PoliceCaptainDesk`, `PoliceCaptainCabinet`, `PoliceDesk`, `PoliceFilingCabinet`, `PoliceFileBox`, `PoliceEvidence`, `PoliceStorageGuns` | Oui | Oui |
+| `PoliceLockers`, `FireDeptLockers` | Oui | Non |
+
+Le poids de chaque document est `50 / N`, avec N tiré de son option de rareté : 5 pour la note et 2,5 pour le carnet par défaut. Ce poids procédural n'est pas un pourcentage par meuble : tirages et rareté du butin vanilla s'appliquent. `OnInitGlobalModData` ajoute les documents absents puis appelle `ItemPickerJava.Parse` une seule fois. Les changements de `AuthCode`, `NoteDropRate` et `CodebookDropRate` reconstruisent les entrées sans doublon ; la note reste disponible dans tous les modes. Les distributions absentes sont ignorées, les autres objets et leurs poids préservés. Aucun remplissage rétroactif, aucune modification des documents déjà trouvés.
+
 ## Objets et scripts
 
 Module de script `MilitaryDrop` pour les objets et recettes ; modèles, sons et véhicules dans `Base`.
@@ -273,11 +285,11 @@ Page `MilitaryDrop`, noms complets `MilitaryDrop.<Option>`, lues à chaque usage
 | `MinZombies` | integer | 3 | 0 à 1000 | Zombies au largage (minimum) | Si le minimum et le maximum valent 0, aucun zombie n'apparaît. |
 | `MaxZombies` | integer | 30 | 0 à 1000 | Zombies au largage (maximum) | Nombre maximal de zombies qui apparaissent autour de la caisse. |
 | `CaseRolls` | integer | 6 | 1 à 100 | Caisses par largage | Nombre de tirages de butin pour la caisse : chaque tirage peut ajouter une caisse de ravitaillement. |
-| `NoteDropRate` | enum | 4 | 1 Extrêmement rare (1/1000); 2 Très rare (1/500); 3 Rare (1/100); 4 Normale (1/50); 5 Courante (1/25); 6 Débogage (1/2) | Fréquence des notes militaires | Chance qu'un zombie mort porte une note avec la fréquence militaire et, selon l'option du code, le code ou la fréquence de la station de chiffres. |
+| `NoteDropRate` | enum | 4 | 1 Extrêmement rare (1/200); 2 Très rare (1/100); 3 Rare (1/20); 4 Normale (1/10); 5 Courante (1/5); 6 Débogage (1/2) | Fréquence des notes militaires | Chance qu'un zombie mort porte une note avec la fréquence militaire et, selon l'option du code, le code ou la fréquence de la station de chiffres. Règle aussi le poids des notes dans les stockages ciblés. |
 | `NotesOnlyArmyPolice` | boolean | true | — | Notes seulement sur les zombies militaires et policiers | Seuls les zombies dont la tenue correspond à la liste ci-dessous peuvent porter les notes. |
 | `NoteOutfits` | string | Army;Police;Sheriff | — | Tenues qui portent les notes | Mots cherchés dans le nom de la tenue du zombie, séparés par ; (reconnaît aussi les tenues des autres mods). |
 | `NoteOutfitsExcluded` | string | Stripper | — | Tenues exclues | Les tenues qui contiennent un de ces mots ne portent jamais de note, séparés par ;. |
-| `CodebookDropRate` | enum | 3 | 1 ?; 2 ?; 3 ?; 4 ?; 5 ?; 6 ? | Fréquence des carnets de codes | Chance qu'un zombie militaire mort porte un carnet de codes ; règle aussi leur fréquence dans les réserves de l'armée. Code périodique chiffré seulement. |
+| `CodebookDropRate` | enum | 3 | 1/200; 1/100; 1/20; 1/10; 1/5; 1/2 | Fréquence des carnets de codes | Chance qu'un zombie militaire mort porte un carnet de codes ; règle aussi leur fréquence dans les stockages militaires et les bureaux, archives et armureries de police. Code périodique chiffré seulement. |
 | `CodebookOutfits` | string | Army | — | Tenues qui portent les carnets | Mots cherchés dans le nom de la tenue du zombie, séparés par ;. Les tenues exclues s'appliquent aussi. |
 | `CrateSmokeMinutes` | integer | 60 | 0 à 1440 | Fumée sur la caisse (minutes) | Nécessite le mod Signal Smoke : une fumée verte marque la caisse posée pendant ce nombre de minutes de jeu. 0 : aucune fumée. Sans Signal Smoke, cette option n'a aucun effet. |
 | `TrustDailyCap` | integer | 10 | 0 à 100 | Plafond quotidien de confiance | Confiance maximale gagnée par chaque personnage par jour de jeu, hors largages. 0 : seuls les largages font varier la confiance. |

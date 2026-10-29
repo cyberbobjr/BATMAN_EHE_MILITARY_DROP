@@ -13,6 +13,10 @@ This project is a standalone rewrite for Build 42.21 of [Expanded Helicopter Eve
 - Developer documentation, **in French**: [docs/README.md](docs/README.md) (architecture, functional and technical specifications, improvements).
 - Changes: [CHANGELOG.md](CHANGELOG.md)
 
+## Version 0.8.1
+
+Military memos and codebooks are five times more likely on eligible zombies and now appear in targeted police and military storage. Fire station lockers can also hold memos. See the [release notes](workshop-changenote.md).
+
 ## Version 0.8.0
 
 Restore damaged relays, follow weekly Fulton priorities and manage your station through the expanded liaison post. See the [Steam release notes](workshop-changenote.md) for the highlights.
@@ -68,6 +72,10 @@ Ce projet est une réécriture autonome pour la Build 42.21 de [Expanded Helicop
 - Guide du joueur : [docs/wiki/fr/Home.md](docs/wiki/fr/Home.md).
 - Documentation de développement : [docs/README.md](docs/README.md) (architecture, spécifications et améliorations).
 
+
+### Version 0.8.1
+
+Notes et carnets sont cinq fois plus fréquents sur les zombies admissibles et apparaissent dans des stockages policiers et militaires ciblés. Les casiers des pompiers peuvent aussi contenir des notes.
 
 ### Version 0.8.0
 

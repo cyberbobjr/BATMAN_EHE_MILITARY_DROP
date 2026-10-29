@@ -17,7 +17,7 @@ Les options se changent sans redémarrer, sauf les deux fréquences (voir plus b
 Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, le largage, la commande, la mission ou le crash suivant. Ce qui existe déjà garde la valeur de sa création : un vol en cours, une horde déjà apparue, l'échéance d'une mission, un site de crash. Dans la minute de jeu qui suit le changement, la console (`console.txt`, ou le journal du serveur) affiche `[MilitaryDrop] sandbox options changed: …`, et quelques changements sont appliqués à ce moment :
 
 - passer au code de la semaine chiffré lance la station de chiffres si la partie a été chargée dans un autre mode ; le quitter fait taire la station ;
-- le carnet est ajouté au butin de l'armée, ou retiré, avec sa nouvelle fréquence (conteneurs remplis ensuite seulement) ;
+- les poids des documents suivent leurs deux réglages de rareté ; les carnets sont ajoutés ou retirés selon le mode du code (conteneurs remplis ensuite seulement) ;
 - les lots de réquisition sont préparés quand le formulaire est activé ;
 - l'outil des zones de largage, s'il est ouvert, affiche le nouveau mode de placement.
 
@@ -45,11 +45,11 @@ Le mod lit ses options à chaque usage : une nouvelle valeur vaut pour l'appel, 
 | Code d'authentification | `AuthCode` | Code périodique, chiffré | Aucun / Code fixe, en clair sur les notes / Code périodique, en clair sur les notes / Code périodique, chiffré (station de chiffres et carnet). 3 codes faux dans la journée : la base ignore l'appelant jusqu'au lendemain. |
 | Changement du code | `CodePeriod` | Chaque semaine (lundi) | Quand le code périodique change (calendrier du jeu) : chaque lundi à 00:00, un lundi sur deux à 00:00, ou le 1er de chaque mois à 00:00. Le précédent reste accepté pendant 24 heures. Choisir une période plus longue sur les serveurs où les jours de jeu passent vite. Le carnet ne change jamais. |
 | Fréquence de la station de chiffres (MHz) | `NumbersStationFrequency` | 0 | 0 : fréquence libre des ondes courtes tirée au hasard, de 10 à 25 MHz. Mode chiffré seulement. Redémarrage requis. |
-| Fréquence des notes militaires | `NoteDropRate` | Normale (1/50) | Extrêmement rare 1/1000, Très rare 1/500, Rare 1/100, Normale 1/50, Courante 1/25, Débogage 1/2. |
+| Fréquence des notes militaires | `NoteDropRate` | Normale (1/10) | Extrêmement rare 1/200, Très rare 1/100, Rare 1/20, Normale 1/10, Courante 1/5, Débogage 1/2. Règle aussi le poids des notes dans les stockages ciblés. |
 | Notes seulement sur les zombies militaires et policiers | `NotesOnlyArmyPolice` | vrai | Seules les tenues de la liste ci-dessous portent des notes. |
 | Tenues qui portent les notes | `NoteOutfits` | `Army;Police;Sheriff` | Mots cherchés dans le nom de la tenue (reconnaît aussi les tenues des mods). |
 | Tenues exclues | `NoteOutfitsExcluded` | `Stripper` | Tenues qui ne portent jamais de note ni de carnet. |
-| Fréquence des carnets de codes | `CodebookDropRate` | Rare (1/100) | Même échelle. Règle aussi leur fréquence dans les réserves de l'armée. |
+| Fréquence des carnets de codes | `CodebookDropRate` | Rare (1/20) | Même échelle. Règle aussi leur fréquence dans les stockages militaires et les bureaux, archives et armureries de police. |
 | Tenues qui portent les carnets | `CodebookOutfits` | `Army` | Mots cherchés dans le nom de la tenue. |
 
 ### Confiance

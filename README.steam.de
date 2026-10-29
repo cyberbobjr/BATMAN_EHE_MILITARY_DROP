@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Einzelspieler & Mehrspieler · Eigenständig[/b]
 
-[i]0.8.0[/i]
+[i]0.8.1[/i]
 
 Stellen Sie ein Militärfunkgerät auf die richtige Frequenz, nennen Sie den Code der Woche und fordern Sie Nachschub an. Ein Hubschrauber wirft weit entfernt eine Kiste ab und meldet allen Zuhörern das Raster... und der Lärm lockt die Toten an.
 
@@ -43,6 +43,10 @@ Jeder Charakter hat einen eigenen Ruf, nie als Zahl angezeigt. Er verkürzt die 
 [*][b]Umkämpfte Abwurfzonen[/b] für PvP-Server, vom Admin im Spiel gezeichnet.
 [*]71 Sandbox-Optionen; servergesteuerter Mehrspielermodus.
 [/list]
+
+[h2]0.8.1[/h2]
+
+Notizen und Codebücher: fünfmal häufiger bei Zombies, dazu neue Fundorte bei Polizei und Militär. Notizen auch in Feuerwehrspinden.
 
 [h2]0.8.0[/h2]
 

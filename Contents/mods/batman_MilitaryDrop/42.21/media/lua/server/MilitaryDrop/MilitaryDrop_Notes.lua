@@ -16,8 +16,8 @@
 -- Note et carnet sont ajoutés à l'inventaire du zombie dans OnZombieDead,
 -- avant la création du cadavre qui le reprend (IsoZombie.onKilled, 42.21). Sur
 -- un client MP, l'ajout n'aurait aucune autorité : ce fichier ne tourne que
--- sur le serveur ou en solo. Le carnet est aussi ajouté aux listes de butin
--- de l'armée (sources, aucun nom d'objet vanilla), à OnInitGlobalModData : en
+-- sur le serveur ou en solo. Les documents sont aussi ajoutes aux listes de
+-- butin ciblees, a OnInitGlobalModData : en
 -- solo, les options sandbox de la partie ne sont connues qu'à ce moment.
 --
 -- Mort par le feu : OnZombieDead peut arriver deux fois et le second passage
@@ -46,7 +46,7 @@ Notes.CODEBOOK_ITEM = "MilitaryDrop.Codebook"
 -- Tirage d'un texte de note (1 à TEXT_COUNT), ramené au nombre de textes du mode.
 Notes.TEXT_COUNT = 8
 -- Options NoteDropRate et CodebookDropRate (1 à 6) : une chance sur N.
-Notes.RATES = { 1000, 500, 100, 50, 25, 2 }
+Notes.RATES = { 200, 100, 20, 10, 5, 2 }
 -- Textes de la note selon le mode du code : préfixe des clés et nombre.
 Notes.FAMILIES = {
     [Codes.MODE_NONE] = { prefix = "IGUI_MilitaryDrop_NoteOpen_", count = 4 },
@@ -66,10 +66,22 @@ Notes.PERIOD_FAMILIES = {
         [Codes.MODE_WEEKLY_CIPHER] = { prefix = "IGUI_MilitaryDrop_NoteCipherMonth_", count = 4 },
     },
 }
--- Listes de butin de l'armée qui reçoivent le carnet, avec un poids
--- CODEBOOK_LOOT_FACTOR / N (N : option CodebookDropRate).
-Notes.CODEBOOK_LISTS = { "ArmyBunkerLockers", "ArmyStorageElectronics", "ArmyStorageOutfit" }
-Notes.CODEBOOK_LOOT_FACTOR = 50
+-- Explicit vanilla distributions: no generic household or office loot.
+Notes.CODEBOOK_LISTS = {
+    "ArmyBunkerLockers", "ArmyBunkerStorage", "ArmyStorageElectronics",
+    "ArmyStorageOutfit", "LockerArmyBedroom", "ArmySurplusLiterature",
+    "PoliceCaptainDesk", "PoliceCaptainCabinet", "PoliceDesk",
+    "PoliceFilingCabinet", "PoliceFileBox", "PoliceEvidence", "PoliceStorageGuns",
+}
+Notes.MEMO_LISTS = {
+    "ArmyBunkerLockers", "ArmyBunkerStorage", "ArmyStorageElectronics",
+    "ArmyStorageOutfit", "LockerArmyBedroom", "ArmySurplusLiterature",
+    "PoliceCaptainDesk", "PoliceCaptainCabinet", "PoliceDesk",
+    "PoliceFilingCabinet", "PoliceFileBox", "PoliceEvidence", "PoliceStorageGuns",
+    "PoliceLockers", "FireDeptLockers",
+}
+-- Procedural weight, not a percentage. Both rates also control storage loot.
+Notes.LOOT_FACTOR = 50
 -- Tenues ciblées : options NoteOutfits, CodebookOutfits et NoteOutfitsExcluded
 -- (mots contenus dans le nom de la tenue, séparés par « ; »), pour suivre les
 -- tenues des mods.
@@ -102,11 +114,11 @@ function Notes.isArmyOrPolice(outfitName)
 end
 
 function Notes.dropRate()
-    return Notes.RATES[Config.get("NoteDropRate")] or 50
+    return Notes.RATES[Config.get("NoteDropRate")] or 10
 end
 
 function Notes.codebookRate()
-    return Notes.RATES[Config.get("CodebookDropRate")] or 100
+    return Notes.RATES[Config.get("CodebookDropRate")] or 20
 end
 
 --- « 18 JUL » pour un jour compté depuis le 1970-01-01.
@@ -250,10 +262,10 @@ end
 -- Butin et zombies
 -- ----------------------------------------------------------------------------
 
---- Listes de butin de l'armée qui existent : { items, … }.
-local function codebookListItems()
+-- Existing item arrays only: absent distributions from other maps are optional.
+local function lootListItems(names)
     local result = {}
-    for _, name in ipairs(Notes.CODEBOOK_LISTS) do
+    for _, name in ipairs(names) do
         local list = ProceduralDistributions.list[name]
         if list and list.items then
             result[#result + 1] = list.items
@@ -262,66 +274,73 @@ local function codebookListItems()
     return result
 end
 
---- Ajoute le carnet (et son poids) aux listes qui ne l'ont pas ; vrai si ajouté.
-local function insertCodebook()
-    local weight = Notes.CODEBOOK_LOOT_FACTOR / Notes.codebookRate()
+-- Add only missing entries, preserving other mods and existing item weights.
+local function insertDocument(names, fullType, rate)
+    local weight = Notes.LOOT_FACTOR / rate
     local added = false
-    for _, items in ipairs(codebookListItems()) do
+    for _, items in ipairs(lootListItems(names)) do
         local present = false
         for _, entry in ipairs(items) do
-            present = present or entry == Notes.CODEBOOK_ITEM
+            present = present or entry == fullType
         end
         if not present then
-            table.insert(items, Notes.CODEBOOK_ITEM)
+            table.insert(items, fullType)
             table.insert(items, weight)
             added = true
         end
     end
     if added then
-        MilitaryDrop.log("codebook added to army loot lists, weight " .. weight)
+        MilitaryDrop.log(fullType .. " added to targeted loot lists, weight " .. weight)
     end
     return added
 end
 
---- Ajoute le carnet aux listes de butin de l'armée (AuthCode 4), une seule
---- fois, puis relit les tables (ItemPickerJava.Parse, idempotent).
-function Notes.addCodebookToLoot()
-    if Config.codeMode() ~= Codes.MODE_WEEKLY_CIPHER or not ProceduralDistributions then
+-- Memos in every authentication mode; codebooks only in encrypted mode.
+local function insertDocuments()
+    local added = insertDocument(Notes.MEMO_LISTS, Notes.ITEM, Notes.dropRate())
+    if Config.codeMode() == Codes.MODE_WEEKLY_CIPHER then
+        local codebookAdded = insertDocument(Notes.CODEBOOK_LISTS, Notes.CODEBOOK_ITEM, Notes.codebookRate())
+        added = codebookAdded or added
+    end
+    return added
+end
+
+function Notes.addDocumentsToLoot()
+    if not ProceduralDistributions or not ProceduralDistributions.list then
         return false
     end
-    local added = insertCodebook()
+    local added = insertDocuments()
     if added then
         ItemPickerJava.Parse()
     end
     return added
 end
 
---- Options AuthCode ou CodebookDropRate changées en cours de partie : le
---- carnet est retiré des listes (objet et poids qui le suit), remis avec le
---- nouveau poids en mode 4, puis les tables sont relues (ItemPickerJava.Parse,
---- comme le bouton « Appliquer » vanilla : IsoWorld.parseDistributions,
---- IsoWorld.java:3115-3118). Seuls les conteneurs remplis ensuite changent.
---- Vrai si les listes ont changé.
-function Notes.refreshCodebookLoot()
-    if not ProceduralDistributions then
-        return false
-    end
+local function removeDocument(names, fullType)
     local removed = false
-    for _, items in ipairs(codebookListItems()) do
+    for _, items in ipairs(lootListItems(names)) do
         for i = #items - 1, 1, -1 do
-            if items[i] == Notes.CODEBOOK_ITEM and type(items[i + 1]) == "number" then
+            if items[i] == fullType and type(items[i + 1]) == "number" then
                 table.remove(items, i + 1)
                 table.remove(items, i)
                 removed = true
             end
         end
     end
-    local added = Config.codeMode() == Codes.MODE_WEEKLY_CIPHER and insertCodebook()
+    return removed
+end
+
+-- Rebuild document weights after sandbox changes; existing loot is untouched.
+function Notes.refreshDocumentLoot()
+    if not ProceduralDistributions or not ProceduralDistributions.list then
+        return false
+    end
+    local removed = removeDocument(Notes.MEMO_LISTS, Notes.ITEM)
+    local codebookRemoved = removeDocument(Notes.CODEBOOK_LISTS, Notes.CODEBOOK_ITEM)
+    removed = codebookRemoved or removed
+    local added = insertDocuments()
     if removed or added then
         ItemPickerJava.Parse()
-        if not added then
-            MilitaryDrop.log("codebook removed from army loot lists")
-        end
     end
     return removed or added
 end
@@ -372,7 +391,7 @@ function Notes.onZombieDead(zombie)
 end
 
 Events.OnZombieDead.Add(Notes.onZombieDead)
-Events.OnInitGlobalModData.Add(Notes.addCodebookToLoot)
-Config.onChange("Notes.codebookLoot", { "AuthCode", "CodebookDropRate" }, Notes.refreshCodebookLoot)
+Events.OnInitGlobalModData.Add(Notes.addDocumentsToLoot)
+Config.onChange("Notes.documentLoot", { "AuthCode", "NoteDropRate", "CodebookDropRate" }, Notes.refreshDocumentLoot)
 
 return Notes

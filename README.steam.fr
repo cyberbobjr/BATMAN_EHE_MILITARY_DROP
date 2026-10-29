@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Solo et multijoueur · Autonome[/b]
 
-[i]0.8.0[/i]
+[i]0.8.1[/i]
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent... et le bruit attire les morts.
 
@@ -43,6 +43,10 @@ Chaque personnage a sa propre réputation, jamais affichée en chiffres. Elle ra
 [*][b]Zones de largage disputées[/b] pour les serveurs PvP, tracées en jeu par l'admin.
 [*]71 options du bac à sable ; autorité serveur en multijoueur.
 [/list]
+
+[h2]0.8.1[/h2]
+
+Notes et carnets : cinq fois plus fréquents sur les zombies, avec de nouveaux stockages policiers et militaires. Notes aussi dans les casiers des pompiers.
 
 [h2]0.8.0[/h2]
 

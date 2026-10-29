@@ -4,7 +4,9 @@
 
 ## 1. Trouver la fréquence militaire
 
-Les zombies militaires et policiers portent parfois une **Note de service militaire** (environ 1 sur 50 par défaut). Clic droit, **Inspecter**.
+Les zombies militaires et policiers portent parfois une **Note de service militaire** (environ 1 sur 10 par défaut). Clic droit, **Inspecter**. Fouillez aussi les bureaux, classeurs, boîtes à dossiers, étagères à pièces à conviction, armureries et casiers de police ; les casiers et réserves des bunkers, stocks d'équipement et d'électronique militaires, casiers des dortoirs, rayons de lecture des surplus militaires ; et les casiers des pompiers. Ce sont des trouvailles aléatoires, sans garantie par bâtiment.
+
+Ces ajouts concernent les conteneurs remplis après la mise à jour ; le butin déjà généré n'est pas renouvelé.
 
 ![Note de service militaire](../../images/screenshots/memo-fr.png)
 
@@ -31,7 +33,7 @@ Elle s'écoute avec une radio militaire, une radio de radioamateur ou le meilleu
 
 ### Le carnet de codes
 
-Les zombies militaires portent parfois un **Carnet de codes militaire**, qu'on trouve aussi dans les réserves de l'armée. Il n'y a qu'une table par partie : tous les carnets trouvés sont identiques.
+Les zombies militaires portent parfois un **Carnet de codes militaire** (environ 1 sur 20 par défaut). Fouillez aussi les stockages militaires et les bureaux, archives et armureries de police cités ci-dessus. Les casiers de police et de pompiers ne donnent que des notes ; les zombies policiers ne portent pas de carnet par défaut. Il n'y a qu'une table par partie : tous les carnets trouvés sont identiques.
 
 ![Carnet de codes militaire](../../images/screenshots/codebook-fr.png)
 

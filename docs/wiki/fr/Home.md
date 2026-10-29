@@ -1,6 +1,6 @@
 # Military Drop : guide du joueur
 
-> Guide de Military Drop 0.8.0.
+> Guide de Military Drop 0.8.1.
 
 [English](../en/Home.md) · [Accueil du guide](../Home.md)
 

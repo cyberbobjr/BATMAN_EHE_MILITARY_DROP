@@ -417,50 +417,132 @@ function T.codebook_only_on_army_zombies_in_encrypted_mode()
     assertEq(codebooks(army), 1, "carnet remis après un second OnZombieDead")
 end
 
-function T.codebook_added_once_to_army_loot_in_encrypted_mode()
-    local lockers = ProceduralDistributions.list.ArmyBunkerLockers.items
-    assertEq(MilitaryDrop.Notes.addCodebookToLoot(), false, "code fixe : rien")
-    assertEq(#lockers, 2, "liste inchangée")
-    SandboxVars.MilitaryDrop.AuthCode = 4
-    assertEq(MilitaryDrop.Notes.addCodebookToLoot(), true, "chiffré : ajouté")
-    assertEq(lockers[3], "MilitaryDrop.Codebook", "objet du mod")
-    assertEq(lockers[4], 25, "poids 50 / 2 (option Débogage)")
-    assertEq(ProceduralDistributions.list.ArmyStorageElectronics.items[1], "MilitaryDrop.Codebook", "autre liste")
-    assertEq(PARSED, 1, "tables relues")
-    assertEq(MilitaryDrop.Notes.addCodebookToLoot(), false, "pas deux fois")
-    assertEq(#lockers, 4, "aucun doublon")
-    assertEq(PARSED, 1, "pas de seconde relecture")
+local function weight(name, fullType)
+    local list = ProceduralDistributions.list[name]
+    if not list then return nil end
+    for i = 1, #list.items, 2 do
+        if list.items[i] == fullType then return list.items[i + 1] end
+    end
 end
 
-function T.codebook_loot_follows_options_changed_during_the_game()
+function T.documents_in_targeted_storage_are_idempotent_and_mode_aware()
+    local Notes = MilitaryDrop.Notes
+    ProceduralDistributions.list.PoliceDesk = { items = { "Base.Pen", 4 } }
+    ProceduralDistributions.list.FireDeptLockers = { items = {} }
+    ProceduralDistributions.list.OfficeDesk = { items = { "Base.Pen", 8 } }
+    assertTrue(Notes.addDocumentsToLoot(), "memo added even with a fixed code")
+    assertEq(weight("PoliceDesk", Notes.ITEM), 25, "police memo weight")
+    assertEq(weight("FireDeptLockers", Notes.ITEM), 25, "fire station memo")
+    assertEq(weight("PoliceDesk", Notes.CODEBOOK_ITEM), nil, "fixed code: no codebook")
+    assertEq(weight("OfficeDesk", Notes.ITEM), nil, "ordinary offices untouched")
+    assertEq(weight("PoliceDesk", "Base.Pen"), 4, "vanilla weight preserved")
+    assertEq(PARSED, 1, "one parse for all documents")
+    assertEq(Notes.addDocumentsToLoot(), false, "repeat initialization changes nothing")
+    assertEq(PARSED, 1, "no unnecessary parse")
+    SandboxVars.MilitaryDrop.AuthCode = 4
+    assertTrue(Notes.addDocumentsToLoot(), "encrypted mode adds codebooks")
+    assertEq(weight("PoliceDesk", Notes.CODEBOOK_ITEM), 25, "police codebook")
+    assertEq(weight("ArmyBunkerLockers", Notes.CODEBOOK_ITEM), 25, "army codebook")
+    assertEq(weight("FireDeptLockers", Notes.CODEBOOK_ITEM), nil, "no codebook in fire lockers")
+    assertEq(#ProceduralDistributions.list.PoliceDesk.items, 6, "one of each document")
+    assertEq(Notes.addDocumentsToLoot(), false, "neither document duplicated")
+end
+
+function T.document_loot_follows_options_changed_during_the_game()
+    local Notes = MilitaryDrop.Notes
     local values = {}
     for name, value in pairs(SandboxVars.MilitaryDrop) do
         values["MilitaryDrop." .. name] = value
     end
     local java = useJavaSandboxOptions(values)
-    java["MilitaryDrop.CodebookDropRate"] = 6
-    local lockers = ProceduralDistributions.list.ArmyBunkerLockers.items
     triggerEvent("OnInitGlobalModData")
     triggerEvent("EveryOneMinute")
-    assertEq(#lockers, 2, "code fixe au chargement : pas de carnet")
+    assertEq(weight("ArmyBunkerLockers", Notes.ITEM), 25, "initial memo")
+    assertEq(weight("ArmyBunkerLockers", Notes.CODEBOOK_ITEM), nil, "fixed mode")
     java["MilitaryDrop.AuthCode"] = 4
-    triggerEvent("EveryOneMinute")
-    assertEq(lockers[3], "MilitaryDrop.Codebook", "mode 4 choisi en cours de partie : carnet ajouté")
-    assertEq(lockers[4], 25, "poids 50 / 2")
-    assertEq(PARSED, 1, "tables relues")
+    java["MilitaryDrop.NoteDropRate"] = 4
     java["MilitaryDrop.CodebookDropRate"] = 3
     triggerEvent("EveryOneMinute")
-    assertEq(#lockers, 4, "une seule entrée")
-    assertEq(lockers[4], 0.5, "nouveau poids 50 / 100 (Rare)")
-    assertEq(PARSED, 2, "relues de nouveau")
+    assertEq(weight("ArmyBunkerLockers", Notes.ITEM), 5, "normal memo weight")
+    assertEq(weight("ArmyBunkerLockers", Notes.CODEBOOK_ITEM), 2.5, "rare codebook weight")
+    assertEq(PARSED, 2, "single parse for combined option changes")
+    java["MilitaryDrop.NoteDropRate"] = 5
+    triggerEvent("EveryOneMinute")
+    assertEq(weight("ArmyBunkerLockers", Notes.ITEM), 10, "memo rate refreshed")
+    assertEq(weight("ArmyBunkerLockers", Notes.CODEBOOK_ITEM), 2.5, "codebook unchanged")
     java["MilitaryDrop.AuthCode"] = 2
     triggerEvent("EveryOneMinute")
-    assertEq(#lockers, 2, "hors mode 4 : carnet retiré")
-    assertEq(lockers[1] .. "=" .. lockers[2], "Base.Something=4", "entrées du jeu intactes")
-    assertEq(#ProceduralDistributions.list.ArmyStorageElectronics.items, 0, "autre liste vidée")
-    assertEq(PARSED, 3, "relues après le retrait")
+    assertEq(weight("ArmyBunkerLockers", Notes.CODEBOOK_ITEM), nil, "codebooks removed")
+    assertEq(weight("ArmyBunkerLockers", Notes.ITEM), 10, "memos retained")
+    assertEq(weight("ArmyBunkerLockers", "Base.Something"), 4, "other loot preserved")
+    assertEq(#ProceduralDistributions.list.ArmyBunkerLockers.items, 4, "one memo, no stale entries")
+    assertEq(PARSED, 4, "one parse per change")
     triggerEvent("EveryOneMinute")
-    assertEq(PARSED, 3, "rien de neuf : pas de relecture")
+    assertEq(PARSED, 4, "stable options do not reparse")
+end
+
+function T.default_zombie_rates_and_all_sandbox_levels()
+    SandboxVars.MilitaryDrop.NoteDropRate = nil
+    SandboxVars.MilitaryDrop.CodebookDropRate = nil
+    assertEq(MilitaryDrop.Notes.dropRate(), 10, "default memo: 10 percent")
+    assertEq(MilitaryDrop.Notes.codebookRate(), 20, "default codebook: 5 percent")
+    local expected = { 200, 100, 20, 10, 5, 2 }
+    for level, denominator in ipairs(expected) do
+        SandboxVars.MilitaryDrop.NoteDropRate = level
+        SandboxVars.MilitaryDrop.CodebookDropRate = level
+        assertEq(MilitaryDrop.Notes.dropRate(), denominator, "memo rarity")
+        assertEq(MilitaryDrop.Notes.codebookRate(), denominator, "codebook rarity")
+    end
+end
+
+function T.zombie_rolls_use_the_configured_denominators()
+    SandboxVars.MilitaryDrop.AuthCode = 4
+    SandboxVars.MilitaryDrop.NoteDropRate = nil
+    SandboxVars.MilitaryDrop.CodebookDropRate = nil
+    local rolls = {}
+    ZombRand = function(n) rolls[#rolls + 1] = n return 1 end
+    MilitaryDrop.Notes.onZombieDead(makeZombie("ArmyCamoGreen"))
+    assertEq(rolls[1], 10, "memo roll")
+    assertEq(rolls[2], 20, "codebook roll")
+    assertEq(#rolls, 2, "separate independent rolls")
+end
+
+function T.missing_loot_tables_are_optional()
+    ProceduralDistributions = nil
+    assertEq(MilitaryDrop.Notes.addDocumentsToLoot(), false, "no registry")
+    ProceduralDistributions = {}
+    assertEq(MilitaryDrop.Notes.refreshDocumentLoot(), false, "no list")
+    ProceduralDistributions.list = {}
+    assertEq(MilitaryDrop.Notes.addDocumentsToLoot(), false, "no matching distributions")
+    assertEq(PARSED, 0, "nothing to parse")
+end
+
+function T.targeted_distributions_exist_in_installed_vanilla()
+    if not hasVanilla then return end
+    local Notes = MilitaryDrop.Notes
+    for _, name in ipairs({ "Bin", "Closet", "Counter", "Desk", "Shelf", "SideTable" }) do
+        assert(loadstring(readVanillaFile("server/Items/Distribution_" .. name .. "Junk.lua")))()
+    end
+    assert(loadstring(readVanillaFile("server/Items/Distribution_BagsAndContainers.lua")))()
+    local source = readVanillaFile("server/Items/ProceduralDistributions.lua")
+    assert(loadstring(source))()
+    local distributions = readVanillaFile("server/Items/Distributions.lua")
+    for _, names in ipairs({ Notes.MEMO_LISTS, Notes.CODEBOOK_LISTS }) do
+        for _, name in ipairs(names) do
+            assertTrue(ProceduralDistributions.list[name] ~= nil, "existing vanilla list: " .. name)
+            assertTrue(distributions:find('name="' .. name .. '"', 1, true) ~= nil,
+                "vanilla container uses: " .. name)
+        end
+    end
+    SandboxVars.MilitaryDrop.AuthCode = 4
+    Notes.addDocumentsToLoot()
+    for _, name in ipairs(Notes.MEMO_LISTS) do
+        assertEq(weight(name, Notes.ITEM), 25, "memo inserted into real table: " .. name)
+    end
+    for _, name in ipairs(Notes.CODEBOOK_LISTS) do
+        assertEq(weight(name, Notes.CODEBOOK_ITEM), 25, "codebook inserted into real table: " .. name)
+    end
+    assertEq(weight("OfficeDesk", Notes.ITEM), nil, "no generic office memo")
 end
 
 return T

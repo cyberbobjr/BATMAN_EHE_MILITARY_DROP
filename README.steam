@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]
 
-[i]0.8.0[/i]
+[i]0.8.1[/i]
 
 Tune a military radio to the right frequency, give this week's code and requisition supplies. A helicopter drops a crate far away and announces the grid to everyone listening... and the noise draws the dead.
 
@@ -43,6 +43,10 @@ Each character has a personal reputation, never shown as a number. It shortens t
 [*][b]Contested drop zones[/b] for PvP servers, drawn in game by the admin.
 [*]71 sandbox options; server-authoritative multiplayer.
 [/list]
+
+[h2]0.8.1[/h2]
+
+Memos and codebooks: five times more likely on zombies, with new police and military storage locations. Fire station lockers can hold memos.
 
 [h2]0.8.0[/h2]
 

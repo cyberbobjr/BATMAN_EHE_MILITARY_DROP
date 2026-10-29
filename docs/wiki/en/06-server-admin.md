@@ -17,7 +17,7 @@ Options can be changed without restarting, except the two frequencies (see below
 The mod reads its options each time it uses them: a new value counts for the next call, drop, order, mission or crash. What already exists keeps the value it was created with: a flight in the air, a horde already spawned, a mission deadline, a crash site. Within one in-game minute of the change, the console (`console.txt`, or the server log) shows `[MilitaryDrop] sandbox options changed: …`, and a few changes are applied at that moment:
 
 - switching to the encrypted weekly code starts the numbers station if the game was loaded in another mode; leaving it silences the station;
-- the codebook is put in army storage, or taken out, with its new drop rate (containers filled afterwards only);
+- document loot weights follow both rarity settings; codebooks are added or removed according to the authentication mode (containers filled afterwards only);
 - the requisition lots are prepared when the form is turned on;
 - the drop zone tool, if open, shows the new placement.
 
@@ -45,11 +45,11 @@ The mod reads its options each time it uses them: a new value counts for the nex
 | Authentication code | `AuthCode` | Rotating code, encrypted | None / Fixed code, in clear on the notes / Rotating code, in clear on the notes / Rotating code, encrypted (numbers station and codebook). 3 wrong codes in a day: the base ignores the caller until the next day. |
 | Code change | `CodePeriod` | Every week (Monday) | When the rotating code changes (game calendar): every Monday at 00:00, every other Monday at 00:00, or on the 1st of each month at 00:00. The previous code is still accepted for 24 hours. Pick a longer period on servers where game days pass quickly. The codebook never changes. |
 | Numbers station frequency (MHz) | `NumbersStationFrequency` | 0 | 0: random free shortwave frequency, 10 to 25 MHz. Encrypted mode only. Restart required. |
-| Military notes drop rate | `NoteDropRate` | Normal (1/50) | Extremely rare 1/1000, Very rare 1/500, Rare 1/100, Normal 1/50, Common 1/25, Debug 1/2. |
+| Military notes drop rate | `NoteDropRate` | Normal (1/10) | Extremely rare 1/200, Very rare 1/100, Rare 1/20, Normal 1/10, Common 1/5, Debug 1/2. Also controls memo weights in targeted storage. |
 | Notes only on military and police zombies | `NotesOnlyArmyPolice` | true | Only outfits from the list below carry memos. |
 | Outfits carrying notes | `NoteOutfits` | `Army;Police;Sheriff` | Words searched in the outfit name (also matches mod outfits). |
 | Excluded outfits | `NoteOutfitsExcluded` | `Stripper` | Outfits that never carry notes or codebooks. |
-| Codebook drop rate | `CodebookDropRate` | Rare (1/100) | Same scale. Also sets how often codebooks are found in army storage. |
+| Codebook drop rate | `CodebookDropRate` | Rare (1/20) | Same scale. Also controls codebooks in military storage and police desks, archives and armouries. |
 | Outfits carrying codebooks | `CodebookOutfits` | `Army` | Words searched in the outfit name. |
 
 ### Trust
