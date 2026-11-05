@@ -79,6 +79,10 @@ Tout le détail, avec captures : [url=https://github.com/cyberbobjr/BATMAN_EHE_M
 Questions, bugs ou idées ? Rejoignez le Discord :
 [url=https://discord.gg/QEsBya7hUA]https://discord.gg/QEsBya7hUA[/url]
 
+[h2]Un mot sur l'IA[/h2]
+
+Je suis développeur depuis des années et je créais des mods bien avant les agents de code, souvent au détriment du temps passé en famille. J'utilise ouvertement Claude Code et Codex : chaque fonctionnalité est toujours discutée, conçue et planifiée, pas « vibe codée » à l'aveugle. L'IA est là pour rester ; j'ai choisi de m'adapter plutôt que de résister. Merci à tous ceux qui ont pris ma défense face aux attaques personnelles.
+
 [h2]Soutenir le projet[/h2]
 
 Un café aide à financer la suite du mod.

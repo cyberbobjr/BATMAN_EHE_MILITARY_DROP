@@ -79,6 +79,10 @@ Todo en detalle, con capturas: [url=https://github.com/cyberbobjr/BATMAN_EHE_MIL
 ¿Preguntas, errores o ideas? Únete al Discord:
 [url=https://discord.gg/QEsBya7hUA]https://discord.gg/QEsBya7hUA[/url]
 
+[h2]Una nota sobre la IA[/h2]
+
+Soy desarrollador desde hace años y creaba mods mucho antes de que existieran los agentes de programación, a menudo a costa del tiempo con mi familia. Uso abiertamente Claude Code y Codex: cada función se sigue discutiendo, diseñando y planificando, no se hace a ciegas con «vibe coding». La IA ha llegado para quedarse; he elegido adaptarme en lugar de resistirme. Gracias a todos los que se opusieron a los ataques personales.
+
 [h2]Apoya el proyecto[/h2]
 
 ¿Te gusta el mod? Un café ayuda a financiar nuevas funciones y traducciones.
