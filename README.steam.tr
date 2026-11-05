@@ -1,0 +1,93 @@
+[h1]Military Drop - Radio Supply Airdrops[/h1]
+
+[b]Gerekli modlar[/b]: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672][b]TooltipLib[/b][/url] + [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url].
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
+
+[b]Build 42.21 · Tek oyunculu ve çok oyunculu · Bağımsız[/b]
+
+[i]0.8.1[/i]
+
+Askerî bir telsizi doğru frekansa ayarla, bu haftanın kodunu ver ve malzeme iste. Bir helikopter uzakta bir sandık bırakır ve koordinatı dinleyen herkese duyurur... Gürültü ise ölüleri çeker.
+
+[h2]Nasıl işler[/h2]
+
+[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/screenshots/walkie-logistics.png[/img]
+
+[olist]
+[*][b]Frekansı ve kodu bul.[/b] Askerî ve polis notları frekansı verir; her Pazartesi, askerî kod kitabıyla kısa dalga numara istasyonunu çöz.
+[*][b]Askerî telsizden çağır.[/b] Sağ tıkla, [b]Aygıt Ayarları[/b], [b]Lojistik[/b] bölümü: kodu yaz ve [b]Malzeme bırakma iste[/b] düğmesine bas.
+[*][b]İstek formunu doldur.[/b] Ganimet tablolarından yapılmış 18 paket (modların dâhil), güvenin belirlediği bütçe içinde. Ya da hordları uzaklaştırmak için bir siren yemi.
+[*][b]Sandığa ulaş.[/b] 150 ila 400 kare uzağa düşer ve bir horda tarafından korunur. Askerî frekansta bir telsiz açık tut: bir kasa açılana kadar koordinat tekrarlanır.
+[/olist]
+
+[h2]Yeni: Fulton çıkarması[/h2]
+
+Balonla orduya istihbarat gönder. [b]Fulton alım isteği[/b] ile bir alım iste, dışarıya bir [b]Fulton kurtarma kiti[/b] koy, içine kimlik kartları, evraklar, saklanan haritalar veya NBC koruyucuları doldur, sonra bir [b]Helyum tüpü[/b] ile [b]Fulton'u şişir ve bırak[/b]. Bir uçak onu kapar ve üs sana güvenle öder. Kiti üret ya da askerî depolarda, enkazlarda veya sandıklarda bulunan hasarlı bir kiti onar.
+
+[h2]Üssün güvenini kazan[/h2]
+
+Her karakterin, asla bir sayı olarak gösterilmeyen kişisel bir itibarı vardır. Bırakmalar arasındaki bekleme süresini kısaltır ve daha büyük istekleri açar.
+
+[list]
+[*]Önce kendi sandığını aç; bir enkazdan uçuş kaydedicisi gönder.
+[*]Günlük raporlar, düşen askerlerin künyeleri, keşif, temizlik emirleri, telsiz kontrolleri, Fulton sevkiyatları.
+[*]Dışarıdakiler sandıklarını açtığında ya da bir sandık kaybolduğunda kaybedersin.
+[/list]
+
+[h2]Ayrıca[/h2]
+
+[list]
+[*][b]Helikopter kazaları[/b], fırtınalarda daha sık: bir MAYDAY sektörü verir; enkaz parça, belge ve uçuş kaydedicisi içerir.
+[*][b]Irtibat noktası[/b]: sabit bir askerî telsiz, istasyonunun konsoluna dönüşür (görevler, emirler, günlük, kayıt bölmesi).
+[*][b]Tartışmalı bırakma bölgeleri[/b] PvP sunucuları için; yönetici bunları oyun içinde çizer.
+[*]71 sandbox seçeneği; sunucu yetkili çok oyunculu.
+[/list]
+
+[h2]0.8.1[/h2]
+
+Notlar ve kod kitapları zombilerde beş kat daha sık çıkar; yeni polis ve askerî depo konumları. İtfaiye istasyonu dolapları notları tutabilir.
+
+[h2]0.8.0[/h2]
+
+[list]
+[*]Keşif başarısı bildirimleri, ırtibat noktasında sonuç geçmişi ve geçici yeşil harita kontrolleri. Keşif ve röle onarım hedefleri haritanda işaretlenir.
+[*]Kesintilerden sonra röle dolaplarını elektronik hurdayla onar; Elektrikçilik maliyeti ve süreyi azaltır. XP kazanırsın, jeneratör gerekmez.
+[*]Haftalık Fulton yük bonusları, horda raporları, teslim makbuzları ve kişisel takdirnameler.
+[*]Rotor ve teslimat gürültü denetimleri ayrı; yapılandırılmış bırakma hordası kalır.
+[*]Yönetici konsolu: SP Debug → Main; MP'de herhangi bir yere sağ tıkla → Military Drop Admin Menu. Güncel kod/frekanslar, zorla bırakmalar, sonraki kaza ve Fulton testleri. Bırakma bölgesi menüleri değişmedi.
+[*]İsteğe bağlı [b]batman_MilitaryDropJammer[/b] alt modu bu pakette: RJ-93'ü üret ve yerleştir, pil tak/çıkar ve penceresinde şarjı gör. Varsayılan: 100 kare, tam pil başına 24 oyun saati. Giden Military Drop çağrılarını, kendininkiler dâhil, engeller; yayınlar duyulmaya devam eder. Parazit, bir mesaj ve bağlantı durumu engellemeyi belirler. Parazitsiz oynamak için bu alt modu devre dışı bırak.
+[*]Uçuş kaydedicileri: iletimden önce veya sonra sök; fiziksel kaydedici artık geri verilir. Yöneticiler seçili bir noktada röle onarım emirleri başlatabilir.
+[/list]
+
+[h2]Uyumluluk[/h2]
+
+[list]
+[*]Gerekli: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338][b]Belt Walkie-Talkie[/b][/url]; onu kullanan tüm modların ortak kemer telsizi davranışı.
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3672792485]HEF - Helicopter Event Framework[/url] ile birlikte çalışacak şekilde tasarlandı.
+[*]Gerekli: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882][b]Signal Smoke[/b][/url]; yeşil duman sandığı işaretler.
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3615135168]Zombie Virus Vaccine[/url] ile numuneler ve aşılar Fulton ile gönderilebilir.
+[*]Better Walkie Talkies desteklenir; modlarındaki eşyalar sandıklarda çıkar.
+[/list]
+
+[h2]Rehber[/h2]
+
+Ekran görüntüleriyle her şey ayrıntılı: [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/EN-Home]tam rehber (İngilizce)[/url] · [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/wiki/FR-Home]guide complet (Fransızca)[/url].
+
+[h2]Discord[/h2]
+
+Soru, hata bildirimi ya da fikrin mi var? Discord'a katıl:
+[url=https://discord.gg/QEsBya7hUA]https://discord.gg/QEsBya7hUA[/url]
+
+[h2]Yapay zekâ hakkında bir not[/h2]
+
+Yıllardır geliştiriciyim ve kodlama ajanları ortaya çıkmadan çok önce mod yapıyordum; bu da çoğu zaman ailemle geçirdiğim zamandan çalıyordu. Claude Code ve Codex'i açıkça kullanıyorum: her özellik hâlâ tartışılıyor, tasarlanıyor ve planlanıyor; körü körüne "vibe coding" yapılmıyor. Yapay zekâ kalıcı; direnmek yerine uyum sağlamayı seçtim. Kişisel saldırılara karşı duran herkese teşekkür ederim.
+
+[h2]Projeyi destekle[/h2]
+
+Modu beğendin mi? Bir kahve yeni özellikler ve çevirilere kaynak sağlamaya yardımcı olur.
+[url=https://ko-fi.com/Z8Z8QJV31][img]https://storage.ko-fi.com/cdn/kofi6.png?v=6[/img][/url]
+
+[h2]Emeği geçenler[/h2]
+
+Build 42'ye yeniden yazım: [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085]Expanded Helicopter Events: Drop Military Cargo[/url] (Build 41). Kaynak kodu (MIT) [url=https://github.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP]GitHub[/url] üzerinde.
