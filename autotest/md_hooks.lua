@@ -1,6 +1,6 @@
 --[[
-Hooks of the generic launcher pz-autotest (.claude/tools/pz-autotest) for Military Drop: nominal path (C13 of
-docs/ameliorations-et-idees.md). Configuration: MilitaryDrop/autotest.json. Loaded by batman_PZAutoTestDriver with
+Hooks of the generic launcher pzdev (PZDevKit) for Military Drop: nominal path (C13 of
+docs/ameliorations-et-idees.md). Configuration: MilitaryDrop/autotest.json. Loaded by batman_PZDevKit with
 loadstring (global environment, the mod already loaded). ASCII only (Kahlua lexer).
 
 Authority (solo client, or mp server with the first connected player), through the mod's own server entry points:
@@ -24,12 +24,12 @@ opened, both drawn for a few frames then closed (C08: split window files, Lua er
 Parameters (ctx.params, text): deliverySec (default 240), clientWaitSec (mp client, default 420), crateWaitSec
 (crate vehicle or ground cases after the delivery, default 30), serverLeadSec (mp server, delay before step 1 so
 that client 1 observes the "Result" reply, default 20).
-Run state: MilitaryDrop's world state of the COPIED save only (pz-autotest copies the save and the server).
+Run state: MilitaryDrop's world state of the COPIED save only (pzdev copies the save and the server).
 ]]
 
 local H = { client = {}, server = {} }
 
--- -P shots=1: screenshots for a visual check (Zomboid/Screenshots of the cache, copied into runs/... by pz-autotest).
+-- -P shots=1: screenshots for a visual check (Zomboid/Screenshots of the cache, copied into runs/... by pzdev).
 -- takeScreenshot reads the last presented frame: wait a few frames after a UI change.
 local SHOTS = false
 

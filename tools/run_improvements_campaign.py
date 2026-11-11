@@ -1,4 +1,4 @@
-"""Run the branch's real-game scenarios serially, using throwaway pz-autotest caches."""
+"""Run the branch's real-game scenarios serially, using throwaway pzdev caches."""
 import argparse
 import datetime
 import json
@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-TOOL = ROOT.parent / '.claude/tools/pz-autotest/pz_autotest.py'
+TOOL = ROOT.parent / 'PZDevKit/pzdev.py'
 CASES = {
     'admin-sp': ['sp', 'autotest/scenarios/administration.json'],
     'admin-mp': ['mp', 'autotest/scenarios/administration.json', '--clients', '2', '--client-run'],

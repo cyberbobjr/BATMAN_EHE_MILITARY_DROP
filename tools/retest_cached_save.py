@@ -9,9 +9,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT.parent / '.claude/tools/pz-autotest'))
-import pz_autotest
-from pzat import runner
+sys.path.insert(0, str(ROOT.parent / 'PZDevKit/cli'))
+from pzdev import autotest as pz_autotest
+from pzdev import launcher as runner
 
 source = Path(sys.argv[1]).resolve()
 if not source.is_relative_to(Path(tempfile.gettempdir()).resolve()) or not source.name.startswith('pzat-sp-'):

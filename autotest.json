@@ -1,9 +1,9 @@
-// pz-autotest configuration of Military Drop (.claude/tools/pz-autotest/README.md). Nominal path (C13):
+// pzdev configuration of Military Drop (PZDevKit/docs/wiki/fr/01-tests-automatiques.md). Nominal path (C13):
 // request checked by the server (code, cooldown), real flight and crate delivery near the player, crate contents,
 // trust on the first supply case opened, admin mission, liaison post, Fulton refusal without a kit.
-//   python .claude/tools/pz-autotest/pz_autotest.py check MilitaryDrop
-//   python .claude/tools/pz-autotest/pz_autotest.py sp    MilitaryDrop --wait-idle 3600
-//   python .claude/tools/pz-autotest/pz_autotest.py mp    MilitaryDrop --clients 1 --client-run --wait-idle 3600
+//   python PZDevKit/pzdev.py check MilitaryDrop
+//   python PZDevKit/pzdev.py sp    MilitaryDrop --wait-idle 3600
+//   python PZDevKit/pzdev.py mp    MilitaryDrop --clients 1 --client-run --wait-idle 3600
 // Scenarios: -P scenario=marks (map markers), -P scenario=fulton (real Fulton launch); -P shots=1 for screenshots.
 // -P scenario=corrections: fixed post report/check and real clearance deaths (mp: --clients 2 --client-run).
 {
