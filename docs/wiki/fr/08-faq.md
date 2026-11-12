@@ -23,6 +23,18 @@ Le repère n'apparaît que sur la carte des joueurs dont la radio était **allum
 **Il n'y a pas de symbole de reconnaissance ou de nettoyage sur ma carte.**
 Même règle que pour les largages : le symbole n'apparaît que si votre radio entend l'annonce. Les ordres ouverts sont répétés toutes les 6 heures par défaut, et **Confirmer la reconnaissance** trop loin (ou **Faire le point** avant que la horde soit repérée) vous donne aussi la grille et le symbole.
 
+**Quels sont les numéros de grille, et où est la grille X / Y ?**
+Une grille est un point de la carte, donné en **cases** (les carrés du jeu). Le premier nombre est X, qui augmente d'ouest en est ; le second est Y, qui augmente du nord au sud. Les largages, les reconnaissances et les nettoyages donnent la case exacte. Les appels MAYDAY et l'extraction Fulton font exception : ils donnent un secteur de 50 cases, d'où des numéros qui finissent toujours par 25. Vous n'avez jamais rien à calculer : suivez le symbole.
+
+Pour trouver une grille :
+- **Symbole de carte.** Le symbole du largage, de la reconnaissance ou du nettoyage apparaît sur votre carte quand votre radio entend l'annonce, un rappel ou une réponse donnant la grille (voir [Symboles sur la carte](02-calling-a-drop.md#symboles-sur-la-carte)).
+- **Gardez la radio allumée et réglée** sur la fréquence militaire, pour entendre les rappels (toutes les 6 heures par défaut).
+- **Faire le point** avant que la horde soit repérée donne la grille et ajoute son symbole à votre carte.
+- **Poste de liaison, liste des ordres** : sélectionnez une mission pour lire sa grille, le temps restant et les consignes ([Poste de liaison](05-liaison-post.md)).
+- **Confirmer la reconnaissance** trop loin du point : la base répète la grille.
+
+La carte du jeu n'affiche pas de coordonnées par défaut. Le seul affichage de coordonnées est l'option serveur **ShowCoordinates** (désactivée par défaut), qui montre votre propre X et Y dans le coin inférieur droit de l'écran.
+
 **Je suis à la grille, mais il n'y a pas de caisse.**
 La caisse est posée quand quelqu'un arrive et que la zone est chargée, jusqu'à 30 cases du point annoncé. Cherchez autour.
 

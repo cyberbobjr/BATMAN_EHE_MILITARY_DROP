@@ -23,6 +23,18 @@ The marker appears only on the maps of players whose radio was **on and tuned to
 **There is no recon or clearance symbol on my map.**
 Same rule as the drops: the symbol appears only if your radio hears the announcement. Open orders are repeated every 6 hours by default, and pressing **Confirm the recon** too far away (or **Clearance status** before the horde is spotted) also gives you the grid and the symbol.
 
+**What are the grid numbers, and where is grid X / Y?**
+A grid is a point on the map, given in **tiles** (the game's squares). The first number is X, which grows from west to east; the second is Y, which grows from north to south. Drops, recon and clearance give the exact tile. MAYDAY and Fulton calls are the exception: they give a 50-tile sector, so their numbers always end in 25. You never need to calculate anything: follow the symbol.
+
+To find a grid:
+- **Map symbol.** The drop, recon or clearance symbol is placed on your map when your radio hears the announcement, a reminder or a reply giving the grid (see [Map symbols](02-calling-a-drop.md#map-symbols)).
+- **Keep the radio on and tuned** to the military frequency, so you hear the reminders (every 6 hours by default).
+- **Clearance status** before the horde is spotted gives the grid and adds its symbol to your map.
+- **Liaison post, Orders list**: select a mission to read its grid, time left and instructions ([Liaison post](05-liaison-post.md)).
+- **Confirm the recon** too far from the point: the base repeats the grid.
+
+The game's map shows no coordinates by default. The only coordinate display is the server option **ShowCoordinates** (off by default), which shows your own character's X and Y in the bottom-right corner of the screen.
+
 **I reached the grid but there is no crate.**
 The crate is placed when someone arrives and the area is loaded, up to 30 tiles from the announced point. Look around.
 
