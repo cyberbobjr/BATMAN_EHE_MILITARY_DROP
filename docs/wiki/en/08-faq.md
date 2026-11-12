@@ -21,13 +21,13 @@ Only military radios have the section (US Army Walkie Talkie, Manpack Radio, Ham
 The marker appears only on the maps of players whose radio was **on and tuned to the military frequency** at that moment. It is the most common trap: save the frequency with **Add preset** and keep a radio on. Keep listening: the base repeats the grid every 6 hours by default, until someone opens a supply case (48 hours at most). If you missed it, ask someone who was listening, or read the log of your [liaison post](05-liaison-post.md) if it was on.
 
 **There is no recon or clearance symbol on my map.**
-Same rule as the drops: the symbol appears only if your radio hears the announcement. Open orders are repeated every 6 hours by default, and pressing **Confirm the recon** too far away (or **Clearance status** before the horde is spotted) also gives you the grid and the symbol.
+The two missions do not work the same way. The blue **eye** of a recon is placed automatically while the order is open, radio or not, including after reconnecting. The red **skull** of a clearance follows the drop rule: it appears only if one of your radios hears the announcement, a reminder or a reply giving the grid. Open orders are repeated every 6 hours by default, and **Clearance status** before the horde is spotted also gives you the grid and the symbol. Erased the eye by mistake? It comes back at the next synchronization while the recon is open.
 
 **What are the grid numbers, and where is grid X / Y?**
 A grid is a point on the map, given in **tiles** (the game's squares). The first number is X, which grows from west to east; the second is Y, which grows from north to south. Drops, recon and clearance give the exact tile. MAYDAY and Fulton calls are the exception: they give a 50-tile sector, so their numbers always end in 25. You never need to calculate anything: follow the symbol.
 
 To find a grid:
-- **Map symbol.** The drop, recon or clearance symbol is placed on your map when your radio hears the announcement, a reminder or a reply giving the grid (see [Map symbols](02-calling-a-drop.md#map-symbols)).
+- **Map symbol.** The drop or clearance symbol is placed on your map when your radio hears the announcement, a reminder or a reply giving the grid; the recon symbol is placed automatically while the order is open (see [Map symbols](02-calling-a-drop.md#map-symbols)).
 - **Keep the radio on and tuned** to the military frequency, so you hear the reminders (every 6 hours by default).
 - **Clearance status** before the horde is spotted gives the grid and adds its symbol to your map.
 - **Liaison post, Orders list**: select a mission to read its grid, time left and instructions ([Liaison post](05-liaison-post.md)).
