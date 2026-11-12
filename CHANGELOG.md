@@ -4,6 +4,23 @@ Technical version history. Player-facing Steam notes are kept separately in
 `workshop-changenote.md` and published through `tools/publish_workshop.py`.
 The top version must match `modversion=` in `mod.info`.
 
+## 0.8.2 — 2026-11-12
+
+### Fixed
+
+- Translated the 95 values that were still identical to English: Chinese memo texts (all authentication modes and code periods), month abbreviations, document and codebook headers and labels, `PostTime` and `AdminMenuAccess`; prototype Fulton balloon and bag names in CN, DE, ES, PT, PTBR and RU; `AdminMenuAccess` in every language; Spanish `PostLampOn`. Values legitimately identical to English (units, codes, cardinal points, identical words) are kept.
+- `IGUI_MilitaryDrop_PostTime` in CN and PTBR displayed month and day in the wrong order (Lua passes day, month, time).
+- Player's guide FAQ (EN/FR): what broadcast grid numbers mean and how to locate them.
+
+### Known limits
+
+- Radio broadcasts, server-written documents and crate names still use the dedicated server's language.
+- CJK rendering and layout of Chinese memos and codebooks in the document fonts are not verified in game.
+
+### Validation
+
+- `python tests/run_tests.py --require-luacheck`: exit 0, "Tout est bon."; translation JSON valid, keys and placeholders identical to English. Not tested in game.
+
 ## 0.8.1 — 2026-10-29
 
 Published to Steam Workshop on 2026-10-29. Eight descriptions updated; all 17 additional screenshots preserved. Native gameplay validation remains pending.

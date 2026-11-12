@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Um jogador e multijogador · Independente[/b]
 
-[i]0.8.1[/i]
+[i]0.8.2[/i]
 
 Sintoniza um rádio militar na frequência certa, dá o código da semana e requisita abastecimentos. Um helicóptero larga uma caixa ao longe e anuncia a quadrícula a todos os que escutam... e o barulho atrai os mortos.
 
@@ -43,6 +43,10 @@ Cada personagem tem a sua própria reputação, nunca mostrada em números. Encu
 [*][b]Zonas de largada disputadas[/b] para servidores PvP, traçadas no jogo pelo administrador.
 [*]71 opções de sandbox; autoridade do servidor em multijogador.
 [/list]
+
+[h2]0.8.2[/h2]
+
+Traduções: os memorandos, o livro de códigos e os documentos em chinês estão agora totalmente traduzidos; as peças do protótipo Fulton e a entrada do menu de administração estão traduzidas em todas as línguas; as datas do posto de ligação seguem a ordem chinesa e do português do Brasil.
 
 [h2]0.8.1[/h2]
 

@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Tek oyunculu ve çok oyunculu · Bağımsız[/b]
 
-[i]0.8.1[/i]
+[i]0.8.2[/i]
 
 Askerî bir telsizi doğru frekansa ayarla, bu haftanın kodunu ver ve malzeme iste. Bir helikopter uzakta bir sandık bırakır ve koordinatı dinleyen herkese duyurur... Gürültü ise ölüleri çeker.
 
@@ -43,6 +43,10 @@ Her karakterin, asla bir sayı olarak gösterilmeyen kişisel bir itibarı vard�
 [*][b]Tartışmalı bırakma bölgeleri[/b] PvP sunucuları için; yönetici bunları oyun içinde çizer.
 [*]71 sandbox seçeneği; sunucu yetkili çok oyunculu.
 [/list]
+
+[h2]0.8.2[/h2]
+
+Çeviriler: Çince askeri notlar, şifre kitabı ve belgeler artık tamamen çevrildi; Fulton prototip parçaları ve yönetici menüsü girişi tüm dillerde çevrildi; irtibat noktasındaki tarihler Çince ve Brezilya Portekizcesi sırasını izliyor.
 
 [h2]0.8.1[/h2]
 

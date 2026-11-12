@@ -6,7 +6,7 @@
 
 [b]Build 42.21 · Einzelspieler & Mehrspieler · Eigenständig[/b]
 
-[i]0.8.1[/i]
+[i]0.8.2[/i]
 
 Stellen Sie ein Militärfunkgerät auf die richtige Frequenz, nennen Sie den Code der Woche und fordern Sie Nachschub an. Ein Hubschrauber wirft weit entfernt eine Kiste ab und meldet allen Zuhörern das Raster... und der Lärm lockt die Toten an.
 
@@ -43,6 +43,10 @@ Jeder Charakter hat einen eigenen Ruf, nie als Zahl angezeigt. Er verkürzt die 
 [*][b]Umkämpfte Abwurfzonen[/b] für PvP-Server, vom Admin im Spiel gezeichnet.
 [*]71 Sandbox-Optionen; servergesteuerter Mehrspielermodus.
 [/list]
+
+[h2]0.8.2[/h2]
+
+Übersetzungen: Die chinesischen Memos, das Codebuch und die Dokumente sind jetzt vollständig übersetzt; die Fulton-Prototypteile und der Admin-Menüeintrag sind in allen Sprachen übersetzt; Datumsangaben am Verbindungsposten folgen der chinesischen und brasilianisch-portugiesischen Reihenfolge.
 
 [h2]0.8.1[/h2]
 
