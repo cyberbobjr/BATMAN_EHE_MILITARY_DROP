@@ -666,7 +666,7 @@
   "IGUI_MilitaryDrop_AdminUI_Phase_opened": "Найден / открыт",
   "IGUI_MilitaryDrop_AdminUI_mainPlayerOnly": "В сетевой игре штатное перемещение доступно только первому локальному игроку.",
   "IGUI_MilitaryDrop_AdminUI_busy": "Подождите немного и запросите действие снова.",
-  "IGUI_MilitaryDrop_AdminMenuAccess": "Military Drop Admin Menu",
+  "IGUI_MilitaryDrop_AdminMenuAccess": "Меню администратора Military Drop",
   "IGUI_MilitaryDrop_AdminUI_Group_tools": "Инструменты",
   "IGUI_MilitaryDrop_AdminUI_Group_radio": "Связь",
   "IGUI_MilitaryDrop_AdminUI_Phase_tool": "Инструмент админа",

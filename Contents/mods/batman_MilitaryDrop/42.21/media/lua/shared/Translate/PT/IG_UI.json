@@ -666,7 +666,7 @@
   "IGUI_MilitaryDrop_AdminUI_Phase_opened": "Encontrado / aberto",
   "IGUI_MilitaryDrop_AdminUI_mainPlayerOnly": "Em MP, a deslocação nativa está reservada ao primeiro jogador local.",
   "IGUI_MilitaryDrop_AdminUI_busy": "Aguarde um instante e volte a pedir a intervenção.",
-  "IGUI_MilitaryDrop_AdminMenuAccess": "Military Drop Admin Menu",
+  "IGUI_MilitaryDrop_AdminMenuAccess": "Menu de administração do Military Drop",
   "IGUI_MilitaryDrop_AdminUI_Group_tools": "Ferramentas",
   "IGUI_MilitaryDrop_AdminUI_Group_radio": "Comunicações",
   "IGUI_MilitaryDrop_AdminUI_Phase_tool": "Ferramenta admin",
