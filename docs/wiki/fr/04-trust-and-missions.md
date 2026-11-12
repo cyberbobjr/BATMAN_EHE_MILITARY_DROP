@@ -80,11 +80,11 @@ De temps en temps, la base donne un ordre à **toutes les stations** sur la fré
 
 *« À toutes les stations, ici Logistique. Reconnaissance demandée en grille X / Y. Premier survivant à confirmer sur place dans les 48 heures. »*
 
-Un symbole **œil** bleu marque automatiquement la grille sur votre carte dès le lancement, y compris après reconnexion si la mission est encore active. Il disparaît à sa clôture. Allez-y et appuyez sur **Confirmer la reconnaissance** à **25 cases** au plus du point. Le premier personnage gagne +3. Trop loin, la base vous redonne la grille.
+<img src="../../images/screenshots/map-symbol-recon.png" width="32" alt="Œil bleu"> Un symbole **œil** bleu marque automatiquement la grille sur votre carte dès le lancement, y compris après reconnexion si la mission est encore active. Il disparaît à sa clôture. Allez-y et appuyez sur **Confirmer la reconnaissance** à **25 cases** au plus du point. Le premier personnage gagne +3. Trop loin, la base vous redonne la grille.
 
 ### Nettoyage
 
-À la réussite, chaque participant connecté reçoit une notification indiquant sa contribution et son gain réel de confiance, même si le plafond quotidien limite ce gain à zéro. La récompense reste attribuée au meilleur contributeur selon les règles ordinaires. Le crâne et le cercle sont remplacés par une **coche verte pendant une heure de jeu**, puis retirés automatiquement ; une reconnexion conserve seulement la durée restante.
+À la réussite, chaque participant connecté reçoit une notification indiquant sa contribution et son gain réel de confiance, même si le plafond quotidien limite ce gain à zéro. La récompense reste attribuée au meilleur contributeur selon les règles ordinaires. Le crâne et le cercle sont remplacés par une <img src="../../images/screenshots/map-symbol-secured.png" width="24" alt="Coche verte"> **coche verte pendant une heure de jeu**, puis retirés automatiquement ; une reconnexion conserve seulement la durée restante.
 
 Le poste de liaison conserve les **20 derniers résultats de nettoyage** sous « Missions terminées » : résultat, grille, date de clôture, votre contribution et votre gain de confiance. L'historique reste consultable après reconnexion et après disparition de la coche. Une mission expirée ou clôturée sans réussite apparaît comme telle, sans notification de succès ni coche verte. Les missions terminées avant cette mise à jour ne peuvent pas être reconstituées avec leurs détails manquants.
 
@@ -131,7 +131,7 @@ Le premier joueur qui termine rétablit le service et reçoit **10 XP de base en
 
 Les quatre emplacements utilisent les coordonnées X/Y de projectzomboidmap.com, au rez-de-chaussée. Une mission désigne une seule armoire ; réparer une autre ne valide rien.
 
-Un **« ! » orange** indique l’armoire à réparer sur votre carte dès la synchronisation de la mission, y compris après reconnexion. Le repère disparaît après réparation, rétablissement administratif ou liaison de secours ; vos annotations personnelles sont conservées.
+<img src="../../images/screenshots/map-symbol-relay.png" width="32" alt="Point d’exclamation orange"> Un **« ! » orange** indique l’armoire à réparer sur votre carte dès la synchronisation de la mission, y compris après reconnexion. Le repère disparaît après réparation, rétablissement administratif ou liaison de secours ; vos annotations personnelles sont conservées.
 
 | Site | X | Y | Carte |
 |---|---|---|---|

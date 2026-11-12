@@ -18,6 +18,8 @@ Admin drops and decoy drops never crash by chance or by gunfire. A crash has no 
 
 Keep a military radio on the military frequency: Logistics calls *"MAYDAY, MAYDAY! Logistics flight going down near grid X / Y. Search the area. No further contact."* The grid is the crash site. By default the ordered supplies are lost with the helicopter; the server can choose to deliver them at the site instead.
 
+<img src="../../images/screenshots/map-symbol-mayday.png" width="32" alt="Orange question mark"> If your radio hears the MAYDAY, an orange **question mark** marks the sector on your map. It is never removed by the base: erase it yourself once the site is searched.
+
 ## The crash site
 
 - The fuselage and the tail lie apart, burnt. Depending on the server: fire and smoke, smoke only, or nothing.

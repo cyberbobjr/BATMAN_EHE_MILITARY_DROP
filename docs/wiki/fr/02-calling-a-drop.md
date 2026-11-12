@@ -113,13 +113,16 @@ Vous l'avez manquée ? La base répète la grille de chaque largage dont aucune 
 
 ### Symboles sur la carte
 
-Pour les largages et les nettoyages, la base marque votre carte si l'une de vos radios **entend** l'annonce, un rappel ou une réponse donnant la grille. Les missions de reconnaissance et de réparation de relais ont aussi un repère automatique synchronisé tant qu'elles sont actives, y compris après reconnexion. Ce sont les symboles de carte du jeu : on les efface comme n'importe quelle note de carte ; une synchronisation peut restaurer un repère de mission active.
+Pour les largages, les nettoyages et les MAYDAY, la base marque votre carte si l'une de vos radios **entend** l'annonce, un rappel ou une réponse donnant la grille. Les missions de reconnaissance et de réparation de relais ont aussi un repère automatique synchronisé tant qu'elles sont actives, y compris après reconnexion. Ce sont les symboles de carte du jeu : on les efface comme n'importe quelle note de carte ; une synchronisation peut restaurer un repère de mission active.
 
 | Symbole | Signification | Où |
 |---|---|---|
 | <img src="../../images/screenshots/map-symbol-drop.png" width="48" alt="Cible verte"> | **Largage** : la grille annoncée d'une caisse (ou d'un leurre, identique) | Sur une route ou au pied d'un bâtiment, jamais dans l'eau |
 | <img src="../../images/screenshots/map-symbol-recon.png" width="48" alt="Œil bleu"> | **Reconnaissance** : le bâtiment ou la route à vérifier | Confirmer à 25 cases au plus du symbole |
 | <img src="../../images/screenshots/map-symbol-clearance.png" width="48" alt="Tête de mort rouge"> | **Nettoyage** : centre de la zone où la horde est signalée, avec un cercle rouge qui trace le rayon de la zone sur la carte du monde (la mini-carte n'en montre qu'une petite icône) | La horde est répartie dans un rayon de 40 cases autour, dans le cercle |
+| <img src="../../images/screenshots/map-symbol-secured.png" width="48" alt="Coche verte"> | **Zone nettoyée** : remplace la tête de mort et le cercle quand un nettoyage réussit, pendant une heure de jeu | Rien à faire : elle disparaît seule |
+| <img src="../../images/screenshots/map-symbol-relay.png" width="48" alt="Point d’exclamation orange"> | **Relais en panne** : l'armoire de relais à réparer (voir [Réparer un relais](04-trust-and-missions.md)) | Clic droit sur l'armoire → Armoire de relais → Réparer |
+| <img src="../../images/screenshots/map-symbol-mayday.png" width="48" alt="Point d’interrogation orange"> | **MAYDAY** : le secteur où l'hélicoptère de ravitaillement est tombé (voir [Crash d'hélicoptère](09-helicopter-crash.md)) | L'épave est quelque part dans le secteur de 50 cases autour |
 
 La base retire ses symboles quand ils ne servent plus : celui d'un largage quand une caisse de ravitaillement a été ouverte ou vidée, ou que le largage est perdu ; celui d'une mission à la clôture de l'ordre. Si vous étiez déconnecté, ils sont retirés à votre reconnexion. Les symboles de MAYDAY et vos propres notes de carte ne sont jamais touchés.
 

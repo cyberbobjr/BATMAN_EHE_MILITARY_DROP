@@ -78,11 +78,11 @@ From time to time, the base gives an order to **all stations** on the military f
 
 *"All stations, Logistics. Recon required at grid X / Y. First survivor to confirm on site within 48 hours."*
 
-A blue **eye** symbol automatically marks the grid on your map at launch, including after reconnecting while the mission remains active. It disappears when the mission closes. Go there and press **Confirm the recon** within **25 tiles** of the point. The first character gets +3. Pressed too far away, the base gives you the grid again.
+<img src="../../images/screenshots/map-symbol-recon.png" width="32" alt="Blue eye"> A blue **eye** symbol automatically marks the grid on your map at launch, including after reconnecting while the mission remains active. It disappears when the mission closes. Go there and press **Confirm the recon** within **25 tiles** of the point. The first character gets +3. Pressed too far away, the base gives you the grid again.
 
 ### Clearance
 
-On success, each connected participant receives a notification showing their contribution and actual trust gain, even when the daily cap reduces that gain to zero. The ordinary best-contributor reward rule remains unchanged. The skull and circle are replaced by a **green checkmark for one game hour**, then automatically removed; reconnecting preserves only the remaining duration.
+On success, each connected participant receives a notification showing their contribution and actual trust gain, even when the daily cap reduces that gain to zero. The ordinary best-contributor reward rule remains unchanged. The skull and circle are replaced by a <img src="../../images/screenshots/map-symbol-secured.png" width="24" alt="Green checkmark"> **green checkmark for one game hour**, then automatically removed; reconnecting preserves only the remaining duration.
 
 The liaison post retains the **latest 20 clearance results** under "Completed missions": outcome, grid, completion date, your contribution and your trust gain. History remains available after reconnecting and after the checkmark disappears. Expired orders and orders closed without success are identified accordingly, without a success notification or green checkmark. Missions completed before this update cannot be reconstructed with their missing details.
 
@@ -129,7 +129,7 @@ The first player to finish restores service and earns **10 base Electricity XP**
 
 Four ground-floor locations use projectzomboidmap.com X/Y coordinates. The order identifies one cabinet; repairing another does not complete it.
 
-An **amber exclamation point** marks the cabinet on your map when the mission state synchronizes, including after reconnecting. It disappears after repair, admin restoration or emergency bypass; your personal map notes are retained.
+<img src="../../images/screenshots/map-symbol-relay.png" width="32" alt="Amber exclamation point"> An **amber exclamation point** marks the cabinet on your map when the mission state synchronizes, including after reconnecting. It disappears after repair, admin restoration or emergency bypass; your personal map notes are retained.
 
 | Site | X | Y | Map |
 |---|---|---|---|

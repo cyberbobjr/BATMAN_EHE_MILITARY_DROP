@@ -18,6 +18,8 @@ Les largages admin et les leurres ne tombent jamais par panne ni sous les tirs. 
 
 Gardez une radio militaire sur la fréquence militaire : la Logistique annonce « MAYDAY, MAYDAY ! Appareil Logistique en chute près de la grille X / Y. Fouillez le secteur. Contact perdu. » La grille est celle du crash. Par défaut, le matériel commandé est perdu avec l'hélicoptère ; le serveur peut choisir de le livrer sur le lieu du crash.
 
+<img src="../../images/screenshots/map-symbol-mayday.png" width="32" alt="Point d’interrogation orange"> Si votre radio entend le MAYDAY, un **point d'interrogation** orange marque le secteur sur votre carte. La base ne le retire jamais : effacez-le vous-même une fois le site fouillé.
+
 ## Le lieu du crash
 
 - Le fuselage et la queue gisent séparés, brûlés. Selon le serveur : feu et fumée, fumée seule, ou rien.

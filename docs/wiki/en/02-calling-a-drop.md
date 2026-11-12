@@ -109,13 +109,16 @@ Missed it? The base repeats the grid of every drop whose supply cases are all st
 
 ### Map symbols
 
-For drops and clearance, the base marks your map when one of your radios **hears** the announcement, a reminder or a reply giving the grid. Recon and relay repair missions also have automatic markers synchronized while active, including after reconnecting. These are the game's own map symbols: you can erase them like any map note; synchronization may restore an active mission marker.
+For drops, clearance and MAYDAY calls, the base marks your map when one of your radios **hears** the announcement, a reminder or a reply giving the grid. Recon and relay repair missions also have automatic markers synchronized while active, including after reconnecting. These are the game's own map symbols: you can erase them like any map note; synchronization may restore an active mission marker.
 
 | Symbol | Meaning | Where |
 |---|---|---|
 | <img src="../../images/screenshots/map-symbol-drop.png" width="48" alt="Green target"> | **Supply drop**: the announced grid of a crate (or of a decoy, which looks the same) | On a road or next to a building, never in water |
 | <img src="../../images/screenshots/map-symbol-recon.png" width="48" alt="Blue eye"> | **Reconnaissance**: the building or road to check | Confirm within 25 tiles of the symbol |
 | <img src="../../images/screenshots/map-symbol-clearance.png" width="48" alt="Red skull"> | **Clearance**: centre of the zone where the horde was reported, with a red circle showing the zone's radius on the world map (the mini-map only shows a small circle icon) | The horde is spread within 40 tiles around it, inside the circle |
+| <img src="../../images/screenshots/map-symbol-secured.png" width="48" alt="Green checkmark"> | **Zone cleared**: replaces the skull and circle when a clearance succeeds, for one game hour | Nothing to do: it disappears by itself |
+| <img src="../../images/screenshots/map-symbol-relay.png" width="48" alt="Amber exclamation point"> | **Relay down**: the relay cabinet to repair (see [Repair a relay](04-trust-and-missions.md)) | Right-click the cabinet → Relay cabinet → Repair |
+| <img src="../../images/screenshots/map-symbol-mayday.png" width="48" alt="Orange question mark"> | **MAYDAY**: the sector where the supply helicopter went down (see [Helicopter crash](09-helicopter-crash.md)) | The wreck is somewhere in the 50-tile sector around it |
 
 The base removes its symbols once they are no longer useful: a drop symbol when a supply case has been opened or emptied, or the drop is lost; a mission symbol when the order closes. If you were offline, they are removed when you reconnect. MAYDAY symbols and your own map notes are never touched.
 
