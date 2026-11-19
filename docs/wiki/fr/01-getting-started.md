@@ -8,7 +8,7 @@ Military Drop permet d'appeler l'armée par radio pour obtenir un largage de rav
 
 ## Installation
 
-1. Abonnez-vous à **Military Drop** sur le Workshop Steam (Build 42.21). Steam propose aussi ses mods requis : **Belt Walkie-Talkie** (avec **TooltipLib**) et **Signal Smoke**. Abonnez-vous à eux aussi.
+1. Abonnez-vous à **Military Drop** sur le Workshop Steam (Build 42.22). Steam propose aussi ses mods requis : **Belt Walkie-Talkie** (avec **TooltipLib**) et **Signal Smoke**. Abonnez-vous à eux aussi.
 2. Dans la liste des mods du jeu, activez **Military Drop** (identifiant `batman_MilitaryDrop`) avec Belt Walkie-Talkie (`batman_BeltRadio`), TooltipLib (`TooltipLib`) et Signal Smoke (`batman_SignalSmoke`).
 3. Lancez une partie. Les réglages sont sur la page **Military Drop** des options du bac à sable.
 

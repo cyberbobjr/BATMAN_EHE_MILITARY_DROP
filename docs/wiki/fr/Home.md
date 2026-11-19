@@ -4,7 +4,7 @@
 
 [English](../en/Home.md) · [Accueil du guide](../Home.md)
 
-Military Drop est un mod Project Zomboid Build 42.21 : appelez l'armée par radio, remplissez un formulaire de réquisition, et arrivez à la caisse avant les morts.
+Military Drop est un mod Project Zomboid Build 42.22 : appelez l'armée par radio, remplissez un formulaire de réquisition, et arrivez à la caisse avant les morts.
 
 ![Une caisse de ravitaillement en jeu](../../images/screenshots/header.png)
 

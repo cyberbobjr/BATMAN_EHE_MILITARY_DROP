@@ -1,6 +1,6 @@
 # Military Drop — documentation
 
-Mod Project Zomboid Build 42.21 (`batman_MilitaryDrop`) : appeler l'armée par radio militaire, réquisitionner du matériel largué par hélicoptère, gagner la confiance de la base par des missions et diriger sa station depuis un poste de liaison.
+Mod Project Zomboid Build 42.22 (`batman_MilitaryDrop`) : appeler l'armée par radio militaire, réquisitionner du matériel largué par hélicoptère, gagner la confiance de la base par des missions et diriger sa station depuis un poste de liaison.
 
 La documentation de développement est en français ; le wiki joueur existe en anglais et en français. La présentation GitHub est le [README](../README.md) du dépôt, l'historique des versions le [CHANGELOG](../CHANGELOG.md).
 

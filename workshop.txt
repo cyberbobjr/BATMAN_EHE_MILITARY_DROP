@@ -7,7 +7,7 @@ description=[b]Required mods[/b]: [url=https://steamcommunity.com/sharedfiles/fi
 description=
 description=[img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 description=
-description=[b]Build 42.21 · Singleplayer & Multiplayer · Standalone[/b]
+description=[b]Build 42.22 · Singleplayer & Multiplayer · Standalone[/b]
 description=
 description=[i]0.8.2[/i]
 description=

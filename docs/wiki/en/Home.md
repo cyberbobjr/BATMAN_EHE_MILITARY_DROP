@@ -4,7 +4,7 @@
 
 [Français](../fr/Home.md) · [Guide home](../Home.md)
 
-Military Drop is a Project Zomboid Build 42.21 mod: call the army by radio, fill a requisition form, and race the dead to the supply crate.
+Military Drop is a Project Zomboid Build 42.22 mod: call the army by radio, fill a requisition form, and race the dead to the supply crate.
 
 ![A supply crate in game](../../images/screenshots/header.png)
 

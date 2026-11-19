@@ -19,6 +19,6 @@ These files are the source of the wiki pages. / Ces fichiers sont la source des 
 | [8. FAQ](en/08-faq.md) | [8. FAQ](fr/08-faq.md) |
 | [9. Helicopter crash](en/09-helicopter-crash.md) | [9. Hélicoptère abattu](fr/09-helicopter-crash.md) |
 
-Build 42.21 · single player and multiplayer / solo et multijoueur.
+Build 42.22 · single player and multiplayer / solo et multijoueur.
 
 Pictures marked "out-of-game render" come from the mod's preview tools (`source/*/preview.py`); the others are in-game screenshots. / Les images marquées « rendu hors jeu » viennent des outils d'aperçu du mod ; les autres sont des captures en jeu.

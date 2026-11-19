@@ -4,7 +4,7 @@
 
 [img]https://raw.githubusercontent.com/cyberbobjr/BATMAN_EHE_MILITARY_DROP/main/docs/images/art/banner.png[/img]
 
-[b]Build 42.21 · Одиночная и сетевая игра · Самостоятельный мод[/b]
+[b]Build 42.22 · Одиночная и сетевая игра · Самостоятельный мод[/b]
 
 [i]0.8.2[/i]
 

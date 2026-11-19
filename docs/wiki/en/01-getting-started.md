@@ -8,7 +8,7 @@ Military Drop lets you call the army by radio for a supply airdrop. A helicopter
 
 ## Install
 
-1. Subscribe to **Military Drop** on the Steam Workshop (Build 42.21). Steam also offers its required mods: **Belt Walkie-Talkie** (with **TooltipLib**) and **Signal Smoke**. Subscribe to them too.
+1. Subscribe to **Military Drop** on the Steam Workshop (Build 42.22). Steam also offers its required mods: **Belt Walkie-Talkie** (with **TooltipLib**) and **Signal Smoke**. Subscribe to them too.
 2. In the game's mod list, enable **Military Drop** (mod ID `batman_MilitaryDrop`) together with Belt Walkie-Talkie (`batman_BeltRadio`), TooltipLib (`TooltipLib`) and Signal Smoke (`batman_SignalSmoke`).
 3. Start a game. The settings are on the **Military Drop** page of the sandbox options.
 

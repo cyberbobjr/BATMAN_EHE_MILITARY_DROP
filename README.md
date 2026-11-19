@@ -1,10 +1,10 @@
 # Military Drop — Radio Supply Airdrops
 
-**Project Zomboid Build 42.21 · Singleplayer & Multiplayer · Standalone**
+**Project Zomboid Build 42.22 · Singleplayer & Multiplayer · Standalone**
 
 Tune a military radio to the right frequency, give this week's code and requisition military supplies. A helicopter drops a crate far away and announces the grid to everyone listening, and the noise draws the dead. Earn the base's trust with reports, dog tags and public missions, and run your station from a liaison post.
 
-This project is a standalone rewrite for Build 42.21 of [Expanded Helicopter Events: Drop Military Cargo](https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085) (Build 41). It no longer requires Expanded Helicopter Events.
+This project is a standalone rewrite for Build 42.22 of [Expanded Helicopter Events: Drop Military Cargo](https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085) (Build 41). It no longer requires Expanded Helicopter Events.
 
 - Mod ID: `batman_MilitaryDrop`
 - Requires [Belt Walkie-Talkie](https://steamcommunity.com/sharedfiles/filedetails/?id=3817018338) (`batman_BeltRadio`, which needs [TooltipLib](https://steamcommunity.com/sharedfiles/filedetails/?id=3694097672)) and [Signal Smoke](https://steamcommunity.com/sharedfiles/filedetails/?id=3811010882) (`batman_SignalSmoke`).
@@ -67,7 +67,7 @@ Sounds of the liaison post reader bay come from Wikimedia Commons (public domain
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel militaire. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent… et le bruit attire les morts. Gagnez la confiance de la base par des rapports, des plaques d'identité et des missions publiques, et dirigez votre station depuis un poste de liaison.
 
-Ce projet est une réécriture autonome pour la Build 42.21 de [Expanded Helicopter Events: Drop Military Cargo](https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085) (Build 41). Il ne dépend plus d'Expanded Helicopter Events.
+Ce projet est une réécriture autonome pour la Build 42.22 de [Expanded Helicopter Events: Drop Military Cargo](https://steamcommunity.com/sharedfiles/filedetails/?id=3259615085) (Build 41). Il ne dépend plus d'Expanded Helicopter Events.
 
 - Guide du joueur : [docs/wiki/fr/Home.md](docs/wiki/fr/Home.md).
 - Documentation de développement : [docs/README.md](docs/README.md) (architecture, spécifications et améliorations).
