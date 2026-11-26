@@ -6,7 +6,7 @@
 
 [b]Build 42.22 · Un jugador y multijugador · Independiente[/b]
 
-[i]0.8.2[/i]
+[i]0.8.3[/i]
 
 Sintoniza una radio militar en la frecuencia correcta, da el código de la semana y solicita suministros. Un helicóptero lanza una caja a lo lejos y anuncia la cuadrícula a todos los que escuchan... y el ruido atrae a los muertos.
 
@@ -44,13 +44,13 @@ Cada personaje tiene su propia reputación, nunca mostrada en cifras. Acorta la 
 [*]71 opciones de entorno; multijugador con autoridad del servidor.
 [/list]
 
+[h2]0.8.3[/h2]
+
+TVRadio ReInvented: la sección Logística se abre ahora en su propia ventana pequeña, junto a la ventana de la radio.
+
 [h2]0.8.2[/h2]
 
 Traducciones: los memorandos, el libro de códigos y los documentos en chino están ahora completamente traducidos; las piezas del prototipo Fulton y la entrada del menú de administración están traducidas en todos los idiomas; las fechas del puesto de enlace siguen el orden chino y portugués de Brasil.
-
-[h2]0.8.1[/h2]
-
-Notas y libros de códigos: cinco veces más frecuentes en zombis, con nuevos lugares en comisarías y almacenes militares. Notas también en taquillas de bomberos.
 
 [h2]0.8.0[/h2]
 

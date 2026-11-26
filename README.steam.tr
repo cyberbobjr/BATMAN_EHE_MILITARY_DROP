@@ -6,7 +6,7 @@
 
 [b]Build 42.22 · Tek oyunculu ve çok oyunculu · Bağımsız[/b]
 
-[i]0.8.2[/i]
+[i]0.8.3[/i]
 
 Askerî bir telsizi doğru frekansa ayarla, bu haftanın kodunu ver ve malzeme iste. Bir helikopter uzakta bir sandık bırakır ve koordinatı dinleyen herkese duyurur... Gürültü ise ölüleri çeker.
 
@@ -44,13 +44,13 @@ Her karakterin, asla bir sayı olarak gösterilmeyen kişisel bir itibarı vard�
 [*]71 sandbox seçeneği; sunucu yetkili çok oyunculu.
 [/list]
 
+[h2]0.8.3[/h2]
+
+TVRadio ReInvented: Logistics bölümü artık telsiz penceresinin yanında kendi küçük penceresinde açılıyor.
+
 [h2]0.8.2[/h2]
 
 Çeviriler: Çince askeri notlar, şifre kitabı ve belgeler artık tamamen çevrildi; Fulton prototip parçaları ve yönetici menüsü girişi tüm dillerde çevrildi; irtibat noktasındaki tarihler Çince ve Brezilya Portekizcesi sırasını izliyor.
-
-[h2]0.8.1[/h2]
-
-Notlar ve kod kitapları zombilerde beş kat daha sık çıkar; yeni polis ve askerî depo konumları. İtfaiye istasyonu dolapları notları tutabilir.
 
 [h2]0.8.0[/h2]
 

@@ -760,6 +760,32 @@ function RM.addTo(window)
     return true
 end
 
+--- Mods qui remplacent toute la fenêtre radio par la leur : leur addModule
+--- ignore un module sans taille et leur readFromObject n'affiche qu'un
+--- module choisi d'avance, donc « Logistique » n'y apparaîtrait jamais
+--- (TVRadio ReInvented 1.3, ISRadioWindow.lua:116 et :330). Avec l'un
+--- d'eux, le module s'ouvre dans sa propre fenêtre, collée à la leur
+--- (MilitaryDrop_RadioCompanion.lua) ; sans eux, rien ne change.
+RM.WINDOW_REPLACING_MODS = { TVRadio_ReInvented = true }
+
+--- Un mod de RM.WINDOW_REPLACING_MODS est actif (liste Java des IDs, « \ »
+--- initial possible). Lu une fois : la liste ne change pas en partie.
+function RM.windowReplaced()
+    if RM.replacedCache == nil then
+        local found = false
+        local mods = getActivatedMods and getActivatedMods()
+        if mods then
+            for i = 0, mods:size() - 1 do
+                if RM.WINDOW_REPLACING_MODS[(tostring(mods:get(i)):gsub("^\\", ""))] then
+                    found = true
+                end
+            end
+        end
+        RM.replacedCache = found
+    end
+    return RM.replacedCache
+end
+
 --- Enveloppe ISRadioWindow.createChildren une seule fois (original d'abord,
 --- puis le module). Si ISRadioWindow.lua a été rechargé (débogage),
 --- l'enveloppe est reposée sur le nouvel original au prochain menu
@@ -767,6 +793,9 @@ end
 --- s'ouvre, donc avant la création de ses modules (RM.onFillContextMenu).
 function RM.installWindowWrapper()
     local RadioWindow = ISRadioWindow
+    if RM.windowReplaced() then
+        return false
+    end
     if not RadioWindow or type(RadioWindow.createChildren) ~= "function"
         or (RM.windowWrapper and RadioWindow.createChildren == RM.windowWrapper) then
         return false

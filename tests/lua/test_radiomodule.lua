@@ -609,4 +609,90 @@ function T.cutting_loops_always_end()
     end
 end
 
+-- ----------------------------------------------------------------------------
+-- Fenêtre « Logistique » séparée (MilitaryDrop_RadioCompanion.lua) : seulement
+-- si un mod remplace toute la fenêtre radio (TVRadio ReInvented).
+-- ----------------------------------------------------------------------------
+
+--- Charge la fenêtre séparée ; modId : mod actif simulé (nil : aucun).
+--- Fenêtre radio de remplacement simulée : rangée dans instances comme
+--- TVRadio, position et appareil courant.
+local function loadCompanion(modId)
+    RM.replacedCache = nil
+    getActivatedMods = function()
+        local ids = { modId and ("\\" .. modId) or nil }
+        return { size = function() return #ids end, get = function(_, i) return ids[i + 1] end }
+    end
+    getPlayerScreenLeft = function() return 0 end
+    getPlayerScreenWidth = function() return 1280 end
+    ISCollapsableWindow = UIBase:derive("ISCollapsableWindow")
+    function ISCollapsableWindow.new(cls, x, y, w, h) return UIBase.new(cls, x, y, w, h) end
+    function ISCollapsableWindow:createChildren() end
+    function ISCollapsableWindow:titleBarHeight() return 16 end
+    function ISCollapsableWindow:close() self:setVisible(false) end
+    function ISCollapsableWindow:addToUIManager() self.inUI = true end
+    function ISCollapsableWindow:removeFromUIManager() self.inUI = false end
+    ISRadioWindow.instances, ISRadioWindow.instancesIso = {}, {}
+    RADIO_X = 100
+    ACTIVATIONS = 0
+    ORIGINAL_ACTIVATE = function(player, device)
+        ACTIVATIONS = ACTIVATIONS + 1
+        local window = UIBase.new(UIBase, RADIO_X, 50, 270, 386)
+        window.device, window.deviceType = device, "InventoryItem"
+        ISRadioWindow.instances[player:getPlayerNum()] = window
+        return window
+    end
+    ISRadioWindow.activate = ORIGINAL_ACTIVATE
+    loadMod("client/MilitaryDrop/MilitaryDrop_RadioCompanion.lua")
+    return MilitaryDrop.RadioCompanion
+end
+
+function T.companion_does_nothing_without_a_replacing_mod()
+    local RC = loadCompanion(nil)
+    assertTrue(ISRadioWindow.activate == ORIGINAL_ACTIVATE, "activate intact")
+    assertEq(RC.install(), false, "pas d'enveloppe")
+    local panel = openOn(RADIO)
+    assertTrue(panel ~= nil, "module toujours dans la fenêtre radio")
+end
+
+function T.companion_opens_beside_the_replaced_radio_window()
+    local RC = loadCompanion("TVRadio_ReInvented")
+    ISRadioWindow.createChildren = function(self) self.modules = self.modules or {} end
+    assertEq(RM.installWindowWrapper(), false, "module non ajouté à leur fenêtre")
+    local radioWindow = ISRadioWindow.activate(PLAYER, RADIO)
+    assertEq(ACTIVATIONS, 1, "leur activate appelé une fois")
+    assertTrue(radioWindow == ISRadioWindow.instances[0], "leur fenêtre rendue")
+    local window = RC.windows[0]
+    assertTrue(window ~= nil and window.inUI and window:getIsVisible(), "fenêtre Logistique ouverte")
+    assertEq(window.title, "IGUI_MilitaryDrop_Logistics", "titre")
+    assertEq(window.x, RADIO_X + 270, "collée à droite")
+    assertEq(window.y, 50, "même hauteur")
+    assertTrue(window.panel.device == RADIO and window.panel.player == PLAYER, "panneau lu sur la radio")
+    assertTrue(window.panel.radioWindow == window, "feuille de réquisition ancrée ici")
+    assertEq(window.height, 16 + window.panel.height, "hauteur du panneau plus le titre")
+    -- Reposée une seule fois.
+    assertEq(RC.install(), false, "enveloppe déjà posée")
+end
+
+function T.companion_closes_for_a_civilian_radio_and_with_the_radio_window()
+    local RC = loadCompanion("TVRadio_ReInvented")
+    ISRadioWindow.activate(PLAYER, RADIO)
+    local window = RC.windows[0]
+    ISRadioWindow.activate(PLAYER, makeRadio("Radio", { highTier = false }))
+    assertTrue(not window.inUI and window.panel.device == nil, "radio civile : fermée")
+    ISRadioWindow.activate(PLAYER, RADIO)
+    assertTrue(RC.windows[0] == window and window.inUI, "réutilisée")
+    ISRadioWindow.instances[0]:setVisible(false)
+    window:update()
+    assertTrue(not window.inUI, "fermée avec la fenêtre radio")
+end
+
+function T.companion_goes_left_at_the_screen_edge()
+    local RC = loadCompanion("TVRadio_ReInvented")
+    RADIO_X = 1100
+    ISRadioWindow.activate(PLAYER, RADIO)
+    local window = RC.windows[0]
+    assertEq(window.x, RADIO_X - window.width, "à gauche de la fenêtre radio")
+end
+
 return T

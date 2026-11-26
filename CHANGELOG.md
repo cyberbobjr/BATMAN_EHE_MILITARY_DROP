@@ -4,6 +4,21 @@ Technical version history. Player-facing Steam notes are kept separately in
 `workshop-changenote.md` and published through `tools/publish_workshop.py`.
 The top version must match `modversion=` in `mod.info`.
 
+## 0.8.3 — 2026-11-26
+
+### Fixed
+
+- With TVRadio ReInvented, which replaces the whole radio window, the Logistics section never appeared. It now opens in its own small window, stuck to the right of the radio window (to the left when the screen lacks room); it follows that window and closes with it or when another device is shown. Without TVRadio ReInvented nothing changes.
+
+### Known limits
+
+- The separate Logistics window has no gamepad navigation.
+- Steam description: the 0.8.1 summary is removed to stay under the size limit.
+
+### Validation
+
+- `python tests/run_tests.py --require-luacheck`: exit 0, "Tout est bon."; four new offline cases cover the separate window. Not tested in game with TVRadio ReInvented.
+
 ## 0.8.2 — 2026-11-12
 
 ### Fixed

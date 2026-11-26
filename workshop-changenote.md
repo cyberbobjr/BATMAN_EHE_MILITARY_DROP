@@ -1,8 +1,5 @@
-## 0.8.2 — 2026-11-12
+## 0.8.3 — 2026-11-26
 
-### Translations
+### Compatibility
 
-- Chinese: military memos, the codebook, document headers and month names are now fully translated.
-- Prototype Fulton balloon and bag names are translated in every language, as is the admin menu entry.
-- Dates at the liaison post now use the usual day and month order in Chinese and Brazilian Portuguese.
-- The player's guide explains what grid numbers mean and how to find them on the map.
+- TVRadio ReInvented: the Logistics section did not appear in its radio window. It now opens in its own small window, right next to the radio window, whenever you open a military radio.
