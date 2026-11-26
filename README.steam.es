@@ -6,7 +6,7 @@
 
 [b]Build 42.22 · Un jugador y multijugador · Independiente[/b]
 
-[i]0.8.3[/i]
+[i]1.0.0[/i]
 
 Sintoniza una radio militar en la frecuencia correcta, da el código de la semana y solicita suministros. Un helicóptero lanza una caja a lo lejos y anuncia la cuadrícula a todos los que escuchan... y el ruido atrae a los muertos.
 

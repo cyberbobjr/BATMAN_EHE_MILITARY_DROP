@@ -6,7 +6,7 @@
 
 [b]Build 42.22 · Solo et multijoueur · Autonome[/b]
 
-[i]0.8.3[/i]
+[i]1.0.0[/i]
 
 Réglez une radio militaire sur la bonne fréquence, donnez le code de la semaine et réquisitionnez du matériel. Un hélicoptère largue une caisse au loin et annonce la grille à tous ceux qui écoutent... et le bruit attire les morts.
 

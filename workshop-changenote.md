@@ -1,5 +1,5 @@
-## 0.8.3 — 2026-11-26
+## 1.0.0 — 2026-11-26
 
-### Compatibility
+### Version 1.0
 
-- TVRadio ReInvented: the Logistics section did not appear in its radio window. It now opens in its own small window, right next to the radio window, whenever you open a military radio.
+- Military Drop reaches version 1.0.0. Nothing changes in your game or your saves: this is the same content as 0.8.3, now considered complete.

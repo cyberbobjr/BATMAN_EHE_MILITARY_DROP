@@ -4,6 +4,20 @@ Technical version history. Player-facing Steam notes are kept separately in
 `workshop-changenote.md` and published through `tools/publish_workshop.py`.
 The top version must match `modversion=` in `mod.info`.
 
+## 1.0.0 — 2026-11-26
+
+### Changed
+
+- First stable version number. Same content as 0.8.3: no gameplay, save or option change.
+
+### Known limits
+
+- Unchanged from 0.8.3 and 0.8.2.
+
+### Validation
+
+- `python tests/run_tests.py --require-luacheck`: exit 0, "Tout est bon.". Not tested in game.
+
 ## 0.8.3 — 2026-11-26
 
 ### Fixed
